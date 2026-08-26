@@ -52,9 +52,9 @@ document.addEventListener("keydown", function(e) {
         activeSlot = menuSelection;
         var saves = getSaves();
         if (saves.slots[menuSelection]) {
-          if (loadGame(menuSelection)) { gameState = ST_PLAYING; updateUI(); }
+          if (loadGame(menuSelection)) { gameState = ST_PLAYING; startMusic(); updateUI(); }
         } else {
-          resetAll(); gameState = ST_PLAYING; updateUI();
+          resetAll(); gameState = ST_PLAYING; startMusic(); updateUI();
         }
         e.preventDefault();
         return;

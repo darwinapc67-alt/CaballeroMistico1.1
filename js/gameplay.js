@@ -169,7 +169,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   if (newRoom !== currentRoom) {
     currentRoom = newRoom;
     stats.roomsVisited++;
-    var names = ["CAVERNA INICIAL", "CUEVA OLVIDADA", "ASCENSO ROCOSO", "TÚNELES OLVIDADOS", "PROFUNDIDADES", "CIUDAD", "PICO ABISMAL", "CIMA", "CAMINO FINAL", "TIENDA"];
+    var names = ["CAVERNA INICIAL", "CUEVA OLVIDADA", "ASCENSO ROCOSO", "TÚNELES OLVIDADOS", "PROFUNDIDADES", "", "PICO ABISMAL", "", "CAMINO FINAL", "TIENDA"];
     zoneName = names[currentRoom] || "";
     zoneNameTimer = 120;
     p.inv = 30;
@@ -541,7 +541,7 @@ function updateTransition() {
         player.vx = player.vx < 0 ? -2 : 2;
         if (twoPlayerMode) { player2.y = room.height - 120; player2.vx = player2.vx < 0 ? -2 : 2; }
       }
-      var names = ["CAVERNA INICIAL", "CUEVA OLVIDADA", "ASCENSO ROCOSO", "TÚNELES OLVIDADOS", "PROFUNDIDADES", "CIUDAD", "PICO ABISMAL", "CIMA", "CAMINO FINAL", "TIENDA"];
+      var names = ["CAVERNA INICIAL", "CUEVA OLVIDADA", "ASCENSO ROCOSO", "TÚNELES OLVIDADOS", "PROFUNDIDADES", "", "PICO ABISMAL", "", "CAMINO FINAL", "TIENDA"];
       zoneName = names[currentRoom] || "";
       zoneNameTimer = 120;
     }
