@@ -507,6 +507,10 @@ function drawMenu() {
 }
 
 function drawPause() {
+  if (pauseSubState === "diary") {
+    drawDiary();
+    return;
+  }
   ctx.fillStyle = "rgba(0,0,0,0.82)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.textAlign = "center"; ctx.fillStyle = "#6cc"; ctx.font = "bold 32px monospace";
   ctx.fillText("⏸️  PAUSA", canvas.width/2, 130);
