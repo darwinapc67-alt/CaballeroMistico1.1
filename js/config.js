@@ -2,7 +2,7 @@ var canvas, ctx;
 var ROOM_W = 800, ROOM_H = 600, GRAVITY = 0.6;
 var WORLD_W = 10 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
-var VERSION = "v0.80";
+var VERSION = "v0.90";
 
 var ST_MENU = 0, ST_PLAYING = 1, ST_PAUSED = 2, ST_TRANSITION = 3, ST_EXPLOSION = 4, ST_INVENTORY = 5;
 
@@ -48,7 +48,7 @@ var stats = {
 var frameCounter = 0;
 
 var bestiaryInfo = {
-  bat: { name: "Murciélago Sombrío", desc: "Criatura alada que habita las profundidades." },
+  bat: { name: "Murciélago Sombrío", desc: "Criatura alada que habita las profundidades. se alimenta de energia de hechizos." },
   larva_mosca: { name: "Larva-Mosca", desc: "Aberración híbrida que embiste con ferocidad." }
 };
 var bestiary = { bat: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 } };
@@ -59,7 +59,7 @@ var player = {
   jumpsLeft: 1, maxJumps: 2, inv: 0, anim: 0, autoWalk: 0, frozen: false,
   hp: 10, maxHp: 10, id: 1, color: "#0aa", headColor: "#0cc",
   hasSword: false, swordEquipped: false, swordSwing: 0, swordCooldown: 0,
-  swordSheathed: true
+  swordSheathed: true, swordSheathTimer: 0
 };
 
 var player2 = {
@@ -67,7 +67,7 @@ var player2 = {
   jumpsLeft: 1, maxJumps: 2, inv: 0, anim: 0, autoWalk: 0, frozen: false,
   hp: 10, maxHp: 10, id: 2, color: "#a0a", headColor: "#c0c",
   hasSword: false, swordEquipped: false, swordSwing: 0, swordCooldown: 0,
-  swordSheathed: true
+  swordSheathed: true, swordSheathTimer: 0
 };
 
 var hasSword = false, swordEquipped = false;

@@ -33,7 +33,7 @@ function resetPlayer() {
   player.maxJumps = hasDoubleJump ? 2 : 1;
   player.frozen = false;
   player.swordSwing = 0; player.swordCooldown = 0;
-  player.swordSheathed = true;
+  player.swordSheathed = true; player.swordSheathTimer = 0;
   playerDead = false;
   deathTimer = 0;
   particles = []; floatTexts = []; flash = 0;
@@ -45,7 +45,7 @@ function resetPlayer() {
     player2.maxJumps = hasDoubleJump ? 2 : 1;
     player2.frozen = false;
     player2.swordSwing = 0; player2.swordCooldown = 0;
-    player2.swordSheathed = true;
+    player2.swordSheathed = true; player2.swordSheathTimer = 0;
   }
 }
 
@@ -146,8 +146,6 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     return;
   }
   if (p.autoWalk > 0 || p.frozen) { p.autoWalk--; return; }
-
-  if (!attackPressed && p.swordSwing <= 0) p.swordSheathed = true;
 
   var wasOnGround = p.onGround;
 
@@ -269,10 +267,15 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
 
   if (p.swordSwing > 0) p.swordSwing--;
   if (p.swordCooldown > 0) p.swordCooldown--;
+  if (!p.swordSheathed && p.swordSwing <= 0) {
+    p.swordSheathTimer--;
+    if (p.swordSheathTimer <= 0) p.swordSheathed = true;
+  }
 
   if (attackPressed && p.hasSword && p.swordEquipped && p.swordCooldown <= 0 && p.swordSwing <= 0 && !p.frozen) {
     p.swordSwing = 12; p.swordCooldown = 22;
     p.swordSheathed = false;
+    p.swordSheathTimer = 180;
     stats.attacks++;
     spawnParticles(p.x + p.w/2 + p.facing * 18, p.y + p.h/2, "#ffd700", 6, 4);
     sfxAttack();

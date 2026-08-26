@@ -50,7 +50,7 @@ var stats = {
 var frameCounter = 0;
 
 var bestiaryInfo = {
-  bat: { name: "Murciélago Sombrío", desc: "Criatura alada que habita las profundidades." },
+  bat: { name: "Murciélago Sombrío", desc: "Criatura alada que habita las profundidades. se alimenta de energia de hechizos." },
   larva_mosca: { name: "Larva-Mosca", desc: "Aberración híbrida que embiste con ferocidad." }
 };
 var bestiary = { bat: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 } };

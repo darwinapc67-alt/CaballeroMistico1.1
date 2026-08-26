@@ -51,7 +51,7 @@ var canvas, ctx;
 var ROOM_W = 800, ROOM_H = 600, GRAVITY = 0.6;
 var WORLD_W = 10 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
-var VERSION = "v0.80";
+var VERSION = "v0.90";
 
 var ST_MENU = 0, ST_PLAYING = 1, ST_PAUSED = 2, ST_TRANSITION = 3, ST_EXPLOSION = 4, ST_INVENTORY = 5;
 
@@ -97,7 +97,7 @@ var stats = {
 var frameCounter = 0;
 
 var bestiaryInfo = {
-  bat: { name: "Murciélago Sombrío", desc: "Criatura alada que habita las profundidades." },
+  bat: { name: "Murciélago Sombrío", desc: "Criatura alada que habita las profundidades. se alimenta de energia de hechizos." },
   larva_mosca: { name: "Larva-Mosca", desc: "Aberración híbrida que embiste con ferocidad." }
 };
 var bestiary = { bat: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 } };
@@ -108,7 +108,7 @@ var player = {
   jumpsLeft: 1, maxJumps: 2, inv: 0, anim: 0, autoWalk: 0, frozen: false,
   hp: 10, maxHp: 10, id: 1, color: "#0aa", headColor: "#0cc",
   hasSword: false, swordEquipped: false, swordSwing: 0, swordCooldown: 0,
-  swordSheathed: true
+  swordSheathed: true, swordSheathTimer: 0
 };
 
 var player2 = {
@@ -116,7 +116,7 @@ var player2 = {
   jumpsLeft: 1, maxJumps: 2, inv: 0, anim: 0, autoWalk: 0, frozen: false,
   hp: 10, maxHp: 10, id: 2, color: "#a0a", headColor: "#c0c",
   hasSword: false, swordEquipped: false, swordSwing: 0, swordCooldown: 0,
-  swordSheathed: true
+  swordSheathed: true, swordSheathTimer: 0
 };
 
 var hasSword = false, swordEquipped = false;
@@ -550,7 +550,7 @@ function resetPlayer() {
   player.maxJumps = hasDoubleJump ? 2 : 1;
   player.frozen = false;
   player.swordSwing = 0; player.swordCooldown = 0;
-  player.swordSheathed = true;
+  player.swordSheathed = true; player.swordSheathTimer = 0;
   playerDead = false;
   deathTimer = 0;
   particles = []; floatTexts = []; flash = 0;
@@ -562,7 +562,7 @@ function resetPlayer() {
     player2.maxJumps = hasDoubleJump ? 2 : 1;
     player2.frozen = false;
     player2.swordSwing = 0; player2.swordCooldown = 0;
-    player2.swordSheathed = true;
+    player2.swordSheathed = true; player2.swordSheathTimer = 0;
   }
 }
 
@@ -666,8 +666,6 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     return;
   }
   if (p.autoWalk > 0 || p.frozen) { p.autoWalk--; return; }
-  
-  if (!attackPressed && p.swordSwing <= 0) p.swordSheathed = true;
   
   var wasOnGround = p.onGround;
   
@@ -789,10 +787,15 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   
   if (p.swordSwing > 0) p.swordSwing--;
   if (p.swordCooldown > 0) p.swordCooldown--;
+  if (!p.swordSheathed && p.swordSwing <= 0) {
+    p.swordSheathTimer--;
+    if (p.swordSheathTimer <= 0) p.swordSheathed = true;
+  }
   
   if (attackPressed && p.hasSword && p.swordEquipped && p.swordCooldown <= 0 && p.swordSwing <= 0 && !p.frozen) {
     p.swordSwing = 12; p.swordCooldown = 22;
     p.swordSheathed = false;
+    p.swordSheathTimer = 180;
     stats.attacks++;
     spawnParticles(p.x + p.w/2 + p.facing * 18, p.y + p.h/2, "#ffd700", 6, 4);
     sfxAttack();
