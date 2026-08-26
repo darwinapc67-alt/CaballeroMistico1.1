@@ -1,0 +1,34 @@
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #020205;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      color: #666;
+      overflow: hidden;
+    }
+    canvas {
+      background: #050510;
+      display: block;
+      border: 2px solid #151525;
+      border-radius: 6px;
+      image-rendering: pixelated;
+    }
+    #ui {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 13px;
+      font-family: monospace;
+    }
+    kbd {
+      background: #101020;
+      border: 1px solid #333;
+      border-radius: 3px;
+      padding: 2px 6px;
+      color: #6cc;
+      font-family: monospace;
+    }
