@@ -146,7 +146,8 @@ function drawShopNPC() {
       ctx.lineTo(houseX + 138, houseY + 28);
       ctx.closePath(); ctx.fill();
       ctx.fillStyle = "#111122";
-      ctx.fillRect(houseX + 52, houseY + 72, 26, 48);
+      ctx.fillRect(houseX + 18, houseY + 62, 20, 18);
+      ctx.fillRect(houseX + 92, houseY + 62, 20, 18);
       ctx.fillStyle = "#8b4513";
       ctx.fillRect(npc.x, npc.y, npc.w, npc.h);
       ctx.fillStyle = "#a0522d";
@@ -154,13 +155,8 @@ function drawShopNPC() {
       ctx.fillStyle = "#ffd700";
       ctx.fillRect(npc.x + 4, npc.y + 8, 4, 4);
       ctx.fillRect(npc.x + npc.w - 8, npc.y + 8, 4, 4);
-      ctx.fillStyle = "rgba(0,0,0,0.6)";
-      ctx.fillRect(npc.x - 10, npc.y - 20, npc.w + 20, 14);
       ctx.fillStyle = "#ffd700";
-      ctx.font = "9px monospace";
-      ctx.textAlign = "center";
-      ctx.fillText(s.label, npc.x + npc.w/2, npc.y - 10);
-      ctx.textAlign = "left";
+      ctx.fillRect(npc.x - 9, npc.y - 10, 4, 4);
     });
   }
 }
@@ -517,8 +513,16 @@ function drawMenu() {
     }
     if (isSel) { ctx.fillStyle = "#6cc"; ctx.fillText("▶", 165, y+30); }
   }
+  var adminY = 540, adminSelected = menuSelection === 5;
+  ctx.fillStyle = adminSelected ? "rgba(255,80,80,0.18)" : "rgba(255,255,255,0.02)";
+  ctx.fillRect(180, adminY - 20, 440, 32);
+  ctx.strokeStyle = adminSelected ? "#f66" : "#333"; ctx.lineWidth = adminSelected ? 2 : 1;
+  ctx.strokeRect(180, adminY - 20, 440, 32);
+  ctx.fillStyle = adminSelected ? "#f66" : "#888"; ctx.font = "bold 14px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText((adminSelected ? "▶  " : "    ") + "Panel del admin", canvas.width/2, adminY);
   ctx.textAlign = "center"; ctx.fillStyle = "#333"; ctx.font = "12px monospace";
-  ctx.fillText(gamepadConnected ? "⬆️⬇️ Navegar  •  ❌ Seleccionar  •  ⬜ Borrar" : "↑/↓ Navegar  •  ENTER Seleccionar  •  DEL/X Borrar", canvas.width/2, 565);
+  ctx.fillText(gamepadConnected ? "⬆️⬇️ Navegar  •  ❌ Seleccionar  •  ⬜ Borrar" : "↑/↓ Navegar  •  ENTER Seleccionar  •  DEL/X Borrar", canvas.width/2, 580);
 
   if (menuSubState === "confirm_delete") {
     ctx.fillStyle = "rgba(0,0,0,0.92)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -528,6 +532,17 @@ function drawMenu() {
     ctx.fillText("Esta acción no se puede deshacer", canvas.width/2, 285);
     ctx.fillStyle = "#0f0"; ctx.fillText("[Y / S] Confirmar", canvas.width/2, 330);
     ctx.fillStyle = "#f44"; ctx.fillText("[N / ESC] Cancelar", canvas.width/2, 360);
+  }
+  if (menuSubState === "admin_password") {
+    ctx.fillStyle = "rgba(0,0,0,0.94)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#f66"; ctx.font = "bold 24px monospace";
+    ctx.fillText("PANEL DEL ADMIN", canvas.width/2, 220);
+    ctx.fillStyle = "#aaa"; ctx.font = "14px monospace";
+    ctx.fillText("Introduce la contraseña", canvas.width/2, 265);
+    ctx.fillStyle = "#fff"; ctx.font = "bold 24px monospace";
+    ctx.fillText("*".repeat(adminPassword.length), canvas.width/2, 315);
+    ctx.fillStyle = adminMessage ? "#f66" : "#666"; ctx.font = "12px monospace";
+    ctx.fillText(adminMessage || "ENTER confirmar  •  ESC cancelar", canvas.width/2, 370);
   }
   ctx.textAlign = "left";
 }
@@ -715,6 +730,10 @@ function drawTransition() {
 
 function drawShop() {
   drawGameWorld();
+  if (shopAnim > 0) {
+    ctx.fillStyle = "rgba(255,215,0," + (shopAnim / 90) + ")";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
   ctx.fillStyle = "rgba(0,0,0,0.88)"; ctx.fillRect(0,0,canvas.width,canvas.height);
   ctx.textAlign = "center";
   ctx.fillStyle = "#ffd700"; ctx.font = "bold 28px monospace";

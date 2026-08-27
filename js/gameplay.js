@@ -442,7 +442,7 @@ function tryInteractFor(p) {
       var dy = (p.y + p.h/2) - (npc.y + npc.h/2);
       if (Math.sqrt(dx*dx + dy*dy) < 90 && !shopOpen) {
         sfxNpc();
-        shopOpen = true; shopId = s.id; menuSelection = 0;
+        shopOpen = true; shopId = s.id; menuSelection = 0; shopAnim = 18;
         return;
       }
     }

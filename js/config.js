@@ -2,7 +2,7 @@ var canvas, ctx;
 var ROOM_W = 800, ROOM_H = 600, GRAVITY = 0.6;
 var WORLD_W = 10 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
-var VERSION = "v0.90";
+var VERSION = "v1.00";
 
 var ST_LANGUAGE = 0, ST_DEVICE = 1, ST_MENU = 2, ST_PLAYING = 3, ST_PAUSED = 4, ST_TRANSITION = 5, ST_EXPLOSION = 6, ST_INVENTORY = 7;
 
@@ -83,6 +83,7 @@ function translateText(text) {
   return result;
 }
 var menuSelection = 0, menuSubState = "slots", slotToDelete = -1, activeSlot = -1;
+var adminPassword = "", adminMessage = "";
 var pauseSelection = 0, pauseSubState = "menu";
 
 var transTimer = 0, transPhase = "out", transTargetRoom = 0, transFade = 0;
@@ -98,7 +99,7 @@ var zoneName = "", zoneNameTimer = 0;
 var explosionAnim = 0, explosionX = 0, explosionY = 0;
 var knockbackVX = 0, knockbackVY = 0;
 
-var azari = 0, hasMap = false, hasBow = false, arrows = 0, shopOpen = false, shopId = 0;
+var azari = 0, hasMap = false, hasBow = false, arrows = 0, shopOpen = false, shopId = 0, shopAnim = 0;
 var heartFragments1 = 0, heartFragments2 = 0;
 var heartFragmentsBought1 = 0, heartFragmentsBought2 = 0;
 var hasAzariCharm = false, hasDoubleJump = false;

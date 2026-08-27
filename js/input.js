@@ -44,6 +44,10 @@ window.addEventListener("keydown", function(e) {
       menuSubState = "slots"; slotToDelete = -1;
       e.preventDefault();
       return;
+    } else if (gameState === ST_MENU && menuSubState === "admin_password") {
+      menuSubState = "slots"; adminPassword = ""; adminMessage = "";
+      e.preventDefault();
+      return;
     }
   }
 
@@ -81,10 +85,32 @@ window.addEventListener("keydown", function(e) {
   }
 
   if (gameState === ST_MENU) {
-    if (menuSubState === "slots") {
-      if (up || k === "w") { menuSelection = (menuSelection - 1 + 5) % 5; e.preventDefault(); return; }
-      if (down || k === "s") { menuSelection = (menuSelection + 1) % 5; e.preventDefault(); return; }
+    if (menuSubState === "admin_password") {
       if (confirm) {
+        if (adminPassword === "123412") {
+          azari = 1000;
+          currentRoom = rooms.length - 2;
+          player.x = currentRoom * ROOM_W + 30;
+          player.y = rooms[currentRoom].height - 120;
+          player.vx = 0; player.vy = 0;
+          gameState = ST_PLAYING;
+          menuSubState = "slots";
+          startMusic(); updateUI();
+        } else {
+          adminPassword = "";
+          adminMessage = "Contraseña incorrecta";
+        }
+        e.preventDefault(); return;
+      }
+      if (e.key === "Backspace") { adminPassword = adminPassword.slice(0, -1); e.preventDefault(); return; }
+      if (/^[0-9]$/.test(e.key) && adminPassword.length < 12) { adminPassword += e.key; e.preventDefault(); return; }
+      return;
+    }
+    if (menuSubState === "slots") {
+      if (up || k === "w") { menuSelection = (menuSelection - 1 + 6) % 6; e.preventDefault(); return; }
+      if (down || k === "s") { menuSelection = (menuSelection + 1) % 6; e.preventDefault(); return; }
+      if (confirm) {
+        if (menuSelection === 5) { menuSubState = "admin_password"; adminPassword = ""; adminMessage = ""; e.preventDefault(); return; }
         activeSlot = menuSelection;
         var saves = getSaves();
         if (saves.slots[menuSelection]) {

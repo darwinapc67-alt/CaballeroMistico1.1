@@ -33,6 +33,7 @@ function resetAll() {
 }
 
 function update() {
+  if (shopAnim > 0) shopAnim--;
   if (shopOpen) return;
   if (gameState === ST_EXPLOSION) { updateExplosion(); return; }
   if (gameState === ST_TRANSITION) { updateTransition(); return; }
