@@ -1,6 +1,9 @@
-document.addEventListener("keydown", function(e) {
+window.addEventListener("keydown", function(e) {
   initAudio();
   var k = e.key.toLowerCase();
+  var up = e.key === "ArrowUp" || e.code === "ArrowUp";
+  var down = e.key === "ArrowDown" || e.code === "ArrowDown";
+  var confirm = e.key === "Enter" || e.code === "Enter" || e.code === "NumpadEnter";
 
   if (k === "`") {
     if (gameState === ST_PLAYING) {
@@ -45,9 +48,9 @@ document.addEventListener("keydown", function(e) {
   }
 
   if (gameState === ST_LANGUAGE) {
-    if (e.key === "ArrowUp" || k === "w") { languageSelection = (languageSelection - 1 + languages.length) % languages.length; e.preventDefault(); return; }
-    if (e.key === "ArrowDown" || k === "s") { languageSelection = (languageSelection + 1) % languages.length; e.preventDefault(); return; }
-    if (e.key === "Enter") {
+    if (up || k === "w") { languageSelection = (languageSelection - 1 + languages.length) % languages.length; e.preventDefault(); return; }
+    if (down || k === "s") { languageSelection = (languageSelection + 1) % languages.length; e.preventDefault(); return; }
+    if (confirm) {
       language = languages[languageSelection].code;
       gameState = ST_DEVICE;
       deviceSelection = 0;
@@ -58,9 +61,9 @@ document.addEventListener("keydown", function(e) {
   }
 
   if (gameState === ST_DEVICE) {
-    if (e.key === "ArrowUp" || k === "w") { deviceSelection = (deviceSelection - 1 + devices.length) % devices.length; e.preventDefault(); return; }
-    if (e.key === "ArrowDown" || k === "s") { deviceSelection = (deviceSelection + 1) % devices.length; e.preventDefault(); return; }
-    if (e.key === "Enter") {
+    if (up || k === "w") { deviceSelection = (deviceSelection - 1 + devices.length) % devices.length; e.preventDefault(); return; }
+    if (down || k === "s") { deviceSelection = (deviceSelection + 1) % devices.length; e.preventDefault(); return; }
+    if (confirm) {
       device = devices[deviceSelection].code;
       gamepadConnected = device === "play" && gamepadConnected;
       setupTouchControls();
@@ -74,9 +77,9 @@ document.addEventListener("keydown", function(e) {
 
   if (gameState === ST_MENU) {
     if (menuSubState === "slots") {
-      if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 5) % 5; e.preventDefault(); return; }
-      if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % 5; e.preventDefault(); return; }
-      if (e.key === "Enter") {
+      if (up || k === "w") { menuSelection = (menuSelection - 1 + 5) % 5; e.preventDefault(); return; }
+      if (down || k === "s") { menuSelection = (menuSelection + 1) % 5; e.preventDefault(); return; }
+      if (confirm) {
         activeSlot = menuSelection;
         var saves = getSaves();
         if (saves.slots[menuSelection]) {
@@ -102,9 +105,9 @@ document.addEventListener("keydown", function(e) {
   if (gameState === ST_PAUSED) {
     if (pauseSubState === "diary") return;
     if (pauseSubState === "controls") { if (e.key === "Escape") { pauseSubState = "menu"; e.preventDefault(); } return; }
-    if (e.key === "ArrowUp" || k === "w") { pauseSelection = (pauseSelection - 1 + 5) % 5; e.preventDefault(); return; }
-    if (e.key === "ArrowDown" || k === "s") { pauseSelection = (pauseSelection + 1) % 5; e.preventDefault(); return; }
-    if (e.key === "Enter") {
+    if (up || k === "w") { pauseSelection = (pauseSelection - 1 + 5) % 5; e.preventDefault(); return; }
+    if (down || k === "s") { pauseSelection = (pauseSelection + 1) % 5; e.preventDefault(); return; }
+    if (confirm) {
       if (pauseSelection === 0) gameState = ST_PLAYING;
       if (pauseSelection === 1) pauseSubState = "diary";
       if (pauseSelection === 2) { twoPlayerMode = !twoPlayerMode; updateUI(); }
