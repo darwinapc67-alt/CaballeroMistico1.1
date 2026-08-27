@@ -136,6 +136,17 @@ function drawShopNPC() {
   if (room.shops) {
     room.shops.forEach(function(s) {
       var npc = s.npc;
+      var houseX = npc.x - 55, houseY = npc.y - 95;
+      ctx.fillStyle = "#26263a";
+      ctx.fillRect(houseX, houseY + 25, 130, 95);
+      ctx.fillStyle = s.id === 0 ? "#4a3a25" : "#3a2638";
+      ctx.beginPath();
+      ctx.moveTo(houseX - 8, houseY + 28);
+      ctx.lineTo(houseX + 65, houseY - 25);
+      ctx.lineTo(houseX + 138, houseY + 28);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#111122";
+      ctx.fillRect(houseX + 52, houseY + 72, 26, 48);
       ctx.fillStyle = "#8b4513";
       ctx.fillRect(npc.x, npc.y, npc.w, npc.h);
       ctx.fillStyle = "#a0522d";
@@ -284,7 +295,7 @@ function drawInventory() {
   if (hasBow) items.push("🏹 Arco: ✓");
   items.push("🏹 Flechas: " + arrows);
   if (hasMap) items.push("🗺️ Mapa: ✓");
-  if (hasAzariCharm) items.push("💎 Amuleto: ✓");
+  if (hasAzariCharm) items.push("💎 Bendición codiciosa: ✓");
   items.push("❤️ Fragmentos: " + heartFragments1 + "/3");
   items.push("💠 Azari: " + azari);
   items.push("🔄 Saltos: " + (hasDoubleJump ? "Doble" : "Simple"));
@@ -429,6 +440,7 @@ function drawGame() {
   ctx.fillText(hasSword ? "⚔️ Espada" : "🛡️ Sin arma", 12, 22);
   if (hasSword) { ctx.fillStyle = player.swordCooldown <= 0 ? "#ffd700" : "#444"; ctx.fillText("⚔️ J1: " + (player.swordCooldown <= 0 ? (player.swordSheathed ? "🔒" : "⚔️") : "···"), 12, 42); }
   else { ctx.fillStyle = "#555"; ctx.fillText("Encuentra la espada...", 12, 42); }
+  if (hasBow) { ctx.fillStyle = player.bowCooldown <= 0 ? "#ffd700" : "#444"; ctx.fillText("🏹 Arco: " + (player.bowCooldown <= 0 ? "Listo" : "···"), 12, 62); }
   if (twoPlayerMode && hasSword) {
     ctx.fillStyle = player2.swordCooldown <= 0 ? "#f0f" : "#444"; ctx.fillText("⚔️ J2: " + (player2.swordCooldown <= 0 ? (player2.swordSheathed ? "🔒" : "⚔️") : "···"), 12, 58);
   }
@@ -723,20 +735,26 @@ function drawShop() {
     }
     ctx.fillStyle = "#666"; ctx.font = "13px monospace";
     ctx.fillText("↑/↓ Elegir  •  ENTER Comprar  •  ESC Salir", canvas.width/2, 355);
-  } else if (shopId === 1 || shopId === 2) {
-    var label = shopId === 1 ? "JUGADOR 1" : "JUGADOR 2";
-    var frags = shopId === 1 ? heartFragments1 : heartFragments2;
-    var bought = shopId === 1 ? heartFragmentsBought1 : heartFragmentsBought2;
+  } else if (shopId === 1) {
     ctx.fillStyle = "#6cc"; ctx.font = "18px monospace";
-    ctx.fillText("💎 MERCADO - " + label, canvas.width/2, 200);
+    ctx.fillText("💎 CASA DEL CORAZÓN", canvas.width/2, 200);
     ctx.fillStyle = "#fff"; ctx.font = "16px monospace";
-    ctx.fillText("❤️ Fragmentos: " + frags + "/3", canvas.width/2, 240);
-    ctx.fillStyle = "#aaa"; ctx.font = "13px monospace";
-    ctx.fillText("Compra fragmentos (25 Azari) o Amuleto (45 Azari)", canvas.width/2, 280);
+    ctx.fillText("❤️ J1: " + heartFragments1 + "/3", canvas.width/2, 240);
+    ctx.fillText("💗 J2: " + heartFragments2 + "/3", canvas.width/2, 270);
+    var heartItems = ["❤️ Fragmento J1 - 25 Azari", "💗 Fragmento J2 - 25 Azari", "💎 Bendición codiciosa - 45 Azari"];
+    for (var i = 0; i < heartItems.length; i++) {
+      var heartY = 240 + i * 38, heartSelected = menuSelection === i;
+      ctx.fillStyle = heartSelected ? "rgba(100,200,255,0.18)" : "transparent";
+      ctx.fillRect(150, heartY - 20, 500, 32);
+      ctx.strokeStyle = heartSelected ? "#6cc" : "#333"; ctx.lineWidth = heartSelected ? 2 : 1;
+      ctx.strokeRect(150, heartY - 20, 500, 32);
+      ctx.fillStyle = heartSelected ? "#6cc" : "#aaa"; ctx.font = "bold 15px monospace";
+      ctx.fillText((heartSelected ? "▶  " : "    ") + heartItems[i], canvas.width/2, heartY);
+    }
     ctx.fillStyle = "#666"; ctx.font = "13px monospace";
-    ctx.fillText("↑/↓ Navegar  •  ENTER Comprar  •  ESC Salir", canvas.width/2, 320);
   }
-  ctx.textAlign = "left";
+    ctx.fillText("J1: " + heartFragments1 + "/3  •  J2: " + heartFragments2 + "/3", canvas.width/2, 360);
+    ctx.fillText("↑/↓ Elegir  •  ENTER Comprar  •  ESC Salir", canvas.width/2, 390);
 }
 
 function drawExplosion() {

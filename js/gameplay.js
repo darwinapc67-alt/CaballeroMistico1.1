@@ -32,7 +32,7 @@ function resetPlayer() {
   player.jumpsLeft = hasDoubleJump ? 2 : 1; player.facing = 1; player.inv = 0; player.autoWalk = 0;
   player.maxJumps = hasDoubleJump ? 2 : 1;
   player.frozen = false;
-  player.swordSwing = 0; player.swordCooldown = 0;
+  player.swordSwing = 0; player.swordCooldown = 0; player.bowCooldown = 0;
   player.swordSheathed = true; player.swordSheathTimer = 0;
   playerDead = false;
   deathTimer = 0;
@@ -44,7 +44,7 @@ function resetPlayer() {
     player2.jumpsLeft = hasDoubleJump ? 2 : 1; player2.facing = 1; player2.inv = 0; player2.autoWalk = 0;
     player2.maxJumps = hasDoubleJump ? 2 : 1;
     player2.frozen = false;
-    player2.swordSwing = 0; player2.swordCooldown = 0;
+    player2.swordSwing = 0; player2.swordCooldown = 0; player2.bowCooldown = 0;
     player2.swordSheathed = true; player2.swordSheathTimer = 0;
   }
 }
@@ -298,6 +298,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
 
   if (p.swordSwing > 0) p.swordSwing--;
   if (p.swordCooldown > 0) p.swordCooldown--;
+  if (p.bowCooldown > 0) p.bowCooldown--;
   if (!p.swordSheathed && p.swordSwing <= 0) {
     p.swordSheathTimer--;
     if (p.swordSheathTimer <= 0) p.swordSheathed = true;
@@ -314,8 +315,8 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     checkSwordHitEnemiesFor(p);
   }
 
-  if (shootPressed && p.id === 1 && hasBow && arrows > 0 && p.swordCooldown <= 0 && !p.frozen) {
-    arrows--; p.swordCooldown = 18;
+  if (shootPressed && p.id === 1 && hasBow && arrows > 0 && p.bowCooldown <= 0 && !p.frozen) {
+    arrows--; p.bowCooldown = 18;
     arrowsInFlight.push({ x: p.x + (p.facing > 0 ? p.w : -12), y: p.y + 13, w: 12, h: 3, vx: p.facing * 8, vy: 0, life: 100 });
     sfxBow();
   }

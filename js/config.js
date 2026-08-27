@@ -136,7 +136,7 @@ var player = {
   x: 100, y: 400, w: 22, h: 30, vx: 0, vy: 0, onGround: false, facing: 1,
   jumpsLeft: 1, maxJumps: 2, inv: 0, anim: 0, autoWalk: 0, frozen: false,
   hp: 10, maxHp: 10, id: 1, color: "#0aa", headColor: "#0cc",
-  hasSword: false, swordEquipped: false, swordSwing: 0, swordCooldown: 0,
+  hasSword: false, swordEquipped: false, swordSwing: 0, swordCooldown: 0, bowCooldown: 0,
   swordSheathed: true, swordSheathTimer: 0
 };
 
@@ -144,7 +144,7 @@ var player2 = {
   x: 140, y: 400, w: 22, h: 30, vx: 0, vy: 0, onGround: false, facing: 1,
   jumpsLeft: 1, maxJumps: 2, inv: 0, anim: 0, autoWalk: 0, frozen: false,
   hp: 10, maxHp: 10, id: 2, color: "#a0a", headColor: "#c0c",
-  hasSword: false, swordEquipped: false, swordSwing: 0, swordCooldown: 0,
+  hasSword: false, swordEquipped: false, swordSwing: 0, swordCooldown: 0, bowCooldown: 0,
   swordSheathed: true, swordSheathTimer: 0
 };
 
@@ -406,9 +406,8 @@ var room9 = {
   spikes: [], walls: [{x:7980, y:0, w:20, h:600}],
   transitionZone: null,
   shops: [
-    { id: 0, npc: {x:7350, y:445, w:20, h:35}, label: "Mapa" },
-    { id: 1, npc: {x:7550, y:445, w:20, h:35}, label: "Fragmentos J1" },
-    { id: 2, npc: {x:7750, y:445, w:20, h:35}, label: "Fragmentos J2" }
+    { id: 0, npc: {x:7350, y:445, w:20, h:35}, label: "Casa del Explorador" },
+    { id: 1, npc: {x:7700, y:445, w:20, h:35}, label: "Casa del Corazón" }
   ],
   healingStone: {x: 7500, y: 520, w: 50, h: 40, active: true},
   decor: genDecor(7200, 10, 8, 600)

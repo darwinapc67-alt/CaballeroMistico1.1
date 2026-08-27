@@ -159,8 +159,8 @@ window.addEventListener("keydown", function(e) {
       }
     }
     if (shopId === 1) {
-      if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 2) % 2; e.preventDefault(); return; }
-      if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % 2; e.preventDefault(); return; }
+      if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 3) % 3; e.preventDefault(); return; }
+      if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % 3; e.preventDefault(); return; }
       if (e.key === "Enter") {
         if (menuSelection === 0 && heartFragmentsBought1 < 2 && azari >= 25) {
           azari -= 25; heartFragments1++; heartFragmentsBought1++;
@@ -168,7 +168,11 @@ window.addEventListener("keydown", function(e) {
           sfxBuy();
           if (heartFragments1 >= 3) { heartFragments1 -= 3; player.maxHp++; player.hp = player.maxHp; spawnFloatText(player.x, player.y - 50, "¡Vida +1!", "#f44"); spawnParticles(player.x + player.w/2, player.y + player.h/2, "#f44", 20, 5); }
         }
-        if (menuSelection === 1 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; spawnFloatText(player.x, player.y - 30, "¡Amuleto!", "#0ff"); sfxBuy(); }
+        if (menuSelection === 1 && heartFragmentsBought2 < 2 && azari >= 25) {
+          azari -= 25; heartFragments2++; heartFragmentsBought2++; sfxBuy();
+          if (heartFragments2 >= 3) { heartFragments2 -= 3; player2.maxHp++; player2.hp = player2.maxHp; }
+        }
+        if (menuSelection === 2 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; spawnFloatText(player.x, player.y - 30, "¡Bendición codiciosa!", "#0ff"); sfxBuy(); }
         e.preventDefault(); return;
       }
     }
