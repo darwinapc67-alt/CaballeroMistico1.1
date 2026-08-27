@@ -32,3 +32,28 @@
       color: #6cc;
       font-family: monospace;
     }
+    #touchControls {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 12px;
+      touch-action: none;
+    }
+    #touchControls button {
+      width: 52px;
+      height: 46px;
+      border: 1px solid #6cc;
+      border-radius: 6px;
+      background: #101c2b;
+      color: #fff;
+      font-size: 22px;
+      touch-action: none;
+    }
+    @media (max-width: 800px) {
+      body { justify-content: flex-start; padding-top: 12px; }
+      canvas { width: 100vw; height: auto; max-height: 76vh; }
+      #ui { max-width: 96vw; }
+    }
+    @media (min-width: 801px) {
+      #touchControls { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); }
+    }

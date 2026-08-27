@@ -2,17 +2,80 @@ var canvas, ctx;
 var ROOM_W = 800, ROOM_H = 600, GRAVITY = 0.6;
 var WORLD_W = 10 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
-var VERSION = "v0.90";
+var VERSION = "v1.00";
 
-var ST_LANGUAGE = 0, ST_MENU = 1, ST_PLAYING = 2, ST_PAUSED = 3, ST_TRANSITION = 4, ST_EXPLOSION = 5, ST_INVENTORY = 6;
+var ST_LANGUAGE = 0, ST_DEVICE = 1, ST_MENU = 2, ST_PLAYING = 3, ST_PAUSED = 4, ST_TRANSITION = 5, ST_EXPLOSION = 6, ST_INVENTORY = 7;
 
 var gameState = ST_LANGUAGE;
 var languageSelection = 0, language = "es";
+var deviceSelection = 0, device = "pc";
+var devices = [
+  { code: "pc", label: "PC" },
+  { code: "touch", label: "Celular / Tablet" },
+  { code: "play", label: "Control de Play" }
+];
 var languages = [
   { code: "es", label: "Español" },
   { code: "en", label: "English" },
   { code: "pt", label: "Português" }
 ];
+
+var translations = {
+  en: {
+    "CABALLERO MÍSTICO": "MYSTIC KNIGHT", "Selecciona una ranura": "Select a save slot", "RANURA": "SLOT",
+    "Guardado": "Saved", "Vacía": "Empty", "para nueva partida": "for a new game", "Borrar": "Delete",
+    "Reanudar": "Resume", "Ver Diario": "View Journal", "Agregar J2": "Add P2", "Quitar J2": "Remove P2",
+    "Controles": "Controls", "Salir al Menú": "Exit to Menu", "PAUSA": "PAUSED", "DIARIO DEL CABALLERO": "KNIGHT'S JOURNAL",
+    "Bestiario de criaturas abatidas": "Bestiary of defeated creatures", "Abatidos": "Defeated", "Criatura no descubierta.": "Undiscovered creature.",
+    "ESTADÍSTICAS": "STATS", "Inventario": "Inventory", "Sin arma": "Unarmed", "Encuentra la espada...": "Find the sword...",
+    "Nueva criatura descubierta!": "New creature discovered!", "CARGANDO": "LOADING", "TIENDA DEL EXILIADO": "EXILE'S SHOP",
+    "Mapa de la Zona": "Area Map", "Ya lo posees": "Already owned", "Comprar": "Buy", "Fragmentos": "Fragments",
+    "Compra fragmentos": "Buy fragments", "Amuleto": "Charm", "Vida restaurada!": "Health restored!",
+    "Obtuviste la Espada!": "You got the Sword!", "Presiona": "Press", "atacar": "to attack", "Muerto!": "Defeated!",
+    "No hay más abajo!": "There is nowhere further down!", "No hay vuelta atrás...": "There is no turning back...",
+    "cayó!": "fell!", "sentándose...": "sitting down...", "Mando detectado": "Controller detected",
+    "CAVERNA INICIAL": "INITIAL CAVE", "CUEVA OLVIDADA": "FORGOTTEN CAVE", "ASCENSO ROCOSO": "ROCKY ASCENT",
+    "TÚNELES OLVIDADOS": "FORGOTTEN TUNNELS", "PROFUNDIDADES": "DEPTHS", "PICO ABISMAL": "ABYSSAL PEAK",
+    "CAMINO FINAL": "FINAL PATH", "TIENDA": "SHOP", "Mapa": "Map", "Fragmentos J1": "P1 Fragments", "Fragmentos J2": "P2 Fragments",
+    "Mover": "Move", "Saltar": "Jump", "Atacar": "Attack", "Interactuar": "Interact", "Menú": "Menu",
+    "Música": "Music", "Seleccionar": "Select", "Navegar": "Navigate", "Confirmar": "Confirm", "Volver": "Back",
+    "Espada": "Sword", "Modo": "Mode", "JUGADOR": "PLAYER", "Tiempo": "Time", "Vida": "Health",
+    "Murciélago Sombrío": "Shadow Bat", "Criatura alada que habita las profundidades. se alimenta de energia de hechizos.": "Winged creature that dwells in the depths and feeds on spell energy.",
+    "Larva-Mosca": "Fly Larva", "Aberración híbrida que embiste con ferocidad.": "A hybrid aberration that charges with ferocity."
+  },
+  pt: {
+    "CABALLERO MÍSTICO": "CAVALEIRO MÍSTICO", "Selecciona una ranura": "Selecione um espaço", "RANURA": "ESPAÇO",
+    "Guardado": "Salvo", "Vacía": "Vazio", "para nueva partida": "para novo jogo", "Borrar": "Apagar",
+    "Reanudar": "Continuar", "Ver Diario": "Ver Diário", "Agregar J2": "Adicionar J2", "Quitar J2": "Remover J2",
+    "Controles": "Controles", "Salir al Menú": "Sair ao Menu", "PAUSA": "PAUSADO", "DIARIO DEL CABALLERO": "DIÁRIO DO CAVALEIRO",
+    "Bestiario de criaturas abatidas": "Bestiário de criaturas derrotadas", "Abatidos": "Derrotados", "Criatura no descubierta.": "Criatura não descoberta.",
+    "ESTADÍSTICAS": "ESTATÍSTICAS", "Inventario": "Inventário", "Sin arma": "Sem arma", "Encuentra la espada...": "Encontre a espada...",
+    "Nueva criatura descubierta!": "Nova criatura descoberta!", "CARGANDO": "CARREGANDO", "TIENDA DEL EXILIADO": "LOJA DO EXILADO",
+    "Mapa de la Zona": "Mapa da Área", "Ya lo posees": "Você já possui", "Comprar": "Comprar", "Fragmentos": "Fragmentos",
+    "Compra fragmentos": "Comprar fragmentos", "Amuleto": "Amuleto", "Vida restaurada!": "Vida restaurada!",
+    "Obtuviste la Espada!": "Você conseguiu a Espada!", "Presiona": "Pressione", "atacar": "para atacar", "Muerto!": "Derrotado!",
+    "No hay más abajo!": "Não há mais abaixo!", "No hay vuelta atrás...": "Não há como voltar...",
+    "cayó!": "caiu!", "sentándose...": "sentando...", "Mando detectado": "Controle detectado",
+    "CAVERNA INICIAL": "CAVERNA INICIAL", "CUEVA OLVIDADA": "CAVERNA ESQUECIDA", "ASCENSO ROCOSO": "SUBIDA ROCHOSA",
+    "TÚNELES OLVIDADOS": "TÚNEIS ESQUECIDOS", "PROFUNDIDADES": "PROFUNDEZAS", "PICO ABISMAL": "PICO ABISSAL",
+    "CAMINO FINAL": "CAMINHO FINAL", "TIENDA": "LOJA", "Mapa": "Mapa", "Fragmentos J1": "Fragmentos J1", "Fragmentos J2": "Fragmentos J2",
+    "Mover": "Mover", "Saltar": "Pular", "Atacar": "Atacar", "Interactuar": "Interagir", "Menú": "Menu",
+    "Música": "Música", "Seleccionar": "Selecionar", "Navegar": "Navegar", "Confirmar": "Confirmar", "Volver": "Voltar",
+    "Espada": "Espada", "Modo": "Modo", "JUGADOR": "JOGADOR", "Tiempo": "Tempo", "Vida": "Vida",
+    "Murciélago Sombrío": "Morcego Sombrio", "Criatura alada que habita las profundidades. se alimenta de energia de hechizos.": "Criatura alada das profundezas que se alimenta de energia de feitiços.",
+    "Larva-Mosca": "Larva-Mosca", "Aberración híbrida que embiste con ferocidad.": "Aberração híbrida que investe com ferocidade."
+  }
+};
+
+function translateText(text) {
+  if (language === "es") return text;
+  var result = String(text);
+  var dictionary = translations[language] || {};
+  Object.keys(dictionary).forEach(function(key) {
+    result = result.split(key).join(dictionary[key]);
+  });
+  return result;
+}
 var menuSelection = 0, menuSubState = "slots", slotToDelete = -1, activeSlot = -1;
 var pauseSelection = 0, pauseSubState = "menu";
 

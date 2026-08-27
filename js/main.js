@@ -108,8 +108,12 @@ function update() {
 }
 
 function loop() {
+  scanGamepads();
+  pollGamepad();
+  processGamepadInput();
   update();
   if (gameState === ST_LANGUAGE) drawLanguageSelect();
+  else if (gameState === ST_DEVICE) drawDeviceSelect();
   else if (gameState === ST_MENU) drawMenu();
   else if (gameState === ST_PAUSED) { drawGame(); drawPause(); }
   else if (gameState === ST_TRANSITION) drawTransition();
@@ -124,5 +128,12 @@ function loop() {
 
 canvas = document.getElementById("gameCanvas");
 ctx = canvas.getContext("2d");
+var originalFillText = ctx.fillText.bind(ctx);
+ctx.fillText = function(text, x, y, maxWidth) {
+  var translated = translateText(text);
+  if (maxWidth === undefined) originalFillText(translated, x, y);
+  else originalFillText(translated, x, y, maxWidth);
+};
 resetAll();
+setupTouchControls();
 loop();

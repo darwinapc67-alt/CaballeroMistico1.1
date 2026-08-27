@@ -49,6 +49,21 @@ document.addEventListener("keydown", function(e) {
     if (e.key === "ArrowDown" || k === "s") { languageSelection = (languageSelection + 1) % languages.length; e.preventDefault(); return; }
     if (e.key === "Enter") {
       language = languages[languageSelection].code;
+      gameState = ST_DEVICE;
+      deviceSelection = 0;
+      e.preventDefault();
+      return;
+    }
+    return;
+  }
+
+  if (gameState === ST_DEVICE) {
+    if (e.key === "ArrowUp" || k === "w") { deviceSelection = (deviceSelection - 1 + devices.length) % devices.length; e.preventDefault(); return; }
+    if (e.key === "ArrowDown" || k === "s") { deviceSelection = (deviceSelection + 1) % devices.length; e.preventDefault(); return; }
+    if (e.key === "Enter") {
+      device = devices[deviceSelection].code;
+      gamepadConnected = device === "play" && gamepadConnected;
+      setupTouchControls();
       gameState = ST_MENU;
       menuSubState = "slots";
       e.preventDefault();
@@ -208,13 +223,61 @@ function processGamepadInput() {
   if (!gamepadConnected) return;
   var btn9 = gpButtons[9] && !prevGPButtons[9];
   var btn8 = gpButtons[8] && !prevGPButtons[8];
+  var btn0 = gpButtons[0] && !prevGPButtons[0];
+  var btn12 = gpButtons[12] && !prevGPButtons[12];
+  var btn13 = gpButtons[13] && !prevGPButtons[13];
+  if (gameState === ST_LANGUAGE || gameState === ST_DEVICE) {
+    var selection = gameState === ST_LANGUAGE ? languageSelection : deviceSelection;
+    var options = gameState === ST_LANGUAGE ? languages : devices;
+    if (btn12) selection = (selection - 1 + options.length) % options.length;
+    if (btn13) selection = (selection + 1) % options.length;
+    if (gameState === ST_LANGUAGE) languageSelection = selection;
+    else deviceSelection = selection;
+    if (btn0 || btn9) {
+      if (gameState === ST_LANGUAGE) {
+        language = languages[languageSelection].code;
+        gameState = ST_DEVICE;
+        deviceSelection = 0;
+      } else {
+        device = devices[deviceSelection].code;
+        gamepadConnected = device === "play";
+        setupTouchControls();
+        gameState = ST_MENU;
+        menuSubState = "slots";
+      }
+    }
+    return;
+  }
   if (btn8) {
     if (gameState === ST_PLAYING) { inventoryOpen = !inventoryOpen; if (inventoryOpen) gameState = ST_INVENTORY; else gameState = ST_PLAYING; return; }
     else if (gameState === ST_INVENTORY) { inventoryOpen = false; gameState = ST_PLAYING; return; }
   }
   if (btn9) {
+    if (gameState === ST_DEVICE) {
+      deviceSelection = (deviceSelection + 1) % devices.length;
+      return;
+    }
     if (gameState === ST_PLAYING) { gameState = ST_PAUSED; pauseSubState = "menu"; pauseSelection = 0; return; }
     else if (gameState === ST_PAUSED) { if (pauseSubState === "diary") pauseSubState = "menu"; else if (pauseSubState === "controls") pauseSubState = "menu"; else gameState = ST_PLAYING; return; }
     else if (gameState === ST_INVENTORY) { inventoryOpen = false; gameState = ST_PLAYING; return; }
   }
+}
+
+function setupTouchControls() {
+  var existing = document.getElementById("touchControls");
+  if (existing) existing.remove();
+  if (device !== "touch") return;
+  var controls = document.createElement("div");
+  controls.id = "touchControls";
+  controls.innerHTML = '<button data-key="a">◀</button><button data-key="d">▶</button><button data-key=" ">⬆</button><button data-key="x">⚔</button><button data-key="e">✦</button>';
+  controls.querySelectorAll("button").forEach(function(button) {
+    var key = button.getAttribute("data-key");
+    var press = function(event) { event.preventDefault(); keys[key] = true; };
+    var release = function(event) { event.preventDefault(); keys[key] = false; };
+    button.addEventListener("pointerdown", press);
+    button.addEventListener("pointerup", release);
+    button.addEventListener("pointercancel", release);
+    button.addEventListener("pointerleave", release);
+  });
+  document.body.appendChild(controls);
 }

@@ -536,6 +536,29 @@ function drawLanguageSelect() {
   ctx.textAlign = "left";
 }
 
+function drawDeviceSelect() {
+  ctx.fillStyle = "#050510"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#6cc"; ctx.font = "bold 30px monospace";
+  ctx.fillText(translateText("CABALLERO MÍSTICO"), canvas.width/2, 125);
+  ctx.fillStyle = "#ffd700"; ctx.font = "bold 20px monospace";
+  ctx.fillText(device === "pc" ? "ELIGE TU DISPOSITIVO" : "ELIGE TU FORMA DE JUGAR", canvas.width/2, 205);
+  ctx.fillStyle = "#888"; ctx.font = "13px monospace";
+  ctx.fillText("PC  •  Mobile / Tablet  •  Play Controller", canvas.width/2, 232);
+  for (var i = 0; i < devices.length; i++) {
+    var y = 285 + i * 58, isSelected = i === deviceSelection;
+    ctx.fillStyle = isSelected ? "rgba(100,200,255,0.16)" : "rgba(255,255,255,0.03)";
+    ctx.fillRect(220, y - 22, 360, 42);
+    ctx.strokeStyle = isSelected ? "#6cc" : "#333"; ctx.lineWidth = isSelected ? 2 : 1;
+    ctx.strokeRect(220, y - 22, 360, 42);
+    ctx.fillStyle = isSelected ? "#6cc" : "#aaa"; ctx.font = "bold 17px monospace";
+    ctx.fillText((isSelected ? "▶  " : "    ") + devices[i].label, canvas.width/2, y + 6);
+  }
+  ctx.fillStyle = "#666"; ctx.font = "12px monospace";
+  ctx.fillText("↑/↓ Navegar  •  ENTER Confirmar", canvas.width/2, 520);
+  ctx.textAlign = "left";
+}
+
 function drawPause() {
   if (pauseSubState === "diary") {
     drawDiary();
