@@ -98,7 +98,7 @@ var zoneName = "", zoneNameTimer = 0;
 var explosionAnim = 0, explosionX = 0, explosionY = 0;
 var knockbackVX = 0, knockbackVY = 0;
 
-var azari = 0, hasMap = false, shopOpen = false, shopId = 0;
+var azari = 0, hasMap = false, hasBow = false, arrows = 0, shopOpen = false, shopId = 0;
 var heartFragments1 = 0, heartFragments2 = 0;
 var heartFragmentsBought1 = 0, heartFragmentsBought2 = 0;
 var hasAzariCharm = false, hasDoubleJump = false;
@@ -150,7 +150,7 @@ var player2 = {
 
 var hasSword = false, swordEquipped = false;
 var currentRoom = 0, cameraX = 0, targetCamX = 0, cameraY = 0, targetCamY = 0;
-var particles = [], floatTexts = [], flash = 0;
+var particles = [], floatTexts = [], arrowsInFlight = [], flash = 0;
 var keys = {};
 
 function formatTime(s) {
@@ -176,7 +176,7 @@ function saveGame(i) {
   var s = getSaves();
   s.slots[i] = {
     room: currentRoom, px: player.x, py: player.y,
-    twoPlayer: twoPlayerMode, hasSword: hasSword, swordEquipped: swordEquipped,
+    twoPlayer: twoPlayerMode, hasSword: hasSword, swordEquipped: swordEquipped, hasBow: hasBow, arrows: arrows,
     enemiesKilled: enemies.map(function(e){ return e.dead; }),
     azari: azari, hasMap: hasMap, hp: player.hp, maxHp: player.maxHp,
     heartFragments1: heartFragments1, heartFragments2: heartFragments2,
@@ -199,6 +199,7 @@ function loadGame(i) {
   player.x = s.px; player.y = s.py; player.vx = 0; player.vy = 0;
   hasSword = s.hasSword || false; swordEquipped = s.swordEquipped || false;
   player.hasSword = hasSword; player.swordEquipped = swordEquipped;
+  hasBow = s.hasBow || false; arrows = s.arrows || 0;
   azari = s.azari || 0; hasMap = s.hasMap || false;
   player.hp = s.hp !== undefined ? s.hp : 10;
   player.maxHp = s.maxHp !== undefined ? s.maxHp : 10;

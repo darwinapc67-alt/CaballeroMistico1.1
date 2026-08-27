@@ -141,16 +141,22 @@ window.addEventListener("keydown", function(e) {
     if (e.key === " " || e.key === "Space") { keys[" "] = true; e.preventDefault(); }
     if (e.key === "ArrowUp") { keys["arrowup"] = true; e.preventDefault(); }
     if (e.key === "x" || e.key === "X" || e.key === "j" || e.key === "J") { keys["x"] = true; e.preventDefault(); }
+    if (e.key === "z" || e.key === "Z") { keys["z"] = true; e.preventDefault(); }
     if (e.key === "e" || e.key === "E") { keys["e"] = true; e.preventDefault(); }
     if (e.key === "m" || e.key === "M") { initAudio(); toggleMusic(); e.preventDefault(); }
     if (e.key === "n" || e.key === "N") { initAudio(); toggleSfx(); e.preventDefault(); }
   }
 
   if (shopOpen) {
-    if (shopId === 0 && e.key === "Enter" && !hasMap && azari >= 45) {
-      azari -= 45; hasMap = true;
-      spawnFloatText(player.x, player.y - 30, "¡Mapa adquirido!", "#ffd700");
-      sfxBuy();
+    if (shopId === 0) {
+      if (up || k === "w") { menuSelection = (menuSelection - 1 + 3) % 3; e.preventDefault(); return; }
+      if (down || k === "s") { menuSelection = (menuSelection + 1) % 3; e.preventDefault(); return; }
+      if (confirm) {
+        if (menuSelection === 0 && !hasMap && azari >= 45) { azari -= 45; hasMap = true; sfxBuy(); }
+        if (menuSelection === 1 && !hasBow && azari >= 35) { azari -= 35; hasBow = true; sfxBuy(); }
+        if (menuSelection === 2 && azari >= 5) { azari -= 5; arrows += 20; sfxBuy(); }
+        e.preventDefault(); return;
+      }
     }
     if (shopId === 1) {
       if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 2) % 2; e.preventDefault(); return; }
@@ -192,6 +198,7 @@ document.addEventListener("keyup", function(e) {
   if (e.key === " " || e.key === "Space") keys[" "] = false;
   if (e.key === "ArrowUp") keys["arrowup"] = false;
   if (e.key === "x" || e.key === "X" || e.key === "j" || e.key === "J") keys["x"] = false;
+  if (e.key === "z" || e.key === "Z") keys["z"] = false;
   if (e.key === "e" || e.key === "E") keys["e"] = false;
 });
 
@@ -242,6 +249,16 @@ function processGamepadInput() {
   var btn0 = gpButtons[0] && !prevGPButtons[0];
   var btn12 = gpButtons[12] && !prevGPButtons[12];
   var btn13 = gpButtons[13] && !prevGPButtons[13];
+  if (shopOpen && shopId === 0) {
+    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + 3) % 3; gamepadMenuAxisLock = 1; }
+    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % 3; gamepadMenuAxisLock = 1; }
+    if (btn0) {
+      if (menuSelection === 0 && !hasMap && azari >= 45) { azari -= 45; hasMap = true; sfxBuy(); }
+      if (menuSelection === 1 && !hasBow && azari >= 35) { azari -= 35; hasBow = true; sfxBuy(); }
+      if (menuSelection === 2 && azari >= 5) { azari -= 5; arrows += 20; sfxBuy(); }
+    }
+    return;
+  }
   if (gameState === ST_LANGUAGE || gameState === ST_DEVICE) {
     var selection = gameState === ST_LANGUAGE ? languageSelection : deviceSelection;
     var options = gameState === ST_LANGUAGE ? languages : devices;

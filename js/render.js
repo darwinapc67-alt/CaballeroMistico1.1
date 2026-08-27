@@ -281,6 +281,8 @@ function drawInventory() {
 
   var items = [];
   if (player.hasSword) items.push("⚔️ Espada: ✓");
+  if (hasBow) items.push("🏹 Arco: ✓");
+  items.push("🏹 Flechas: " + arrows);
   if (hasMap) items.push("🗺️ Mapa: ✓");
   if (hasAzariCharm) items.push("💎 Amuleto: ✓");
   items.push("❤️ Fragmentos: " + heartFragments1 + "/3");
@@ -363,6 +365,12 @@ function drawGameWorld() {
     if (r === 9) { drawShopNPC(); drawHealingStone(); }
   }
   drawEnemies();
+  arrowsInFlight.forEach(function(arrow) {
+    ctx.fillStyle = "#d4af37";
+    ctx.fillRect(arrow.x, arrow.y, arrow.w, arrow.h);
+    ctx.fillStyle = "#eee";
+    ctx.fillRect(arrow.x + (arrow.vx > 0 ? arrow.w : -4), arrow.y - 2, 4, arrow.h + 4);
+  });
   drawPlayerEntity(player);
   if (twoPlayerMode) drawPlayerEntity(player2);
 
@@ -702,10 +710,14 @@ function drawShop() {
   ctx.fillStyle = "#6cc"; ctx.font = "18px monospace";
   ctx.fillText("💠 Azari: " + azari, canvas.width/2, 160);
   if (shopId === 0) {
-    ctx.fillStyle = hasMap ? "#4a4" : "#ffd700"; ctx.font = "bold 18px monospace";
-    ctx.fillText("🗺️ Mapa de la Zona - 45 Azari", canvas.width/2, 240);
+    ctx.fillStyle = hasMap ? "#4a4" : "#ffd700"; ctx.font = "bold 16px monospace";
+    ctx.fillText("🗺️ Mapa - 45 Azari", canvas.width/2, 225);
+    ctx.fillStyle = hasBow ? "#4a4" : "#ffd700";
+    ctx.fillText("🏹 Arco - 35 Azari", canvas.width/2, 265);
+    ctx.fillStyle = "#ffd700";
+    ctx.fillText("🏹 20 flechas - 5 Azari", canvas.width/2, 305);
     ctx.fillStyle = "#666"; ctx.font = "13px monospace";
-    ctx.fillText(hasMap ? "Ya lo posees" : "ENTER para comprar  •  ESC para salir", canvas.width/2, 280);
+    ctx.fillText("↑/↓ Elegir  •  ENTER Comprar  •  ESC Salir", canvas.width/2, 355);
   } else if (shopId === 1 || shopId === 2) {
     var label = shopId === 1 ? "JUGADOR 1" : "JUGADOR 2";
     var frags = shopId === 1 ? heartFragments1 : heartFragments2;

@@ -9,7 +9,7 @@ function resetAll() {
   hasSword = false; swordEquipped = false;
   player.hasSword = false; player.swordEquipped = false;
   if (twoPlayerMode) { player2.hasSword = false; player2.swordEquipped = false; }
-  azari = 0; hasMap = false; shopOpen = false; shopId = 0;
+  azari = 0; hasMap = false; hasBow = false; arrows = 0; shopOpen = false; shopId = 0;
   heartFragments1 = 0; heartFragments2 = 0;
   heartFragmentsBought1 = 0; heartFragmentsBought2 = 0;
   hasAzariCharm = false; hasDoubleJump = false;
@@ -86,6 +86,7 @@ function update() {
     updatePlayer();
     updatePlayer2();
     updateEnemies();
+    updateArrows();
     if (healing) {
       healTimer--;
       if (healTimer % 20 === 0) {

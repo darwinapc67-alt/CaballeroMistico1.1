@@ -36,7 +36,7 @@ function resetPlayer() {
   player.swordSheathed = true; player.swordSheathTimer = 0;
   playerDead = false;
   deathTimer = 0;
-  particles = []; floatTexts = []; flash = 0;
+  particles = []; floatTexts = []; arrowsInFlight = []; flash = 0;
   healing = false; healTimer = 0;
   hitFlash = 0; needsRespawn = false;
   if (twoPlayerMode) {
@@ -147,7 +147,29 @@ function updateWaterDrops() {
   waterDrops = waterDrops.filter(function(drop) { return drop.life > 0 && drop.y < cameraY + canvas.height + 10; });
 }
 
-function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed, interactPressed) {
+function updateArrows() {
+  for (var i = arrowsInFlight.length - 1; i >= 0; i--) {
+    var arrow = arrowsInFlight[i];
+    arrow.x += arrow.vx;
+    arrow.y += arrow.vy;
+    arrow.life--;
+    var hitEnemy = false;
+    enemies.forEach(function(e) {
+      if (!e.dead && e.room === currentRoom && rectHit(arrow, e)) {
+        e.dead = true; stats.enemiesKilled++; hitEnemy = true;
+        bestiary[e.type].count++; bestiary[e.type].discovered = true;
+        var gain = e.type === "larva_mosca" ? 4 : 2;
+        azari += hasAzariCharm ? gain * 2 : gain;
+        spawnParticles(e.x + e.w/2, e.y + e.h/2, "#f88", 12, 5);
+        spawnFloatText(e.x, e.y - 10, "¡Muerto!", "#f88");
+        sfxEnemyDie(); sfxCoin();
+      }
+    });
+    if (hitEnemy || arrow.life <= 0 || arrow.x < 0 || arrow.x > WORLD_W) arrowsInFlight.splice(i, 1);
+  }
+}
+
+function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed, interactPressed, shootPressed) {
   if (gameState !== ST_PLAYING) return;
   if (playerDead && p === player) {
     deathTimer--;
@@ -292,6 +314,12 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     checkSwordHitEnemiesFor(p);
   }
 
+  if (shootPressed && p.id === 1 && hasBow && arrows > 0 && p.swordCooldown <= 0 && !p.frozen) {
+    arrows--; p.swordCooldown = 18;
+    arrowsInFlight.push({ x: p.x + (p.facing > 0 ? p.w : -12), y: p.y + 13, w: 12, h: 3, vx: p.facing * 8, vy: 0, life: 100 });
+    sfxBow();
+  }
+
   if (interactPressed) tryInteractFor(p);
 
   if (jumpPressed && p.jumpsLeft > 0 && !p.frozen) {
@@ -309,15 +337,17 @@ function updatePlayer() {
   var moveRight = keys["d"] || keys["arrowright"];
   var jump = keys[" "] || keys["arrowup"];
   var attack = (keys["x"] || keys["j"]) && hasSword;
+  var shoot = keys["z"];
   var interact = keys["e"];
   if (gamepadConnected) {
     if (gpAxes.x < -0.25) moveLeft = true;
     if (gpAxes.x > 0.25) moveRight = true;
     if (gpButtons[0] && !prevGPButtons[0]) jump = true;
     if (gpButtons[2] && !prevGPButtons[2]) attack = true;
+    if (gpButtons[1] && !prevGPButtons[1]) shoot = true;
     if (gpButtons[3] && !prevGPButtons[3]) interact = true;
   }
-  updateGenericPlayer(player, moveLeft, moveRight, jump, attack, interact);
+  updateGenericPlayer(player, moveLeft, moveRight, jump, attack, interact, shoot);
 }
 
 function updatePlayer2() {
@@ -327,7 +357,7 @@ function updatePlayer2() {
   var jump = keys["shift"];
   var attack = keys["ctrl"] && hasSword;
   var interact = keys["alt"];
-  updateGenericPlayer(player2, moveLeft, moveRight, jump, attack, interact);
+  updateGenericPlayer(player2, moveLeft, moveRight, jump, attack, interact, false);
   if (rectHit(player, player2)) {
     var dx = (player.x + player.w/2) - (player2.x + player2.w/2);
     if (dx > 0) { player.x += 1; player2.x -= 1; }
@@ -374,6 +404,7 @@ function checkSwordHitEnemiesFor(p) {
       }
       spawnParticles(e.x + e.w/2, e.y + e.h/2, "#f88", 12, 5);
       spawnParticles(e.x + e.w/2, e.y + e.h/2, "#440", 8, 3);
+      p.vy = -11; p.onGround = false; p.jumpsLeft = p.maxJumps;
       spawnFloatText(e.x, e.y - 10, "¡Muerto!", "#f88");
       spawnFloatText(e.x, e.y - 25, "+" + azariGain + " Azari", "#0ff");
       sfxEnemyDie(); sfxCoin();
@@ -575,7 +606,7 @@ function updateUI() {
   if (twoPlayerMode) {
     el.innerHTML = '<kbd>A/D</kbd>+<kbd>ESP</kbd>+<kbd>X</kbd> J1  •  <kbd>←→</kbd>+<kbd>Shift</kbd>+<kbd>Ctrl</kbd> J2  •  <kbd>`</kbd> Inventario • <kbd>ESC</kbd> Menú';
   } else {
-    if (hasSword) el.innerHTML = '<kbd>A</kbd> <kbd>D</kbd> Mover • <kbd>ESPACIO</kbd> Saltar • <kbd>X</kbd>/<kbd>J</kbd> Atacar • <kbd>E</kbd> Interactuar • <kbd>`</kbd> Inventario • <kbd>M</kbd> Música • <kbd>N</kbd> SFX • <kbd>ESC</kbd> Menú';
+    if (hasSword || hasBow) el.innerHTML = '<kbd>A</kbd> <kbd>D</kbd> Mover • <kbd>ESPACIO</kbd> Saltar • <kbd>X</kbd>/<kbd>J</kbd> Espada • <kbd>Z</kbd> Arco • <kbd>E</kbd> Interactuar • <kbd>`</kbd> Inventario • <kbd>M</kbd> Música • <kbd>N</kbd> SFX • <kbd>ESC</kbd> Menú';
     else el.innerHTML = '<kbd>A</kbd> <kbd>D</kbd> Mover • <kbd>ESPACIO</kbd> Saltar • <kbd>E</kbd> Interactuar • <kbd>`</kbd> Inventario • <kbd>M</kbd> Música • <kbd>N</kbd> SFX • <kbd>ESC</kbd> Menú';
   }
 }
