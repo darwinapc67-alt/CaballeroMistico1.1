@@ -138,6 +138,15 @@ function updateStalactites() {
   });
 }
 
+function updateWaterDrops() {
+  if (Math.random() < 0.006) {
+    waterDrops.push({ x: currentRoom * ROOM_W + 20 + Math.random() * (ROOM_W - 40), y: cameraY - 12, vy: 3 + Math.random() * 2, life: 90 });
+    sfxWaterDrop();
+  }
+  waterDrops.forEach(function(drop) { drop.y += drop.vy; drop.life--; });
+  waterDrops = waterDrops.filter(function(drop) { return drop.life > 0 && drop.y < cameraY + canvas.height + 10; });
+}
+
 function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed, interactPressed) {
   if (gameState !== ST_PLAYING) return;
   if (playerDead && p === player) {
@@ -400,6 +409,7 @@ function tryInteractFor(p) {
       var dx = (p.x + p.w/2) - (npc.x + npc.w/2);
       var dy = (p.y + p.h/2) - (npc.y + npc.h/2);
       if (Math.sqrt(dx*dx + dy*dy) < 90 && !shopOpen) {
+        sfxNpc();
         shopOpen = true; shopId = s.id; menuSelection = 0;
         return;
       }

@@ -39,6 +39,9 @@ var translations = {
     "CAMINO FINAL": "FINAL PATH", "TIENDA": "SHOP", "Mapa": "Map", "Fragmentos J1": "P1 Fragments", "Fragmentos J2": "P2 Fragments",
     "Mover": "Move", "Saltar": "Jump", "Atacar": "Attack", "Interactuar": "Interact", "Menú": "Menu",
     "Música": "Music", "Seleccionar": "Select", "Navegar": "Navigate", "Confirmar": "Confirm", "Volver": "Back",
+    "MÚSICA Y SONIDO": "MUSIC & SOUND", "Efectos": "Effects", "ESC para volver": "ESC to go back",
+    "ELIGE TU IDIOMA": "CHOOSE YOUR LANGUAGE", "ELIGE TU DISPOSITIVO": "CHOOSE YOUR DEVICE", "ELIGE TU FORMA DE JUGAR": "CHOOSE HOW TO PLAY",
+    "Celular / Tablet": "Mobile / Tablet", "Control de Play": "Play Controller", "Choose your language": "Choose your language", "Escolha seu idioma": "Choose your language",
     "Espada": "Sword", "Modo": "Mode", "JUGADOR": "PLAYER", "Tiempo": "Time", "Vida": "Health",
     "Murciélago Sombrío": "Shadow Bat", "Criatura alada que habita las profundidades. se alimenta de energia de hechizos.": "Winged creature that dwells in the depths and feeds on spell energy.",
     "Larva-Mosca": "Fly Larva", "Aberración híbrida que embiste con ferocidad.": "A hybrid aberration that charges with ferocity."
@@ -61,6 +64,9 @@ var translations = {
     "CAMINO FINAL": "CAMINHO FINAL", "TIENDA": "LOJA", "Mapa": "Mapa", "Fragmentos J1": "Fragmentos J1", "Fragmentos J2": "Fragmentos J2",
     "Mover": "Mover", "Saltar": "Pular", "Atacar": "Atacar", "Interactuar": "Interagir", "Menú": "Menu",
     "Música": "Música", "Seleccionar": "Selecionar", "Navegar": "Navegar", "Confirmar": "Confirmar", "Volver": "Voltar",
+    "MÚSICA Y SONIDO": "MÚSICA E SOM", "Efectos": "Efeitos", "ESC para volver": "ESC para voltar",
+    "ELIGE TU IDIOMA": "ESCOLHA SEU IDIOMA", "ELIGE TU DISPOSITIVO": "ESCOLHA SEU DISPOSITIVO", "ELIGE TU FORMA DE JUGAR": "ESCOLHA COMO JOGAR",
+    "Celular / Tablet": "Celular / Tablet", "Control de Play": "Controle de Play", "Choose your language": "Escolha seu idioma", "Escolha seu idioma": "Escolha seu idioma",
     "Espada": "Espada", "Modo": "Modo", "JUGADOR": "JOGADOR", "Tiempo": "Tempo", "Vida": "Vida",
     "Murciélago Sombrío": "Morcego Sombrio", "Criatura alada que habita las profundidades. se alimenta de energia de hechizos.": "Criatura alada das profundezas que se alimenta de energia de feitiços.",
     "Larva-Mosca": "Larva-Mosca", "Aberración híbrida que embiste con ferocidad.": "Aberração híbrida que investe com ferocidade."
@@ -83,6 +89,7 @@ var transTimer = 0, transPhase = "out", transTargetRoom = 0, transFade = 0;
 var transIsFall = false, transitionCooldown = 0;
 
 var audioCtx = null, musicPlaying = false, musicInterval = null, sfxEnabled = true;
+var musicVolume = 0.35, sfxVolume = 0.7;
 var gamepadConnected = false, gamepadIndex = -1;
 var gpButtons = {}, prevGPButtons = {}, gpAxes = { x: 0, y: 0 };
 var gamepadMenuAxisLock = 0;
@@ -103,6 +110,7 @@ var twoPlayerMode = false;
 var inventoryOpen = false;
 
 var stalactites = [];
+var waterDrops = [];
 var deathParticles = [];
 var playerDead = false;
 var deathTimer = 0;

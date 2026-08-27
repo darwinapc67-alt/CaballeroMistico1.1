@@ -7,6 +7,12 @@ function drawCaveBg(rx, decor, roomH) {
     ctx.fillStyle = "#fff"; ctx.fillRect(sx, sy, 1, 1);
   }
   ctx.globalAlpha = 1;
+  waterDrops.forEach(function(drop) {
+    ctx.globalAlpha = Math.min(1, drop.life / 20);
+    ctx.fillStyle = "rgba(100, 200, 255, 0.8)";
+    ctx.fillRect(drop.x, drop.y, 2, 8);
+  });
+  ctx.globalAlpha = 1;
   decor.forEach(function(d) {
     if (d.type === 'stalactite') {
       ctx.fillStyle = "#1a1a2e";
@@ -542,7 +548,7 @@ function drawDeviceSelect() {
   ctx.fillStyle = "#6cc"; ctx.font = "bold 30px monospace";
   ctx.fillText(translateText("CABALLERO MÍSTICO"), canvas.width/2, 125);
   ctx.fillStyle = "#ffd700"; ctx.font = "bold 20px monospace";
-  ctx.fillText(device === "pc" ? "ELIGE TU DISPOSITIVO" : "ELIGE TU FORMA DE JUGAR", canvas.width/2, 205);
+  ctx.fillText(translateText(device === "pc" ? "ELIGE TU DISPOSITIVO" : "ELIGE TU FORMA DE JUGAR"), canvas.width/2, 205);
   ctx.fillStyle = "#888"; ctx.font = "13px monospace";
   ctx.fillText("PC  •  Mobile / Tablet  •  Play Controller", canvas.width/2, 232);
   for (var i = 0; i < devices.length; i++) {
@@ -552,7 +558,7 @@ function drawDeviceSelect() {
     ctx.strokeStyle = isSelected ? "#6cc" : "#333"; ctx.lineWidth = isSelected ? 2 : 1;
     ctx.strokeRect(220, y - 22, 360, 42);
     ctx.fillStyle = isSelected ? "#6cc" : "#aaa"; ctx.font = "bold 17px monospace";
-    ctx.fillText((isSelected ? "▶  " : "    ") + devices[i].label, canvas.width/2, y + 6);
+    ctx.fillText((isSelected ? "▶  " : "    ") + translateText(devices[i].label), canvas.width/2, y + 6);
   }
   ctx.fillStyle = "#666"; ctx.font = "12px monospace";
   ctx.fillText("↑/↓ Navegar  •  ENTER Confirmar", canvas.width/2, 520);
@@ -564,6 +570,10 @@ function drawPause() {
     drawDiary();
     return;
   }
+  if (pauseSubState === "audio") {
+    drawAudioMenu();
+    return;
+  }
   ctx.fillStyle = "rgba(0,0,0,0.82)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.textAlign = "center"; ctx.fillStyle = "#6cc"; ctx.font = "bold 32px monospace";
   ctx.fillText("⏸️  PAUSA", canvas.width/2, 130);
@@ -572,9 +582,9 @@ function drawPause() {
   var opts = [
     "▶  Reanudar", "📖  Ver Diario",
     twoPlayerMode ? "👤  Quitar J2" : "👥  Agregar J2",
-    "🎮  Controles", "🚪  Salir al Menú"
+    "🎮  Controles", "🔊  Música y sonido", "🚪  Salir al Menú"
   ];
-  for (var i = 0; i < 5; i++) {
+  for (var i = 0; i < 6; i++) {
     var y = 200 + i * 40;
     var isSel = (i === pauseSelection);
     ctx.fillStyle = isSel ? "rgba(100,200,255,0.15)" : "transparent";
@@ -586,6 +596,21 @@ function drawPause() {
   }
   ctx.fillStyle = "#444"; ctx.font = "12px monospace";
   ctx.fillText("↑/↓ Navegar  •  ENTER Seleccionar  •  ESC Volver", canvas.width/2, 480);
+  ctx.textAlign = "left";
+}
+
+function drawAudioMenu() {
+  ctx.fillStyle = "rgba(0,0,0,0.9)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#ffd700"; ctx.font = "bold 28px monospace";
+  ctx.fillText(translateText("MÚSICA Y SONIDO"), canvas.width/2, 130);
+  ctx.fillStyle = "#aaa"; ctx.font = "15px monospace";
+  ctx.fillText("Música: " + Math.round(musicVolume * 100) + "%", canvas.width/2, 220);
+  ctx.fillText(translateText("Efectos") + ": " + Math.round(sfxVolume * 100) + "%", canvas.width/2, 270);
+  ctx.fillStyle = "#6cc"; ctx.font = "13px monospace";
+  ctx.fillText("↑/↓ Música  •  ←/→ Efectos", canvas.width/2, 355);
+  ctx.fillStyle = "#666";
+  ctx.fillText(translateText("ESC para volver"), canvas.width/2, 410);
   ctx.textAlign = "left";
 }
 

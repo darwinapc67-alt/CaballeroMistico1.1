@@ -22,12 +22,12 @@ window.addEventListener("keydown", function(e) {
 
   if (e.key === "Escape") {
     if (gameState === ST_PLAYING) {
-      gameState = ST_PAUSED; pauseSubState = "menu"; pauseSelection = 0;
+      gameState = ST_PAUSED; pauseSubState = "menu"; pauseSelection = 0; sfxPause();
       e.preventDefault();
       return;
     } else if (gameState === ST_PAUSED) {
       if (pauseSubState === "diary") pauseSubState = "menu";
-      else if (pauseSubState === "controls") pauseSubState = "menu";
+      else if (pauseSubState === "controls" || pauseSubState === "audio") pauseSubState = "menu";
       else gameState = ST_PLAYING;
       e.preventDefault();
       return;
@@ -109,15 +109,23 @@ window.addEventListener("keydown", function(e) {
 
   if (gameState === ST_PAUSED) {
     if (pauseSubState === "diary") return;
+    if (pauseSubState === "audio") {
+      if (up || k === "w") { adjustMusicVolume(0.05); e.preventDefault(); return; }
+      if (down || k === "s") { adjustMusicVolume(-0.05); e.preventDefault(); return; }
+      if (e.key === "ArrowLeft") { adjustSfxVolume(-0.05); e.preventDefault(); return; }
+      if (e.key === "ArrowRight") { adjustSfxVolume(0.05); e.preventDefault(); return; }
+      return;
+    }
     if (pauseSubState === "controls") { if (e.key === "Escape") { pauseSubState = "menu"; e.preventDefault(); } return; }
-    if (up || k === "w") { pauseSelection = (pauseSelection - 1 + 5) % 5; e.preventDefault(); return; }
-    if (down || k === "s") { pauseSelection = (pauseSelection + 1) % 5; e.preventDefault(); return; }
+    if (up || k === "w") { pauseSelection = (pauseSelection - 1 + 6) % 6; e.preventDefault(); return; }
+    if (down || k === "s") { pauseSelection = (pauseSelection + 1) % 6; e.preventDefault(); return; }
     if (confirm) {
       if (pauseSelection === 0) gameState = ST_PLAYING;
       if (pauseSelection === 1) pauseSubState = "diary";
       if (pauseSelection === 2) { twoPlayerMode = !twoPlayerMode; updateUI(); }
       if (pauseSelection === 3) { pauseSubState = "controls"; }
-      if (pauseSelection === 4) { if (activeSlot >= 0) saveGame(activeSlot); gameState = ST_MENU; menuSubState = "slots"; }
+      if (pauseSelection === 4) pauseSubState = "audio";
+      if (pauseSelection === 5) { if (activeSlot >= 0) saveGame(activeSlot); gameState = ST_MENU; menuSubState = "slots"; }
       e.preventDefault();
       return;
     }
@@ -274,14 +282,15 @@ function processGamepadInput() {
   }
   if (gameState === ST_PAUSED && pauseSubState === "menu") {
     if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
-    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { pauseSelection = (pauseSelection - 1 + 5) % 5; gamepadMenuAxisLock = 1; }
-    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { pauseSelection = (pauseSelection + 1) % 5; gamepadMenuAxisLock = 1; }
+    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { pauseSelection = (pauseSelection - 1 + 6) % 6; gamepadMenuAxisLock = 1; }
+    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { pauseSelection = (pauseSelection + 1) % 6; gamepadMenuAxisLock = 1; }
     if (btn0) {
       if (pauseSelection === 0) gameState = ST_PLAYING;
       if (pauseSelection === 1) pauseSubState = "diary";
       if (pauseSelection === 2) { twoPlayerMode = !twoPlayerMode; updateUI(); }
       if (pauseSelection === 3) pauseSubState = "controls";
-      if (pauseSelection === 4) { if (activeSlot >= 0) saveGame(activeSlot); gameState = ST_MENU; menuSubState = "slots"; }
+      if (pauseSelection === 4) pauseSubState = "audio";
+      if (pauseSelection === 5) { if (activeSlot >= 0) saveGame(activeSlot); gameState = ST_MENU; menuSubState = "slots"; }
     }
     return;
   }
@@ -294,8 +303,8 @@ function processGamepadInput() {
       deviceSelection = (deviceSelection + 1) % devices.length;
       return;
     }
-    if (gameState === ST_PLAYING) { gameState = ST_PAUSED; pauseSubState = "menu"; pauseSelection = 0; return; }
-    else if (gameState === ST_PAUSED) { if (pauseSubState === "diary") pauseSubState = "menu"; else if (pauseSubState === "controls") pauseSubState = "menu"; else gameState = ST_PLAYING; return; }
+    if (gameState === ST_PLAYING) { gameState = ST_PAUSED; pauseSubState = "menu"; pauseSelection = 0; sfxPause(); return; }
+    else if (gameState === ST_PAUSED) { if (pauseSubState === "diary" || pauseSubState === "controls" || pauseSubState === "audio") pauseSubState = "menu"; else gameState = ST_PLAYING; return; }
     else if (gameState === ST_INVENTORY) { inventoryOpen = false; gameState = ST_PLAYING; return; }
   }
 }

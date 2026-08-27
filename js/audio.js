@@ -11,7 +11,23 @@ function playTone(freq, duration, type, vol, delay) {
     var gain = audioCtx.createGain();
     osc.type = type;
     osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
-    gain.gain.setValueAtTime(vol, audioCtx.currentTime + delay);
+    gain.gain.setValueAtTime(vol * sfxVolume, audioCtx.currentTime + delay);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(audioCtx.currentTime + delay);
+    osc.stop(audioCtx.currentTime + delay + duration);
+  } catch(e) {}
+}
+
+function playMusicTone(freq, duration, type, vol, delay) {
+  initAudio();
+  if (!audioCtx || !musicPlaying) return;
+  try {
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+    gain.gain.setValueAtTime(vol * musicVolume, audioCtx.currentTime + delay);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
     osc.connect(gain); gain.connect(audioCtx.destination);
     osc.start(audioCtx.currentTime + delay);
@@ -52,13 +68,16 @@ function sfxFall() { playTone(200, 0.4, "sine", 0.06, 0); playTone(150, 0.5, "si
 function sfxStalactiteFall() { playTone(80, 0.3, "sawtooth", 0.06, 0); playNoise(0.2, 0.08, 0.05); }
 function sfxDeath() { playTone(800, 0.1, "square", 0.10, 0); playTone(600, 0.1, "square", 0.08, 0.08); playTone(400, 0.2, "sawtooth", 0.06, 0.16); playTone(200, 0.3, "sawtooth", 0.04, 0.28); playNoise(0.3, 0.15, 0); }
 function sfxPlatformLand() { playTone(150, 0.06, "sine", 0.05, 0); playTone(120, 0.08, "sine", 0.04, 0.03); }
+function sfxPause() { playTone(440, 0.08, "sine", 0.08, 0); playTone(330, 0.12, "sine", 0.06, 0.06); }
+function sfxNpc() { playTone(520, 0.08, "triangle", 0.08, 0); playTone(680, 0.1, "triangle", 0.06, 0.08); }
+function sfxWaterDrop() { playTone(1050, 0.05, "sine", 0.07, 0); playTone(1450, 0.09, "sine", 0.05, 0.04); }
 
 function playAmbientChord(baseFreq, delay) {
   if (!audioCtx || !musicPlaying) return;
-  playTone(baseFreq, 3.5, "sine", 0.05, delay);
-  playTone(baseFreq * 1.25, 3.2, "triangle", 0.03, delay + 0.1);
-  playTone(baseFreq * 1.5, 2.8, "sine", 0.025, delay + 0.2);
-  playTone(baseFreq * 2, 2.5, "sine", 0.02, delay + 0.3);
+  playMusicTone(baseFreq, 3.5, "sine", 0.05, delay);
+  playMusicTone(baseFreq * 1.25, 3.2, "triangle", 0.03, delay + 0.1);
+  playMusicTone(baseFreq * 1.5, 2.8, "sine", 0.025, delay + 0.2);
+  playMusicTone(baseFreq * 2, 2.5, "sine", 0.02, delay + 0.3);
 }
 
 function startMusic() {
@@ -77,3 +96,5 @@ function startMusic() {
 function stopMusic() { musicPlaying = false; if (musicInterval) { clearInterval(musicInterval); musicInterval = null; } }
 function toggleMusic() { initAudio(); if (musicPlaying) stopMusic(); else startMusic(); }
 function toggleSfx() { sfxEnabled = !sfxEnabled; }
+function adjustMusicVolume(delta) { musicVolume = Math.max(0, Math.min(1, musicVolume + delta)); }
+function adjustSfxVolume(delta) { sfxVolume = Math.max(0, Math.min(1, sfxVolume + delta)); }

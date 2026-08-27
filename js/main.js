@@ -52,6 +52,7 @@ function update() {
     frameCounter++;
     if (frameCounter >= 60) { frameCounter = 0; stats.playTime++; }
     updateStalactites();
+    updateWaterDrops();
     for (var i = deathParticles.length - 1; i >= 0; i--) {
       var dp = deathParticles[i];
       dp.x += dp.vx; dp.y += dp.vy; dp.vy += 0.1; dp.life--;
