@@ -159,15 +159,6 @@ function drawShopNPC() {
       ctx.font = "10px monospace";
       ctx.textAlign = "center";
       ctx.fillText("E", npc.x + npc.w / 2, npc.y + 72);
-      ctx.fillStyle = "#8b4513";
-      ctx.fillRect(npc.x, npc.y, npc.w, npc.h);
-      ctx.fillStyle = "#a0522d";
-      ctx.fillRect(npc.x, npc.y, npc.w, 5);
-      ctx.fillStyle = "#ffd700";
-      ctx.fillRect(npc.x + 4, npc.y + 8, 4, 4);
-      ctx.fillRect(npc.x + npc.w - 8, npc.y + 8, 4, 4);
-      ctx.fillStyle = "#ffd700";
-      ctx.fillRect(npc.x - 9, npc.y - 10, 4, 4);
     });
   }
 }
