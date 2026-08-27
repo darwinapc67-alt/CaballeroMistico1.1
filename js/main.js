@@ -2,7 +2,7 @@ function resetAll() {
   transIsFall = false; transitionCooldown = 0;
   if (musicInterval) { clearInterval(musicInterval); musicInterval = null; }
   musicPlaying = false; gamepadConnected = false; gamepadIndex = -1;
-  gpButtons = {}; prevGPButtons = {}; gpAxes = {x:0,y:0};
+  gpButtons = {}; prevGPButtons = {}; gpAxes = {x:0,y:0}; gamepadMenuAxisLock = 0;
   inventoryOpen = false;
   resetPlayer();
   currentRoom = 0; cameraX = 0; targetCamX = 0; cameraY = 0; targetCamY = 0;

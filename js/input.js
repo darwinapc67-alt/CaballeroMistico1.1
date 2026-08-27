@@ -251,6 +251,34 @@ function processGamepadInput() {
     }
     return;
   }
+  if (gameState === ST_MENU) {
+    if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
+    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + 5) % 5; gamepadMenuAxisLock = 1; }
+    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % 5; gamepadMenuAxisLock = 1; }
+    if (btn0) {
+      activeSlot = menuSelection;
+      var saves = getSaves();
+      if (saves.slots[menuSelection]) {
+        if (loadGame(menuSelection)) { gameState = ST_PLAYING; startMusic(); updateUI(); }
+      } else {
+        resetAll(); gameState = ST_PLAYING; startMusic(); updateUI();
+      }
+    }
+    return;
+  }
+  if (gameState === ST_PAUSED && pauseSubState === "menu") {
+    if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
+    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { pauseSelection = (pauseSelection - 1 + 5) % 5; gamepadMenuAxisLock = 1; }
+    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { pauseSelection = (pauseSelection + 1) % 5; gamepadMenuAxisLock = 1; }
+    if (btn0) {
+      if (pauseSelection === 0) gameState = ST_PLAYING;
+      if (pauseSelection === 1) pauseSubState = "diary";
+      if (pauseSelection === 2) { twoPlayerMode = !twoPlayerMode; updateUI(); }
+      if (pauseSelection === 3) pauseSubState = "controls";
+      if (pauseSelection === 4) { if (activeSlot >= 0) saveGame(activeSlot); gameState = ST_MENU; menuSubState = "slots"; }
+    }
+    return;
+  }
   if (btn8) {
     if (gameState === ST_PLAYING) { inventoryOpen = !inventoryOpen; if (inventoryOpen) gameState = ST_INVENTORY; else gameState = ST_PLAYING; return; }
     else if (gameState === ST_INVENTORY) { inventoryOpen = false; gameState = ST_PLAYING; return; }

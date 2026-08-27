@@ -85,6 +85,7 @@ var transIsFall = false, transitionCooldown = 0;
 var audioCtx = null, musicPlaying = false, musicInterval = null, sfxEnabled = true;
 var gamepadConnected = false, gamepadIndex = -1;
 var gpButtons = {}, prevGPButtons = {}, gpAxes = { x: 0, y: 0 };
+var gamepadMenuAxisLock = 0;
 
 var zoneName = "", zoneNameTimer = 0;
 var explosionAnim = 0, explosionX = 0, explosionY = 0;
