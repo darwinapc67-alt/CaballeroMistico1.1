@@ -2,7 +2,7 @@ var canvas, ctx;
 var ROOM_W = 800, ROOM_H = 600, GRAVITY = 0.6;
 var WORLD_W = 10 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
-var VERSION = "v1.20";
+var VERSION = "v1.30";
 
 var ST_LANGUAGE = 0, ST_DEVICE = 1, ST_MENU = 2, ST_PLAYING = 3, ST_PAUSED = 4, ST_TRANSITION = 5, ST_EXPLOSION = 6, ST_INVENTORY = 7;
 
@@ -100,6 +100,7 @@ var explosionAnim = 0, explosionX = 0, explosionY = 0;
 var knockbackVX = 0, knockbackVY = 0;
 
 var azari = 0, hasMap = false, hasBow = false, arrows = 0, shopOpen = false, shopId = 0, shopAnim = 0, shopConfirm = -1;
+var shopPreviousX = 0, shopPreviousY = 0;
 var heartFragments1 = 0, heartFragments2 = 0;
 var heartFragmentsBought1 = 0, heartFragmentsBought2 = 0;
 var hasAzariCharm = false, hasDoubleJump = false;
@@ -399,7 +400,7 @@ var room8 = {
 var room9 = {
   height: 600,
   platforms: [
-    {x:7200, y:560, w:800, h:40}, {x:7250, y:480, w:700, h:14},
+    {x:7200, y:560, w:800, h:40},
     {x:7300, y:400, w:100, h:14}, {x:7500, y:350, w:100, h:14},
     {x:7700, y:400, w:100, h:14}, {x:7400, y:280, w:80, h:14},
     {x:7600, y:250, w:80, h:14}, {x:7800, y:280, w:80, h:14}
@@ -407,8 +408,8 @@ var room9 = {
   spikes: [], walls: [{x:7980, y:0, w:20, h:600}],
   transitionZone: null,
   shops: [
-    { id: 0, npc: {x:7350, y:445, w:20, h:35}, label: "Casa del Explorador" },
-    { id: 1, npc: {x:7700, y:445, w:20, h:35}, label: "Casa del Corazón" }
+    { id: 0, npc: {x:7380, y:525, w:20, h:35}, label: "" },
+    { id: 1, npc: {x:7780, y:525, w:20, h:35}, label: "" }
   ],
   healingStone: {x: 7500, y: 520, w: 50, h: 40, active: true},
   decor: genDecor(7200, 10, 8, 600)

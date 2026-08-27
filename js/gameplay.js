@@ -442,7 +442,9 @@ function tryInteractFor(p) {
       var dy = (p.y + p.h/2) - (npc.y + npc.h/2);
       if (Math.sqrt(dx*dx + dy*dy) < 90 && !shopOpen) {
         sfxNpc();
+        shopPreviousX = player.x; shopPreviousY = player.y;
         shopOpen = true; shopId = s.id; menuSelection = 0; shopConfirm = -1; shopAnim = 180;
+        player.x = 400; player.y = 470; player.vx = 0; player.vy = 0;
         return;
       }
     }

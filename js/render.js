@@ -380,7 +380,7 @@ function drawGameWorld() {
     if (r === 1) drawPedestal();
     if (r === 2) drawBombBox();
     if (r === 5) drawTransitionZone(room5.transitionZone);
-    if (r === 9) { drawHealingStone(); }
+    if (r === 9) { drawShopNPC(); drawHealingStone(); }
   }
   drawEnemies();
   arrowsInFlight.forEach(function(arrow) {
@@ -771,6 +771,7 @@ function drawShop() {
   ctx.fillStyle = "#ffd700"; ctx.fillRect(vendorX - 7, vendorY + 42, 4, 4); ctx.fillRect(vendorX + 3, vendorY + 42, 4, 4);
   ctx.fillStyle = "#d19a72"; ctx.beginPath(); ctx.arc(vendorX, vendorY + 15, 14, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#332211"; ctx.fillRect(vendorX - 15, vendorY + 2, 30, 7);
+  drawPlayerEntity(player);
   ctx.fillStyle = "#ffd700"; ctx.font = "bold 18px monospace"; ctx.textAlign = "center";
   ctx.fillText(shopId === 0 ? "TIENDA DEL EXPLORADOR" : "TIENDA DEL CORAZÓN", canvas.width/2, 85);
   ctx.fillStyle = "#6cc"; ctx.font = "16px monospace";

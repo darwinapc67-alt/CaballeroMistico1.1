@@ -22,7 +22,7 @@ window.addEventListener("keydown", function(e) {
 
   if (e.key === "Escape") {
     if (shopOpen) {
-      shopOpen = false; menuSelection = 0;
+      shopOpen = false; menuSelection = 0; player.x = shopPreviousX; player.y = shopPreviousY;
       e.preventDefault();
       return;
     } else if (gameState === ST_PLAYING) {
@@ -222,7 +222,7 @@ window.addEventListener("keydown", function(e) {
         e.preventDefault(); return;
       }
     }
-    if (e.key === "Escape") { shopOpen = false; menuSelection = 0; e.preventDefault(); return; }
+    if (e.key === "Escape") { shopOpen = false; menuSelection = 0; player.x = shopPreviousX; player.y = shopPreviousY; e.preventDefault(); return; }
   }
 });
 
@@ -356,7 +356,7 @@ function processGamepadInput() {
       deviceSelection = (deviceSelection + 1) % devices.length;
       return;
     }
-    if (shopOpen) { shopOpen = false; menuSelection = 0; return; }
+    if (shopOpen) { shopOpen = false; menuSelection = 0; player.x = shopPreviousX; player.y = shopPreviousY; return; }
     if (gameState === ST_PLAYING) { gameState = ST_PAUSED; pauseSubState = "menu"; pauseSelection = 0; sfxPause(); return; }
     else if (gameState === ST_PAUSED) { if (pauseSubState === "diary" || pauseSubState === "controls" || pauseSubState === "audio") pauseSubState = "menu"; else gameState = ST_PLAYING; return; }
     else if (gameState === ST_INVENTORY) { inventoryOpen = false; gameState = ST_PLAYING; return; }
