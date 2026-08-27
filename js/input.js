@@ -21,7 +21,11 @@ window.addEventListener("keydown", function(e) {
   }
 
   if (e.key === "Escape") {
-    if (gameState === ST_PLAYING) {
+    if (shopOpen) {
+      shopOpen = false; menuSelection = 0;
+      e.preventDefault();
+      return;
+    } else if (gameState === ST_PLAYING) {
       gameState = ST_PAUSED; pauseSubState = "menu"; pauseSelection = 0; sfxPause();
       e.preventDefault();
       return;
@@ -38,10 +42,6 @@ window.addEventListener("keydown", function(e) {
       return;
     } else if (gameState === ST_MENU && menuSubState === "confirm_delete") {
       menuSubState = "slots"; slotToDelete = -1;
-      e.preventDefault();
-      return;
-    } else if (shopOpen) {
-      shopOpen = false; menuSelection = 0;
       e.preventDefault();
       return;
     }
@@ -320,6 +320,7 @@ function processGamepadInput() {
       deviceSelection = (deviceSelection + 1) % devices.length;
       return;
     }
+    if (shopOpen) { shopOpen = false; menuSelection = 0; return; }
     if (gameState === ST_PLAYING) { gameState = ST_PAUSED; pauseSubState = "menu"; pauseSelection = 0; sfxPause(); return; }
     else if (gameState === ST_PAUSED) { if (pauseSubState === "diary" || pauseSubState === "controls" || pauseSubState === "audio") pauseSubState = "menu"; else gameState = ST_PLAYING; return; }
     else if (gameState === ST_INVENTORY) { inventoryOpen = false; gameState = ST_PLAYING; return; }
