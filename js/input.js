@@ -44,6 +44,19 @@ document.addEventListener("keydown", function(e) {
     }
   }
 
+  if (gameState === ST_LANGUAGE) {
+    if (e.key === "ArrowUp" || k === "w") { languageSelection = (languageSelection - 1 + languages.length) % languages.length; e.preventDefault(); return; }
+    if (e.key === "ArrowDown" || k === "s") { languageSelection = (languageSelection + 1) % languages.length; e.preventDefault(); return; }
+    if (e.key === "Enter") {
+      language = languages[languageSelection].code;
+      gameState = ST_MENU;
+      menuSubState = "slots";
+      e.preventDefault();
+      return;
+    }
+    return;
+  }
+
   if (gameState === ST_MENU) {
     if (menuSubState === "slots") {
       if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 5) % 5; e.preventDefault(); return; }

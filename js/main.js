@@ -109,7 +109,8 @@ function update() {
 
 function loop() {
   update();
-  if (gameState === ST_MENU) drawMenu();
+  if (gameState === ST_LANGUAGE) drawLanguageSelect();
+  else if (gameState === ST_MENU) drawMenu();
   else if (gameState === ST_PAUSED) { drawGame(); drawPause(); }
   else if (gameState === ST_TRANSITION) drawTransition();
   else if (gameState === ST_EXPLOSION) drawExplosion();

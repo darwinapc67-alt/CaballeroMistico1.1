@@ -4,9 +4,15 @@ var WORLD_W = 10 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
 var VERSION = "v0.90";
 
-var ST_MENU = 0, ST_PLAYING = 1, ST_PAUSED = 2, ST_TRANSITION = 3, ST_EXPLOSION = 4, ST_INVENTORY = 5;
+var ST_LANGUAGE = 0, ST_MENU = 1, ST_PLAYING = 2, ST_PAUSED = 3, ST_TRANSITION = 4, ST_EXPLOSION = 5, ST_INVENTORY = 6;
 
-var gameState = ST_MENU;
+var gameState = ST_LANGUAGE;
+var languageSelection = 0, language = "es";
+var languages = [
+  { code: "es", label: "Español" },
+  { code: "en", label: "English" },
+  { code: "pt", label: "Português" }
+];
 var menuSelection = 0, menuSubState = "slots", slotToDelete = -1, activeSlot = -1;
 var pauseSelection = 0, pauseSubState = "menu";
 

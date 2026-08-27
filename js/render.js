@@ -506,6 +506,36 @@ function drawMenu() {
   ctx.textAlign = "left";
 }
 
+function drawLanguageSelect() {
+  ctx.fillStyle = "#050510"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#fff";
+  for (var i = 0; i < 60; i++) {
+    var sx = (i * 137) % 800, sy = (i * 89) % 600;
+    ctx.globalAlpha = 0.08 + Math.sin(Date.now()/1000 + i) * 0.06;
+    ctx.fillRect(sx, sy, 1.5, 1.5);
+  }
+  ctx.globalAlpha = 1;
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#6cc"; ctx.font = "bold 32px monospace";
+  ctx.fillText("⚔️ CABALLERO MÍSTICO", canvas.width/2, 125);
+  ctx.fillStyle = "#ffd700"; ctx.font = "bold 20px monospace";
+  ctx.fillText("ELIGE TU IDIOMA", canvas.width/2, 205);
+  ctx.fillStyle = "#888"; ctx.font = "13px monospace";
+  ctx.fillText("Choose your language  •  Escolha seu idioma", canvas.width/2, 232);
+  for (var i = 0; i < languages.length; i++) {
+    var y = 285 + i * 58, isSelected = i === languageSelection;
+    ctx.fillStyle = isSelected ? "rgba(100,200,255,0.16)" : "rgba(255,255,255,0.03)";
+    ctx.fillRect(250, y - 22, 300, 42);
+    ctx.strokeStyle = isSelected ? "#6cc" : "#333"; ctx.lineWidth = isSelected ? 2 : 1;
+    ctx.strokeRect(250, y - 22, 300, 42);
+    ctx.fillStyle = isSelected ? "#6cc" : "#aaa"; ctx.font = "bold 17px monospace";
+    ctx.fillText((isSelected ? "▶  " : "    ") + languages[i].label, canvas.width/2, y + 6);
+  }
+  ctx.fillStyle = "#666"; ctx.font = "12px monospace";
+  ctx.fillText("↑/↓ Navegar  •  ENTER Confirmar", canvas.width/2, 520);
+  ctx.textAlign = "left";
+}
+
 function drawPause() {
   if (pauseSubState === "diary") {
     drawDiary();
