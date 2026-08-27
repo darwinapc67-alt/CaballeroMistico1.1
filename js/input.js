@@ -65,7 +65,12 @@ window.addEventListener("keydown", function(e) {
     if (down || k === "s") { deviceSelection = (deviceSelection + 1) % devices.length; e.preventDefault(); return; }
     if (confirm) {
       device = devices[deviceSelection].code;
-      gamepadConnected = device === "play" && gamepadConnected;
+      if (device === "play") {
+        scanGamepads();
+        if (gamepadIndex >= 0) gamepadConnected = true;
+      } else {
+        gamepadConnected = false;
+      }
       setupTouchControls();
       gameState = ST_MENU;
       menuSubState = "slots";
@@ -252,10 +257,11 @@ function processGamepadInput() {
     return;
   }
   if (gameState === ST_MENU) {
+    if (device !== "play") return;
     if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
     if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + 5) % 5; gamepadMenuAxisLock = 1; }
     if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % 5; gamepadMenuAxisLock = 1; }
-    if (btn0) {
+    if (btn0 || (gpButtons[1] && !prevGPButtons[1])) {
       activeSlot = menuSelection;
       var saves = getSaves();
       if (saves.slots[menuSelection]) {
