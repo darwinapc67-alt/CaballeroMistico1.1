@@ -710,12 +710,17 @@ function drawShop() {
   ctx.fillStyle = "#6cc"; ctx.font = "18px monospace";
   ctx.fillText("💠 Azari: " + azari, canvas.width/2, 160);
   if (shopId === 0) {
-    ctx.fillStyle = hasMap ? "#4a4" : "#ffd700"; ctx.font = "bold 16px monospace";
-    ctx.fillText("🗺️ Mapa - 45 Azari", canvas.width/2, 225);
-    ctx.fillStyle = hasBow ? "#4a4" : "#ffd700";
-    ctx.fillText("🏹 Arco - 35 Azari", canvas.width/2, 265);
-    ctx.fillStyle = "#ffd700";
-    ctx.fillText("🏹 20 flechas - 5 Azari", canvas.width/2, 305);
+    var shopItems = ["🗺️ Mapa - 45 Azari", "🏹 Arco - 35 Azari", "🏹 20 flechas - 5 Azari"];
+    for (var i = 0; i < shopItems.length; i++) {
+      var itemY = 225 + i * 40;
+      var selected = menuSelection === i;
+      ctx.fillStyle = selected ? "rgba(100,200,255,0.18)" : "transparent";
+      ctx.fillRect(180, itemY - 23, 440, 34);
+      ctx.strokeStyle = selected ? "#6cc" : "#333"; ctx.lineWidth = selected ? 2 : 1;
+      ctx.strokeRect(180, itemY - 23, 440, 34);
+      ctx.fillStyle = selected ? "#6cc" : "#aaa"; ctx.font = "bold 16px monospace";
+      ctx.fillText((selected ? "▶  " : "    ") + shopItems[i], canvas.width/2, itemY);
+    }
     ctx.fillStyle = "#666"; ctx.font = "13px monospace";
     ctx.fillText("↑/↓ Elegir  •  ENTER Comprar  •  ESC Salir", canvas.width/2, 355);
   } else if (shopId === 1 || shopId === 2) {
