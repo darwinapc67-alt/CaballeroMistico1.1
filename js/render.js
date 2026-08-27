@@ -369,7 +369,7 @@ function drawGameWorld() {
     if (r === 1) drawPedestal();
     if (r === 2) drawBombBox();
     if (r === 5) drawTransitionZone(room5.transitionZone);
-    if (r === 9) { drawShopNPC(); drawHealingStone(); }
+    if (r === 9) { drawHealingStone(); }
   }
   drawEnemies();
   arrowsInFlight.forEach(function(arrow) {
@@ -729,11 +729,41 @@ function drawTransition() {
 }
 
 function drawShop() {
-  drawGameWorld();
   if (shopAnim > 0) {
-    ctx.fillStyle = "rgba(255,215,0," + (shopAnim / 90) + ")";
+    ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#aaa";
+    ctx.font = "bold 16px monospace";
+    ctx.fillText(translateText("CARGANDO") + "...", canvas.width/2, canvas.height/2);
+    ctx.fillStyle = "#6cc";
+    ctx.font = "12px monospace";
+    ctx.fillText(Math.ceil((shopAnim / 180) * 3) + "", canvas.width/2, canvas.height/2 + 28);
+    ctx.textAlign = "left";
+    return;
   }
+  ctx.fillStyle = "#080818"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#151525";
+  ctx.beginPath(); ctx.ellipse(canvas.width/2, 250, 330, 220, 0, Math.PI, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#25253a";
+  ctx.fillRect(70, 250, canvas.width - 140, 260);
+  ctx.fillStyle = "#30304a";
+  ctx.fillRect(70, 250, canvas.width - 140, 8);
+  for (var rock = 0; rock < 8; rock++) {
+    var rx = 100 + rock * 83, ry = 300 + (rock % 3) * 42;
+    ctx.fillStyle = rock % 2 ? "#45455c" : "#38384f";
+    ctx.beginPath(); ctx.arc(rx, ry, 18 + (rock % 3) * 5, 0, Math.PI * 2); ctx.fill();
+  }
+  var vendorX = canvas.width/2, vendorY = 325;
+  ctx.fillStyle = "#8b4513"; ctx.fillRect(vendorX - 12, vendorY + 28, 24, 55);
+  ctx.fillStyle = "#a0522d"; ctx.fillRect(vendorX - 12, vendorY + 28, 24, 6);
+  ctx.fillStyle = "#ffd700"; ctx.fillRect(vendorX - 7, vendorY + 42, 4, 4); ctx.fillRect(vendorX + 3, vendorY + 42, 4, 4);
+  ctx.fillStyle = "#d19a72"; ctx.beginPath(); ctx.arc(vendorX, vendorY + 15, 14, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#332211"; ctx.fillRect(vendorX - 15, vendorY + 2, 30, 7);
+  ctx.fillStyle = "#ffd700"; ctx.font = "bold 18px monospace"; ctx.textAlign = "center";
+  ctx.fillText(shopId === 0 ? "TIENDA DEL EXPLORADOR" : "TIENDA DEL CORAZÓN", canvas.width/2, 85);
+  ctx.fillStyle = "#6cc"; ctx.font = "16px monospace";
+  ctx.fillText("💠 Azari: " + azari, canvas.width/2, 120);
   ctx.fillStyle = "rgba(0,0,0,0.88)"; ctx.fillRect(0,0,canvas.width,canvas.height);
   ctx.textAlign = "center";
   ctx.fillStyle = "#ffd700"; ctx.font = "bold 28px monospace";

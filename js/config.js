@@ -2,7 +2,7 @@ var canvas, ctx;
 var ROOM_W = 800, ROOM_H = 600, GRAVITY = 0.6;
 var WORLD_W = 10 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
-var VERSION = "v1.00";
+var VERSION = "v1.10";
 
 var ST_LANGUAGE = 0, ST_DEVICE = 1, ST_MENU = 2, ST_PLAYING = 3, ST_PAUSED = 4, ST_TRANSITION = 5, ST_EXPLOSION = 6, ST_INVENTORY = 7;
 
