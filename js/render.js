@@ -148,6 +148,17 @@ function drawShopNPC() {
       ctx.fillStyle = "#111122";
       ctx.fillRect(houseX + 18, houseY + 62, 20, 18);
       ctx.fillRect(houseX + 92, houseY + 62, 20, 18);
+      ctx.fillStyle = "#080818";
+      ctx.beginPath();
+      ctx.ellipse(npc.x + npc.w / 2, npc.y + 20, 34, 45, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = s.id === 0 ? "#8b6b3f" : "#8b3f6b";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = "#aaa";
+      ctx.font = "10px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("E", npc.x + npc.w / 2, npc.y + 72);
       ctx.fillStyle = "#8b4513";
       ctx.fillRect(npc.x, npc.y, npc.w, npc.h);
       ctx.fillStyle = "#a0522d";
@@ -764,12 +775,6 @@ function drawShop() {
   ctx.fillText(shopId === 0 ? "TIENDA DEL EXPLORADOR" : "TIENDA DEL CORAZÓN", canvas.width/2, 85);
   ctx.fillStyle = "#6cc"; ctx.font = "16px monospace";
   ctx.fillText("💠 Azari: " + azari, canvas.width/2, 120);
-  ctx.fillStyle = "rgba(0,0,0,0.88)"; ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.textAlign = "center";
-  ctx.fillStyle = "#ffd700"; ctx.font = "bold 28px monospace";
-  ctx.fillText("🏚️ TIENDA DEL EXILIADO", canvas.width/2, 120);
-  ctx.fillStyle = "#6cc"; ctx.font = "18px monospace";
-  ctx.fillText("💠 Azari: " + azari, canvas.width/2, 160);
   if (shopId === 0) {
     var shopItems = ["🗺️ Mapa - 45 Azari", "🏹 Arco - 35 Azari", "🏹 20 flechas - 5 Azari"];
     for (var i = 0; i < shopItems.length; i++) {
@@ -783,7 +788,7 @@ function drawShop() {
       ctx.fillText((selected ? "▶  " : "    ") + shopItems[i], canvas.width/2, itemY);
     }
     ctx.fillStyle = "#666"; ctx.font = "13px monospace";
-    ctx.fillText("↑/↓ Elegir  •  ENTER Comprar  •  ESC Salir", canvas.width/2, 355);
+    ctx.fillText(shopConfirm >= 0 ? "ENTER confirmar compra  •  ESC cancelar" : "↑/↓ Elegir  •  ENTER Comprar  •  ESC Salir", canvas.width/2, 355);
   } else if (shopId === 1) {
     ctx.fillStyle = "#6cc"; ctx.font = "18px monospace";
     ctx.fillText("💎 CASA DEL CORAZÓN", canvas.width/2, 200);
@@ -803,7 +808,7 @@ function drawShop() {
     ctx.fillStyle = "#666"; ctx.font = "13px monospace";
   }
     ctx.fillText("J1: " + heartFragments1 + "/3  •  J2: " + heartFragments2 + "/3", canvas.width/2, 360);
-    ctx.fillText("↑/↓ Elegir  •  ENTER Comprar  •  ESC Salir", canvas.width/2, 390);
+    ctx.fillText(shopConfirm >= 0 ? "ENTER confirmar compra  •  ESC cancelar" : "↑/↓ Elegir  •  ENTER Comprar  •  ESC Salir", canvas.width/2, 390);
 }
 
 function drawExplosion() {

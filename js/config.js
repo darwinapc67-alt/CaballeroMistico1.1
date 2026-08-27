@@ -2,7 +2,7 @@ var canvas, ctx;
 var ROOM_W = 800, ROOM_H = 600, GRAVITY = 0.6;
 var WORLD_W = 10 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
-var VERSION = "v1.10";
+var VERSION = "v1.20";
 
 var ST_LANGUAGE = 0, ST_DEVICE = 1, ST_MENU = 2, ST_PLAYING = 3, ST_PAUSED = 4, ST_TRANSITION = 5, ST_EXPLOSION = 6, ST_INVENTORY = 7;
 
@@ -99,7 +99,7 @@ var zoneName = "", zoneNameTimer = 0;
 var explosionAnim = 0, explosionX = 0, explosionY = 0;
 var knockbackVX = 0, knockbackVY = 0;
 
-var azari = 0, hasMap = false, hasBow = false, arrows = 0, shopOpen = false, shopId = 0, shopAnim = 0;
+var azari = 0, hasMap = false, hasBow = false, arrows = 0, shopOpen = false, shopId = 0, shopAnim = 0, shopConfirm = -1;
 var heartFragments1 = 0, heartFragments2 = 0;
 var heartFragmentsBought1 = 0, heartFragmentsBought2 = 0;
 var hasAzariCharm = false, hasDoubleJump = false;

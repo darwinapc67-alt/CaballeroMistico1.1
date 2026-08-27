@@ -174,13 +174,17 @@ window.addEventListener("keydown", function(e) {
   }
 
   if (shopOpen) {
+    if (shopAnim > 0) return;
     if (shopId === 0) {
       if (up || k === "w") { menuSelection = (menuSelection - 1 + 3) % 3; e.preventDefault(); return; }
       if (down || k === "s") { menuSelection = (menuSelection + 1) % 3; e.preventDefault(); return; }
       if (confirm) {
-        if (menuSelection === 0 && !hasMap && azari >= 45) { azari -= 45; hasMap = true; sfxBuy(); }
-        if (menuSelection === 1 && !hasBow && azari >= 35) { azari -= 35; hasBow = true; sfxBuy(); }
-        if (menuSelection === 2 && azari >= 5) { azari -= 5; arrows += 20; sfxBuy(); }
+        if (shopConfirm === menuSelection) {
+          if (menuSelection === 0 && !hasMap && azari >= 45) { azari -= 45; hasMap = true; sfxBuy(); }
+          if (menuSelection === 1 && !hasBow && azari >= 35) { azari -= 35; hasBow = true; sfxBuy(); }
+          if (menuSelection === 2 && azari >= 5) { azari -= 5; arrows += 20; sfxBuy(); }
+          shopConfirm = -1;
+        } else shopConfirm = menuSelection;
         e.preventDefault(); return;
       }
     }
@@ -188,6 +192,7 @@ window.addEventListener("keydown", function(e) {
       if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 3) % 3; e.preventDefault(); return; }
       if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % 3; e.preventDefault(); return; }
       if (e.key === "Enter") {
+        if (shopConfirm !== menuSelection) { shopConfirm = menuSelection; e.preventDefault(); return; }
         if (menuSelection === 0 && heartFragmentsBought1 < 2 && azari >= 25) {
           azari -= 25; heartFragments1++; heartFragmentsBought1++;
           spawnFloatText(player.x, player.y - 30, "¡Fragmento J1!", "#f44");
@@ -199,6 +204,7 @@ window.addEventListener("keydown", function(e) {
           if (heartFragments2 >= 3) { heartFragments2 -= 3; player2.maxHp++; player2.hp = player2.maxHp; }
         }
         if (menuSelection === 2 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; spawnFloatText(player.x, player.y - 30, "¡Bendición codiciosa!", "#0ff"); sfxBuy(); }
+        shopConfirm = -1;
         e.preventDefault(); return;
       }
     }
