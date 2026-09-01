@@ -47,9 +47,9 @@ function update() {
     }
     return;
   }
-  if (gameState !== ST_PLAYING && gameState !== ST_INVENTORY) return;
+  if (gameState !== ST_PLAYING && gameState !== ST_INVENTORY && gameState !== ST_EDITOR) return;
 
-  if (gameState === ST_PLAYING) {
+  if (gameState === ST_PLAYING || gameState === ST_EDITOR) {
     frameCounter++;
     if (frameCounter >= 60) { frameCounter = 0; stats.playTime++; }
     updateStalactites();
@@ -128,10 +128,12 @@ function loop() {
   if (gameState === ST_LANGUAGE) drawLanguageSelect();
   else if (gameState === ST_DEVICE) drawDeviceSelect();
   else if (gameState === ST_MENU) drawMenu();
+  else if (gameState === ST_EDITOR_MENU) drawEditorMenu();
   else if (gameState === ST_PAUSED) { drawGame(); drawPause(); }
   else if (gameState === ST_TRANSITION) drawTransition();
   else if (gameState === ST_EXPLOSION) drawExplosion();
   else if (gameState === ST_INVENTORY) { drawGame(); drawInventory(); }
+  else if (gameState === ST_EDITOR) { drawGame(); }
   else {
     drawGame();
     if (shopOpen) drawShop();
@@ -149,4 +151,6 @@ ctx.fillText = function(text, x, y, maxWidth) {
 };
 resetAll();
 setupTouchControls();
+initEditorInputs();
 loop();
+initLevelPublisher();
