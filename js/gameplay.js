@@ -444,7 +444,7 @@ function tryInteractFor(p) {
         sfxNpc();
         shopPreviousX = player.x; shopPreviousY = player.y;
         shopOpen = true; shopMenuOpen = false; shopId = s.id; menuSelection = 0; shopConfirm = -1; shopAnim = 180;
-        player.x = 400; player.y = 530; player.vx = 0; player.vy = 0;
+        player.x = 550; player.y = 530; player.vx = 0; player.vy = 0;
         return;
       }
     }

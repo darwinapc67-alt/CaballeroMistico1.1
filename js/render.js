@@ -749,12 +749,22 @@ function drawShop() {
     ctx.fillStyle = rock % 2 ? "#45455c" : "#38384f";
     ctx.beginPath(); ctx.arc(rx, ry, 18 + (rock % 3) * 5, 0, Math.PI * 2); ctx.fill();
   }
-  var vendorX = canvas.width/2, vendorY = 445;
+  var vendorX = 680, vendorY = 445;
+  ctx.fillStyle = "#5a351d";
+  ctx.fillRect(590, 500, 180, 32);
+  ctx.fillStyle = "#8b542b";
+  ctx.fillRect(590, 500, 180, 6);
+  ctx.fillStyle = "#d4af37";
+  ctx.fillRect(620, 510, 12, 8); ctx.fillRect(655, 510, 12, 8); ctx.fillRect(705, 510, 12, 8);
   ctx.fillStyle = "#8b4513"; ctx.fillRect(vendorX - 12, vendorY + 28, 24, 55);
   ctx.fillStyle = "#a0522d"; ctx.fillRect(vendorX - 12, vendorY + 28, 24, 6);
   ctx.fillStyle = "#ffd700"; ctx.fillRect(vendorX - 7, vendorY + 42, 4, 4); ctx.fillRect(vendorX + 3, vendorY + 42, 4, 4);
   ctx.fillStyle = "#d19a72"; ctx.beginPath(); ctx.arc(vendorX, vendorY + 15, 14, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#332211"; ctx.fillRect(vendorX - 15, vendorY + 2, 30, 7);
+  ctx.fillStyle = "#5a351d";
+  ctx.fillRect(590, 500, 180, 22);
+  ctx.fillStyle = "#8b542b";
+  ctx.fillRect(590, 500, 180, 5);
   drawPlayerEntity(player);
   ctx.fillStyle = "#ffd700"; ctx.font = "bold 18px monospace"; ctx.textAlign = "center";
   ctx.fillText(shopId === 0 ? "TIENDA DEL EXPLORADOR" : "TIENDA DEL CORAZÓN", canvas.width/2, 85);
@@ -784,13 +794,10 @@ function drawShop() {
       ctx.fillText((selected ? "▶  " : "    ") + shopItems[i], canvas.width/2, itemY);
     }
     ctx.fillStyle = "#666"; ctx.font = "13px monospace";
-    ctx.fillText(shopConfirm >= 0 ? "ENTER confirmar compra  •  ESC cancelar" : "↑/↓ Elegir  •  ENTER Comprar  •  ESC Salir", canvas.width/2, 355);
+    ctx.fillText(shopConfirm >= 0 ? "ENTER confirmar compra  •  ESC cancelar" : "↑/↓ Elegir  •  ENTER Comprar", canvas.width/2, 355);
   } else if (shopId === 1) {
     ctx.fillStyle = "#6cc"; ctx.font = "18px monospace";
     ctx.fillText("💎 CASA DEL CORAZÓN", canvas.width/2, 200);
-    ctx.fillStyle = "#fff"; ctx.font = "16px monospace";
-    ctx.fillText("❤️ J1: " + heartFragments1 + "/3", canvas.width/2, 240);
-    ctx.fillText("💗 J2: " + heartFragments2 + "/3", canvas.width/2, 270);
     var heartItems = ["❤️ Fragmento J1 - 25 Azari", "💗 Fragmento J2 - 25 Azari", "💎 Bendición codiciosa - 45 Azari"];
     for (var i = 0; i < heartItems.length; i++) {
       var heartY = 240 + i * 38, heartSelected = menuSelection === i;
@@ -802,9 +809,11 @@ function drawShop() {
       ctx.fillText((heartSelected ? "▶  " : "    ") + heartItems[i], canvas.width/2, heartY);
     }
     ctx.fillStyle = "#666"; ctx.font = "13px monospace";
+    ctx.fillText("J1: " + heartFragments1 + "/3  •  J2: " + heartFragments2 + "/3", canvas.width/2, 370);
+    ctx.fillText(shopConfirm >= 0 ? "ENTER confirmar compra  •  ESC cancelar" : "↑/↓ Elegir  •  ENTER Comprar", canvas.width/2, 395);
   }
-    ctx.fillText("J1: " + heartFragments1 + "/3  •  J2: " + heartFragments2 + "/3", canvas.width/2, 360);
-    ctx.fillText(shopConfirm >= 0 ? "ENTER confirmar compra  •  ESC cancelar" : "↑/↓ Elegir  •  ENTER Comprar  •  ESC Salir", canvas.width/2, 390);
+  ctx.fillStyle = "#777"; ctx.font = "12px monospace";
+  ctx.fillText("ESC: pausa", canvas.width/2, 575);
 }
 
 function drawExplosion() {

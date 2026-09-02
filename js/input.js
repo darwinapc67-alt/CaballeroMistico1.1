@@ -178,7 +178,7 @@ window.addEventListener("keydown", function(e) {
     if (shopAnim > 0) return;
     if (!shopMenuOpen) {
       if (e.key === "e" || e.key === "E") {
-        var vendorDistance = Math.abs(player.x - 400) + Math.abs(player.y - 445);
+        var vendorDistance = Math.abs(player.x - 680) + Math.abs(player.y - 445);
         if (vendorDistance < 115) { shopMenuOpen = true; menuSelection = 0; sfxNpc(); }
         if (Math.abs(player.x - 100) < 70 && player.y > 500) {
           shopOpen = false; player.x = shopPreviousX; player.y = shopPreviousY;
