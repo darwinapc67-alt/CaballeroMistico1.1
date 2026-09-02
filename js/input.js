@@ -21,8 +21,9 @@ window.addEventListener("keydown", function(e) {
   }
 
   if (e.key === "Escape") {
-    if (shopOpen) {
-      shopOpen = false; menuSelection = 0; player.x = shopPreviousX; player.y = shopPreviousY;
+    if (shopOpen && gameState === ST_PLAYING) {
+      if (shopMenuOpen) { shopMenuOpen = false; shopConfirm = -1; }
+      else { gameState = ST_PAUSED; pauseSubState = "menu"; pauseSelection = 0; sfxPause(); }
       e.preventDefault();
       return;
     } else if (gameState === ST_PLAYING) {
@@ -46,17 +47,6 @@ window.addEventListener("keydown", function(e) {
       return;
     } else if (gameState === ST_MENU && menuSubState === "admin_password") {
       menuSubState = "slots"; adminPassword = ""; adminMessage = "";
-      e.preventDefault();
-      return;
-    } else if (gameState === ST_EDITOR_MENU) {
-      gameState = ST_MENU;
-      menuSubState = "slots";
-      e.preventDefault();
-      return;
-    } else if (gameState === ST_EDITOR) {
-      editorMode = false;
-      gameState = ST_PLAYING;
-      spawnFloatText(400, 300, "Editor desactivado", "#f44");
       e.preventDefault();
       return;
     }
@@ -118,25 +108,10 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (menuSubState === "slots") {
-      if (up || k === "w") { menuSelection = (menuSelection - 1 + 7) % 7; e.preventDefault(); return; }
-      if (down || k === "s") { menuSelection = (menuSelection + 1) % 7; e.preventDefault(); return; }
+      if (up || k === "w") { menuSelection = (menuSelection - 1 + 6) % 6; e.preventDefault(); return; }
+      if (down || k === "s") { menuSelection = (menuSelection + 1) % 6; e.preventDefault(); return; }
       if (confirm) {
-        // Opción 5 = EDITOR DE NIVELES
-        if (menuSelection === 5) {
-          gameState = ST_EDITOR_MENU;
-          editorMenuSelection = 0;
-          loadSavedLevels();
-          e.preventDefault();
-          return;
-        }
-        // Opción 6 = ADMIN
-        if (menuSelection === 6) {
-          menuSubState = "admin_password";
-          adminPassword = "";
-          adminMessage = "";
-          e.preventDefault();
-          return;
-        }
+        if (menuSelection === 5) { menuSubState = "admin_password"; adminPassword = ""; adminMessage = ""; e.preventDefault(); return; }
         activeSlot = menuSelection;
         var saves = getSaves();
         if (saves.slots[menuSelection]) {
@@ -155,74 +130,6 @@ window.addEventListener("keydown", function(e) {
     } else if (menuSubState === "confirm_delete") {
       if (k === "y" || k === "s") { deleteSave(slotToDelete); menuSubState = "slots"; slotToDelete = -1; e.preventDefault(); return; }
       if (k === "n" || e.key === "Escape") { menuSubState = "slots"; slotToDelete = -1; e.preventDefault(); return; }
-    }
-    return;
-  }
-
-  if (gameState === ST_EDITOR_MENU) {
-    if (up || k === "w") { editorMenuSelection = (editorMenuSelection - 1 + 4) % 4; e.preventDefault(); return; }
-    if (down || k === "s") { editorMenuSelection = (editorMenuSelection + 1) % 4; e.preventDefault(); return; }
-    if (confirm) {
-      if (editorMenuSelection === 0) {
-        gameState = ST_PLAYING;
-        toggleEditor();
-        e.preventDefault();
-        return;
-      }
-      if (editorMenuSelection === 1) {
-        if (savedLevels.length === 0) {
-          spawnFloatText(400, 300, "No hay niveles guardados", "#f44");
-          e.preventDefault();
-          return;
-        }
-        var msg = "Niveles guardados:\n";
-        savedLevels.forEach(function(l, i) {
-          msg += (i+1) + ". " + l.name + "\n";
-        });
-        var choice = prompt(msg + "\nNúmero a cargar:");
-        if (choice) {
-          var idx = parseInt(choice) - 1;
-          if (idx >= 0 && idx < savedLevels.length) {
-            if (loadLevelFromList(idx)) {
-              gameState = ST_PLAYING;
-            }
-          }
-        }
-        e.preventDefault();
-        return;
-      }
-      if (editorMenuSelection === 2) {
-        if (savedLevels.length === 0) {
-          spawnFloatText(400, 300, "No hay niveles para eliminar", "#f44");
-          e.preventDefault();
-          return;
-        }
-        var msg = "Niveles guardados:\n";
-        savedLevels.forEach(function(l, i) {
-          msg += (i+1) + ". " + l.name + "\n";
-        });
-        var choice = prompt(msg + "\nNúmero a eliminar:");
-        if (choice) {
-          var idx = parseInt(choice) - 1;
-          if (idx >= 0 && idx < savedLevels.length) {
-            deleteLevelFromList(idx);
-          }
-        }
-        e.preventDefault();
-        return;
-      }
-      if (editorMenuSelection === 3) {
-        gameState = ST_MENU;
-        menuSubState = "slots";
-        e.preventDefault();
-        return;
-      }
-    }
-    if (e.key === "Escape") {
-      gameState = ST_MENU;
-      menuSubState = "slots";
-      e.preventDefault();
-      return;
     }
     return;
   }
@@ -267,43 +174,19 @@ window.addEventListener("keydown", function(e) {
     if (e.key === "n" || e.key === "N") { initAudio(); toggleSfx(); e.preventDefault(); }
   }
 
-  if (gameState === ST_EDITOR) {
-    if (e.key === "s" || e.key === "S") {
-      saveLevelFromEditor();
-      e.preventDefault();
-    }
-    if (e.key === "x" || e.key === "X") {
-      editorSelection = 3;
-      spawnFloatText(400, 300, "🗑️ Modo borrar activado", "#f44");
-      e.preventDefault();
-    }
-    if (e.key === "1") { editorSelection = 0; spawnFloatText(400, 300, "🔧 Plataforma", "#0f0"); e.preventDefault(); }
-    if (e.key === "2") { editorSelection = 1; spawnFloatText(400, 300, "🔧 Púa", "#f44"); e.preventDefault(); }
-    if (e.key === "3") { editorSelection = 2; spawnFloatText(400, 300, "🔧 Enemigo", "#f0f"); e.preventDefault(); }
-    if (e.key === "g" || e.key === "G") {
-      editorShowGrid = !editorShowGrid;
-      spawnFloatText(400, 300, editorShowGrid ? "📊 Grid: ON" : "📊 Grid: OFF", "#0ff");
-      e.preventDefault();
-    }
-    if (e.key === "t" || e.key === "T") {
-      editorSnapToGrid = !editorSnapToGrid;
-      spawnFloatText(400, 300, editorSnapToGrid ? "🔗 Snap: ON" : "🔗 Snap: OFF", "#0ff");
-      e.preventDefault();
-    }
-    if (e.key === "c" || e.key === "C") {
-      copyLevelToClipboard(currentRoom);
-      e.preventDefault();
-    }
-    if (e.key === "Escape") {
-      editorMode = false;
-      gameState = ST_PLAYING;
-      spawnFloatText(400, 300, "Editor desactivado", "#f44");
-      e.preventDefault();
-    }
-  }
-
   if (shopOpen) {
     if (shopAnim > 0) return;
+    if (!shopMenuOpen) {
+      if (e.key === "e" || e.key === "E") {
+        var vendorDistance = Math.abs(player.x - 400) + Math.abs(player.y - 445);
+        if (vendorDistance < 115) { shopMenuOpen = true; menuSelection = 0; sfxNpc(); }
+        if (Math.abs(player.x - 100) < 70 && player.y > 500) {
+          shopOpen = false; player.x = shopPreviousX; player.y = shopPreviousY;
+        }
+        e.preventDefault(); return;
+      }
+      return;
+    }
     if (shopId === 0) {
       if (up || k === "w") { menuSelection = (menuSelection - 1 + 3) % 3; e.preventDefault(); return; }
       if (down || k === "s") { menuSelection = (menuSelection + 1) % 3; e.preventDefault(); return; }
@@ -449,23 +332,9 @@ function processGamepadInput() {
   if (gameState === ST_MENU) {
     if (device !== "play") return;
     if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
-    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + 7) % 7; gamepadMenuAxisLock = 1; }
-    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % 7; gamepadMenuAxisLock = 1; }
+    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + 5) % 5; gamepadMenuAxisLock = 1; }
+    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % 5; gamepadMenuAxisLock = 1; }
     if (btn0 || (gpButtons[1] && !prevGPButtons[1])) {
-      // Opción 5 = EDITOR DE NIVELES
-      if (menuSelection === 5) {
-        gameState = ST_EDITOR_MENU;
-        editorMenuSelection = 0;
-        loadSavedLevels();
-        return;
-      }
-      // Opción 6 = ADMIN
-      if (menuSelection === 6) {
-        menuSubState = "admin_password";
-        adminPassword = "";
-        adminMessage = "";
-        return;
-      }
       activeSlot = menuSelection;
       var saves = getSaves();
       if (saves.slots[menuSelection]) {
@@ -473,67 +342,6 @@ function processGamepadInput() {
       } else {
         resetAll(); gameState = ST_PLAYING; startMusic(); updateUI();
       }
-    }
-    return;
-  }
-  if (gameState === ST_EDITOR_MENU) {
-    if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
-    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { editorMenuSelection = (editorMenuSelection - 1 + 4) % 4; gamepadMenuAxisLock = 1; }
-    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { editorMenuSelection = (editorMenuSelection + 1) % 4; gamepadMenuAxisLock = 1; }
-    if (btn0) {
-      if (editorMenuSelection === 0) {
-        gameState = ST_PLAYING;
-        toggleEditor();
-        return;
-      }
-      if (editorMenuSelection === 1) {
-        if (savedLevels.length === 0) {
-          spawnFloatText(400, 300, "No hay niveles guardados", "#f44");
-          return;
-        }
-        var msg = "Niveles guardados:\n";
-        savedLevels.forEach(function(l, i) {
-          msg += (i+1) + ". " + l.name + "\n";
-        });
-        var choice = prompt(msg + "\nNúmero a cargar:");
-        if (choice) {
-          var idx = parseInt(choice) - 1;
-          if (idx >= 0 && idx < savedLevels.length) {
-            if (loadLevelFromList(idx)) {
-              gameState = ST_PLAYING;
-            }
-          }
-        }
-        return;
-      }
-      if (editorMenuSelection === 2) {
-        if (savedLevels.length === 0) {
-          spawnFloatText(400, 300, "No hay niveles para eliminar", "#f44");
-          return;
-        }
-        var msg = "Niveles guardados:\n";
-        savedLevels.forEach(function(l, i) {
-          msg += (i+1) + ". " + l.name + "\n";
-        });
-        var choice = prompt(msg + "\nNúmero a eliminar:");
-        if (choice) {
-          var idx = parseInt(choice) - 1;
-          if (idx >= 0 && idx < savedLevels.length) {
-            deleteLevelFromList(idx);
-          }
-        }
-        return;
-      }
-      if (editorMenuSelection === 3) {
-        gameState = ST_MENU;
-        menuSubState = "slots";
-        return;
-      }
-    }
-    if (btn9) {
-      gameState = ST_MENU;
-      menuSubState = "slots";
-      return;
     }
     return;
   }
@@ -554,12 +362,6 @@ function processGamepadInput() {
   if (btn8) {
     if (gameState === ST_PLAYING) { inventoryOpen = !inventoryOpen; if (inventoryOpen) gameState = ST_INVENTORY; else gameState = ST_PLAYING; return; }
     else if (gameState === ST_INVENTORY) { inventoryOpen = false; gameState = ST_PLAYING; return; }
-    else if (gameState === ST_EDITOR) {
-      editorMode = false;
-      gameState = ST_PLAYING;
-      spawnFloatText(400, 300, "Editor desactivado", "#f44");
-      return;
-    }
   }
   if (btn9) {
     if (gameState === ST_DEVICE) {
@@ -570,17 +372,6 @@ function processGamepadInput() {
     if (gameState === ST_PLAYING) { gameState = ST_PAUSED; pauseSubState = "menu"; pauseSelection = 0; sfxPause(); return; }
     else if (gameState === ST_PAUSED) { if (pauseSubState === "diary" || pauseSubState === "controls" || pauseSubState === "audio") pauseSubState = "menu"; else gameState = ST_PLAYING; return; }
     else if (gameState === ST_INVENTORY) { inventoryOpen = false; gameState = ST_PLAYING; return; }
-    else if (gameState === ST_EDITOR_MENU) {
-      gameState = ST_MENU;
-      menuSubState = "slots";
-      return;
-    }
-    else if (gameState === ST_EDITOR) {
-      editorMode = false;
-      gameState = ST_PLAYING;
-      spawnFloatText(400, 300, "Editor desactivado", "#f44");
-      return;
-    }
   }
 }
 
@@ -601,43 +392,4 @@ function setupTouchControls() {
     button.addEventListener("pointerleave", release);
   });
   document.body.appendChild(controls);
-}
-
-// ============================================
-// CONTROLES DEL EDITOR CON MOUSE
-// ============================================
-
-function initEditorInputs() {
-  if (!canvas) return;
-  
-  canvas.addEventListener("mousemove", function(e) {
-      var rect = canvas.getBoundingClientRect();
-      editorMouseX = e.clientX - rect.left;
-      editorMouseY = e.clientY - rect.top;
-      
-      if (gameState === ST_EDITOR) {
-          handleEditorMouseMove(editorMouseX, editorMouseY);
-      }
-  });
-
-  canvas.addEventListener("mousedown", function(e) {
-      if (gameState !== ST_EDITOR) return;
-      e.preventDefault();
-      
-      var x = editorMouseX;
-      var y = editorMouseY;
-      
-      handleEditorMouseDown(x, y, e.button);
-  });
-
-  canvas.addEventListener("mouseup", function(e) {
-      if (gameState !== ST_EDITOR) return;
-      handleEditorMouseUp();
-  });
-
-  canvas.addEventListener("contextmenu", function(e) {
-      if (gameState === ST_EDITOR) {
-          e.preventDefault();
-      }
-  });
 }

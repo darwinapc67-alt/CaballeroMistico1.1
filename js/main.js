@@ -34,7 +34,7 @@ function resetAll() {
 
 function update() {
   if (shopAnim > 0) shopAnim--;
-  if (shopOpen) { updateShopPlayer(); return; }
+  if (shopOpen && gameState === ST_PLAYING) { updateShopPlayer(); return; }
   if (gameState === ST_EXPLOSION) { updateExplosion(); return; }
   if (gameState === ST_TRANSITION) { updateTransition(); return; }
   if (hitFlash > 0) {
@@ -47,9 +47,9 @@ function update() {
     }
     return;
   }
-  if (gameState !== ST_PLAYING && gameState !== ST_INVENTORY && gameState !== ST_EDITOR) return;
+  if (gameState !== ST_PLAYING && gameState !== ST_INVENTORY) return;
 
-  if (gameState === ST_PLAYING || gameState === ST_EDITOR) {
+  if (gameState === ST_PLAYING) {
     frameCounter++;
     if (frameCounter >= 60) { frameCounter = 0; stats.playTime++; }
     updateStalactites();
@@ -114,10 +114,10 @@ function updateShopPlayer() {
   if (shopAnim > 0) return;
   if (keys["a"] || keys["arrowleft"]) player.x -= 3.5;
   if (keys["d"] || keys["arrowright"]) player.x += 3.5;
-  if (keys[" "] || keys["arrowup"]) player.y = Math.max(390, player.y - 4);
-  else if (player.y < 470) player.y += 4;
+  if (keys[" "] || keys["arrowup"]) player.y = Math.max(430, player.y - 4);
+  else if (player.y < 530) player.y += 4;
   player.x = Math.max(100, Math.min(canvas.width - 100, player.x));
-  player.y = Math.min(470, player.y);
+  player.y = Math.min(530, player.y);
 }
 
 function loop() {
@@ -128,12 +128,10 @@ function loop() {
   if (gameState === ST_LANGUAGE) drawLanguageSelect();
   else if (gameState === ST_DEVICE) drawDeviceSelect();
   else if (gameState === ST_MENU) drawMenu();
-  else if (gameState === ST_EDITOR_MENU) drawEditorMenu();
   else if (gameState === ST_PAUSED) { drawGame(); drawPause(); }
   else if (gameState === ST_TRANSITION) drawTransition();
   else if (gameState === ST_EXPLOSION) drawExplosion();
   else if (gameState === ST_INVENTORY) { drawGame(); drawInventory(); }
-  else if (gameState === ST_EDITOR) { drawGame(); }
   else {
     drawGame();
     if (shopOpen) drawShop();
@@ -151,6 +149,4 @@ ctx.fillText = function(text, x, y, maxWidth) {
 };
 resetAll();
 setupTouchControls();
-initEditorInputs();
 loop();
-initLevelPublisher();

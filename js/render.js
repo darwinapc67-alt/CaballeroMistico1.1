@@ -465,16 +465,7 @@ function drawGame() {
   ctx.textAlign = "right";
   ctx.fillText("` = Inventario", canvas.width - 10, canvas.height - 20);
   ctx.textAlign = "left";
-
-  // EDITOR UI - solo cuando está en modo editor
-  if (gameState === ST_EDITOR) {
-    drawEditorUI();
-  }
 }
-
-// ============================================
-// MENÚ PRINCIPAL
-// ============================================
 
 function drawMenu() {
   ctx.fillStyle = "#050510"; ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -494,57 +485,33 @@ function drawMenu() {
 
   var saves = getSaves();
   for (var i = 0; i < 5; i++) {
-    var y = 180 + i * 65, isSel = (i === menuSelection), slot = saves.slots[i];
+    var y = 180 + i * 72, isSel = (i === menuSelection), slot = saves.slots[i];
     ctx.fillStyle = isSel ? "rgba(100, 200, 255, 0.12)" : "rgba(255,255,255,0.02)";
-    ctx.fillRect(180, y, 440, 55);
+    ctx.fillRect(180, y, 440, 62);
     ctx.strokeStyle = isSel ? "#6cc" : "#2a2a3a"; ctx.lineWidth = isSel ? 2 : 1;
-    ctx.strokeRect(180, y, 440, 55);
-    ctx.textAlign = "left"; ctx.font = "bold 14px monospace"; ctx.fillStyle = isSel ? "#6cc" : "#888";
-    ctx.fillText("RANURA " + (i+1), 200, y+20);
-    ctx.font = "11px monospace";
+    ctx.strokeRect(180, y, 440, 62);
+    ctx.textAlign = "left"; ctx.font = "bold 16px monospace"; ctx.fillStyle = isSel ? "#6cc" : "#888";
+    ctx.fillText("RANURA " + (i+1), 200, y+22);
+    ctx.font = "12px monospace";
     if (slot) {
-      ctx.fillStyle = "#8f8"; ctx.fillText("🗂️  Guardado — " + fmtDate(slot.timestamp), 200, y+34);
-      ctx.fillStyle = "#555"; ctx.textAlign = "right"; ctx.fillText("[DEL/X] Borrar", 600, y+34);
+      ctx.fillStyle = "#8f8"; ctx.fillText("🗂️  Guardado — " + fmtDate(slot.timestamp), 200, y+36);
+      ctx.fillStyle = "#0ff"; ctx.fillText("💠 " + (slot.azari || 0) + " Azari" + (slot.hasMap ? "  🗺️ Mapa" : "") + "  ❤️ " + (slot.hp || "?") + "/" + (slot.maxHp || "?") + (slot.twoPlayer ? "  👥2P" : "  👤1P"), 200, y+52);
+      var playTime = slot.stats ? slot.stats.playTime || 0 : 0;
+      ctx.fillStyle = "#ffd700"; ctx.fillText("⏱️ " + formatTime(playTime), 430, y+52);
+      ctx.fillStyle = "#555"; ctx.textAlign = "right"; ctx.fillText("[DEL/X] Borrar", 600, y+40);
     } else {
-      ctx.fillStyle = "#444"; ctx.fillText("Vacía — ENTER para nueva partida", 200, y+34);
+      ctx.fillStyle = "#444"; ctx.fillText("Vacía — ENTER para nueva partida", 200, y+40);
     }
-    if (isSel) { ctx.fillStyle = "#6cc"; ctx.fillText("▶", 165, y+20); }
+    if (isSel) { ctx.fillStyle = "#6cc"; ctx.fillText("▶", 165, y+30); }
   }
-
-  // EDITOR DE NIVELES - Opción 5
-  var editorY = 180 + 5 * 65;
-  var editorSelected = (menuSelection === 5);
-  ctx.fillStyle = editorSelected ? "rgba(100,200,255,0.15)" : "rgba(255,255,255,0.02)";
-  ctx.fillRect(180, editorY, 440, 55);
-  ctx.strokeStyle = editorSelected ? "#6cc" : "#2a2a3a"; ctx.lineWidth = editorSelected ? 2 : 1;
-  ctx.strokeRect(180, editorY, 440, 55);
-  ctx.fillStyle = editorSelected ? "#6cc" : "#aaa";
-  ctx.font = "bold 14px monospace";
-  ctx.textAlign = "left";
-  ctx.fillText("🎨  EDITOR DE NIVELES", 200, editorY + 20);
-  ctx.fillStyle = "#666";
-  ctx.font = "11px monospace";
-  ctx.fillText("Crea y guarda tus propios niveles", 200, editorY + 34);
-  ctx.fillStyle = "#0ff";
-  ctx.font = "10px monospace";
-  ctx.fillText(savedLevels.length > 0 ? "📂 " + savedLevels.length + " niveles guardados" : "", 200, editorY + 48);
-  if (editorSelected) { ctx.fillStyle = "#6cc"; ctx.fillText("▶", 165, editorY + 20); }
-
-  // ADMIN - Opción 6
-  var adminY = editorY + 65;
-  var adminSelected = (menuSelection === 6);
+  var adminY = 540, adminSelected = menuSelection === 5;
   ctx.fillStyle = adminSelected ? "rgba(255,80,80,0.18)" : "rgba(255,255,255,0.02)";
-  ctx.fillRect(180, adminY, 440, 55);
+  ctx.fillRect(180, adminY - 20, 440, 32);
   ctx.strokeStyle = adminSelected ? "#f66" : "#333"; ctx.lineWidth = adminSelected ? 2 : 1;
-  ctx.strokeRect(180, adminY, 440, 55);
-  ctx.fillStyle = adminSelected ? "#f66" : "#888";
-  ctx.font = "bold 14px monospace";
-  ctx.fillText((adminSelected ? "▶  " : "    ") + "🔑 Panel del admin", 200, adminY + 20);
-  ctx.fillStyle = "#555";
-  ctx.font = "11px monospace";
-  ctx.fillText("Acceso rápido (contraseña: 123412)", 200, adminY + 34);
-  if (adminSelected) { ctx.fillStyle = "#f66"; ctx.fillText("▶", 165, adminY + 20); }
-
+  ctx.strokeRect(180, adminY - 20, 440, 32);
+  ctx.fillStyle = adminSelected ? "#f66" : "#888"; ctx.font = "bold 14px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText((adminSelected ? "▶  " : "    ") + "Panel del admin", canvas.width/2, adminY);
   ctx.textAlign = "center"; ctx.fillStyle = "#333"; ctx.font = "12px monospace";
   ctx.fillText(gamepadConnected ? "⬆️⬇️ Navegar  •  ❌ Seleccionar  •  ⬜ Borrar" : "↑/↓ Navegar  •  ENTER Seleccionar  •  DEL/X Borrar", canvas.width/2, 580);
 
@@ -570,10 +537,6 @@ function drawMenu() {
   }
   ctx.textAlign = "left";
 }
-
-// ============================================
-// MENÚ DE IDIOMA Y DISPOSITIVO
-// ============================================
 
 function drawLanguageSelect() {
   ctx.fillStyle = "#050510"; ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -628,10 +591,6 @@ function drawDeviceSelect() {
   ctx.textAlign = "left";
 }
 
-// ============================================
-// MENÚ DE PAUSA
-// ============================================
-
 function drawPause() {
   if (pauseSubState === "diary") {
     drawDiary();
@@ -641,52 +600,30 @@ function drawPause() {
     drawAudioMenu();
     return;
   }
-  if (pauseSubState === "controls") {
-    drawControls();
-    return;
-  }
-  
-  ctx.fillStyle = "rgba(0,0,0,0.82)";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.textAlign = "center";
-  ctx.fillStyle = "#6cc";
-  ctx.font = "bold 32px monospace";
+  ctx.fillStyle = "rgba(0,0,0,0.82)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.textAlign = "center"; ctx.fillStyle = "#6cc"; ctx.font = "bold 32px monospace";
   ctx.fillText("⏸️  PAUSA", canvas.width/2, 130);
-  ctx.fillStyle = "#446";
-  ctx.font = "14px monospace";
+  ctx.fillStyle = "#446"; ctx.font = "14px monospace";
   ctx.fillText(VERSION + (twoPlayerMode ? "  •  👥 MODO 2P" : "  •  👤 MODO 1P"), canvas.width/2, 155);
-  
   var opts = [
-    "▶  Reanudar",
-    "📖  Ver Diario",
+    "▶  Reanudar", "📖  Ver Diario",
     twoPlayerMode ? "👤  Quitar J2" : "👥  Agregar J2",
-    "🎮  Controles",
-    "🔊  Música y sonido",
-    "🚪  Salir al Menú"
+    "🎮  Controles", "🔊  Música y sonido", "🚪  Salir al Menú"
   ];
-  
   for (var i = 0; i < 6; i++) {
-    var y = 200 + i * 36;
+    var y = 200 + i * 40;
     var isSel = (i === pauseSelection);
     ctx.fillStyle = isSel ? "rgba(100,200,255,0.15)" : "transparent";
-    ctx.fillRect(250, y - 18, 300, 32);
-    ctx.strokeStyle = isSel ? "#6cc" : "#333";
-    ctx.lineWidth = isSel ? 2 : 1;
-    ctx.strokeRect(250, y - 18, 300, 32);
-    ctx.fillStyle = isSel ? "#6cc" : "#aaa";
-    ctx.font = "bold 15px monospace";
-    ctx.fillText(opts[i], canvas.width/2, y + 4);
+    ctx.fillRect(250, y - 18, 300, 36);
+    ctx.strokeStyle = isSel ? "#6cc" : "#333"; ctx.lineWidth = isSel ? 2 : 1;
+    ctx.strokeRect(250, y - 18, 300, 36);
+    ctx.fillStyle = isSel ? "#6cc" : "#aaa"; ctx.font = "bold 16px monospace";
+    ctx.fillText(opts[i], canvas.width/2, y + 5);
   }
-  
-  ctx.fillStyle = "#444";
-  ctx.font = "12px monospace";
-  ctx.fillText("↑/↓ Navegar  •  ENTER Seleccionar  •  ESC Volver", canvas.width/2, 500);
+  ctx.fillStyle = "#444"; ctx.font = "12px monospace";
+  ctx.fillText("↑/↓ Navegar  •  ENTER Seleccionar  •  ESC Volver", canvas.width/2, 480);
   ctx.textAlign = "left";
 }
-
-// ============================================
-// MENÚ DE AUDIO
-// ============================================
 
 function drawAudioMenu() {
   ctx.fillStyle = "rgba(0,0,0,0.9)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -702,10 +639,6 @@ function drawAudioMenu() {
   ctx.fillText(translateText("ESC para volver"), canvas.width/2, 410);
   ctx.textAlign = "left";
 }
-
-// ============================================
-// DIARIO / BESTIARIO
-// ============================================
 
 function drawDiary() {
   ctx.fillStyle = "rgba(5,5,16,0.95)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -752,10 +685,6 @@ function drawDiary() {
   ctx.textAlign = "left";
 }
 
-// ============================================
-// CONTROLES
-// ============================================
-
 function drawControls() {
   ctx.fillStyle = "rgba(0,0,0,0.92)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.textAlign = "center";
@@ -777,10 +706,6 @@ function drawControls() {
   ctx.textAlign = "left";
 }
 
-// ============================================
-// TRANSICIÓN
-// ============================================
-
 function drawTransition() {
   drawGameWorld();
   ctx.fillStyle = "rgba(0, 0, 0, " + transFade + ")";
@@ -793,10 +718,6 @@ function drawTransition() {
     ctx.textAlign = "left";
   }
 }
-
-// ============================================
-// TIENDA
-// ============================================
 
 function drawShop() {
   if (shopAnim > 0) {
@@ -816,15 +737,19 @@ function drawShop() {
   ctx.fillStyle = "#151525";
   ctx.beginPath(); ctx.ellipse(canvas.width/2, 250, 330, 220, 0, Math.PI, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#25253a";
-  ctx.fillRect(70, 250, canvas.width - 140, 260);
+  ctx.fillRect(70, 250, canvas.width - 140, 310);
   ctx.fillStyle = "#30304a";
   ctx.fillRect(70, 250, canvas.width - 140, 8);
+  ctx.fillStyle = "#3a3a4a";
+  ctx.fillRect(70, 560, canvas.width - 140, 40);
+  ctx.fillStyle = "#1a1a2a";
+  ctx.fillRect(70, 560, canvas.width - 140, 5);
   for (var rock = 0; rock < 8; rock++) {
     var rx = 100 + rock * 83, ry = 300 + (rock % 3) * 42;
     ctx.fillStyle = rock % 2 ? "#45455c" : "#38384f";
     ctx.beginPath(); ctx.arc(rx, ry, 18 + (rock % 3) * 5, 0, Math.PI * 2); ctx.fill();
   }
-  var vendorX = canvas.width/2, vendorY = 325;
+  var vendorX = canvas.width/2, vendorY = 445;
   ctx.fillStyle = "#8b4513"; ctx.fillRect(vendorX - 12, vendorY + 28, 24, 55);
   ctx.fillStyle = "#a0522d"; ctx.fillRect(vendorX - 12, vendorY + 28, 24, 6);
   ctx.fillStyle = "#ffd700"; ctx.fillRect(vendorX - 7, vendorY + 42, 4, 4); ctx.fillRect(vendorX + 3, vendorY + 42, 4, 4);
@@ -835,6 +760,17 @@ function drawShop() {
   ctx.fillText(shopId === 0 ? "TIENDA DEL EXPLORADOR" : "TIENDA DEL CORAZÓN", canvas.width/2, 85);
   ctx.fillStyle = "#6cc"; ctx.font = "16px monospace";
   ctx.fillText("💠 Azari: " + azari, canvas.width/2, 120);
+  ctx.fillStyle = "#553311"; ctx.fillRect(82, 500, 38, 60);
+  ctx.fillStyle = "#ffd700"; ctx.fillRect(106, 532, 5, 5);
+  ctx.fillStyle = "#aaa"; ctx.font = "12px monospace";
+  ctx.fillText("E: salir", 101, 585);
+  if (!shopMenuOpen) {
+    ctx.fillStyle = "#aaa"; ctx.font = "14px monospace";
+    ctx.fillText("Acércate al vendedor y pulsa E", canvas.width/2, 190);
+    ctx.fillText("Pulsa E junto a la puerta para salir", canvas.width/2, 215);
+    ctx.textAlign = "left";
+    return;
+  }
   if (shopId === 0) {
     var shopItems = ["🗺️ Mapa - 45 Azari", "🏹 Arco - 35 Azari", "🏹 20 flechas - 5 Azari"];
     for (var i = 0; i < shopItems.length; i++) {
@@ -866,14 +802,10 @@ function drawShop() {
       ctx.fillText((heartSelected ? "▶  " : "    ") + heartItems[i], canvas.width/2, heartY);
     }
     ctx.fillStyle = "#666"; ctx.font = "13px monospace";
+  }
     ctx.fillText("J1: " + heartFragments1 + "/3  •  J2: " + heartFragments2 + "/3", canvas.width/2, 360);
     ctx.fillText(shopConfirm >= 0 ? "ENTER confirmar compra  •  ESC cancelar" : "↑/↓ Elegir  •  ENTER Comprar  •  ESC Salir", canvas.width/2, 390);
-  }
 }
-
-// ============================================
-// EXPLOSIÓN
-// ============================================
 
 function drawExplosion() {
   drawGameWorld();
@@ -900,223 +832,4 @@ function drawExplosion() {
     ctx.fillText("CARGANDO", canvas.width/2, 30);
     ctx.textAlign = "left";
   }
-}
-
-// ============================================
-// MENÚ DEL EDITOR DE NIVELES
-// ============================================
-
-function drawEditorMenu() {
-  ctx.fillStyle = "#050510";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-  ctx.fillStyle = "#fff";
-  for (var i = 0; i < 60; i++) {
-    var sx = (i * 137) % 800, sy = (i * 89) % 600;
-    ctx.globalAlpha = 0.08 + Math.sin(Date.now()/1000 + i) * 0.06;
-    ctx.fillRect(sx, sy, 1.5, 1.5);
-  }
-  ctx.globalAlpha = 1;
-  
-  ctx.textAlign = "center";
-  
-  ctx.fillStyle = "#6cc";
-  ctx.font = "bold 36px monospace";
-  ctx.fillText("🎨 EDITOR DE NIVELES", canvas.width/2, 80);
-  
-  ctx.fillStyle = "#446";
-  ctx.font = "14px monospace";
-  ctx.fillText("Crea y guarda tus propios niveles", canvas.width/2, 110);
-  
-  ctx.fillStyle = "#ffd700";
-  ctx.font = "bold 16px monospace";
-  ctx.fillText("📂 Niveles guardados: " + savedLevels.length, canvas.width/2, 150);
-  
-  var opts = [
-    "🆕  Crear nivel nuevo",
-    "📂  Cargar nivel guardado",
-    "🗑️  Eliminar nivel",
-    "🔙  Volver al menú"
-  ];
-  
-  for (var i = 0; i < opts.length; i++) {
-    var y = 200 + i * 55;
-    var isSel = (i === editorMenuSelection);
-    ctx.fillStyle = isSel ? "rgba(100,200,255,0.15)" : "rgba(255,255,255,0.02)";
-    ctx.fillRect(200, y - 20, 400, 40);
-    ctx.strokeStyle = isSel ? "#6cc" : "#333";
-    ctx.lineWidth = isSel ? 2 : 1;
-    ctx.strokeRect(200, y - 20, 400, 40);
-    ctx.fillStyle = isSel ? "#6cc" : "#aaa";
-    ctx.font = "bold 18px monospace";
-    ctx.fillText((isSel ? "▶  " : "    ") + opts[i], canvas.width/2, y + 8);
-  }
-  
-  if (savedLevels.length > 0) {
-    ctx.fillStyle = "#666";
-    ctx.font = "12px monospace";
-    ctx.fillText("Niveles guardados:", canvas.width/2, 440);
-    
-    var maxShow = Math.min(savedLevels.length, 5);
-    for (var i = 0; i < maxShow; i++) {
-      var level = savedLevels[i];
-      var y = 465 + i * 22;
-      ctx.fillStyle = "#888";
-      ctx.font = "11px monospace";
-      ctx.fillText((i+1) + ". " + level.name + " (" + level.createdAt.slice(0,10) + ")", canvas.width/2, y);
-    }
-    if (savedLevels.length > 5) {
-      ctx.fillStyle = "#555";
-      ctx.font = "11px monospace";
-      ctx.fillText("... y " + (savedLevels.length - 5) + " más", canvas.width/2, 465 + 5 * 22);
-    }
-  }
-  
-  ctx.fillStyle = "#444";
-  ctx.font = "12px monospace";
-  ctx.fillText("↑/↓ Navegar  •  ENTER Seleccionar  •  ESC Volver", canvas.width/2, 570);
-  ctx.textAlign = "left";
-}
-
-// ============================================
-// DIBUJAR ELEMENTOS DEL EDITOR EN EL JUEGO
-// ============================================
-
-function drawEditorUI() {
-  if (gameState !== ST_EDITOR) return;
-  
-  ctx.save();
-  ctx.translate(-Math.floor(cameraX), -Math.floor(cameraY));
-  
-  // Dibujar grid
-  if (editorShowGrid) {
-    ctx.strokeStyle = "rgba(100, 100, 200, 0.2)";
-    ctx.lineWidth = 1;
-    var gridSize = editorGridSize;
-    var startX = Math.floor(cameraX / gridSize) * gridSize;
-    var startY = Math.floor(cameraY / gridSize) * gridSize;
-    var endX = startX + ROOM_W + gridSize;
-    var endY = Math.max(600, startY + ROOM_H + gridSize);
-    
-    for (var x = startX; x < endX; x += gridSize) {
-      ctx.beginPath();
-      ctx.moveTo(x, cameraY);
-      ctx.lineTo(x, cameraY + canvas.height);
-      ctx.stroke();
-    }
-    for (var y = startY; y < endY; y += gridSize) {
-      ctx.beginPath();
-      ctx.moveTo(cameraX, y);
-      ctx.lineTo(cameraX + canvas.width, y);
-      ctx.stroke();
-    }
-  }
-  
-  // Dibujar límites de la sala
-  ctx.strokeStyle = "rgba(200, 100, 100, 0.5)";
-  ctx.lineWidth = 2;
-  var currentRoomStart = currentRoom * ROOM_W;
-  ctx.strokeRect(currentRoomStart, 0, ROOM_W, rooms[currentRoom].height);
-  
-  // Dibujar elementos
-  editorElements.forEach(function(el, index) {
-    var isSelected = index === editorSelectedElement;
-    var color, strokeColor;
-    
-    if (el.type === 'platform') {
-      color = isSelected ? "rgba(0, 255, 100, 0.7)" : "rgba(0, 200, 0, 0.5)";
-      strokeColor = isSelected ? "#0f0" : "#0a0";
-    } else if (el.type === 'spike') {
-      color = isSelected ? "rgba(255, 100, 100, 0.7)" : "rgba(255, 0, 0, 0.5)";
-      strokeColor = isSelected ? "#f00" : "#a00";
-    } else if (el.type === 'enemy') {
-      color = isSelected ? "rgba(255, 100, 255, 0.7)" : "rgba(255, 0, 255, 0.5)";
-      strokeColor = isSelected ? "#f0f" : "#a0a";
-    }
-    
-    ctx.fillStyle = color;
-    ctx.fillRect(el.x, el.y, el.w, el.h);
-    ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = isSelected ? 3 : 2;
-    ctx.strokeRect(el.x, el.y, el.w, el.h);
-    
-    // Dibujar identificación del tipo
-    if (isSelected) {
-      ctx.fillStyle = strokeColor;
-      ctx.font = "bold 12px monospace";
-      ctx.fillText(el.type.charAt(0).toUpperCase(), el.x + 4, el.y + 16);
-      
-      // Dibujar manija de redimensionamiento
-      ctx.fillStyle = strokeColor;
-      ctx.fillRect(el.x + el.w - 8, el.y + el.h - 8, 8, 8);
-      ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(el.x + el.w - 8, el.y + el.h - 8, 8, 8);
-    }
-  });
-  
-  // Cursor del editor
-  var cursorX = editorMouseX + cameraX;
-  var cursorY = editorMouseY + cameraY;
-  ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
-  ctx.fillRect(cursorX - 8, cursorY - 8, 16, 16);
-  ctx.strokeStyle = "#fff";
-  ctx.lineWidth = 1;
-  ctx.strokeRect(cursorX - 12, cursorY - 12, 24, 24);
-  
-  ctx.restore();
-  
-  // ============================================
-  // HUD DEL EDITOR (SIEMPRE VISIBLE)
-  // ============================================
-  
-  // Panel superior con información
-  ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
-  ctx.fillRect(0, 0, canvas.width, 100);
-  ctx.strokeStyle = "#0ff";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(0, 0, canvas.width, 100);
-  
-  ctx.fillStyle = "#0ff";
-  ctx.font = "bold 16px monospace";
-  ctx.textAlign = "left";
-  ctx.fillText("🎨 EDITOR DE NIVELES - " + getRoomName(currentRoom), 10, 25);
-  
-  ctx.fillStyle = "#aaa";
-  ctx.font = "12px monospace";
-  var modes = ["🟩 Plataforma", "🌹 Púa", "👹 Enemigo", "🗑️ Borrar"];
-  var currentModeText = modes[editorSelection] || "Plataforma";
-  ctx.fillText("Modo: " + currentModeText, 10, 50);
-  ctx.fillText("Elementos: " + editorElements.length + " | Grid: " + (editorShowGrid ? "ON" : "OFF") + " | Snap: " + (editorSnapToGrid ? "ON" : "OFF"), 10, 70);
-  
-  // Atajos
-  ctx.fillStyle = "#888";
-  ctx.font = "10px monospace";
-  ctx.fillText("1:Plat  2:Púa  3:Enemy  X:Borrar  G:Grid  T:Snap  S:Guardar  C:Copiar JSON  ESC:Salir", 10, 90);
-  
-  // Panel derecho con instrucciones
-  ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-  ctx.fillRect(canvas.width - 250, 0, 250, 140);
-  ctx.strokeStyle = "#0ff";
-  ctx.lineWidth = 1;
-  ctx.strokeRect(canvas.width - 250, 0, 250, 140);
-  
-  ctx.fillStyle = "#0ff";
-  ctx.font = "bold 12px monospace";
-  ctx.textAlign = "right";
-  ctx.fillText("CONTROLES", canvas.width - 10, 20);
-  
-  ctx.fillStyle = "#aaa";
-  ctx.font = "10px monospace";
-  ctx.textAlign = "right";
-  ctx.fillText("IZQ: Agregar/Mover", canvas.width - 10, 37);
-  ctx.fillText("DER: Redimensionar", canvas.width - 10, 50);
-  ctx.fillText("Mouse: Posicionar", canvas.width - 10, 63);
-  ctx.fillText("G: Mostrar/ocultar grid", canvas.width - 10, 76);
-  ctx.fillText("T: Snap a grid", canvas.width - 10, 89);
-  ctx.fillText("S: Guardar nivel", canvas.width - 10, 102);
-  ctx.fillText("C: Copiar JSON", canvas.width - 10, 115);
-  ctx.fillText("ESC: Salir del editor", canvas.width - 10, 128);
-  
-  ctx.textAlign = "left";
 }
