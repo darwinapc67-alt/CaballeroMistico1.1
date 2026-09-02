@@ -440,7 +440,7 @@ function tryInteractFor(p) {
       var npc = s.npc;
       var dx = (p.x + p.w/2) - (npc.x + npc.w/2);
       var dy = (p.y + p.h/2) - (npc.y + npc.h/2);
-      if (Math.sqrt(dx*dx + dy*dy) < 90 && !shopOpen) {
+      if (Math.sqrt(dx*dx + dy*dy) < 90 && !shopOpen && shopExitCooldown <= 0) {
         sfxNpc();
         shopPreviousX = player.x; shopPreviousY = player.y;
         shopOpen = true; shopMenuOpen = false; shopId = s.id; menuSelection = 0; shopConfirm = -1; shopAnim = 180;

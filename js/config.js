@@ -100,7 +100,7 @@ var explosionAnim = 0, explosionX = 0, explosionY = 0;
 var knockbackVX = 0, knockbackVY = 0;
 
 var azari = 0, hasMap = false, hasBow = false, arrows = 0, shopOpen = false, shopMenuOpen = false, shopId = 0, shopAnim = 0, shopConfirm = -1;
-var shopPreviousX = 0, shopPreviousY = 0;
+var shopPreviousX = 0, shopPreviousY = 0, shopExitCooldown = 0;
 var heartFragments1 = 0, heartFragments2 = 0;
 var heartFragmentsBought1 = 0, heartFragmentsBought2 = 0;
 var hasAzariCharm = false, hasDoubleJump = false;

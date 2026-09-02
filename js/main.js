@@ -34,6 +34,7 @@ function resetAll() {
 
 function update() {
   if (shopAnim > 0) shopAnim--;
+  if (shopExitCooldown > 0) shopExitCooldown--;
   if (shopOpen && gameState === ST_PLAYING) { updateShopPlayer(); return; }
   if (gameState === ST_EXPLOSION) { updateExplosion(); return; }
   if (gameState === ST_TRANSITION) { updateTransition(); return; }

@@ -181,7 +181,7 @@ window.addEventListener("keydown", function(e) {
         var vendorDistance = Math.abs(player.x - 680) + Math.abs(player.y - 445);
         if (vendorDistance < 115) { shopMenuOpen = true; menuSelection = 0; sfxNpc(); }
         if (Math.abs(player.x - 100) < 70 && player.y > 500) {
-          shopOpen = false; player.x = shopPreviousX; player.y = shopPreviousY;
+          shopOpen = false; shopMenuOpen = false; shopExitCooldown = 30; keys["e"] = false; player.x = shopPreviousX; player.y = shopPreviousY;
         }
         e.preventDefault(); return;
       }
@@ -234,7 +234,7 @@ window.addEventListener("keydown", function(e) {
         e.preventDefault(); return;
       }
     }
-    if (e.key === "Escape") { shopOpen = false; menuSelection = 0; player.x = shopPreviousX; player.y = shopPreviousY; e.preventDefault(); return; }
+    if (e.key === "Escape") { shopOpen = false; shopMenuOpen = false; shopConfirm = -1; shopExitCooldown = 30; player.x = shopPreviousX; player.y = shopPreviousY; e.preventDefault(); return; }
   }
 });
 
@@ -368,7 +368,7 @@ function processGamepadInput() {
       deviceSelection = (deviceSelection + 1) % devices.length;
       return;
     }
-    if (shopOpen) { shopOpen = false; menuSelection = 0; player.x = shopPreviousX; player.y = shopPreviousY; return; }
+    if (shopOpen) { shopOpen = false; shopMenuOpen = false; shopConfirm = -1; shopExitCooldown = 30; keys["e"] = false; player.x = shopPreviousX; player.y = shopPreviousY; return; }
     if (gameState === ST_PLAYING) { gameState = ST_PAUSED; pauseSubState = "menu"; pauseSelection = 0; sfxPause(); return; }
     else if (gameState === ST_PAUSED) { if (pauseSubState === "diary" || pauseSubState === "controls" || pauseSubState === "audio") pauseSubState = "menu"; else gameState = ST_PLAYING; return; }
     else if (gameState === ST_INVENTORY) { inventoryOpen = false; gameState = ST_PLAYING; return; }
