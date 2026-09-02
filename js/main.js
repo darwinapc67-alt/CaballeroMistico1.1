@@ -114,10 +114,13 @@ function updateShopPlayer() {
   if (shopAnim > 0) return;
   if (keys["a"] || keys["arrowleft"]) player.x -= 3.5;
   if (keys["d"] || keys["arrowright"]) player.x += 3.5;
-  if (keys[" "] || keys["arrowup"]) player.y = Math.max(430, player.y - 4);
-  else if (player.y < 530) player.y += 4;
+  if ((keys[" "] || keys["arrowup"]) && player.y >= 530) player.vy = -14.5;
+  player.vy += GRAVITY;
+  if (player.vy > 12) player.vy = 12;
+  player.y += player.vy;
+  if (player.y >= 530) { player.y = 530; player.vy = 0; player.onGround = true; }
+  else player.onGround = false;
   player.x = Math.max(100, Math.min(canvas.width - 100, player.x));
-  player.y = Math.min(530, player.y);
 }
 
 function loop() {
