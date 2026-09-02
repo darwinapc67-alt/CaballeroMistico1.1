@@ -113,8 +113,8 @@ function update() {
 
 function updateShopPlayer() {
   if (shopAnim > 0) return;
-  if (keys["a"] || keys["arrowleft"]) player.x -= 3.5;
-  if (keys["d"] || keys["arrowright"]) player.x += 3.5;
+  if (keys["a"] || keys["arrowleft"]) { player.x -= 3.5; player.facing = -1; }
+  if (keys["d"] || keys["arrowright"]) { player.x += 3.5; player.facing = 1; }
   if ((keys[" "] || keys["arrowup"]) && player.y >= 530) player.vy = -14.5;
   player.vy += GRAVITY;
   if (player.vy > 12) player.vy = 12;
