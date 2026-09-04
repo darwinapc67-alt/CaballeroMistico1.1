@@ -406,7 +406,7 @@ var room9 = {
     {x:7600, y:250, w:80, h:14}, {x:7800, y:280, w:80, h:14}
   ],
   spikes: [], walls: [{x:7980, y:0, w:20, h:600}],
-  transitionZone: null,
+  transitionZone: {x:4760, y:460, w:50, h:100, to:6},
   shops: [
     { id: 0, npc: {x:7380, y:525, w:20, h:35}, label: "" },
     { id: 1, npc: {x:7780, y:525, w:20, h:35}, label: "" }

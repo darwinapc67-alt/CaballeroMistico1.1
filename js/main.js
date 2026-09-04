@@ -24,8 +24,9 @@ function resetAll() {
   room0.transitionZone = null; room1.transitionZone = null; room2.transitionZone = null;
   room3.transitionZone = null; room4.transitionZone = null;
   room5.transitionZone = {x:4750, y:460, w:50, h:100, to:6};
-  room6.transitionZone = null; room7.transitionZone = null; room8.transitionZone = null; room9.transitionZone = null;
+  room6.transitionZone = null; room7.transitionZone = null; room8.transitionZone = null; 
   room1.pedestal.taken = false; room1.pedestal.glow = 0;
+  room9.transitionZone = {x:4760, y:460, w:50, h:100, to:6};
   if (room2.bombBox) { room2.bombBox.broken = false; room2.bombBox.exploded = false; }
   if (room9.healingStone) room9.healingStone.active = true;
   enemies.forEach(function(e){ e.dead = false; });
