@@ -501,26 +501,6 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
 
     checkSwordHitEnemiesFor(p);
 
-    // Golpe final del combo
-    if (p.comboStep === 3) {
-      e.vx = p.facing * 8;
-      e.vy = -8;
-
-      spawnParticles(
-        e.x + e.w / 2,
-        e.y + e.h / 2,
-        "#ffd700",
-        18,
-        6
-      );
-
-      spawnFloatText(
-        e.x,
-        e.y - 30,
-        "¡GOLPE FUERTE!",
-        "#ffd700"
-      );
-    }
   }
 
   if (shootPressed && p.id === 1 && hasBow && arrows > 0 && p.bowCooldown <= 0 && !p.frozen) {
@@ -599,6 +579,13 @@ function checkSwordHitEnemiesFor(p) {
       if (rectHit(swingBoxes[i], e)) { hit = true; break; }
     }
     if (hit) {
+      if (p.comboStep === 3) {
+        e.vx = p.facing * 8;
+        e.vy = -8;
+        spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#ffd700", 18, 6);
+        spawnFloatText(e.x, e.y - 30, "¡GOLPE FUERTE!", "#ffd700");
+      }
+
       e.dead = true;
       stats.enemiesKilled++;
       for (var i = 0; i < 15; i++) {
