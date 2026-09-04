@@ -150,6 +150,12 @@ var player2 = {
   swordSheathed: true, swordSheathTimer: 0
 };
 
+player.comboStep = 0;
+player.comboTimer = 0;
+
+player2.comboStep = 0;
+player2.comboTimer = 0;
+
 // DASH
 var DASH_SPEED = 9;
 var DASH_DURATION = 10;

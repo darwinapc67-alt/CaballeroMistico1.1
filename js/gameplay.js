@@ -408,6 +408,16 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   }
 
   if (p.swordSwing > 0) p.swordSwing--;
+
+  // =========================
+  // COMBO DE ESPADA
+  // =========================
+  if (p.comboTimer > 0) {
+    p.comboTimer--;
+  } else {
+    p.comboStep = 0;
+  }
+
   if (p.swordCooldown > 0) p.swordCooldown--;
   if (p.bowCooldown > 0) p.bowCooldown--;
   if (!p.swordSheathed && p.swordSwing <= 0) {
@@ -416,14 +426,101 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   }
 
   if (attackPressed && p.hasSword && p.swordEquipped && p.swordCooldown <= 0 && p.swordSwing <= 0 && !p.frozen) {
-    p.swordSwing = 12; p.swordCooldown = 22;
+
+    // Avanzar combo
+    p.comboStep++;
+
+    if (p.comboStep > 3) {
+      p.comboStep = 1;
+    }
+
+    // Tiempo para continuar el combo
+    p.comboTimer = 45;
+
+    // Diferentes ataques
+    if (p.comboStep === 1) {
+      p.swordSwing = 12;
+      p.swordCooldown = 22;
+    }
+
+    else if (p.comboStep === 2) {
+      p.swordSwing = 12;
+      p.swordCooldown = 18;
+    }
+
+    else if (p.comboStep === 3) {
+      p.swordSwing = 16;
+      p.swordCooldown = 28;
+    }
+
     p.swordSheathed = false;
     p.swordSheathTimer = 180;
+
     stats.attacks++;
-    spawnParticles(p.x + p.w / 2 + p.facing * 18, p.y + p.h / 2, "#ffd700", 6, 4);
+
+    // Efectos diferentes
+    if (p.comboStep === 3) {
+      spawnParticles(
+        p.x + p.w / 2 + p.facing * 25,
+        p.y + p.h / 2,
+        "#fff",
+        15,
+        6
+      );
+
+      spawnFloatText(
+        p.x,
+        p.y - 25,
+        "¡COMBO x3!",
+        "#ffd700"
+      );
+    } else {
+      spawnParticles(
+        p.x + p.w / 2 + p.facing * 18,
+        p.y + p.h / 2,
+        "#ffd700",
+        6,
+        4
+      );
+
+      if (p.comboStep === 2) {
+        spawnFloatText(
+          p.x,
+          p.y - 25,
+          "¡COMBO x2!",
+          "#ffea70"
+        );
+      }
+    }
+
     sfxAttack();
-    if (p.id === 1) { tryBreakBombBox(); }
+
+    if (p.id === 1) {
+      tryBreakBombBox();
+    }
+
     checkSwordHitEnemiesFor(p);
+
+    // Golpe final del combo
+    if (p.comboStep === 3) {
+      e.vx = p.facing * 8;
+      e.vy = -8;
+
+      spawnParticles(
+        e.x + e.w / 2,
+        e.y + e.h / 2,
+        "#ffd700",
+        18,
+        6
+      );
+
+      spawnFloatText(
+        e.x,
+        e.y - 30,
+        "¡GOLPE FUERTE!",
+        "#ffd700"
+      );
+    }
   }
 
   if (shootPressed && p.id === 1 && hasBow && arrows > 0 && p.bowCooldown <= 0 && !p.frozen) {
@@ -481,6 +578,14 @@ function checkSwordHitEnemiesFor(p) {
   if (p.swordSwing <= 0) return;
 
   var reach = 30;
+
+  if (p.comboStep === 2) {
+    reach = 42;
+  }
+
+  if (p.comboStep === 3) {
+    reach = 60;
+  }
   var swingBoxes = [
     { x: p.x + (p.facing > 0 ? p.w : -reach), y: p.y + 2, w: reach, h: 26 },
     { x: p.x - 6, y: p.y - reach + 4, w: p.w + 12, h: reach },
