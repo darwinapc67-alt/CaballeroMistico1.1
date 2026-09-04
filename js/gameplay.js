@@ -1,8 +1,14 @@
 function playerTakeDamage(p, dmg) {
   if (p.inv > 0 || p.frozen) return;
+  if (p.blocking) {
+    p.inv = 8;
+    spawnParticles(p.x + p.w/2, p.y + p.h/2, "#9de8ff", 8, 2);
+    spawnFloatText(p.x, p.y - 18, "¡BLOQUEADO!", "#9de8ff");
+    return;
+  }
   p.hp -= dmg;
   p.inv = 40;
-  spawnParticles(p.x + p.w / 2, p.y + p.h / 2, "#f44", 10);
+  spawnParticles(p.x + p.w/2, p.y + p.h/2, "#f44", 10);
   flash = 0.4;
   sfxHit();
   if (p.hp <= 0) {
@@ -13,17 +19,17 @@ function playerTakeDamage(p, dmg) {
     sfxDeath();
     for (var i = 0; i < 30; i++) {
       deathParticles.push({
-        x: p.x + p.w / 2, y: p.y + p.h / 2,
-        vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8 - 3,
+        x: p.x + p.w/2, y: p.y + p.h/2,
+        vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8 - 3,
         life: 30 + Math.random() * 30, maxLife: 50,
-        color: ["#f44", "#f88", "#f00", "#ff0"][Math.floor(Math.random() * 4)],
+        color: ["#f44", "#f88", "#f00", "#ff0"][Math.floor(Math.random()*4)],
         size: 3 + Math.random() * 4
       });
     }
     p.x = currentRoom * ROOM_W + 100 + (p.id === 2 ? 40 : 0);
     p.y = 400; p.vx = 0; p.vy = 0;
     spawnFloatText(p.x, p.y - 20, "¡J" + p.id + " cayó!", "#f44");
-    spawnParticles(p.x + p.w / 2, p.y + p.h / 2, "#f00", 20, 5);
+    spawnParticles(p.x + p.w/2, p.y + p.h/2, "#f00", 20, 5);
   }
 }
 
@@ -34,6 +40,8 @@ function resetPlayer() {
   player.frozen = false;
   player.swordSwing = 0; player.swordCooldown = 0; player.bowCooldown = 0;
   player.swordSheathed = true; player.swordSheathTimer = 0;
+  player.blocking = false;
+  player.dashTimer = 0; player.dashCooldown = 0; player.dashDir = 1; player.dashing = false;
   playerDead = false;
   deathTimer = 0;
   particles = []; floatTexts = []; arrowsInFlight = []; flash = 0;
@@ -46,25 +54,190 @@ function resetPlayer() {
     player2.frozen = false;
     player2.swordSwing = 0; player2.swordCooldown = 0; player2.bowCooldown = 0;
     player2.swordSheathed = true; player2.swordSheathTimer = 0;
+    player2.blocking = false;
+    player2.dashTimer = 0; player2.dashCooldown = 0; player2.dashDir = 1; player2.dashing = false;
+  }
+}
+
+function bossTarget(e) {
+  var target = player;
+  var dx = (player.x + player.w / 2) - (e.x + e.w / 2);
+  var dy = (player.y + player.h / 2) - (e.y + e.h / 2);
+  var best = Math.sqrt(dx * dx + dy * dy);
+  if (twoPlayerMode) {
+    var dx2 = (player2.x + player2.w / 2) - (e.x + e.w / 2);
+    var dy2 = (player2.y + player2.h / 2) - (e.y + e.h / 2);
+    var d2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+    if (d2 < best) { target = player2; dx = dx2; dy = dy2; best = d2; }
+  }
+  return { player: target, dx: dx, dy: dy, dist: best };
+}
+
+function spawnBossProjectile(e, vx, vy, damage, kind, extra) {
+  extra = extra || {};
+  bossProjectiles.push({
+    x: e.x + e.w / 2 - (extra.w || 10) / 2, y: e.y + e.h / 2 - (extra.h || 10) / 2,
+    w: extra.w || 10, h: extra.h || 10, vx: vx, vy: vy, gravity: extra.gravity || 0,
+    damage: damage, life: extra.life || 180, room: e.room, kind: kind || "rock",
+    color: extra.color || "#b66", homing: !!extra.homing
+  });
+}
+
+function bossMeleeHit(e, damage, reach) {
+  if (e.attackHit) return;
+  var hitbox = { x: e.x - reach, y: e.y - 10, w: e.w + reach * 2, h: e.h + 20 };
+  if (rectHit(player, hitbox)) { playerTakeDamage(player, damage); e.attackHit = true; }
+  if (twoPlayerMode && rectHit(player2, hitbox)) { playerTakeDamage(player2, damage); e.attackHit = true; }
+}
+
+function updateBoss(e, room) {
+  var target = bossTarget(e);
+  var arenaLeft = e.room * ROOM_W + 35, arenaRight = arenaLeft + ROOM_W - 70;
+  var floorY = room.height - 40 - e.h;
+  e.aiTimer = (e.aiTimer || 0) - 1;
+  e.attackTimer = (e.attackTimer || 0) - 1;
+  if (e.hp <= e.maxHp / 2 && !e.enraged) {
+    e.enraged = true; e.phase = Math.max(2, e.phase || 1);
+    e.attackTimer = 1;
+    spawnFloatText(e.x, e.y - 25, "¡ENRAGE!", "#f44");
+    spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#f22", 22, 5);
+  }
+  if (e.type === "guardian") {
+    if (e.actionTimer > 0) {
+      e.actionTimer--;
+      if (e.action === "melee" && e.actionTimer === 8) bossMeleeHit(e, e.enraged ? 8 : 5, 30);
+      if (e.action === "jump") { e.vy += GRAVITY; e.y += e.vy; }
+      if (e.y >= floorY) { e.y = floorY; e.vy = 0; e.action = ""; e.attackHit = false; }
+    } else if (e.attackTimer <= 0) {
+      e.attackTimer = e.enraged ? 45 : 70;
+      var choice = Math.random();
+      if (target.dist < 125 && choice < 0.45) {
+        e.action = "melee"; e.actionTimer = 18; e.attackHit = false;
+      } else if (choice < 0.72) {
+        e.action = "jump"; e.actionTimer = 34; e.vy = -11;
+        e.vx = target.player.x < e.x ? -4 : 4;
+      } else {
+        var dx = target.dx, dy = target.dy, d = Math.max(1, target.dist);
+        spawnBossProjectile(e, dx / d * (e.enraged ? 6 : 5), dy / d * (e.enraged ? 6 : 5), e.enraged ? 5 : 3, "guardian_rock", {w:14, h:14, color:"#98704d"});
+      }
+    }
+    if (!e.action || e.action === "melee") e.x += (target.player.x < e.x ? -1 : 1) * (e.enraged ? 1.6 : 1);
+  } else if (e.type === "queen_larva") {
+    if (e.action !== "ceiling") e.y = floorY;
+    if (e.actionTimer > 0) {
+      e.actionTimer--;
+      if (e.action === "charge") { e.x += e.vx; bossMeleeHit(e, e.enraged ? 7 : 4, 20); }
+      if (e.action === "wall" && e.actionTimer % 12 === 0) {
+        bossProjectiles.push({x: arenaLeft, y: 220 + (e.actionTimer % 3) * 55, w: 16, h: 10,
+          vx: e.enraged ? 6 : 4, vy: 0, gravity: 0, damage: 4, life: 150,
+          room: e.room, kind: "wall_spike", color: "#bd668d", homing: false});
+        bossProjectiles.push({x: arenaRight, y: 220 + (e.actionTimer % 3) * 55, w: 16, h: 10,
+          vx: e.enraged ? -6 : -4, vy: 0, gravity: 0, damage: 4, life: 150,
+          room: e.room, kind: "wall_spike", color: "#bd668d", homing: false});
+      }
+      if (e.action === "ceiling") {
+        if (e.actionTimer % 10 === 0) spawnBossProjectile(e, 0, 3.5, 4, "ceiling_rock", {w:13, h:18, color:"#8b6070", gravity:0.12});
+      }
+      if (e.actionTimer <= 0) { e.action = ""; e.attackHit = false; e.y = floorY; }
+    } else if (e.attackTimer <= 0) {
+      e.attackTimer = e.enraged ? 42 : 68;
+      var q = Math.random();
+      if (q < 0.22) {
+        e.action = "wall"; e.actionTimer = e.enraged ? 60 : 42;
+      } else if (q < 0.45) {
+        e.action = "charge"; e.actionTimer = e.enraged ? 28 : 22; e.vx = target.player.x < e.x ? - (e.enraged ? 7 : 5) : (e.enraged ? 7 : 5); e.attackHit = false;
+      } else if (q < 0.65) {
+        e.action = "ceiling"; e.actionTimer = e.enraged ? 55 : 40; e.y = 55;
+      } else if (q < 0.85) {
+        for (var i = 0; i < (e.enraged ? 3 : 2); i++) {
+          enemies.push({x: e.x + (i - 1) * 35, y: floorY - 22, w: 28, h: 22, vx: 0, vy: 0,
+            speed: 1.8, visionRadius: 260, dead: false, room: e.room, type: "larva_mosca"});
+        }
+        spawnFloatText(e.x, e.y - 25, "¡CRÍA!", "#d98");
+      } else {
+        var dxq = target.dx, dyq = target.dy, dq = Math.max(1, target.dist);
+        spawnBossProjectile(e, dxq / dq * 5, dyq / dq * 5, 4, "queen_spit", {w:12, h:12, color:"#b35c9c", homing:true});
+      }
+    }
+    if (e.x < arenaLeft) e.x = arenaLeft;
+    if (e.x > arenaRight) e.x = arenaRight;
+  } else if (e.type === "abyssal_knight") {
+    var healthPhase = e.hp <= e.maxHp / 3 ? 3 : (e.hp <= e.maxHp * 2 / 3 ? 2 : 1);
+    if (healthPhase > e.phase) { e.phase = healthPhase; e.attackTimer = 1; }
+    if (e.actionTimer > 0) {
+      e.actionTimer--;
+      if (e.action === "sword") bossMeleeHit(e, e.phase === 3 ? 10 : 7, 38);
+      if (e.action === "dash") { e.x += e.vx; bossMeleeHit(e, e.phase === 3 ? 9 : 6, 15); }
+      if (e.action === "teleport" && e.actionTimer === 4) {
+        e.x = Math.max(arenaLeft, Math.min(arenaRight, e.teleportTargetX));
+        e.y = floorY;
+        spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#7af", 14, 4);
+      }
+      if (e.actionTimer <= 0) { e.action = ""; e.attackHit = false; }
+    } else if (e.attackTimer <= 0) {
+      e.attackTimer = e.phase === 3 ? 28 : (e.phase === 2 ? 42 : 58);
+      var k = Math.random();
+      if (k < 0.25) {
+        e.action = "sword"; e.actionTimer = 16; e.attackHit = false;
+      } else if (k < 0.5) {
+        e.action = "dash"; e.actionTimer = e.phase === 3 ? 16 : 11; e.vx = target.player.x < e.x ? - (e.phase === 3 ? 11 : 8) : (e.phase === 3 ? 11 : 8); e.attackHit = false;
+      } else if (k < 0.7) {
+        e.action = "teleport"; e.actionTimer = 8;
+        e.teleportTargetX = target.player.x + (target.player.x < e.x ? 90 : -90);
+      } else {
+        var spread = e.phase === 3 ? 3 : 1;
+        for (var j = -spread; j <= spread; j++) {
+          var angle = Math.atan2(target.dy, target.dx) + j * 0.16;
+          spawnBossProjectile(e, Math.cos(angle) * (e.phase === 3 ? 7 : 5), Math.sin(angle) * (e.phase === 3 ? 7 : 5), e.phase === 3 ? 6 : 4, "knight_bolt", {w:9, h:9, color:"#79c"});
+        }
+      }
+    }
+    if (!e.action || e.action === "sword") e.x += (target.player.x < e.x ? -1 : 1) * (e.phase === 3 ? 2.2 : 1.2);
+    if (e.x < arenaLeft) e.x = arenaLeft;
+    if (e.x > arenaRight) e.x = arenaRight;
+  }
+  if (e.y > floorY && e.type !== "queen_larva") { e.y = floorY; e.vy = 0; }
+}
+
+function updateBossProjectiles() {
+  for (var i = bossProjectiles.length - 1; i >= 0; i--) {
+    var b = bossProjectiles[i];
+    b.vy += b.gravity || 0; b.x += b.vx; b.y += b.vy; b.life--;
+    if (b.homing) {
+      var t = bossTarget({x:b.x, y:b.y, w:b.w, h:b.h}).player;
+      var tx = t.x + t.w / 2 - (b.x + b.w / 2), ty = t.y + t.h / 2 - (b.y + b.h / 2);
+      var td = Math.max(1, Math.sqrt(tx * tx + ty * ty));
+      b.vx += tx / td * 0.04; b.vy += ty / td * 0.04;
+    }
+    var hit = false;
+    if (currentRoom === b.room) {
+      if (rectHit(player, b)) { playerTakeDamage(player, b.damage); hit = true; }
+      if (twoPlayerMode && rectHit(player2, b)) { playerTakeDamage(player2, b.damage); hit = true; }
+    }
+    if (hit || b.life <= 0 || b.x < b.room * ROOM_W || b.x > (b.room + 1) * ROOM_W || b.y > rooms[b.room].height + 30) {
+      bossProjectiles.splice(i, 1);
+    }
   }
 }
 
 function updateEnemies() {
   if (gameState !== ST_PLAYING) return;
-  enemies.forEach(function (e) {
+  enemies.forEach(function(e) {
     if (e.dead || e.room !== currentRoom) return;
     var room = rooms[currentRoom];
     var left = currentRoom * ROOM_W, right = left + ROOM_W;
-    if (e.type === 'larva_mosca') {
-      var ecx = e.x + e.w / 2, ecy = e.y + e.h / 2;
-      var pcx = player.x + player.w / 2, pcy = player.y + player.h / 2;
+    if (e.boss) {
+      updateBoss(e, room);
+    } else if (e.type === 'larva_mosca') {
+      var ecx = e.x + e.w/2, ecy = e.y + e.h/2;
+      var pcx = player.x + player.w/2, pcy = player.y + player.h/2;
       var dx = pcx - ecx, dy = pcy - ecy;
-      var dist = Math.sqrt(dx * dx + dy * dy);
+      var dist = Math.sqrt(dx*dx + dy*dy);
       var target = player;
       if (twoPlayerMode) {
-        var p2cx = player2.x + player2.w / 2, p2cy = player2.y + player2.h / 2;
+        var p2cx = player2.x + player2.w/2, p2cy = player2.y + player2.h/2;
         var d2x = p2cx - ecx, d2y = p2cy - ecy;
-        var dist2 = Math.sqrt(d2x * d2x + d2y * d2y);
+        var dist2 = Math.sqrt(d2x*d2x + d2y*d2y);
         if (dist2 < dist) { dist = dist2; dx = d2x; dy = d2y; target = player2; }
       }
       if (dist < e.visionRadius && !target.frozen && target.inv <= 0) {
@@ -85,11 +258,11 @@ function updateEnemies() {
     }
     if (player.inv <= 0 && !player.frozen && rectHit(player, e)) {
       var dmg = e.type === 'larva_mosca' ? 2 : 1;
-      playerTakeDamage(player, dmg);
+      playerTakeDamage(player, e.boss ? (e.type === "guardian" ? 4 : 3) : dmg);
     }
     if (twoPlayerMode && player2.inv <= 0 && !player2.frozen && rectHit(player2, e)) {
       var dmg2 = e.type === 'larva_mosca' ? 2 : 1;
-      playerTakeDamage(player2, dmg2);
+      playerTakeDamage(player2, e.boss ? (e.type === "guardian" ? 4 : 3) : dmg2);
     }
   });
 }
@@ -107,27 +280,27 @@ function generateStalactites() {
 }
 
 function updateStalactites() {
-  stalactites.forEach(function (s) {
+  stalactites.forEach(function(s) {
     if (!s.active && !s.fallen) {
       s.fallTimer--;
       if (s.fallTimer <= 0) s.active = true;
     }
     if (s.active && !s.fallen) {
       s.y += s.speed;
-      if (Math.random() < 0.1) spawnParticles(s.x + s.w / 2, s.y, "rgba(100,100,120,0.3)", 1, 0.5);
+      if (Math.random() < 0.1) spawnParticles(s.x + s.w/2, s.y, "rgba(100,100,120,0.3)", 1, 0.5);
       var roomIndex = Math.floor(s.x / ROOM_W);
       if (roomIndex < rooms.length) {
         var room = rooms[roomIndex];
         if (s.y + s.h >= room.height - 10) {
           s.fallen = true; s.active = false;
-          spawnParticles(s.x + s.w / 2, s.y + s.h, "#6a6a7a", 8, 4);
-          spawnParticles(s.x + s.w / 2, s.y + s.h, "#4a4a5a", 5, 3);
+          spawnParticles(s.x + s.w/2, s.y + s.h, "#6a6a7a", 8, 4);
+          spawnParticles(s.x + s.w/2, s.y + s.h, "#4a4a5a", 5, 3);
           sfxStalactiteFall();
         }
       }
     }
   });
-  stalactites.forEach(function (s) {
+  stalactites.forEach(function(s) {
     if (s.fallen) {
       s.fallTimer = 300 + Math.random() * 400;
       s.fallen = false;
@@ -143,8 +316,8 @@ function updateWaterDrops() {
     waterDrops.push({ x: currentRoom * ROOM_W + 20 + Math.random() * (ROOM_W - 40), y: cameraY - 12, vy: 3 + Math.random() * 2, life: 90 });
     sfxWaterDrop();
   }
-  waterDrops.forEach(function (drop) { drop.y += drop.vy; drop.life--; });
-  waterDrops = waterDrops.filter(function (drop) { return drop.life > 0 && drop.y < cameraY + canvas.height + 10; });
+  waterDrops.forEach(function(drop) { drop.y += drop.vy; drop.life--; });
+  waterDrops = waterDrops.filter(function(drop) { return drop.life > 0 && drop.y < cameraY + canvas.height + 10; });
 }
 
 function updateArrows() {
@@ -154,152 +327,79 @@ function updateArrows() {
     arrow.y += arrow.vy;
     arrow.life--;
     var hitEnemy = false;
-    enemies.forEach(function (e) {
+    enemies.forEach(function(e) {
       if (!e.dead && e.room === currentRoom && rectHit(arrow, e)) {
-        e.dead = true; stats.enemiesKilled++; hitEnemy = true;
-        bestiary[e.type].count++; bestiary[e.type].discovered = true;
-        var gain = e.type === "larva_mosca" ? 4 : 2;
-        azari += hasAzariCharm ? gain * 2 : gain;
-        spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#f88", 12, 5);
-        spawnFloatText(e.x, e.y - 10, "¡Muerto!", "#f88");
-        sfxEnemyDie(); sfxCoin();
+        if (e.boss) {
+          e.hp -= 5; hitEnemy = true;
+          spawnFloatText(e.x, e.y - 10, "-" + 5, "#ffd700");
+          spawnParticles(e.x + e.w/2, e.y + e.h/2, "#7af", 8, 3);
+          if (e.hp <= 0) defeatBoss(e);
+        } else {
+          e.dead = true; stats.enemiesKilled++; hitEnemy = true;
+          if (bestiary[e.type]) { bestiary[e.type].count++; bestiary[e.type].discovered = true; }
+          var gain = e.type === "larva_mosca" ? 4 : 2;
+          azari += hasAzariCharm ? gain * 2 : gain;
+          spawnParticles(e.x + e.w/2, e.y + e.h/2, "#f88", 12, 5);
+          spawnFloatText(e.x, e.y - 10, "¡Muerto!", "#f88");
+          sfxEnemyDie(); sfxCoin();
+        }
       }
     });
     if (hitEnemy || arrow.life <= 0 || arrow.x < 0 || arrow.x > WORLD_W) arrowsInFlight.splice(i, 1);
   }
+
+  function defeatBoss(e) {
+    if (e.dead) return;
+    e.dead = true; e.hp = 0; stats.enemiesKilled++;
+    bossArenaState[e.type] = true;
+    spawnFloatText(e.x, e.y - 22, "¡" + e.bossName + " DERROTADO!", "#ffd700");
+    spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#ffd700", 35, 8);
+    sfxEnemyDie(); sfxCoin();
+    bossProjectiles = bossProjectiles.filter(function(p) { return p.room !== e.room; });
+  }
 }
 
-function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed, interactPressed, shootPressed) {
+function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed, interactPressed, shootPressed, blockPressed, dashPressed) {
   if (gameState !== ST_PLAYING) return;
+  p.blocking = !!blockPressed && !p.frozen;
   if (playerDead && p === player) {
     deathTimer--;
     if (deathTimer <= 0) { playerDead = false; p.inv = 40; }
     return;
   }
-
-  // =========================
-  // DASH
-  // =========================
-  if (p.dashCooldown > 0) p.dashCooldown--;
-
-  if (p.dashTimer > 0) {
-    p.dashTimer--;
-
-    // Movimiento rápido
-    p.vx = p.facing * DASH_SPEED;
-    p.vy = 0;
-    p.x += p.vx;
-
-    // =========================
-    // DAÑO CON DASH
-    // =========================
-    if (typeof enemies !== "undefined") {
-      for (const e of enemies) {
-        if (e.dead) continue;
-
-        const playerLeft = p.x;
-        const playerRight = p.x + p.w;
-        const playerTop = p.y;
-        const playerBottom = p.y + p.h;
-
-        const enemyLeft = e.x;
-        const enemyRight = e.x + e.w;
-        const enemyTop = e.y;
-        const enemyBottom = e.y + e.h;
-
-        const touching =
-          playerRight > enemyLeft &&
-          playerLeft < enemyRight &&
-          playerBottom > enemyTop &&
-          playerTop < enemyBottom;
-
-        if (touching) {
-          // Daño del dash
-          e.hp -= 2;
-
-          // Empujar enemigo
-          e.vx = p.facing * 6;
-          e.vy = -3;
-
-          // Pequeño retroceso del jugador
-          p.x -= p.facing * 4;
-
-          // Efecto visual
-          spawnParticles(
-            e.x + e.w / 2,
-            e.y + e.h / 2,
-            "rgba(255,220,100,0.95)",
-            10,
-            4
-          );
-
-          // Si muere
-          if (e.hp <= 0) {
-            e.dead = true;
-          }
-        }
-      }
-    }
-
-    // Invulnerabilidad durante el dash
-    p.inv = Math.max(p.inv, 2);
-
-    // Partículas
-    if (Math.random() < 0.8) {
-      spawnParticles(
-        p.x + p.w / 2 - p.facing * 10,
-        p.y + p.h / 2,
-        "rgba(180,220,255,0.8)",
-        2,
-        2
-      );
-    }
-
-    // Limitar al mundo
-    if (p.x < 5) p.x = 5;
-    if (p.x + p.w > WORLD_W - 5) {
-      p.x = WORLD_W - 5 - p.w;
-    }
-
-    return;
-  }
-
-  // Activar dash
-  if (
-    keys["z"] &&
-    p.dashCooldown <= 0 &&
-    !p.frozen &&
-    !playerDead
-  ) {
-    p.dashTimer = DASH_DURATION;
-    p.dashCooldown = DASH_COOLDOWN;
-    p.inv = DASH_DURATION + 2;
-    p.vy = 0;
-
-    spawnParticles(
-      p.x + p.w / 2,
-      p.y + p.h / 2,
-      "rgba(120,200,255,0.9)",
-      12,
-      4
-    );
-
-    return;
-  }
-
   if (p.autoWalk > 0 || p.frozen) { p.autoWalk--; return; }
 
   var wasOnGround = p.onGround;
+  if (p.dashCooldown > 0) p.dashCooldown--;
+  if (dashPressed && p.dashCooldown <= 0 && p.dashTimer <= 0 && !p.blocking) {
+    p.dashTimer = DASH_DURATION;
+    p.dashCooldown = DASH_COOLDOWN;
+    p.dashDir = moveLeft ? -1 : (moveRight ? 1 : p.facing || 1);
+    p.facing = p.dashDir;
+    p.dashing = true;
+    p.inv = Math.max(p.inv, DASH_INV_FRAMES);
+    p.vy = 0;
+    spawnParticles(p.x + p.w / 2, p.y + p.h / 2, "#7af", 8, 3);
+  }
 
-  if (moveLeft) { p.vx = -3.5; p.facing = -1; }
-  else if (moveRight) { p.vx = 3.5; p.facing = 1; }
-  else p.vx *= 0.75;
+  if (p.dashTimer > 0) {
+    p.dashTimer--;
+    p.dashing = true;
+    p.vx = p.dashDir * DASH_SPEED;
+    p.vy = 0;
+    if (p.dashTimer <= 0) p.dashing = false;
+  } else {
+    p.dashing = false;
+    if (moveLeft) { p.vx = -3.5; p.facing = -1; }
+    else if (moveRight) { p.vx = 3.5; p.facing = 1; }
+    else p.vx *= 0.75;
 
-  p.vy += GRAVITY; if (p.vy > 12) p.vy = 12;
+    p.vy += GRAVITY; if (p.vy > 12) p.vy = 12;
+  }
   p.x += p.vx; p.y += p.vy;
 
   if (p.onGround && Math.abs(p.vx) > 1 && Math.random() < 0.3) {
-    spawnParticles(p.x + p.w / 2 + (p.facing > 0 ? 0 : p.w), p.y + p.h, "rgba(200,200,200,0.3)", 1, 0.5);
+    spawnParticles(p.x + p.w/2 + (p.facing > 0 ? 0 : p.w), p.y + p.h, "rgba(200,200,200,0.3)", 1, 0.5);
   }
 
   var left = 0, right = WORLD_W;
@@ -344,11 +444,11 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   p.onGround = false;
   var touchingSpikes = false;
 
-  room.platforms.forEach(function (pl) {
+  room.platforms.forEach(function(pl) {
     if (rectHit(p, pl)) {
       if (p.vy >= 0 && p.y + p.h - p.vy <= pl.y + 10) {
         if (!wasOnGround && p.vy > 2) {
-          spawnParticles(p.x + p.w / 2, p.y + p.h, "rgba(180,160,140,0.5)", 5, 2);
+          spawnParticles(p.x + p.w/2, p.y + p.h, "rgba(180,160,140,0.5)", 5, 2);
           sfxPlatformLand();
         }
         p.y = pl.y - p.h; p.vy = 0; p.onGround = true; p.jumpsLeft = p.maxJumps;
@@ -368,7 +468,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       else if (p.vx < 0) { p.x = b.x + b.w; p.vx = 0; }
     }
   }
-  room.walls.forEach(function (w) {
+  room.walls.forEach(function(w) {
     if (rectHit(p, w)) {
       if (p.vx > 0) { p.x = w.x - p.w; p.vx = 0; }
       else if (p.vx < 0) { p.x = w.x + w.w; p.vx = 0; }
@@ -378,8 +478,8 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   if (p.onGround && p.inv <= 0) {
     if (p === player) {
       var onSpikes = false;
-      room.spikes.forEach(function (s) {
-        var hit = { x: s.x + 5, y: s.y - 15, w: s.w - 10, h: s.h + 15 };
+      room.spikes.forEach(function(s) {
+        var hit = {x: s.x + 5, y: s.y - 15, w: s.w - 10, h: s.h + 15};
         if (rectHit(p, hit)) onSpikes = true;
       });
       if (!onSpikes) { lastSafeX = p.x; lastSafeY = p.y; }
@@ -387,37 +487,28 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   }
 
   if (p.inv <= 0) {
-    room.spikes.forEach(function (s) {
-      var hit = { x: s.x + 5, y: s.y - 15, w: s.w - 10, h: s.h + 15 };
+    room.spikes.forEach(function(s) {
+      var hit = {x: s.x + 5, y: s.y - 15, w: s.w - 10, h: s.h + 15};
       if (rectHit(p, hit)) {
         touchingSpikes = true;
         playerTakeDamage(p, 1);
         if (p === player) { hitFlash = 60; needsRespawn = true; p.x = lastSafeX; p.y = lastSafeY; }
         p.frozen = true;
         p.vx = 0; p.vy = 0;
-        spawnParticles(p.x + p.w / 2, p.y + p.h, "#f44", 12);
+        spawnParticles(p.x + p.w/2, p.y + p.h, "#f44", 12);
       }
     });
   } else { p.inv--; }
 
   if (p === player && transitionCooldown <= 0) {
-    if (room.transitionZone && rectHit(p, room.transitionZone)) {
+    var roomBoss = enemies.find ? enemies.find(function(enemy) { return enemy.boss && enemy.room === currentRoom; }) : null;
+    if (room.transitionZone && rectHit(p, room.transitionZone) && (!roomBoss || roomBoss.dead)) {
       startTransition(room.transitionZone.to, "forward");
       return;
     }
   }
 
   if (p.swordSwing > 0) p.swordSwing--;
-
-  // =========================
-  // COMBO DE ESPADA
-  // =========================
-  if (p.comboTimer > 0) {
-    p.comboTimer--;
-  } else {
-    p.comboStep = 0;
-  }
-
   if (p.swordCooldown > 0) p.swordCooldown--;
   if (p.bowCooldown > 0) p.bowCooldown--;
   if (!p.swordSheathed && p.swordSwing <= 0) {
@@ -426,81 +517,14 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   }
 
   if (attackPressed && p.hasSword && p.swordEquipped && p.swordCooldown <= 0 && p.swordSwing <= 0 && !p.frozen) {
-
-    // Avanzar combo
-    p.comboStep++;
-
-    if (p.comboStep > 3) {
-      p.comboStep = 1;
-    }
-
-    // Tiempo para continuar el combo
-    p.comboTimer = 45;
-
-    // Diferentes ataques
-    if (p.comboStep === 1) {
-      p.swordSwing = 12;
-      p.swordCooldown = 22;
-    }
-
-    else if (p.comboStep === 2) {
-      p.swordSwing = 12;
-      p.swordCooldown = 18;
-    }
-
-    else if (p.comboStep === 3) {
-      p.swordSwing = 16;
-      p.swordCooldown = 28;
-    }
-
+    p.swordSwing = 12; p.swordCooldown = 22;
     p.swordSheathed = false;
     p.swordSheathTimer = 180;
-
     stats.attacks++;
-
-    // Efectos diferentes
-    if (p.comboStep === 3) {
-      spawnParticles(
-        p.x + p.w / 2 + p.facing * 25,
-        p.y + p.h / 2,
-        "#fff",
-        15,
-        6
-      );
-
-      spawnFloatText(
-        p.x,
-        p.y - 25,
-        "¡COMBO x3!",
-        "#ffd700"
-      );
-    } else {
-      spawnParticles(
-        p.x + p.w / 2 + p.facing * 18,
-        p.y + p.h / 2,
-        "#ffd700",
-        6,
-        4
-      );
-
-      if (p.comboStep === 2) {
-        spawnFloatText(
-          p.x,
-          p.y - 25,
-          "¡COMBO x2!",
-          "#ffea70"
-        );
-      }
-    }
-
+    spawnParticles(p.x + p.w/2 + p.facing * 18, p.y + p.h/2, "#ffd700", 6, 4);
     sfxAttack();
-
-    if (p.id === 1) {
-      tryBreakBombBox();
-    }
-
+    if (p.id === 1) { tryBreakBombBox(); }
     checkSwordHitEnemiesFor(p);
-
   }
 
   if (shootPressed && p.id === 1 && hasBow && arrows > 0 && p.bowCooldown <= 0 && !p.frozen) {
@@ -514,7 +538,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   if (jumpPressed && p.jumpsLeft > 0 && !p.frozen) {
     p.vy = -14.5; p.jumpsLeft--; p.onGround = false;
     stats.jumps++;
-    spawnParticles(p.x + p.w / 2, p.y + p.h, "#888", 4);
+    spawnParticles(p.x + p.w/2, p.y + p.h, "#888", 4);
     sfxJump();
   }
 }
@@ -528,6 +552,8 @@ function updatePlayer() {
   var attack = (keys["x"] || keys["j"]) && hasSword;
   var shoot = keys["z"];
   var interact = keys["e"];
+  var block = keys["c"];
+  var dash = keys["shift"];
   if (gamepadConnected) {
     if (gpAxes.x < -0.25) moveLeft = true;
     if (gpAxes.x > 0.25) moveRight = true;
@@ -535,8 +561,10 @@ function updatePlayer() {
     if (gpButtons[2] && !prevGPButtons[2]) attack = true;
     if (gpButtons[1] && !prevGPButtons[1]) shoot = true;
     if (gpButtons[3] && !prevGPButtons[3]) interact = true;
+    if (gpButtons[6]) block = true;
+    if (gpButtons[5] && !prevGPButtons[5]) dash = true;
   }
-  updateGenericPlayer(player, moveLeft, moveRight, jump, attack, interact, shoot);
+  updateGenericPlayer(player, moveLeft, moveRight, jump, attack, interact, shoot, block, dash);
 }
 
 function updatePlayer2() {
@@ -546,9 +574,9 @@ function updatePlayer2() {
   var jump = keys["shift"];
   var attack = keys["ctrl"] && hasSword;
   var interact = keys["alt"];
-  updateGenericPlayer(player2, moveLeft, moveRight, jump, attack, interact, false);
+  updateGenericPlayer(player2, moveLeft, moveRight, jump, attack, interact, false, false, keys["shift"]);
   if (rectHit(player, player2)) {
-    var dx = (player.x + player.w / 2) - (player2.x + player2.w / 2);
+    var dx = (player.x + player.w/2) - (player2.x + player2.w/2);
     if (dx > 0) { player.x += 1; player2.x -= 1; }
     else { player.x -= 1; player2.x += 1; }
   }
@@ -558,56 +586,50 @@ function checkSwordHitEnemiesFor(p) {
   if (p.swordSwing <= 0) return;
 
   var reach = 30;
-
-  if (p.comboStep === 2) {
-    reach = 42;
-  }
-
-  if (p.comboStep === 3) {
-    reach = 60;
-  }
   var swingBoxes = [
     { x: p.x + (p.facing > 0 ? p.w : -reach), y: p.y + 2, w: reach, h: 26 },
     { x: p.x - 6, y: p.y - reach + 4, w: p.w + 12, h: reach },
     { x: p.x - 6, y: p.y + p.h - 4, w: p.w + 12, h: reach }
   ];
 
-  enemies.forEach(function (e) {
+  enemies.forEach(function(e) {
     if (e.dead || e.room !== currentRoom) return;
     var hit = false;
     for (var i = 0; i < swingBoxes.length; i++) {
       if (rectHit(swingBoxes[i], e)) { hit = true; break; }
     }
     if (hit) {
-      if (p.comboStep === 3) {
-        e.vx = p.facing * 8;
-        e.vy = -8;
-        spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#ffd700", 18, 6);
-        spawnFloatText(e.x, e.y - 30, "¡GOLPE FUERTE!", "#ffd700");
+      if (e.boss) {
+        if (e.lastSwordHit === frameCounter) return;
+        e.lastSwordHit = frameCounter;
+        e.hp -= 12;
+        spawnFloatText(e.x, e.y - 10, "-12", "#ffd700");
+        spawnParticles(e.x + e.w/2, e.y + e.h/2, "#7af", 10, 4);
+        if (e.hp <= 0) defeatBoss(e);
+        return;
       }
-
       e.dead = true;
       stats.enemiesKilled++;
       for (var i = 0; i < 15; i++) {
         deathParticles.push({
-          x: e.x + e.w / 2, y: e.y + e.h / 2,
-          vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6 - 2,
+          x: e.x + e.w/2, y: e.y + e.h/2,
+          vx: (Math.random()-0.5)*6, vy: (Math.random()-0.5)*6 - 2,
           life: 20 + Math.random() * 20, maxLife: 30,
-          color: ["#f44", "#f88", "#a0a", "#f0f"][Math.floor(Math.random() * 4)],
+          color: ["#f44", "#f88", "#a0a", "#f0f"][Math.floor(Math.random()*4)],
           size: 2 + Math.random() * 4
         });
       }
       var baseGain = e.type === 'larva_mosca' ? 4 : 2;
       var azariGain = hasAzariCharm ? baseGain * 2 : baseGain;
       azari += azariGain;
-      bestiary[e.type].count++;
-      if (!bestiary[e.type].discovered) {
+      if (bestiary[e.type]) bestiary[e.type].count++;
+      if (bestiary[e.type] && !bestiary[e.type].discovered) {
         bestiary[e.type].discovered = true;
         discoveryNotify = { active: true, timer: 200, name: bestiaryInfo[e.type].name };
         sfxDiscovery();
       }
-      spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#f88", 12, 5);
-      spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#440", 8, 3);
+      spawnParticles(e.x + e.w/2, e.y + e.h/2, "#f88", 12, 5);
+      spawnParticles(e.x + e.w/2, e.y + e.h/2, "#440", 8, 3);
       p.vy = -11; p.onGround = false; p.jumpsLeft = p.maxJumps;
       spawnFloatText(e.x, e.y - 10, "¡Muerto!", "#f88");
       spawnFloatText(e.x, e.y - 25, "+" + azariGain + " Azari", "#0ff");
@@ -619,9 +641,9 @@ function checkSwordHitEnemiesFor(p) {
 function tryInteractFor(p) {
   if (currentRoom === 1 && !room1.pedestal.taken) {
     var ped = room1.pedestal;
-    var dx = (p.x + p.w / 2) - (ped.glass.x + ped.glass.w / 2);
-    var dy = (p.y + p.h / 2) - (ped.glass.y + ped.glass.h / 2);
-    if (Math.sqrt(dx * dx + dy * dy) < 70) {
+    var dx = (p.x + p.w/2) - (ped.glass.x + ped.glass.w/2);
+    var dy = (p.y + p.h/2) - (ped.glass.y + ped.glass.h/2);
+    if (Math.sqrt(dx*dx + dy*dy) < 70) {
       room1.pedestal.taken = true;
       hasSword = true; swordEquipped = true;
       player.hasSword = true; player.swordEquipped = true;
@@ -641,9 +663,9 @@ function tryInteractFor(p) {
     for (var i = 0; i < room.shops.length; i++) {
       var s = room.shops[i];
       var npc = s.npc;
-      var dx = (p.x + p.w / 2) - (npc.x + npc.w / 2);
-      var dy = (p.y + p.h / 2) - (npc.y + npc.h / 2);
-      if (Math.sqrt(dx * dx + dy * dy) < 90 && !shopOpen && shopExitCooldown <= 0) {
+      var dx = (p.x + p.w/2) - (npc.x + npc.w/2);
+      var dy = (p.y + p.h/2) - (npc.y + npc.h/2);
+      if (Math.sqrt(dx*dx + dy*dy) < 90 && !shopOpen && shopExitCooldown <= 0) {
         sfxNpc();
         shopPreviousX = player.x; shopPreviousY = player.y;
         shopOpen = true; shopMenuOpen = false; shopId = s.id; menuSelection = 0; shopConfirm = -1; shopAnim = 180;
@@ -654,9 +676,9 @@ function tryInteractFor(p) {
   }
   if (room.healingStone && room.healingStone.active) {
     var st = room.healingStone;
-    var dx = (p.x + p.w / 2) - (st.x + st.w / 2);
-    var dy = (p.y + p.h / 2) - (st.y + st.h / 2);
-    if (Math.sqrt(dx * dx + dy * dy) < 80 && p.hp < p.maxHp && !healing) {
+    var dx = (p.x + p.w/2) - (st.x + st.w/2);
+    var dy = (p.y + p.h/2) - (st.y + st.h/2);
+    if (Math.sqrt(dx*dx + dy*dy) < 80 && p.hp < p.maxHp && !healing) {
       healing = true; healTimer = 120; p.frozen = true;
       spawnFloatText(p.x, p.y - 30, "J" + p.id + " sentándose...", "#4f4");
     }
@@ -677,8 +699,8 @@ function startExplosion() {
   explosionAnim = 60;
   sfxExplosion();
   var box = room2.bombBox;
-  explosionX = box.x + box.w / 2;
-  explosionY = box.y + box.h / 2;
+  explosionX = box.x + box.w/2;
+  explosionY = box.y + box.h/2;
   player.frozen = true; player.vx = 0; player.vy = 0;
   if (twoPlayerMode) { player2.frozen = true; player2.vx = 0; player2.vy = 0; }
   spawnParticles(explosionX, explosionY, "#ff6600", 30, 8);
@@ -694,8 +716,8 @@ function updateExplosion() {
     if (twoPlayerMode) { player2.vx = -knockbackVX; player2.vy = knockbackVY; }
     spawnParticles(explosionX, explosionY, "#ff4400", 25, 12);
     spawnParticles(explosionX, explosionY, "#ffaa00", 20, 10);
-    spawnParticles(player.x + player.w / 2, player.y + player.h / 2, "#ff6600", 10, 5);
-    if (twoPlayerMode) spawnParticles(player2.x + player2.w / 2, player2.y + player2.h / 2, "#ff6600", 10, 5);
+    spawnParticles(player.x + player.w/2, player.y + player.h/2, "#ff6600", 10, 5);
+    if (twoPlayerMode) spawnParticles(player2.x + player2.w/2, player2.y + player2.h/2, "#ff6600", 10, 5);
   }
   if (explosionAnim < 45 && explosionAnim > 10) {
     player.vx = knockbackVX * (explosionAnim / 45);
@@ -707,7 +729,7 @@ function updateExplosion() {
       player2.x += player2.vx; player2.y += player2.vy;
     }
     if (explosionAnim % 5 === 0) {
-      spawnParticles(explosionX + (Math.random() - 0.5) * 40, explosionY + (Math.random() - 0.5) * 40, "#555", 3, 2);
+      spawnParticles(explosionX + (Math.random()-0.5)*40, explosionY + (Math.random()-0.5)*40, "#555", 3, 2);
     }
   }
   if (explosionAnim <= 10) { transFade = 1 - (explosionAnim / 10); }
@@ -812,7 +834,7 @@ function updateUI() {
   if (twoPlayerMode) {
     el.innerHTML = '<kbd>A/D</kbd>+<kbd>ESP</kbd>+<kbd>X</kbd> J1  •  <kbd>←→</kbd>+<kbd>Shift</kbd>+<kbd>Ctrl</kbd> J2  •  <kbd>`</kbd> Inventario • <kbd>ESC</kbd> Menú';
   } else {
-    if (hasSword || hasBow) el.innerHTML = '<kbd>A</kbd> <kbd>D</kbd> Mover • <kbd>ESPACIO</kbd> Saltar • <kbd>X</kbd>/<kbd>J</kbd> Espada • <kbd>Z</kbd> Arco • <kbd>E</kbd> Interactuar • <kbd>`</kbd> Inventario • <kbd>M</kbd> Música • <kbd>N</kbd> SFX • <kbd>ESC</kbd> Menú';
-    else el.innerHTML = '<kbd>A</kbd> <kbd>D</kbd> Mover • <kbd>ESPACIO</kbd> Saltar • <kbd>E</kbd> Interactuar • <kbd>`</kbd> Inventario • <kbd>M</kbd> Música • <kbd>N</kbd> SFX • <kbd>ESC</kbd> Menú';
+    if (hasSword || hasBow) el.innerHTML = '<kbd>A</kbd> <kbd>D</kbd> Mover • <kbd>ESPACIO</kbd> Saltar • <kbd>SHIFT</kbd>/<kbd>R1</kbd> Dash • <kbd>C</kbd>/<kbd>L2</kbd> Bloquear • <kbd>X</kbd>/<kbd>J</kbd> Espada • <kbd>Z</kbd> Arco • <kbd>E</kbd> Interactuar • <kbd>`</kbd> Inventario • <kbd>M</kbd> Música • <kbd>N</kbd> SFX • <kbd>ESC</kbd> Menú';
+    else el.innerHTML = '<kbd>A</kbd> <kbd>D</kbd> Mover • <kbd>ESPACIO</kbd> Saltar • <kbd>SHIFT</kbd>/<kbd>R1</kbd> Dash • <kbd>C</kbd>/<kbd>L2</kbd> Bloquear • <kbd>E</kbd> Interactuar • <kbd>`</kbd> Inventario • <kbd>M</kbd> Música • <kbd>N</kbd> SFX • <kbd>ESC</kbd> Menú';
   }
 }

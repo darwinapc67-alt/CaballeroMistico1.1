@@ -170,6 +170,8 @@ window.addEventListener("keydown", function(e) {
     if (e.key === "x" || e.key === "X" || e.key === "j" || e.key === "J") { keys["x"] = true; e.preventDefault(); }
     if (e.key === "z" || e.key === "Z") { keys["z"] = true; e.preventDefault(); }
     if (e.key === "e" || e.key === "E") { keys["e"] = true; e.preventDefault(); }
+    if (e.key === "c" || e.key === "C") { keys["c"] = true; e.preventDefault(); }
+    if (e.key === "Shift" || e.key === "ShiftLeft" || e.key === "ShiftRight") { keys["shift"] = true; e.preventDefault(); }
     if (e.key === "m" || e.key === "M") { initAudio(); toggleMusic(); e.preventDefault(); }
     if (e.key === "n" || e.key === "N") { initAudio(); toggleSfx(); e.preventDefault(); }
   }
@@ -248,6 +250,8 @@ document.addEventListener("keyup", function(e) {
   if (e.key === "x" || e.key === "X" || e.key === "j" || e.key === "J") keys["x"] = false;
   if (e.key === "z" || e.key === "Z") keys["z"] = false;
   if (e.key === "e" || e.key === "E") keys["e"] = false;
+  if (e.key === "c" || e.key === "C") keys["c"] = false;
+  if (e.key === "Shift") keys["shift"] = false;
 });
 
 function scanGamepads() {
@@ -297,8 +301,6 @@ function processGamepadInput() {
   var btn0 = gpButtons[0] && !prevGPButtons[0];
   var btn12 = gpButtons[12] && !prevGPButtons[12];
   var btn13 = gpButtons[13] && !prevGPButtons[13];
-  // Standard Gamepad mapping: R2 is button 7. Dash uses the same held key as Z.
-  keys["z"] = gameState === ST_PLAYING && !!gpButtons[7];
   if (shopOpen && shopId === 0) {
     if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + 3) % 3; gamepadMenuAxisLock = 1; }
     if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % 3; gamepadMenuAxisLock = 1; }
@@ -383,7 +385,7 @@ function setupTouchControls() {
   if (device !== "touch") return;
   var controls = document.createElement("div");
   controls.id = "touchControls";
-  controls.innerHTML = '<button data-key="a">◀</button><button data-key="d">▶</button><button data-key=" ">⬆</button><button data-key="x">⚔</button><button data-key="e">✦</button>';
+  controls.innerHTML = '<button data-key="a">◀</button><button data-key="d">▶</button><button data-key=" ">⬆</button><button data-key="shift">↯</button><button data-key="x">⚔</button><button data-key="e">✦</button>';
   controls.querySelectorAll("button").forEach(function(button) {
     var key = button.getAttribute("data-key");
     var press = function(event) { event.preventDefault(); keys[key] = true; };

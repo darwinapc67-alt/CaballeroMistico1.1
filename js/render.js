@@ -179,7 +179,30 @@ function drawEnemies() {
     if (e.x + e.w < camLeft - 50 || e.x > camRight + 50) return;
     if (e.y + e.h < camTop - 50 || e.y > camBottom + 50) return;
     ctx.save();
-    if (e.type === 'larva_mosca') {
+    if (e.boss) {
+      var bossColor = e.type === "guardian" ? "#b77b45" : (e.type === "queen_larva" ? "#9b4c9b" : "#415f98");
+      ctx.fillStyle = "rgba(255,80,80,0.18)";
+      ctx.fillRect(e.x - 8, e.y - 8, e.w + 16, e.h + 16);
+      ctx.fillStyle = bossColor;
+      ctx.fillRect(e.x, e.y + 14, e.w, e.h - 14);
+      ctx.fillStyle = "#d8b18a";
+      ctx.fillRect(e.x + 10, e.y, e.w - 20, 18);
+      ctx.fillStyle = "#ff3344";
+      ctx.fillRect(e.x + 15, e.y + 7, 5, 4);
+      ctx.fillRect(e.x + e.w - 20, e.y + 7, 5, 4);
+      if (e.type === "guardian") {
+        ctx.fillStyle = "#6d4329"; ctx.fillRect(e.x - 8, e.y + 25, 10, 45); ctx.fillRect(e.x + e.w - 2, e.y + 25, 10, 45);
+        ctx.fillStyle = "#ddd"; ctx.fillRect(e.x + e.w / 2 - 3, e.y + 28, 6, 30);
+      } else if (e.type === "queen_larva") {
+        ctx.fillStyle = "#d971bd";
+        for (var q = 0; q < 3; q++) ctx.fillRect(e.x + 8 + q * 22, e.y + 40 + (q % 2) * 8, 12, 6);
+      } else {
+        ctx.fillStyle = "#d9e4ff"; ctx.fillRect(e.x + e.w - 5, e.y + 28, 28, 5);
+        ctx.fillStyle = "#26385f"; ctx.fillRect(e.x - 5, e.y + 25, 10, 48);
+      }
+      ctx.fillStyle = "#f44"; ctx.fillRect(e.x, e.y - 14, e.w * Math.max(0, e.hp / e.maxHp), 5);
+      ctx.strokeStyle = "#fff"; ctx.lineWidth = 1; ctx.strokeRect(e.x, e.y - 14, e.w, 5);
+    } else if (e.type === 'larva_mosca') {
       var wiggle = Math.sin(Date.now()/100) * 3;
       ctx.fillStyle = "#6a4";
       ctx.beginPath(); ctx.ellipse(e.x+e.w/2, e.y+e.h/2+4, e.w/2, e.h/2.5, 0, 0, Math.PI*2); ctx.fill();
@@ -217,6 +240,20 @@ function drawEnemies() {
   });
 }
 
+function drawBossProjectiles() {
+  bossProjectiles.forEach(function(b) {
+    if (b.room !== currentRoom) return;
+    ctx.fillStyle = b.color;
+    if (b.kind === "knight_bolt") {
+      ctx.beginPath(); ctx.arc(b.x + b.w / 2, b.y + b.h / 2, b.w / 2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#bde"; ctx.fillRect(b.x + 2, b.y + 2, 3, 3);
+    } else {
+      ctx.beginPath(); ctx.arc(b.x + b.w / 2, b.y + b.h / 2, Math.max(b.w, b.h) / 2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.45)"; ctx.fillRect(b.x + 2, b.y + 2, 3, 3);
+    }
+  });
+}
+
 function drawPlayerEntity(p) {
   ctx.save();
   if (p.inv > 0 && p === player) {
@@ -229,6 +266,10 @@ function drawPlayerEntity(p) {
 
   ctx.fillStyle = "#0a0a2a";
   ctx.fillRect(p.x+4, p.y+8, p.w-8, p.h-8);
+  if (p.dashing) {
+    ctx.fillStyle = "rgba(120,190,255,0.35)";
+    ctx.fillRect(p.x - p.dashDir * 18, p.y + 7, p.w, p.h - 7);
+  }
   ctx.fillStyle = p.color;
   ctx.fillRect(p.x+5, p.y+10, p.w-10, p.h-12);
   ctx.fillStyle = p.headColor;
@@ -236,6 +277,15 @@ function drawPlayerEntity(p) {
   ctx.fillStyle = "#fff";
   var eyeX = p.facing > 0 ? p.x+12 : p.x+6;
   ctx.fillRect(eyeX, p.y+4, 2.5, 2.5);
+  if (p.blocking) {
+    ctx.strokeStyle = "#9de8ff";
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.85;
+    ctx.beginPath();
+    ctx.arc(p.x + p.w/2 + p.facing * 12, p.y + p.h/2, 15, -Math.PI/2, Math.PI/2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
 
   if (p.hasSword && p.swordEquipped && !p.swordSheathed) {
     var sx = p.x+p.w/2, sy = p.y+p.h/2, angle = p.facing > 0 ? 0.3 : 2.8;
@@ -319,14 +369,14 @@ function drawGameWorld() {
 
   ctx.fillStyle = "#0a0a1a";
   for (var i = 0; i < 30; i++) {
-    var bx = ((i * 173) % 8000), by = 50 + Math.sin(i * 2.3) * 100;
+    var bx = ((i * 173) % WORLD_W), by = 50 + Math.sin(i * 2.3) * 100;
     ctx.globalAlpha = 0.03;
     ctx.beginPath(); ctx.arc(bx, by, 60 + Math.sin(i)*30, 0, Math.PI*2); ctx.fill();
   }
   ctx.globalAlpha = 1;
   ctx.fillStyle = "#fff";
   for (var i = 0; i < 60; i++) {
-    var sx = (i*137)%8000, sy = (i*89)%2000;
+    var sx = (i*137)%WORLD_W, sy = (i*89)%2000;
     ctx.globalAlpha = 0.05 + Math.sin(Date.now()/1000+i)*0.03;
     ctx.fillRect(sx, sy, 1.2, 1.2);
   }
@@ -359,10 +409,11 @@ function drawGameWorld() {
     drawSpikes(room);
     if (r === 1) drawPedestal();
     if (r === 2) drawBombBox();
-    if (r === 5) drawTransitionZone(room5.transitionZone);
+    if (room.transitionZone) drawTransitionZone(room.transitionZone);
     if (r === 9) { drawShopNPC(); drawHealingStone(); }
   }
   drawEnemies();
+  drawBossProjectiles();
   arrowsInFlight.forEach(function(arrow) {
     ctx.fillStyle = "#d4af37";
     ctx.fillRect(arrow.x, arrow.y, arrow.w, arrow.h);
@@ -428,6 +479,8 @@ function drawGame() {
   if (hasSword) { ctx.fillStyle = player.swordCooldown <= 0 ? "#ffd700" : "#444"; ctx.fillText("⚔️ J1: " + (player.swordCooldown <= 0 ? (player.swordSheathed ? "🔒" : "⚔️") : "···"), 12, 42); }
   else { ctx.fillStyle = "#555"; ctx.fillText("Encuentra la espada...", 12, 42); }
   if (hasBow) { ctx.fillStyle = player.bowCooldown <= 0 ? "#ffd700" : "#444"; ctx.fillText("🏹 Arco: " + (player.bowCooldown <= 0 ? "Listo" : "···"), 12, 62); }
+  ctx.fillStyle = player.dashCooldown <= 0 ? "#7af" : "#446";
+  ctx.fillText("↯ Dash: " + (player.dashCooldown <= 0 ? "Listo" : "···"), 12, twoPlayerMode ? 76 : (hasBow ? 82 : 62));
   if (twoPlayerMode && hasSword) {
     ctx.fillStyle = player2.swordCooldown <= 0 ? "#f0f" : "#444"; ctx.fillText("⚔️ J2: " + (player2.swordCooldown <= 0 ? (player2.swordSheathed ? "🔒" : "⚔️") : "···"), 12, 58);
   }
@@ -447,6 +500,17 @@ function drawGame() {
     ctx.fillStyle = "#ffd700"; ctx.font = "bold 20px monospace"; ctx.textAlign = "center";
     ctx.fillText(zoneName, canvas.width/2, 50);
     ctx.textAlign = "left"; ctx.globalAlpha = 1;
+  }
+  var activeBoss = null;
+  enemies.forEach(function(e) { if (e.boss && e.room === currentRoom && !e.dead) activeBoss = e; });
+  if (activeBoss) {
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#f66"; ctx.font = "bold 13px monospace";
+    ctx.fillText(activeBoss.bossName + "  " + activeBoss.hp + "/" + activeBoss.maxHp, canvas.width / 2, canvas.height - 42);
+    ctx.fillStyle = "#421"; ctx.fillRect(190, canvas.height - 34, canvas.width - 380, 8);
+    ctx.fillStyle = activeBoss.enraged ? "#ff3344" : "#d66";
+    ctx.fillRect(190, canvas.height - 34, (canvas.width - 380) * Math.max(0, activeBoss.hp / activeBoss.maxHp), 8);
+    ctx.textAlign = "left";
   }
   if (discoveryNotify.active) {
     var alpha = Math.min(1, discoveryNotify.timer / 40);
@@ -694,6 +758,7 @@ function drawControls() {
   ctx.fillText("Teclas del juego", canvas.width/2, 95);
   var controls = [
     "A / ← → Mover", "ESPACIO / ↑ → Saltar",
+    "SHIFT / R1 → Dash", "C / L2 → Bloquear",
     "X / J → Atacar", "E → Interactuar",
     "` → Inventario", "ESC → Menú"
   ];

@@ -1,6 +1,9 @@
 var canvas, ctx;
 var ROOM_W = 800, ROOM_H = 600, GRAVITY = 0.6;
-var WORLD_W = 10 * ROOM_W;
+var DASH_SPEED = 12, DASH_DURATION = 10, DASH_COOLDOWN = 45, DASH_INV_FRAMES = 12;
+/* Rooms 0-9 are the original route, room 10 is the final descent, and
+   rooms 11-13 are the Guardian, Queen Larva, and Abyssal Knight arenas. */
+var WORLD_W = 14 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
 var VERSION = "v1.40";
 
@@ -116,6 +119,8 @@ var waterDrops = [];
 var deathParticles = [];
 var playerDead = false;
 var deathTimer = 0;
+var bossProjectiles = [];
+var bossArenaState = { guardian: false, queen_larva: false, abyssal_knight: false };
 
 var stats = {
   playTime: 0,
@@ -139,7 +144,8 @@ var player = {
   jumpsLeft: 1, maxJumps: 2, inv: 0, anim: 0, autoWalk: 0, frozen: false,
   hp: 10, maxHp: 10, id: 1, color: "#0aa", headColor: "#0cc",
   hasSword: false, swordEquipped: false, swordSwing: 0, swordCooldown: 0, bowCooldown: 0,
-  swordSheathed: true, swordSheathTimer: 0
+  swordSheathed: true, swordSheathTimer: 0, blocking: false,
+  dashTimer: 0, dashCooldown: 0, dashDir: 1, dashing: false
 };
 
 var player2 = {
@@ -147,28 +153,9 @@ var player2 = {
   jumpsLeft: 1, maxJumps: 2, inv: 0, anim: 0, autoWalk: 0, frozen: false,
   hp: 10, maxHp: 10, id: 2, color: "#a0a", headColor: "#c0c",
   hasSword: false, swordEquipped: false, swordSwing: 0, swordCooldown: 0, bowCooldown: 0,
-  swordSheathed: true, swordSheathTimer: 0
+  swordSheathed: true, swordSheathTimer: 0, blocking: false,
+  dashTimer: 0, dashCooldown: 0, dashDir: 1, dashing: false
 };
-
-player.comboStep = 0;
-player.comboTimer = 0;
-
-player2.comboStep = 0;
-player2.comboTimer = 0;
-
-// DASH
-var DASH_SPEED = 9;
-var DASH_DURATION = 10;
-var DASH_COOLDOWN = 45;
-
-player.dashTimer = 0;
-player.dashCooldown = 0;
-
-if (typeof player2 !== "undefined") {
-  player2.dashTimer = 0;
-  player2.dashCooldown = 0;
-}
-// DASH
 
 var hasSword = false, swordEquipped = false;
 var currentRoom = 0, cameraX = 0, targetCamX = 0, cameraY = 0, targetCamY = 0;
@@ -204,6 +191,11 @@ function saveGame(i) {
     heartFragments1: heartFragments1, heartFragments2: heartFragments2,
     heartFragmentsBought1: heartFragmentsBought1, heartFragmentsBought2: heartFragmentsBought2,
     hasAzariCharm: hasAzariCharm, hasDoubleJump: hasDoubleJump,
+    bossesDefeated: {
+      guardian: !!bossArenaState.guardian,
+      queen_larva: !!bossArenaState.queen_larva,
+      abyssal_knight: !!bossArenaState.abyssal_knight
+    },
     bestiary: JSON.parse(JSON.stringify(bestiary)),
     stats: { playTime: stats.playTime || 0, enemiesKilled: stats.enemiesKilled || 0,
              roomsVisited: stats.roomsVisited || 1, jumps: stats.jumps || 0,
@@ -216,7 +208,7 @@ function saveGame(i) {
 function loadGame(i) {
   var s = getSaves().slots[i];
   if (!s) return false;
-  currentRoom = s.room || 0;
+  currentRoom = Math.max(0, Math.min(rooms.length - 1, s.room || 0));
   targetCamX = currentRoom * ROOM_W; cameraX = targetCamX;
   player.x = s.px; player.y = s.py; player.vx = 0; player.vy = 0;
   hasSword = s.hasSword || false; swordEquipped = s.swordEquipped || false;
@@ -232,12 +224,18 @@ function loadGame(i) {
   heartFragmentsBought2 = s.heartFragmentsBought2 || 0;
   hasAzariCharm = s.hasAzariCharm || false;
   hasDoubleJump = s.hasDoubleJump || false;
+  bossArenaState.guardian = !!(s.bossesDefeated && s.bossesDefeated.guardian);
+  bossArenaState.queen_larva = !!(s.bossesDefeated && s.bossesDefeated.queen_larva);
+  bossArenaState.abyssal_knight = !!(s.bossesDefeated && s.bossesDefeated.abyssal_knight);
   if (hasDoubleJump) { player.maxJumps = 2; player2.maxJumps = 2; }
   if (s.bestiary) bestiary = JSON.parse(JSON.stringify(s.bestiary));
   if (s.stats) stats = { playTime: s.stats.playTime || 0, enemiesKilled: s.stats.enemiesKilled || 0, roomsVisited: s.stats.roomsVisited || 1, jumps: s.stats.jumps || 0, attacks: s.stats.attacks || 0, deaths: s.stats.deaths || 0 };
   if (s.enemiesKilled) {
     s.enemiesKilled.forEach(function(dead, idx){ if (enemies[idx]) enemies[idx].dead = dead; });
   }
+  enemies.forEach(function(e) {
+    if (e.boss && bossArenaState[e.type]) { e.dead = true; e.hp = 0; }
+  });
   return true;
 }
 
@@ -426,7 +424,7 @@ var room9 = {
     {x:7600, y:250, w:80, h:14}, {x:7800, y:280, w:80, h:14}
   ],
   spikes: [], walls: [{x:7980, y:0, w:20, h:600}],
-  transitionZone: {x:4760, y:460, w:50, h:100, to:6},
+  transitionZone: {x:7960, y:460, w:40, h:100, to:10},
   shops: [
     { id: 0, npc: {x:7380, y:525, w:20, h:35}, label: "" },
     { id: 1, npc: {x:7780, y:525, w:20, h:35}, label: "" }
@@ -435,7 +433,47 @@ var room9 = {
   decor: genDecor(7200, 10, 8, 600)
 };
 
-var rooms = [room0, room1, room2, room3, room4, room5, room6, room7, room8, room9];
+/* The final descent was lost in an earlier regression.  Keep it as a
+   deliberately small ten-platform vertical room before the boss arenas. */
+var room10 = {
+  height: 1200,
+  platforms: [
+    {x:8000, y:1160, w:800, h:40}, {x:8060, y:1050, w:120, h:14},
+    {x:8220, y:930, w:120, h:14}, {x:8420, y:810, w:120, h:14},
+    {x:8260, y:690, w:120, h:14}, {x:8460, y:570, w:120, h:14},
+    {x:8300, y:450, w:120, h:14}, {x:8500, y:330, w:120, h:14},
+    {x:8340, y:210, w:120, h:14}, {x:8500, y:80, w:200, h:40}
+  ],
+  spikes: [], walls: [], transitionZone: null,
+  decor: genDecor(8000, 8, 5, 1200)
+};
+
+var room11 = {
+  height: 600,
+  platforms: [{x:8800, y:560, w:800, h:40}],
+  spikes: [], walls: [{x:8800, y:0, w:18, h:600}, {x:9582, y:0, w:18, h:600}],
+  transitionZone: {x:9540, y:460, w:40, h:100, to:12},
+  decor: genDecor(8800, 6, 5, 600)
+};
+
+var room12 = {
+  height: 600,
+  platforms: [{x:9600, y:560, w:800, h:40}],
+  spikes: [], walls: [{x:9600, y:0, w:18, h:600}, {x:10382, y:0, w:18, h:600}],
+  transitionZone: {x:10340, y:460, w:40, h:100, to:13},
+  decor: genDecor(9600, 8, 4, 600)
+};
+
+var room13 = {
+  height: 600,
+  platforms: [{x:10400, y:560, w:800, h:40}],
+  spikes: [], walls: [{x:10400, y:0, w:18, h:600}, {x:11182, y:0, w:18, h:600}],
+  transitionZone: null,
+  decor: genDecor(10400, 10, 5, 600)
+};
+
+var rooms = [room0, room1, room2, room3, room4, room5, room6, room7, room8, room9,
+  room10, room11, room12, room13];
 
 var enemies = [
   {x: 150, y: 350, w: 24, h: 20, vx: 1.5, vy: 0, baseY: 350, range: 60, dead: false, room: 0, type: 'bat'},
@@ -479,7 +517,13 @@ var enemies = [
   {x: 7350, y: 350, w: 24, h: 20, vx: 1.3, vy: 0, baseY: 350, range: 55, dead: false, room: 9, type: 'bat'},
   {x: 7550, y: 420, w: 24, h: 20, vx: -1.5, vy: 0, baseY: 420, range: 60, dead: false, room: 9, type: 'bat'},
   {x: 7750, y: 300, w: 24, h: 20, vx: 1.2, vy: 0, baseY: 300, range: 50, dead: false, room: 9, type: 'bat'},
-  {x: 7450, y: 250, w: 24, h: 20, vx: -1.4, vy: 0, baseY: 250, range: 70, dead: false, room: 9, type: 'bat'}
+  {x:7450, y:250, w:24, h:20, vx: -1.4, vy: 0, baseY: 250, range: 70, dead: false, room: 9, type: 'bat'},
+  {x:9140, y:470, w:70, h:90, vx: 0, vy: 0, dead: false, room: 11, type: 'guardian',
+    boss: true, bossName: "GUARDIAN", hp: 100, maxHp: 100, aiTimer: 80, attackTimer: 60, phase: 1, enraged: false},
+  {x:9940, y:470, w:78, h:90, vx: 0, vy: 0, dead: false, room: 12, type: 'queen_larva',
+    boss: true, bossName: "QUEEN LARVA", hp: 140, maxHp: 140, aiTimer: 90, attackTimer: 70, phase: 1, enraged: false},
+  {x:10740, y:460, w:60, h:100, vx: 0, vy: 0, dead: false, room: 13, type: 'abyssal_knight',
+    boss: true, bossName: "ABYSSAL KNIGHT", hp: 180, maxHp: 180, aiTimer: 70, attackTimer: 50, phase: 1, enraged: false}
 ];
 
 var midScene = null;

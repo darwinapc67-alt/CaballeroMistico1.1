@@ -25,11 +25,23 @@ function resetAll() {
   room3.transitionZone = null; room4.transitionZone = null;
   room5.transitionZone = {x:4750, y:460, w:50, h:100, to:6};
   room6.transitionZone = null; room7.transitionZone = null; room8.transitionZone = null; 
+  room9.transitionZone = {x:7960, y:460, w:40, h:100, to:10};
+  room10.transitionZone = null;
+  room11.transitionZone = {x:9540, y:460, w:40, h:100, to:12};
+  room12.transitionZone = {x:10340, y:460, w:40, h:100, to:13};
+  room13.transitionZone = null;
+  bossArenaState = { guardian: false, queen_larva: false, abyssal_knight: false };
+  bossProjectiles = [];
   room1.pedestal.taken = false; room1.pedestal.glow = 0;
-  room9.transitionZone = {x:4760, y:460, w:50, h:100, to:6};
   if (room2.bombBox) { room2.bombBox.broken = false; room2.bombBox.exploded = false; }
   if (room9.healingStone) room9.healingStone.active = true;
-  enemies.forEach(function(e){ e.dead = false; });
+  enemies.forEach(function(e){
+    e.dead = false;
+    if (e.boss) {
+      e.hp = e.maxHp; e.phase = 1; e.enraged = false; e.action = "";
+      e.actionTimer = 0; e.attackTimer = e.type === "abyssal_knight" ? 50 : 70;
+    }
+  });
   generateStalactites();
 }
 
@@ -90,6 +102,7 @@ function update() {
     updatePlayer2();
     updateEnemies();
     updateArrows();
+    updateBossProjectiles();
     if (healing) {
       healTimer--;
       if (healTimer % 20 === 0) {
