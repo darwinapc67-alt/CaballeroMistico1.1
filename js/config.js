@@ -150,6 +150,20 @@ var player2 = {
   swordSheathed: true, swordSheathTimer: 0
 };
 
+// DASH
+var DASH_SPEED = 9;
+var DASH_DURATION = 10;
+var DASH_COOLDOWN = 45;
+
+player.dashTimer = 0;
+player.dashCooldown = 0;
+
+if (typeof player2 !== "undefined") {
+  player2.dashTimer = 0;
+  player2.dashCooldown = 0;
+}
+// DASH
+
 var hasSword = false, swordEquipped = false;
 var currentRoom = 0, cameraX = 0, targetCamX = 0, cameraY = 0, targetCamY = 0;
 var particles = [], floatTexts = [], arrowsInFlight = [], flash = 0;

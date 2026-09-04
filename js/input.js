@@ -297,6 +297,8 @@ function processGamepadInput() {
   var btn0 = gpButtons[0] && !prevGPButtons[0];
   var btn12 = gpButtons[12] && !prevGPButtons[12];
   var btn13 = gpButtons[13] && !prevGPButtons[13];
+  // Standard Gamepad mapping: R2 is button 7. Dash uses the same held key as Z.
+  keys["z"] = gameState === ST_PLAYING && !!gpButtons[7];
   if (shopOpen && shopId === 0) {
     if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + 3) % 3; gamepadMenuAxisLock = 1; }
     if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % 3; gamepadMenuAxisLock = 1; }
