@@ -150,6 +150,7 @@ function drawPedestal() {
     ctx.fillStyle = "#fff";
     ctx.fillRect(ped.sword.x + 1, ped.sword.y + 2, ped.sword.w - 2, ped.sword.h * 0.6);
   }
+
 }
 
 function drawCityBuildings() {
@@ -479,17 +480,24 @@ function drawInventory() {
       var col = roomIndex % 7, row = Math.floor(roomIndex / 7);
       var cardX = startX + col * (cardW + gap), cardY = startY + row * (cardH + gap);
       var selected = roomIndex === currentRoom;
-      ctx.fillStyle = selected ? "rgba(93,72,12,0.75)" : "rgba(25,34,57,0.9)";
+      var discovered = roomIndex <= highestRoomReached;
+      ctx.fillStyle = selected ? "rgba(93,72,12,0.75)" : (discovered ? "rgba(25,34,57,0.9)" : "rgba(8,10,18,0.95)");
       ctx.fillRect(cardX, cardY, cardW, cardH);
       ctx.strokeStyle = selected ? "#ffd700" : (room.bossName ? "#a85cff" : "#43516f");
       ctx.lineWidth = selected ? 2 : 1;
       ctx.strokeRect(cardX, cardY, cardW, cardH);
 
-      ctx.fillStyle = selected ? "#ffd700" : "#d5def5";
+      ctx.fillStyle = selected ? "#ffd700" : (discovered ? "#d5def5" : "#3d4352");
       ctx.font = "bold 11px monospace";
       ctx.fillText(translateText("ZONA") + " " + (roomIndex + 1), cardX + cardW / 2, cardY + 14);
 
       var innerX = cardX + 7, innerY = cardY + 22, innerW = cardW - 14, innerH = cardH - 31;
+      if (!discovered) {
+        ctx.fillStyle = "#303542";
+        ctx.font = "bold 22px monospace";
+        ctx.fillText("?", cardX + cardW / 2, cardY + cardH / 2);
+        continue;
+      }
       var scaleX = innerW / 800, scaleY = innerH / room.height;
       room.platforms.forEach(function(platform) {
         var localX = platform.x - roomIndex * ROOM_W;
@@ -776,6 +784,53 @@ function drawGame() {
     ctx.textAlign = "left";
   }
   if (adminConsoleOpen) drawAdminConsole();
+  drawTutorial();
+}
+
+function drawDeathScreen() {
+  drawGameWorld();
+  ctx.fillStyle = "rgba(2, 2, 10, 0.86)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#ff526f";
+  ctx.font = "bold 34px monospace";
+  ctx.fillText("HAS MUERTO", canvas.width / 2, 170);
+  ctx.fillStyle = "#ddd";
+  ctx.font = "14px monospace";
+  ctx.fillText("La oscuridad reclama este intento.", canvas.width / 2, 215);
+  ["Continuar desde el punto de guardado", "Reintentar desde el menú"].forEach(function(option, index) {
+    var y = 300 + index * 54;
+    ctx.fillStyle = deathChoice === index ? "rgba(100, 220, 200, 0.2)" : "rgba(0,0,0,0.25)";
+    ctx.fillRect(145, y - 28, canvas.width - 290, 40);
+    ctx.strokeStyle = deathChoice === index ? "#6cc" : "#444";
+    ctx.strokeRect(145, y - 28, canvas.width - 290, 40);
+    ctx.fillStyle = deathChoice === index ? "#6cc" : "#aaa";
+    ctx.font = "bold 14px monospace";
+    ctx.fillText((deathChoice === index ? "▶ " : "") + option, canvas.width / 2, y - 3);
+  });
+  ctx.fillStyle = "#888";
+  ctx.font = "11px monospace";
+  ctx.fillText("↑/↓ elegir • ENTER confirmar", canvas.width / 2, 440);
+  ctx.textAlign = "left";
+}
+
+function drawTutorial() {
+  if (gameState !== ST_PLAYING || tutorialTimer <= 0 || tutorialStep >= 6) return;
+  var messages = [
+    "A/D: moverte",
+    "ESPACIO: saltar",
+    "E: interactuar y recoger objetos",
+    "X/J: atacar con la espada",
+    "Z: disparar con el arco",
+    "C: usar tus habilidades"
+  ];
+  ctx.fillStyle = "rgba(4, 8, 20, 0.82)";
+  ctx.fillRect(18, canvas.height - 68, 330, 42);
+  ctx.strokeStyle = "#6cc";
+  ctx.strokeRect(18, canvas.height - 68, 330, 42);
+  ctx.fillStyle = "#d5def5";
+  ctx.font = "bold 13px monospace";
+  ctx.fillText("TUTORIAL  •  " + messages[tutorialStep], 30, canvas.height - 43);
 }
 
 function drawAdminConsole() {
@@ -1133,7 +1188,7 @@ function drawControls() {
   var controls = [
     "A / ← → Mover", "ESPACIO / ↑ → Saltar",
     "SHIFT / R1 → Dash", "C / L2 → Bloquear",
-    "X / J → Atacar", "E → Interactuar",
+    "X / J → Atacar (mantener: cargado)", "↓ + X / J en el aire → Golpe descendente", "E → Interactuar",
     "` → Inventario", "ESC → Menú"
   ];
   for (var i = 0; i < controls.length; i++) {
@@ -1141,7 +1196,7 @@ function drawControls() {
     ctx.fillText(controls[i], canvas.width/2, 140 + i * 35);
   }
   ctx.fillStyle = "#444"; ctx.font = "12px monospace";
-  ctx.fillText("Presiona ESC para volver", canvas.width/2, 380);
+  ctx.fillText("Presiona ESC para volver", canvas.width/2, 470);
   ctx.textAlign = "left";
 }
 

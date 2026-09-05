@@ -7,7 +7,7 @@ var WORLD_W = 14 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
 var VERSION = "v1.65";
 
-var ST_LANGUAGE = 0, ST_DEVICE = 1, ST_MENU = 2, ST_PLAYING = 3, ST_PAUSED = 4, ST_TRANSITION = 5, ST_INVENTORY = 7, ST_DIALOGUE = 8;
+var ST_LANGUAGE = 0, ST_DEVICE = 1, ST_MENU = 2, ST_PLAYING = 3, ST_PAUSED = 4, ST_TRANSITION = 5, ST_INVENTORY = 7, ST_DIALOGUE = 8, ST_DEATH = 9;
 
 var gameState = ST_LANGUAGE;
 var languageSelection = 0, language = "es";
@@ -177,6 +177,10 @@ var waterDrops = [];
 var deathParticles = [];
 var playerDead = false;
 var deathTimer = 0;
+var deathChoice = 0, deathAnimTimer = 0;
+var checkpointState = null;
+var highestRoomReached = 0;
+var tutorialStep = 0, tutorialTimer = 0;
 var bossProjectiles = [];
 var bossDeathEffects = [];
 var bossArenaState = { guardian: false, queen_larva: false, abyssal_knight: false };
@@ -218,7 +222,7 @@ var player = {
   x: 100, y: 400, w: 22, h: 30, vx: 0, vy: 0, onGround: false, facing: 1,
   jumpsLeft: 1, maxJumps: 2, inv: 0, anim: 0, autoWalk: 0, frozen: false,
   hp: 10, maxHp: 10, id: 1, color: "#0aa", headColor: "#0cc",
-  hasSword: false, swordEquipped: false, swordSwing: 0, swordCooldown: 0, bowCooldown: 0,
+  hasSword: false, swordEquipped: false, swordSwing: 0, swordCooldown: 0, bowCooldown: 0, attackHeld: false, attackCharge: 0, attackCharged: false, attackDown: false, attackType: "",
   swordSheathed: true, swordSheathTimer: 0, blocking: false, guardTimer: 0, guardCooldown: 0,
   dashTimer: 0, dashCooldown: 0, dashDir: 1, dashing: false, recoilTimer: 0
 };
@@ -227,7 +231,7 @@ var player2 = {
   x: 140, y: 400, w: 22, h: 30, vx: 0, vy: 0, onGround: false, facing: 1,
   jumpsLeft: 1, maxJumps: 2, inv: 0, anim: 0, autoWalk: 0, frozen: false,
   hp: 10, maxHp: 10, id: 2, color: "#a0a", headColor: "#c0c",
-  hasSword: false, swordEquipped: false, swordSwing: 0, swordCooldown: 0, bowCooldown: 0,
+  hasSword: false, swordEquipped: false, swordSwing: 0, swordCooldown: 0, bowCooldown: 0, attackHeld: false, attackCharge: 0, attackCharged: false, attackDown: false, attackType: "",
   swordSheathed: true, swordSheathTimer: 0, blocking: false, guardTimer: 0, guardCooldown: 0,
   dashTimer: 0, dashCooldown: 0, dashDir: 1, dashing: false, recoilTimer: 0
 };
@@ -264,6 +268,8 @@ function saveGame(i) {
     twoPlayer: twoPlayerMode, hasSword: hasSword, swordEquipped: swordEquipped, hasBow: hasBow, arrows: arrows,
     enemiesKilled: enemies.map(function(e){ return e.dead; }),
     azari: azari, hasMap: hasMap, hp: player.hp, maxHp: player.maxHp,
+    highestRoomReached: highestRoomReached,
+    checkpointState: checkpointState ? JSON.parse(JSON.stringify(checkpointState)) : null,
     heartFragments1: heartFragments1, heartFragments2: heartFragments2,
     heartFragmentsBought1: heartFragmentsBought1, heartFragmentsBought2: heartFragmentsBought2,
     hasAzariCharm: hasAzariCharm, hasDoubleJump: hasDoubleJump,
@@ -301,6 +307,8 @@ function loadGame(i) {
   bossDeathEffects = [];
   difficulty = s.difficulty || "normal";
   currentRoom = Math.max(0, Math.min(rooms.length - 1, s.room || 0));
+  highestRoomReached = Math.max(currentRoom, s.highestRoomReached || 0);
+  checkpointState = s.checkpointState || checkpointState;
   targetCamX = currentRoom * ROOM_W; cameraX = targetCamX;
   player.x = s.px; player.y = s.py; player.vx = 0; player.vy = 0;
   hasSword = s.hasSword || false; swordEquipped = s.swordEquipped || false;
@@ -336,7 +344,6 @@ function loadGame(i) {
   if (s.enemiesKilled) {
     s.enemiesKilled.forEach(function(dead, idx){ if (enemies[idx]) enemies[idx].dead = dead; });
   }
-
   enemies.forEach(function(e) {
     if (e.boss && bossArenaState[e.type]) { e.dead = true; e.hp = 0; }
   });

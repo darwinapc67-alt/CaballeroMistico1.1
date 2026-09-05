@@ -94,6 +94,16 @@ window.addEventListener("keydown", function(e) {
     return;
   }
 
+  if (gameState === ST_DEATH) {
+    if (up || k === "w" || down || k === "s") deathChoice = deathChoice === 0 ? 1 : 0;
+    if (confirm) {
+      if (deathChoice === 0) restoreCheckpoint();
+      else { resetAll(); gameState = ST_MENU; menuSubState = "slots"; }
+      e.preventDefault();
+    }
+    return;
+  }
+
   if (gameState === ST_LANGUAGE) {
     if (up || k === "w") { languageSelection = (languageSelection - 1 + languages.length) % languages.length; e.preventDefault(); return; }
     if (down || k === "s") { languageSelection = (languageSelection + 1) % languages.length; e.preventDefault(); return; }
@@ -312,6 +322,8 @@ window.addEventListener("keydown", function(e) {
     if (e.key === "ArrowRight") { keys["arrowright"] = true; e.preventDefault(); }
     if (e.key === " " || e.key === "Space") { keys[" "] = true; e.preventDefault(); }
     if (e.key === "ArrowUp") { keys["arrowup"] = true; e.preventDefault(); }
+    if (e.key === "ArrowDown") { keys["arrowdown"] = true; e.preventDefault(); }
+    if (e.key === "s" || e.key === "S") { keys["s"] = true; e.preventDefault(); }
     if (e.key === "x" || e.key === "X" || e.key === "j" || e.key === "J") { keys["x"] = true; e.preventDefault(); }
     if (e.key === "z" || e.key === "Z") { keys["z"] = true; e.preventDefault(); }
     if (e.key === "e" || e.key === "E") { keys["e"] = true; e.preventDefault(); }
@@ -397,6 +409,8 @@ document.addEventListener("keyup", function(e) {
   if (e.key === "ArrowRight") keys["arrowright"] = false;
   if (e.key === " " || e.key === "Space") keys[" "] = false;
   if (e.key === "ArrowUp") keys["arrowup"] = false;
+  if (e.key === "ArrowDown") keys["arrowdown"] = false;
+  if (e.key === "s" || e.key === "S") keys["s"] = false;
   if (e.key === "x" || e.key === "X" || e.key === "j" || e.key === "J") keys["x"] = false;
   if (e.key === "z" || e.key === "Z") keys["z"] = false;
   if (e.key === "e" || e.key === "E") keys["e"] = false;

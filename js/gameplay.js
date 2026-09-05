@@ -15,10 +15,13 @@ function playerTakeDamage(p, dmg) {
   flash = 0.4;
   sfxHit();
   if (p.hp <= 0) {
-    p.hp = p.maxHp;
     stats.deaths++;
     playerDead = true;
-    deathTimer = 60;
+    deathTimer = 0;
+    deathAnimTimer = 0;
+    deathChoice = 0;
+    gameState = ST_DEATH;
+    p.frozen = true;
     sfxDeath();
     for (var i = 0; i < 30; i++) {
       deathParticles.push({
@@ -28,10 +31,8 @@ function playerTakeDamage(p, dmg) {
         color: ["#f44", "#f88", "#f00", "#ff0"][Math.floor(Math.random()*4)],
         size: 3 + Math.random() * 4
       });
+
     }
-    p.x = currentRoom * ROOM_W + 100 + (p.id === 2 ? 40 : 0);
-    p.y = 400; p.vx = 0; p.vy = 0;
-    spawnFloatText(p.x, p.y - 20, "¡J" + p.id + " cayó!", "#f44");
     spawnParticles(p.x + p.w/2, p.y + p.h/2, "#f00", 20, 5);
   }
 }
@@ -65,7 +66,7 @@ function resetPlayer() {
   player.jumpsLeft = hasDoubleJump ? 2 : 1; player.facing = 1; player.inv = 0; player.autoWalk = 0;
   player.maxJumps = hasDoubleJump ? 2 : 1;
   player.frozen = false;
-  player.swordSwing = 0; player.swordCooldown = 0; player.bowCooldown = 0;
+  player.swordSwing = 0; player.swordCooldown = 0; player.bowCooldown = 0; player.attackHeld = false; player.attackCharge = 0; player.attackCharged = false; player.attackDown = false; player.attackType = "";
   player.swordSheathed = true; player.swordSheathTimer = 0;
   player.blocking = false;
   player.dashTimer = 0; player.dashCooldown = 0; player.dashDir = 1; player.dashing = false; player.recoilTimer = 0;
@@ -79,12 +80,42 @@ function resetPlayer() {
     player2.jumpsLeft = hasDoubleJump ? 2 : 1; player2.facing = 1; player2.inv = 0; player2.autoWalk = 0;
     player2.maxJumps = hasDoubleJump ? 2 : 1;
     player2.frozen = false;
-    player2.swordSwing = 0; player2.swordCooldown = 0; player2.bowCooldown = 0;
+    player2.swordSwing = 0; player2.swordCooldown = 0; player2.bowCooldown = 0; player2.attackHeld = false; player2.attackCharge = 0; player2.attackCharged = false; player2.attackDown = false; player2.attackType = "";
     player2.swordSheathed = true; player2.swordSheathTimer = 0;
     player2.blocking = false;
     player2.dashTimer = 0; player2.dashCooldown = 0; player2.dashDir = 1; player2.dashing = false; player2.recoilTimer = 0;
   }
+}
 
+function restoreCheckpoint() {
+    var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasDoubleJump: false };
+    currentRoom = cp.room; player.x = cp.px; player.y = cp.py;
+    player.hp = cp.hp; player.maxHp = cp.maxHp;
+    azari = cp.azari; hasSword = cp.hasSword; swordEquipped = cp.swordEquipped;
+    hasBow = cp.hasBow; arrows = cp.arrows; hasMap = cp.hasMap;
+    hasAzariCharm = cp.hasAzariCharm; hasDoubleJump = cp.hasDoubleJump;
+    player.hasSword = hasSword; player.swordEquipped = swordEquipped;
+    player.maxJumps = hasDoubleJump ? 2 : 1; player.jumpsLeft = player.maxJumps;
+    player.frozen = false; player.vx = 0; player.vy = 0; playerDead = false;
+    cameraX = currentRoom * ROOM_W; targetCamX = cameraX; cameraY = 0; targetCamY = 0;
+    resetDeathState();
+  }
+
+function resetDeathState() {
+    gameState = ST_PLAYING;
+    player.inv = 90; deathParticles = []; particles = []; floatTexts = [];
+    if (twoPlayerMode) { player2.hp = player2.maxHp; player2.x = player.x + 35; player2.y = player.y; player2.frozen = false; }
+  }
+
+function updateTutorial() {
+    if (tutorialTimer > 0) tutorialTimer--;
+    if (tutorialTimer > 0) return;
+    if (tutorialStep === 0 && currentRoom >= 0) { tutorialStep = 1; tutorialTimer = 300; return; }
+    if (tutorialStep === 1 && player.onGround === false && stats.jumps > 0) { tutorialStep = 2; tutorialTimer = 300; return; }
+    if (tutorialStep === 2 && hasSword) { tutorialStep = 3; tutorialTimer = 300; return; }
+    if (tutorialStep === 3 && stats.attacks > 0 && hasBow) { tutorialStep = 4; tutorialTimer = 300; return; }
+    if (tutorialStep === 4 && hasBow) { tutorialStep = 5; tutorialTimer = 300; return; }
+    if (tutorialStep === 5 && (hasDoubleJump || bossAbilities.guardian)) { tutorialStep = 6; tutorialTimer = 300; }
 }
 
 function dropHealingHeart(e) {
@@ -573,7 +604,7 @@ function defeatBoss(e) {
   }
 }
 
-function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed, interactPressed, shootPressed, blockPressed, dashPressed) {
+function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed, interactPressed, shootPressed, blockPressed, dashPressed, downPressed) {
   if (gameState !== ST_PLAYING) return;
   var hasStoneGuard = p.id === 1 && bossAbilities.guardian;
   if (hasStoneGuard) {
@@ -754,14 +785,35 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     if (p.swordSheathTimer <= 0) p.swordSheathed = true;
   }
 
-  if (attackPressed && p.hasSword && p.swordEquipped && p.swordCooldown <= 0 && p.swordSwing <= 0 && !p.frozen && !p.blocking) {
-    p.swordSwing = 12; p.swordCooldown = 22;
-    p.swordSheathed = false;
-    p.swordSheathTimer = 180;
-    stats.attacks++;
-    spawnParticles(p.x + p.w/2 + p.facing * 18, p.y + p.h/2, "#ffd700", 6, 4);
-    sfxAttack();
-    checkSwordHitEnemiesFor(p);
+  if (attackPressed && p.hasSword && p.swordEquipped && !p.frozen && !p.blocking) {
+    if (!p.attackHeld) {
+      p.attackHeld = true;
+      p.attackCharge = 0;
+      p.attackCharged = false;
+      p.attackDown = !p.onGround && downPressed;
+    } else if (p.attackCharge < 45) {
+      p.attackCharge++;
+      if (p.attackCharge === 30) {
+        p.attackCharged = true;
+        spawnFloatText(p.x, p.y - 22, "¡Golpe cargado!", "#ffd700");
+      }
+    }
+  } else if (p.attackHeld) {
+    if (p.swordCooldown <= 0 && p.swordSwing <= 0 && !p.frozen && !p.blocking) {
+      p.attackType = p.attackDown ? "down" : (p.attackCharged ? "charged" : "normal");
+      p.swordSwing = p.attackType === "charged" ? 18 : 12;
+      p.swordCooldown = p.attackType === "charged" ? 34 : 22;
+      p.swordSheathed = false;
+      p.swordSheathTimer = 180;
+      stats.attacks++;
+      spawnParticles(p.x + p.w/2 + p.facing * 18, p.y + p.h/2, p.attackType === "charged" ? "#ff9d4d" : "#ffd700", p.attackType === "charged" ? 12 : 6, 4);
+      sfxAttack();
+      checkSwordHitEnemiesFor(p);
+    }
+    p.attackHeld = false;
+    p.attackCharge = 0;
+    p.attackCharged = false;
+    p.attackDown = false;
   }
 
   if (shootPressed && p.id === 1 && hasBow && arrows > 0 && p.bowCooldown <= 0 && !p.frozen) {
@@ -787,6 +839,7 @@ function updatePlayer() {
   var moveRight = keys["d"] || keys["arrowright"];
   var jump = keys[" "] || keys["arrowup"];
   var attack = (keys["x"] || keys["j"]) && hasSword;
+  var down = keys["arrowdown"] || keys["s"];
   var shoot = keys["z"];
   var interact = keys["e"];
   var block = keys["c"];
@@ -795,13 +848,14 @@ function updatePlayer() {
     if (gpAxes.x < -0.25) moveLeft = true;
     if (gpAxes.x > 0.25) moveRight = true;
     if (gpButtons[0] && !prevGPButtons[0]) jump = true;
-    if (gpButtons[2] && !prevGPButtons[2]) attack = true;
+    attack = !!gpButtons[2];
+    down = down || gpAxes.y > 0.5;
     if (gpButtons[1] && !prevGPButtons[1]) shoot = true;
     if (gpButtons[3] && !prevGPButtons[3]) interact = true;
     if (gpButtons[6]) block = true;
     if (gpButtons[5] && !prevGPButtons[5]) dash = true;
   }
-  updateGenericPlayer(player, moveLeft, moveRight, jump, attack, interact, shoot, block, dash);
+  updateGenericPlayer(player, moveLeft, moveRight, jump, attack, interact, shoot, block, dash, down);
 }
 
 function updatePlayer2() {
@@ -810,8 +864,9 @@ function updatePlayer2() {
   var moveRight = keys["arrowright"];
   var jump = keys["shift"];
   var attack = keys["ctrl"] && hasSword;
+  var down = keys["arrowdown"];
   var interact = keys["alt"];
-  updateGenericPlayer(player2, moveLeft, moveRight, jump, attack, interact, false, false, keys["shift"]);
+  updateGenericPlayer(player2, moveLeft, moveRight, jump, attack, interact, false, false, keys["shift"], down);
   if (rectHit(player, player2)) {
     var dx = (player.x + player.w/2) - (player2.x + player2.w/2);
     if (dx > 0) { player.x += 1; player2.x -= 1; }
@@ -822,13 +877,15 @@ function updatePlayer2() {
 function checkSwordHitEnemiesFor(p) {
   if (p.swordSwing <= 0) return;
 
-  var reach = 48;
-  var swingBoxes = [
+  var reach = p.attackType === "charged" ? 72 : (p.attackType === "down" ? 58 : 48);
+  var swingBoxes = p.attackType === "down" ? [
+    { x: p.x - 10, y: p.y + p.h - 2, w: p.w + 20, h: reach }
+  ] : [
     { x: p.x + (p.facing > 0 ? p.w : -reach), y: p.y + 1, w: reach, h: 28 },
     { x: p.x - 10, y: p.y - reach + 4, w: p.w + 20, h: reach },
     { x: p.x - 10, y: p.y + p.h - 4, w: p.w + 20, h: reach }
   ];
-
+  var room = rooms[currentRoom];
   enemies.forEach(function(e) {
     if (e.dead || e.room !== currentRoom) return;
     var hit = false;
@@ -843,6 +900,8 @@ function checkSwordHitEnemiesFor(p) {
         if (e.lastSwordHit === frameCounter) return;
         e.lastSwordHit = frameCounter;
         var swordDamage = bossAbilities.abyssal_knight ? 16 : 12;
+        if (p.attackType === "charged") swordDamage *= 2;
+        if (p.attackType === "down") swordDamage = Math.round(swordDamage * 1.25);
         e.hp -= swordDamage;
         spawnFloatText(e.x, e.y - 10, "-" + swordDamage, "#ffd700");
         spawnParticles(e.x + e.w/2, e.y + e.h/2, "#7af", 10, 4);
@@ -1028,7 +1087,13 @@ function updateTransition() {
     transFade = 1;
     if (transTimer === 25) {
       currentRoom = transTargetRoom;
+      if (currentRoom > highestRoomReached) highestRoomReached = currentRoom;
       var room = rooms[currentRoom];
+      if (currentRoom % 5 === 0) {
+        checkpointState = { room: currentRoom, px: currentRoom * ROOM_W + 100, py: room.height - 120, hp: player.hp, maxHp: player.maxHp, azari: azari, hasSword: hasSword, swordEquipped: swordEquipped, hasBow: hasBow, arrows: arrows, hasMap: hasMap, hasAzariCharm: hasAzariCharm, hasDoubleJump: hasDoubleJump };
+        if (activeSlot >= 0) saveGame(activeSlot);
+        spawnFloatText(player.x, player.y - 35, "PUNTO DE GUARDADO", "#64e6ae");
+      }
       if (transIsFall) {
         player.x = currentRoom * ROOM_W + ROOM_W / 2 - player.w / 2 - 20;
         player.y = 80; player.vx = 0; player.vy = 2;
@@ -1073,9 +1138,13 @@ function updateTransition() {
 function updateUI() {
   var el = document.getElementById("ctrlText");
   if (twoPlayerMode) {
-    el.innerHTML = '<kbd>A/D</kbd>+<kbd>ESP</kbd>+<kbd>X</kbd> J1  •  <kbd>←→</kbd>+<kbd>Shift</kbd>+<kbd>Ctrl</kbd> J2  •  <kbd>`</kbd> Inventario • <kbd>ESC</kbd> Menú';
+    el.innerHTML = '<kbd>A/D</kbd>+<kbd>ESP</kbd> J1  •  <kbd>←→</kbd>+<kbd>Shift</kbd> J2' +
+      (hasSword ? ' • <kbd>X</kbd> J1  •  <kbd>Ctrl</kbd> J2' : '') +
+      ' • <kbd>E</kbd> Interactuar • <kbd>`</kbd> Inventario • <kbd>ESC</kbd> Menú';
   } else {
-    if (hasSword || hasBow) el.innerHTML = '<kbd>A</kbd> <kbd>D</kbd> Mover • <kbd>ESPACIO</kbd> Saltar • <kbd>SHIFT</kbd>/<kbd>R1</kbd> Dash • <kbd>C</kbd>/<kbd>L2</kbd> Bloquear • <kbd>X</kbd>/<kbd>J</kbd> Espada • <kbd>Z</kbd> Arco • <kbd>E</kbd> Interactuar • <kbd>`</kbd> Inventario • <kbd>M</kbd> Música • <kbd>N</kbd> SFX • <kbd>ESC</kbd> Menú';
-    else el.innerHTML = '<kbd>A</kbd> <kbd>D</kbd> Mover • <kbd>ESPACIO</kbd> Saltar • <kbd>SHIFT</kbd>/<kbd>R1</kbd> Dash • <kbd>C</kbd>/<kbd>L2</kbd> Bloquear • <kbd>E</kbd> Interactuar • <kbd>`</kbd> Inventario • <kbd>M</kbd> Música • <kbd>N</kbd> SFX • <kbd>ESC</kbd> Menú';
+    el.innerHTML = '<kbd>A</kbd> <kbd>D</kbd> Mover • <kbd>ESPACIO</kbd> Saltar • <kbd>SHIFT</kbd>/<kbd>R1</kbd> Dash • <kbd>C</kbd>/<kbd>L2</kbd> Bloquear' +
+      (hasSword ? ' • <kbd>X</kbd>/<kbd>J</kbd> Espada' : '') +
+      (hasBow ? ' • <kbd>Z</kbd> Arco' : '') +
+      ' • <kbd>E</kbd> Interactuar • <kbd>`</kbd> Inventario • <kbd>M</kbd> Música • <kbd>N</kbd> SFX • <kbd>ESC</kbd> Menú';
   }
 }

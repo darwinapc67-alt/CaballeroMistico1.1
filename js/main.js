@@ -22,6 +22,10 @@ function resetAll() {
   bestiary = { bat: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 }, cazador_paramo: { discovered: false, count: 0 } };
   deathParticles = [];
   playerDead = false; deathTimer = 0;
+  deathChoice = 0; deathAnimTimer = 0;
+  highestRoomReached = 0;
+  tutorialStep = 0; tutorialTimer = 240;
+  checkpointState = { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasDoubleJump: false };
   room0.transitionZone = null; room1.transitionZone = null; room2.transitionZone = null;
   room3.transitionZone = null; room4.transitionZone = null;
   room5.transitionZone = {x:4750, y:460, w:50, h:100, to:6};
@@ -75,6 +79,15 @@ function update() {
   updateBossDeathEffects();
   if (shopOpen && gameState === ST_PLAYING) { updateShopPlayer(); return; }
   if (gameState === ST_TRANSITION) { updateTransition(); return; }
+  if (gameState === ST_DEATH) {
+    deathAnimTimer++;
+    for (var deathIndex = deathParticles.length - 1; deathIndex >= 0; deathIndex--) {
+      var deathParticle = deathParticles[deathIndex];
+      deathParticle.x += deathParticle.vx; deathParticle.y += deathParticle.vy; deathParticle.vy += 0.1; deathParticle.life--;
+      if (deathParticle.life <= 0) deathParticles.splice(deathIndex, 1);
+    }
+    return;
+  }
   if (gameState === ST_DIALOGUE) return;
   if (hitFlash > 0) {
     hitFlash--;
@@ -129,6 +142,7 @@ function update() {
     updateArrows();
     updateHealingHearts();
     updateBossProjectiles();
+    updateTutorial();
     if (healing) {
       healTimer--;
       if (healTimer % 20 === 0) {
@@ -176,6 +190,7 @@ function loop() {
   else if (gameState === ST_TRANSITION) drawTransition();
   else if (gameState === ST_INVENTORY) { drawGame(); drawInventory(); }
   else if (gameState === ST_DIALOGUE) { drawGame(); drawBossDialogue(); }
+  else if (gameState === ST_DEATH) drawDeathScreen();
   else {
     drawGame();
     if (shopOpen) drawShop();
