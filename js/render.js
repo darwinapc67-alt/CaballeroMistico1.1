@@ -394,21 +394,21 @@ function drawInventory() {
   ctx.textAlign = "center";
   ctx.fillStyle = "#ffd700";
   ctx.font = "bold 24px monospace";
-  ctx.fillText("🎒 INVENTARIO", canvas.width/2, 40);
+  ctx.fillText(translateText("🎒 INVENTARIO"), canvas.width/2, 40);
   ctx.fillStyle = "#446";
   ctx.font = "12px monospace";
-  ctx.fillText("Presiona ` o SHARE para cerrar", canvas.width/2, 60);
+  ctx.fillText(translateText("Presiona ` o SHARE para cerrar"), canvas.width/2, 60);
   if (hasMap) {
     ctx.textAlign = "center";
     ctx.fillStyle = "#6cc";
     ctx.font = "bold 12px monospace";
-    ctx.fillText("M: " + (mapOpen ? "cerrar mapa" : "usar mapa"), canvas.width / 2, 80);
+    ctx.fillText("M: " + translateText(mapOpen ? "cerrar mapa" : "usar mapa"), canvas.width / 2, 80);
   }
 
   ctx.textAlign = "left";
   ctx.fillStyle = "#0cc";
   ctx.font = "bold 14px monospace";
-  ctx.fillText("👤 JUGADOR 1", 30, 100);
+  ctx.fillText(translateText("👤 JUGADOR 1"), 30, 100);
   ctx.fillStyle = "#888";
   ctx.font = "11px monospace";
   ctx.fillText("❤️ " + player.hp + "/" + player.maxHp, 200, 100);
@@ -439,7 +439,7 @@ function drawInventory() {
     ctx.textAlign = "center";
     ctx.fillStyle = "#ffd700";
     ctx.font = "bold 14px monospace";
-    ctx.fillText("🗺️ MAPA DE TODAS LAS ZONAS", canvas.width / 2, 110);
+    ctx.fillText(translateText("🗺️ MAPA DE TODAS LAS ZONAS"), canvas.width / 2, 110);
 
     var cardW = 101, cardH = 184, gap = 6, startX = 18, startY = 122;
     for (var roomIndex = 0; roomIndex < rooms.length; roomIndex++) {
@@ -455,7 +455,7 @@ function drawInventory() {
 
       ctx.fillStyle = selected ? "#ffd700" : "#d5def5";
       ctx.font = "bold 11px monospace";
-      ctx.fillText("ZONA " + (roomIndex + 1), cardX + cardW / 2, cardY + 14);
+      ctx.fillText(translateText("ZONA") + " " + (roomIndex + 1), cardX + cardW / 2, cardY + 14);
 
       var innerX = cardX + 7, innerY = cardY + 22, innerW = cardW - 14, innerH = cardH - 31;
       var scaleX = innerW / 800, scaleY = innerH / room.height;
@@ -477,16 +477,16 @@ function drawInventory() {
       if (room.bossName) {
         ctx.fillStyle = "#d68cff";
         ctx.font = "bold 9px monospace";
-        ctx.fillText("JEFE", cardX + cardW / 2, cardY + cardH - 8);
+        ctx.fillText(translateText("JEFE"), cardX + cardW / 2, cardY + cardH - 8);
       } else if (room.shops && room.shops.length) {
         ctx.fillStyle = "#4fdbb4";
         ctx.font = "9px monospace";
-        ctx.fillText("TIENDA", cardX + cardW / 2, cardY + cardH - 8);
+        ctx.fillText(translateText("TIENDA"), cardX + cardW / 2, cardY + cardH - 8);
       }
     }
     ctx.fillStyle = "#aaa";
     ctx.font = "11px monospace";
-    ctx.fillText("Dorado: zona actual  •  Morado: jefe  •  Verde: tienda  •  Rojo: peligro", canvas.width / 2, 532);
+    ctx.fillText(translateText("Dorado: zona actual  •  Morado: jefe  •  Verde: tienda  •  Rojo: peligro"), canvas.width / 2, 532);
     ctx.textAlign = "left";
   }
 
@@ -499,7 +499,7 @@ function drawInventory() {
   ctx.textAlign = "center";
   ctx.fillStyle = "#ffd700";
   ctx.font = "bold 14px monospace";
-  ctx.fillText("📊 ESTADÍSTICAS", canvas.width/2, statY + 20);
+  ctx.fillText(translateText("📊 ESTADÍSTICAS"), canvas.width/2, statY + 20);
   ctx.fillStyle = "#aaa";
   ctx.font = "11px monospace";
   ctx.fillText("⏱️ " + formatTime(stats.playTime) + "  |  ⚔️ " + stats.enemiesKilled + "  |  🏠 " + stats.roomsVisited, canvas.width/2, statY + 42);
@@ -628,24 +628,24 @@ function drawGame() {
     ctx.fillText(fragText, barX, twoPlayerMode ? 50 : 28);
   }
   ctx.fillStyle = "#fff"; ctx.font = "13px monospace";
-  ctx.fillText(hasSword ? "⚔️ Espada" : "🛡️ Sin arma", 12, 22);
+  ctx.fillText(hasSword ? "⚔️ " + translateText("Espada") : "🛡️ " + translateText("Sin arma"), 12, 22);
   if (hasSword) { ctx.fillStyle = player.swordCooldown <= 0 ? "#ffd700" : "#444"; ctx.fillText("⚔️ J1: " + (player.swordCooldown <= 0 ? (player.swordSheathed ? "🔒" : "⚔️") : "···"), 12, 42); }
-  else { ctx.fillStyle = "#555"; ctx.fillText("Encuentra la espada...", 12, 42); }
-  if (hasBow) { ctx.fillStyle = player.bowCooldown <= 0 ? "#ffd700" : "#444"; ctx.fillText("🏹 Arco: " + (player.bowCooldown <= 0 ? "Listo" : "···"), 12, 62); }
+  else { ctx.fillStyle = "#555"; ctx.fillText(translateText("Encuentra la espada..."), 12, 42); }
+  if (hasBow) { ctx.fillStyle = player.bowCooldown <= 0 ? "#ffd700" : "#444"; ctx.fillText("🏹 " + translateText("Arco") + ": " + (player.bowCooldown <= 0 ? translateText("Listo") : "···"), 12, 62); }
   ctx.fillStyle = player.dashCooldown <= 0 ? "#7af" : "#446";
-  ctx.fillText("↯ Dash: " + (player.dashCooldown <= 0 ? "Listo" : "···"), 12, twoPlayerMode ? 76 : (hasBow ? 82 : 62));
+  ctx.fillText("↯ " + translateText("Dash") + ": " + (player.dashCooldown <= 0 ? translateText("Listo") : "···"), 12, twoPlayerMode ? 76 : (hasBow ? 82 : 62));
   if (twoPlayerMode && hasSword) {
     ctx.fillStyle = player2.swordCooldown <= 0 ? "#f0f" : "#444"; ctx.fillText("⚔️ J2: " + (player2.swordCooldown <= 0 ? (player2.swordSheathed ? "🔒" : "⚔️") : "···"), 12, 58);
   }
-  if (hasSword) { ctx.fillStyle = "#ffd700"; ctx.font = "16px monospace"; ctx.fillText("🗡️", 750, 22); }
+  if (hasSword) { ctx.fillStyle = "#ffd700"; ctx.font = "16px monospace"; ctx.fillText("🗡️", canvas.width - 28, 72); }
   if (hasMap) {
     ctx.textAlign = "right"; ctx.fillStyle = "#ffd700"; ctx.font = "bold 13px monospace";
-    ctx.fillText("🗺️ Mapa", canvas.width - 20, twoPlayerMode ? 74 : 42);
+    ctx.fillText("🗺️ " + translateText("Mapa"), canvas.width - 20, twoPlayerMode ? 74 : 42);
     ctx.textAlign = "left";
   }
   if (hasAzariCharm) {
     ctx.textAlign = "right"; ctx.fillStyle = "#0ff"; ctx.font = "bold 12px monospace";
-    ctx.fillText("💎 Codicia", canvas.width - 20, twoPlayerMode ? 90 : 58);
+    ctx.fillText("💎 " + translateText("Bendición codiciosa"), canvas.width - 20, twoPlayerMode ? 90 : 58);
     ctx.textAlign = "left";
   }
   if (zoneNameTimer > 0) {
@@ -669,18 +669,18 @@ function drawGame() {
     var alpha = Math.min(1, discoveryNotify.timer / 40);
     ctx.globalAlpha = alpha;
     ctx.fillStyle = "#ffd700"; ctx.font = "bold 18px monospace"; ctx.textAlign = "center";
-    ctx.fillText("⚔️ ¡Nueva criatura descubierta!", canvas.width/2, 80);
+    ctx.fillText("⚔️ " + translateText("Nueva criatura descubierta!"), canvas.width/2, 80);
     ctx.fillStyle = "#f88"; ctx.font = "bold 14px monospace";
     ctx.fillText(discoveryNotify.name, canvas.width/2, 105);
     ctx.textAlign = "left"; ctx.globalAlpha = 1;
   }
-  ctx.textAlign = "center"; ctx.fillStyle = "#0ff"; ctx.font = "bold 16px monospace";
-  ctx.fillText("💠 " + azari, canvas.width/2, canvas.height - 20);
+  ctx.textAlign = "right"; ctx.fillStyle = "#0ff"; ctx.font = "bold 13px monospace";
+  ctx.fillText("💠 " + azari, canvas.width - 20, 98);
   ctx.textAlign = "left";
   ctx.fillStyle = "rgba(100,200,255,0.3)";
   ctx.font = "12px monospace";
   ctx.textAlign = "right";
-  ctx.fillText("` = Inventario", canvas.width - 10, canvas.height - 20);
+  ctx.fillText("` = " + translateText("Inventario"), canvas.width - 10, canvas.height - 20);
   ctx.textAlign = "left";
   if (adminMode) {
     ctx.fillStyle = "#f66";
@@ -699,7 +699,7 @@ function drawAdminConsole() {
   ctx.textAlign = "left";
   ctx.fillStyle = "#f66";
   ctx.font = "bold 14px monospace";
-  ctx.fillText("CONSOLA ADMIN  •  COMANDOS DISPONIBLES", 65, canvas.height - 228);
+  ctx.fillText(translateText("CONSOLA ADMIN  •  COMANDOS DISPONIBLES"), 65, canvas.height - 228);
   ctx.fillStyle = "#d5def5";
   ctx.font = "11px monospace";
   ctx.fillText("/give azari [cantidad]", 65, canvas.height - 202);
@@ -709,15 +709,15 @@ function drawAdminConsole() {
   ctx.fillText("/give flechas [cantidad]", 65, canvas.height - 130);
   ctx.fillText("/give vida", 65, canvas.height - 112);
   ctx.fillText("/tp habitacion [1-14]", 330, canvas.height - 202);
-  ctx.fillText("Ejemplo: /give azari 1000", 330, canvas.height - 184);
-  ctx.fillText("Ejemplo: /tp habitacion 5", 330, canvas.height - 166);
+  ctx.fillText(translateText("Ejemplo: /give azari 1000"), 330, canvas.height - 184);
+  ctx.fillText(translateText("Ejemplo: /tp habitacion 5"), 330, canvas.height - 166);
   ctx.fillStyle = "#fff";
   ctx.font = "14px monospace";
   ctx.fillText("> " + adminCommand + "_", 65, canvas.height - 78);
   ctx.fillStyle = "#fff";
   ctx.fillStyle = "#aaa";
   ctx.font = "11px monospace";
-  ctx.fillText(adminCommandMessage || "ENTER ejecutar  •  ESC cerrar", 65, canvas.height - 55);
+  ctx.fillText(adminCommandMessage || translateText("ENTER ejecutar  •  ESC cerrar"), 65, canvas.height - 55);
   ctx.textAlign = "left";
 }
 
@@ -731,11 +731,11 @@ function drawMenu() {
   }
   ctx.globalAlpha = 1;
   ctx.fillStyle = "#6cc"; ctx.font = "bold 36px monospace"; ctx.textAlign = "center";
-  ctx.fillText("⚔️ CABALLERO MÍSTICO", canvas.width/2, 80);
+  ctx.fillText(translateText("⚔️ CABALLERO MÍSTICO"), canvas.width/2, 80);
   ctx.fillStyle = "#446"; ctx.font = "14px monospace";
   ctx.fillText(VERSION, canvas.width/2, 105);
   ctx.fillStyle = "#666"; ctx.font = "14px monospace";
-  ctx.fillText("Selecciona una ranura", canvas.width/2, 135);
+  ctx.fillText(translateText("Selecciona una ranura"), canvas.width/2, 135);
 
   var saves = getSaves();
   for (var i = 0; i < 5; i++) {
@@ -745,49 +745,107 @@ function drawMenu() {
     ctx.strokeStyle = isSel ? "#6cc" : "#2a2a3a"; ctx.lineWidth = isSel ? 2 : 1;
     ctx.strokeRect(180, y, 440, 62);
     ctx.textAlign = "left"; ctx.font = "bold 16px monospace"; ctx.fillStyle = isSel ? "#6cc" : "#888";
-    ctx.fillText("RANURA " + (i+1), 200, y+22);
+    ctx.fillText(translateText("RANURA") + " " + (i+1), 200, y+22);
     ctx.font = "12px monospace";
     if (slot) {
-      ctx.fillStyle = "#8f8"; ctx.fillText("🗂️  Guardado — " + fmtDate(slot.timestamp), 200, y+36);
-      ctx.fillStyle = "#0ff"; ctx.fillText("💠 " + (slot.azari || 0) + " Azari" + (slot.hasMap ? "  🗺️ Mapa" : "") + "  ❤️ " + (slot.hp || "?") + "/" + (slot.maxHp || "?") + (slot.twoPlayer ? "  👥2P" : "  👤1P"), 200, y+52);
+      ctx.fillStyle = "#8f8"; ctx.fillText("🗂️  " + translateText("Guardado") + " — " + fmtDate(slot.timestamp), 200, y+36);
+      ctx.fillStyle = "#0ff"; ctx.fillText("💠 " + (slot.azari || 0) + " Azari" + (slot.hasMap ? "  🗺️ Mapa" : "") + "  ❤️ " + (slot.hp || "?") + "/" + (slot.maxHp || "?") + "  " + (slot.difficulty || "normal").toUpperCase(), 200, y+52);
       var playTime = slot.stats ? slot.stats.playTime || 0 : 0;
       ctx.fillStyle = "#ffd700"; ctx.fillText("⏱️ " + formatTime(playTime), 430, y+52);
-      ctx.fillStyle = "#555"; ctx.textAlign = "right"; ctx.fillText("[DEL/X] Borrar", 600, y+40);
+      ctx.fillStyle = "#555"; ctx.textAlign = "right"; ctx.fillText("[DEL/X] " + translateText("Borrar"), 600, y+40);
     } else {
-      ctx.fillStyle = "#444"; ctx.fillText("Vacía — ENTER para nueva partida", 200, y+40);
+      ctx.fillStyle = "#444"; ctx.fillText(translateText("Vacía") + " — ENTER " + translateText("para nueva partida"), 200, y+40);
     }
     if (isSel) { ctx.fillStyle = "#6cc"; ctx.fillText("▶", 165, y+30); }
   }
-  var adminY = 540, adminSelected = menuSelection === 5;
+  var settingsY = 530, settingsSelected = menuSelection === 5;
+  ctx.fillStyle = settingsSelected ? "rgba(100,200,255,0.15)" : "rgba(255,255,255,0.02)";
+  ctx.fillRect(180, settingsY - 20, 440, 32);
+  ctx.strokeStyle = settingsSelected ? "#6cc" : "#333"; ctx.lineWidth = settingsSelected ? 2 : 1;
+  ctx.strokeRect(180, settingsY - 20, 440, 32);
+  ctx.fillStyle = settingsSelected ? "#6cc" : "#888"; ctx.font = "bold 14px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText((settingsSelected ? "▶  " : "    ") + translateText("⚙️ Configuración"), canvas.width/2, settingsY);
+
+  var adminY = 570, adminSelected = menuSelection === 6;
   ctx.fillStyle = adminSelected ? "rgba(255,80,80,0.18)" : "rgba(255,255,255,0.02)";
   ctx.fillRect(180, adminY - 20, 440, 32);
   ctx.strokeStyle = adminSelected ? "#f66" : "#333"; ctx.lineWidth = adminSelected ? 2 : 1;
   ctx.strokeRect(180, adminY - 20, 440, 32);
   ctx.fillStyle = adminSelected ? "#f66" : "#888"; ctx.font = "bold 14px monospace";
   ctx.textAlign = "center";
-  ctx.fillText((adminSelected ? "▶  " : "    ") + "Panel del admin", canvas.width/2, adminY);
+  ctx.fillText((adminSelected ? "▶  " : "    ") + translateText("Panel del admin"), canvas.width/2, adminY);
   ctx.textAlign = "center"; ctx.fillStyle = "#333"; ctx.font = "12px monospace";
-  ctx.fillText(gamepadConnected ? "⬆️⬇️ Navegar  •  ❌ Seleccionar  •  ⬜ Borrar" : "↑/↓ Navegar  •  ENTER Seleccionar  •  DEL/X Borrar", canvas.width/2, 580);
+  ctx.fillText(gamepadConnected ? "⬆️⬇️ Navegar  •  ❌ Seleccionar  •  ⬜ Borrar" : "↑/↓ Navegar  •  ENTER Seleccionar  •  DEL/X Borrar", canvas.width/2, 598);
 
   if (menuSubState === "confirm_delete") {
     ctx.fillStyle = "rgba(0,0,0,0.92)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#f44"; ctx.font = "bold 20px monospace";
-    ctx.fillText("¿BORRAR RANURA " + (slotToDelete+1) + "?", canvas.width/2, 250);
+    ctx.fillText(translateText("¿BORRAR RANURA") + " " + (slotToDelete+1) + "?", canvas.width/2, 250);
     ctx.fillStyle = "#888"; ctx.font = "16px monospace";
-    ctx.fillText("Esta acción no se puede deshacer", canvas.width/2, 285);
-    ctx.fillStyle = "#0f0"; ctx.fillText("[Y / S] Confirmar", canvas.width/2, 330);
-    ctx.fillStyle = "#f44"; ctx.fillText("[N / ESC] Cancelar", canvas.width/2, 360);
+    ctx.fillText(translateText("Esta acción no se puede deshacer"), canvas.width/2, 285);
+    ctx.fillStyle = "#0f0"; ctx.fillText("[Y / S] " + translateText("Confirmar"), canvas.width/2, 330);
+    ctx.fillStyle = "#f44"; ctx.fillText("[N / ESC] " + translateText("Cancelar"), canvas.width/2, 360);
   }
   if (menuSubState === "admin_password") {
     ctx.fillStyle = "rgba(0,0,0,0.94)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#f66"; ctx.font = "bold 24px monospace";
-    ctx.fillText("PANEL DEL ADMIN", canvas.width/2, 220);
+    ctx.fillText(translateText("Panel del admin"), canvas.width/2, 220);
     ctx.fillStyle = "#aaa"; ctx.font = "14px monospace";
-    ctx.fillText("Introduce la contraseña", canvas.width/2, 265);
+    ctx.fillText(translateText("Introduce la contraseña"), canvas.width/2, 265);
     ctx.fillStyle = "#fff"; ctx.font = "bold 24px monospace";
     ctx.fillText("*".repeat(adminPassword.length), canvas.width/2, 315);
     ctx.fillStyle = adminMessage ? "#f66" : "#666"; ctx.font = "12px monospace";
-    ctx.fillText(adminMessage || "ENTER confirmar  •  ESC cancelar", canvas.width/2, 370);
+    ctx.fillText(adminMessage || translateText("ENTER confirmar  •  ESC cancelar"), canvas.width/2, 370);
+  }
+  if (menuSubState === "difficulty") {
+    ctx.fillStyle = "rgba(0,0,0,0.94)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#ffd700";
+    ctx.font = "bold 25px monospace";
+    ctx.fillText(translateText("ELIGE LA DIFICULTAD"), canvas.width / 2, 150);
+    ctx.fillStyle = "#888";
+    ctx.font = "13px monospace";
+    ctx.fillText(translateText("Esta opción se guardará con la nueva partida"), canvas.width / 2, 180);
+    difficultyOptions.forEach(function(option, index) {
+      var y = 240 + index * 70, selected = difficultySelection === index;
+      ctx.fillStyle = selected ? "rgba(100,200,255,0.16)" : "rgba(255,255,255,0.03)";
+      ctx.fillRect(180, y - 25, 440, 52);
+      ctx.strokeStyle = selected ? "#6cc" : "#333";
+      ctx.lineWidth = selected ? 2 : 1;
+      ctx.strokeRect(180, y - 25, 440, 52);
+      ctx.fillStyle = selected ? "#6cc" : "#aaa";
+      ctx.font = "bold 17px monospace";
+      ctx.fillText((selected ? "▶  " : "    ") + translateText(option.name), canvas.width / 2, y);
+      ctx.fillStyle = "#888";
+      ctx.font = "11px monospace";
+      ctx.fillText(translateText(option.desc), canvas.width / 2, y + 20);
+    });
+    ctx.fillStyle = "#666";
+    ctx.font = "12px monospace";
+    ctx.fillText("↑/↓ Navegar  •  ENTER Confirmar  •  ESC Volver", canvas.width / 2, 500);
+  }
+  if (menuSubState === "settings") {
+    ctx.fillStyle = "rgba(0,0,0,0.94)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#ffd700"; ctx.font = "bold 26px monospace";
+    ctx.fillText("⚙️ CONFIGURACIÓN", canvas.width / 2, 150);
+    var settings = [
+      "🌐 " + translateText("Idioma") + ": " + languages[languageSelection].label,
+      "🎮 " + translateText("Dispositivo") + ": " + translateText(devices[deviceSelection].label),
+      "🔐 " + translateText(adminMode ? "Admin activado" : "Activar modo admin")
+    ];
+    settings.forEach(function(option, index) {
+      var y = 230 + index * 65, selected = settingsSelection === index;
+      ctx.fillStyle = selected ? "rgba(100,200,255,0.16)" : "rgba(255,255,255,0.03)";
+      ctx.fillRect(180, y - 25, 440, 48);
+      ctx.strokeStyle = selected ? "#6cc" : "#333"; ctx.lineWidth = selected ? 2 : 1;
+      ctx.strokeRect(180, y - 25, 440, 48);
+      ctx.fillStyle = selected ? "#6cc" : "#aaa"; ctx.font = "bold 15px monospace";
+      ctx.fillText((selected ? "▶  " : "    ") + option, canvas.width / 2, y + 5);
+    });
+    ctx.fillStyle = "#666"; ctx.font = "12px monospace";
+    ctx.fillText("↑/↓ " + translateText("Navegar") + "  •  ENTER " + translateText("Seleccionar") + "  •  ESC " + translateText("Volver"), canvas.width / 2, 470);
   }
   ctx.textAlign = "left";
 }
@@ -854,17 +912,40 @@ function drawPause() {
     drawAudioMenu();
     return;
   }
+  if (pauseSubState === "settings") {
+    ctx.fillStyle = "rgba(0,0,0,0.94)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.textAlign = "center"; ctx.fillStyle = "#ffd700"; ctx.font = "bold 26px monospace";
+    ctx.fillText("⚙️ CONFIGURACIÓN", canvas.width / 2, 130);
+    var pauseSettings = [
+      "🌐 Idioma: " + languages[languageSelection].label,
+      "🎮 Dispositivo: " + devices[deviceSelection].label,
+      "🔐 " + (adminMode ? "Admin activado" : "Activar modo admin")
+    ];
+    pauseSettings.forEach(function(option, index) {
+      var y = 210 + index * 60, selected = settingsSelection === index;
+      ctx.fillStyle = selected ? "rgba(100,200,255,0.16)" : "rgba(255,255,255,0.03)";
+      ctx.fillRect(180, y - 23, 440, 46);
+      ctx.strokeStyle = selected ? "#6cc" : "#333"; ctx.lineWidth = selected ? 2 : 1;
+      ctx.strokeRect(180, y - 23, 440, 46);
+      ctx.fillStyle = selected ? "#6cc" : "#aaa"; ctx.font = "bold 15px monospace";
+      ctx.fillText((selected ? "▶  " : "    ") + option, canvas.width / 2, y + 5);
+    });
+    ctx.fillStyle = "#666"; ctx.font = "12px monospace";
+    ctx.fillText("↑/↓ Navegar  •  ENTER Seleccionar  •  ESC Volver", canvas.width / 2, 430);
+    ctx.textAlign = "left";
+    return;
+  }
   ctx.fillStyle = "rgba(0,0,0,0.82)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.textAlign = "center"; ctx.fillStyle = "#6cc"; ctx.font = "bold 32px monospace";
-  ctx.fillText("⏸️  PAUSA", canvas.width/2, 130);
+  ctx.fillText("⏸️  " + translateText("PAUSA"), canvas.width/2, 130);
   ctx.fillStyle = "#446"; ctx.font = "14px monospace";
   ctx.fillText(VERSION + (twoPlayerMode ? "  •  👥 MODO 2P" : "  •  👤 MODO 1P"), canvas.width/2, 155);
   var opts = [
-    "▶  Reanudar", "📖  Ver Diario",
-    twoPlayerMode ? "👤  Quitar J2" : "👥  Agregar J2",
-    "🎮  Controles", "🔊  Música y sonido", "🚪  Salir al Menú"
+    "▶  " + translateText("Reanudar"), "📖  " + translateText("Ver Diario"),
+    twoPlayerMode ? "👤  " + translateText("Quitar J2") : "👥  " + translateText("Agregar J2"),
+    "🎮  " + translateText("Controles"), "🔊  " + translateText("MÚSICA Y SONIDO"), "⚙️  " + translateText("⚙️ Configuración"), "🚪  " + translateText("Salir al Menú")
   ];
-  for (var i = 0; i < 6; i++) {
+  for (var i = 0; i < 7; i++) {
     var y = 200 + i * 40;
     var isSel = (i === pauseSelection);
     ctx.fillStyle = isSel ? "rgba(100,200,255,0.15)" : "transparent";
@@ -875,7 +956,7 @@ function drawPause() {
     ctx.fillText(opts[i], canvas.width/2, y + 5);
   }
   ctx.fillStyle = "#444"; ctx.font = "12px monospace";
-  ctx.fillText("↑/↓ Navegar  •  ENTER Seleccionar  •  ESC Volver", canvas.width/2, 480);
+  ctx.fillText("↑/↓ " + translateText("Navegar") + "  •  ENTER " + translateText("Seleccionar") + "  •  ESC " + translateText("Volver"), canvas.width/2, 510);
   ctx.textAlign = "left";
 }
 
@@ -897,10 +978,10 @@ function drawAudioMenu() {
 function drawDiary() {
   ctx.fillStyle = "rgba(5,5,16,0.95)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.textAlign = "center"; ctx.fillStyle = "#ffd700"; ctx.font = "bold 28px monospace";
-  ctx.fillText("📖 DIARIO DEL CABALLERO", canvas.width/2, 60);
+  ctx.fillText(translateText("📖 DIARIO DEL CABALLERO"), canvas.width/2, 60);
   ctx.fillStyle = "#446"; ctx.font = "12px monospace";
-  ctx.fillText("Registro de criaturas y grandes enemigos", canvas.width/2, 85);
-  var tabs = [{ key: "enemies", label: "⚔️ ENEMIGOS" }, { key: "bosses", label: "👑 JEFES" }];
+  ctx.fillText(translateText("Registro de criaturas y grandes enemigos"), canvas.width/2, 85);
+  var tabs = [{ key: "enemies", label: "⚔️ " + translateText("ENEMIGOS") }, { key: "bosses", label: "👑 " + translateText("JEFES") }];
   tabs.forEach(function(tab, idx) {
     var tabX = idx === 0 ? 270 : 530;
     var active = diaryCategory === tab.key;

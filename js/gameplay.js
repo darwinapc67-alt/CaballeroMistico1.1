@@ -6,7 +6,8 @@ function playerTakeDamage(p, dmg) {
     spawnFloatText(p.x, p.y - 18, "¡BLOQUEADO!", "#9de8ff");
     return;
   }
-  p.hp -= dmg;
+  var difficultyData = difficultyOptions.find(function(option) { return option.id === difficulty; }) || difficultyOptions[1];
+  p.hp -= Math.max(1, Math.ceil(dmg * difficultyData.damage));
   p.inv = 40;
   spawnParticles(p.x + p.w/2, p.y + p.h/2, "#f44", 10);
   flash = 0.4;

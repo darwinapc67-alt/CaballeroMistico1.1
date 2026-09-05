@@ -46,7 +46,7 @@ window.addEventListener("keydown", function(e) {
       e.preventDefault();
       return;
     } else if (gameState === ST_PAUSED) {
-      if (pauseSubState === "diary") pauseSubState = "menu";
+      if (pauseSubState === "diary" || pauseSubState === "settings") pauseSubState = "menu";
       else if (pauseSubState === "controls" || pauseSubState === "audio") pauseSubState = "menu";
       else gameState = ST_PLAYING;
       e.preventDefault();
@@ -62,7 +62,18 @@ window.addEventListener("keydown", function(e) {
       e.preventDefault();
       return;
     } else if (gameState === ST_MENU && menuSubState === "admin_password") {
-      menuSubState = "slots"; adminPassword = ""; adminMessage = "";
+      adminPassword = ""; adminMessage = "";
+      if (settingsReturn === "pause") {
+        settingsReturn = false;
+        gameState = ST_PAUSED;
+        pauseSubState = "settings";
+      } else {
+        menuSubState = "slots";
+      }
+      e.preventDefault();
+      return;
+    } else if (gameState === ST_MENU && menuSubState === "settings") {
+      menuSubState = "slots";
       e.preventDefault();
       return;
     }
@@ -82,8 +93,18 @@ window.addEventListener("keydown", function(e) {
     if (down || k === "s") { languageSelection = (languageSelection + 1) % languages.length; e.preventDefault(); return; }
     if (confirm) {
       language = languages[languageSelection].code;
-      gameState = ST_DEVICE;
-      deviceSelection = 0;
+      if (settingsReturn === "pause") {
+        settingsReturn = false;
+        gameState = ST_PAUSED;
+        pauseSubState = "settings";
+      } else if (settingsReturn) {
+        settingsReturn = false;
+        gameState = ST_MENU;
+        menuSubState = "settings";
+      } else {
+        gameState = ST_DEVICE;
+        deviceSelection = 0;
+      }
       e.preventDefault();
       return;
     }
@@ -102,8 +123,14 @@ window.addEventListener("keydown", function(e) {
         gamepadConnected = false;
       }
       setupTouchControls();
-      gameState = ST_MENU;
-      menuSubState = "slots";
+      if (settingsReturn === "pause") {
+        gameState = ST_PAUSED;
+        pauseSubState = "settings";
+      } else {
+        gameState = ST_MENU;
+        menuSubState = settingsReturn ? "settings" : "slots";
+      }
+      settingsReturn = false;
       e.preventDefault();
       return;
     }
@@ -123,9 +150,20 @@ window.addEventListener("keydown", function(e) {
           player.x = currentRoom * ROOM_W + 30;
           player.y = rooms[currentRoom].height - 120;
           player.vx = 0; player.vy = 0;
-          gameState = ST_PLAYING;
-          menuSubState = "slots";
-          startMusic(); updateUI();
+          if (adminFromSettings && settingsReturn === "pause") {
+            adminFromSettings = false;
+            settingsReturn = false;
+            gameState = ST_PAUSED;
+            pauseSubState = "settings";
+          } else if (adminFromSettings) {
+            adminFromSettings = false;
+            gameState = ST_MENU;
+            menuSubState = "settings";
+          } else {
+            gameState = ST_PLAYING;
+            menuSubState = "slots";
+            startMusic(); updateUI();
+          }
         } else {
           adminPassword = "";
           adminMessage = "Contraseña incorrecta";
@@ -137,17 +175,35 @@ window.addEventListener("keydown", function(e) {
       if (/^[0-9]$/.test(e.key) && adminPassword.length < 12) { adminPassword += e.key; e.preventDefault(); return; }
       return;
     }
-    if (menuSubState === "slots") {
-      if (up || k === "w") { menuSelection = (menuSelection - 1 + 6) % 6; e.preventDefault(); return; }
-      if (down || k === "s") { menuSelection = (menuSelection + 1) % 6; e.preventDefault(); return; }
+    if (menuSubState === "difficulty" && e.key === "Escape") {
+      menuSubState = "slots";
+      e.preventDefault();
+      return;
+    }
+    if (menuSubState === "settings") {
+      if (up || k === "w") { settingsSelection = (settingsSelection - 1 + 3) % 3; e.preventDefault(); return; }
+      if (down || k === "s") { settingsSelection = (settingsSelection + 1) % 3; e.preventDefault(); return; }
       if (confirm) {
-        if (menuSelection === 5) { menuSubState = "admin_password"; adminPassword = ""; adminMessage = ""; e.preventDefault(); return; }
+        if (settingsSelection === 0) { settingsReturn = true; gameState = ST_LANGUAGE; }
+        if (settingsSelection === 1) { settingsReturn = true; gameState = ST_DEVICE; }
+        if (settingsSelection === 2) { adminFromSettings = true; menuSubState = "admin_password"; adminPassword = ""; adminMessage = ""; }
+        e.preventDefault(); return;
+      }
+      return;
+    }
+    if (menuSubState === "slots") {
+      if (up || k === "w") { menuSelection = (menuSelection - 1 + 7) % 7; e.preventDefault(); return; }
+      if (down || k === "s") { menuSelection = (menuSelection + 1) % 7; e.preventDefault(); return; }
+      if (confirm) {
+        if (menuSelection === 5) { menuSubState = "settings"; settingsSelection = 0; e.preventDefault(); return; }
+        if (menuSelection === 6) { menuSubState = "admin_password"; adminFromSettings = false; adminPassword = ""; adminMessage = ""; e.preventDefault(); return; }
         activeSlot = menuSelection;
         var saves = getSaves();
         if (saves.slots[menuSelection]) {
           if (loadGame(menuSelection)) { gameState = ST_PLAYING; startMusic(); updateUI(); }
         } else {
-          resetAll(); gameState = ST_PLAYING; startMusic(); updateUI();
+          difficultySelection = 1;
+          menuSubState = "difficulty";
         }
         e.preventDefault();
         return;
@@ -161,10 +217,35 @@ window.addEventListener("keydown", function(e) {
       if (k === "y" || k === "s") { deleteSave(slotToDelete); menuSubState = "slots"; slotToDelete = -1; e.preventDefault(); return; }
       if (k === "n" || e.key === "Escape") { menuSubState = "slots"; slotToDelete = -1; e.preventDefault(); return; }
     }
+    if (menuSubState === "difficulty") {
+      if (up || k === "w") { difficultySelection = (difficultySelection - 1 + difficultyOptions.length) % difficultyOptions.length; e.preventDefault(); return; }
+      if (down || k === "s") { difficultySelection = (difficultySelection + 1) % difficultyOptions.length; e.preventDefault(); return; }
+      if (confirm) {
+        applyDifficultyToNewGame();
+        resetAll();
+        gameState = ST_PLAYING;
+        startMusic();
+        updateUI();
+        menuSubState = "slots";
+        e.preventDefault(); return;
+      }
+      return;
+    }
     return;
   }
 
   if (gameState === ST_PAUSED) {
+    if (pauseSubState === "settings") {
+      if (up || k === "w") { settingsSelection = (settingsSelection - 1 + 3) % 3; e.preventDefault(); return; }
+      if (down || k === "s") { settingsSelection = (settingsSelection + 1) % 3; e.preventDefault(); return; }
+      if (confirm) {
+        if (settingsSelection === 0) { settingsReturn = "pause"; gameState = ST_LANGUAGE; }
+        if (settingsSelection === 1) { settingsReturn = "pause"; gameState = ST_DEVICE; }
+        if (settingsSelection === 2) { adminFromSettings = true; settingsReturn = "pause"; menuSubState = "admin_password"; gameState = ST_MENU; adminPassword = ""; adminMessage = ""; }
+        e.preventDefault(); return;
+      }
+      return;
+    }
     if (pauseSubState === "diary") {
       if (k === "a" || e.key === "ArrowLeft" || k === "q" || k === "1") diaryCategory = "enemies";
       if (k === "d" || e.key === "ArrowRight" || k === "2") diaryCategory = "bosses";
@@ -180,15 +261,16 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (pauseSubState === "controls") { if (e.key === "Escape") { pauseSubState = "menu"; e.preventDefault(); } return; }
-    if (up || k === "w") { pauseSelection = (pauseSelection - 1 + 6) % 6; e.preventDefault(); return; }
-    if (down || k === "s") { pauseSelection = (pauseSelection + 1) % 6; e.preventDefault(); return; }
+    if (up || k === "w") { pauseSelection = (pauseSelection - 1 + 7) % 7; e.preventDefault(); return; }
+    if (down || k === "s") { pauseSelection = (pauseSelection + 1) % 7; e.preventDefault(); return; }
     if (confirm) {
       if (pauseSelection === 0) gameState = ST_PLAYING;
       if (pauseSelection === 1) pauseSubState = "diary";
       if (pauseSelection === 2) { twoPlayerMode = !twoPlayerMode; updateUI(); }
       if (pauseSelection === 3) { pauseSubState = "controls"; }
       if (pauseSelection === 4) pauseSubState = "audio";
-      if (pauseSelection === 5) { if (activeSlot >= 0) saveGame(activeSlot); gameState = ST_MENU; menuSubState = "slots"; }
+      if (pauseSelection === 5) pauseSubState = "settings";
+      if (pauseSelection === 6) { if (activeSlot >= 0) saveGame(activeSlot); gameState = ST_MENU; menuSubState = "slots"; }
       e.preventDefault();
       return;
     }
@@ -399,17 +481,50 @@ function processGamepadInput() {
   }
   if (gameState === ST_MENU) {
     if (device !== "play") return;
+    if (menuSubState === "settings") {
+      if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
+      if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { settingsSelection = (settingsSelection - 1 + 3) % 3; gamepadMenuAxisLock = 1; }
+      if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { settingsSelection = (settingsSelection + 1) % 3; gamepadMenuAxisLock = 1; }
+      if (btn0) {
+        if (settingsSelection === 0) { settingsReturn = true; gameState = ST_LANGUAGE; }
+        if (settingsSelection === 1) { settingsReturn = true; gameState = ST_DEVICE; }
+        if (settingsSelection === 2) { adminFromSettings = true; menuSubState = "admin_password"; adminPassword = ""; adminMessage = ""; }
+      }
+      return;
+    }
+    if (menuSubState === "difficulty") {
+      if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
+      if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { difficultySelection = (difficultySelection - 1 + difficultyOptions.length) % difficultyOptions.length; gamepadMenuAxisLock = 1; }
+      if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { difficultySelection = (difficultySelection + 1) % difficultyOptions.length; gamepadMenuAxisLock = 1; }
+      if (btn0 || (gpButtons[1] && !prevGPButtons[1])) {
+        applyDifficultyToNewGame();
+        resetAll(); gameState = ST_PLAYING; startMusic(); updateUI(); menuSubState = "slots";
+      }
+      return;
+    }
     if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
-    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + 5) % 5; gamepadMenuAxisLock = 1; }
-    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % 5; gamepadMenuAxisLock = 1; }
+    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + 7) % 7; gamepadMenuAxisLock = 1; }
+    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % 7; gamepadMenuAxisLock = 1; }
     if (btn0 || (gpButtons[1] && !prevGPButtons[1])) {
       activeSlot = menuSelection;
       var saves = getSaves();
       if (saves.slots[menuSelection]) {
         if (loadGame(menuSelection)) { gameState = ST_PLAYING; startMusic(); updateUI(); }
       } else {
-        resetAll(); gameState = ST_PLAYING; startMusic(); updateUI();
+        difficultySelection = 1;
+        menuSubState = "difficulty";
       }
+    }
+    return;
+  }
+  if (gameState === ST_PAUSED && pauseSubState === "settings") {
+    if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
+    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { settingsSelection = (settingsSelection - 1 + 3) % 3; gamepadMenuAxisLock = 1; }
+    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { settingsSelection = (settingsSelection + 1) % 3; gamepadMenuAxisLock = 1; }
+    if (btn0) {
+      if (settingsSelection === 0) { settingsReturn = "pause"; gameState = ST_LANGUAGE; }
+      if (settingsSelection === 1) { settingsReturn = "pause"; gameState = ST_DEVICE; }
+      if (settingsSelection === 2) { adminFromSettings = true; settingsReturn = "pause"; menuSubState = "admin_password"; gameState = ST_MENU; adminPassword = ""; adminMessage = ""; }
     }
     return;
   }
@@ -426,15 +541,16 @@ function processGamepadInput() {
   }
   if (gameState === ST_PAUSED && pauseSubState === "menu") {
     if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
-    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { pauseSelection = (pauseSelection - 1 + 6) % 6; gamepadMenuAxisLock = 1; }
-    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { pauseSelection = (pauseSelection + 1) % 6; gamepadMenuAxisLock = 1; }
+    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { pauseSelection = (pauseSelection - 1 + 7) % 7; gamepadMenuAxisLock = 1; }
+    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { pauseSelection = (pauseSelection + 1) % 7; gamepadMenuAxisLock = 1; }
     if (btn0) {
       if (pauseSelection === 0) gameState = ST_PLAYING;
       if (pauseSelection === 1) pauseSubState = "diary";
       if (pauseSelection === 2) { twoPlayerMode = !twoPlayerMode; updateUI(); }
       if (pauseSelection === 3) pauseSubState = "controls";
       if (pauseSelection === 4) pauseSubState = "audio";
-      if (pauseSelection === 5) { if (activeSlot >= 0) saveGame(activeSlot); gameState = ST_MENU; menuSubState = "slots"; }
+      if (pauseSelection === 5) pauseSubState = "settings";
+      if (pauseSelection === 6) { if (activeSlot >= 0) saveGame(activeSlot); gameState = ST_MENU; menuSubState = "slots"; }
     }
 
     return;

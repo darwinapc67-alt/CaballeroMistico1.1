@@ -5,7 +5,7 @@ var DASH_SPEED = 12, DASH_DURATION = 10, DASH_COOLDOWN = 45, DASH_INV_FRAMES = 1
    rooms 11-13 are the Guardian, Queen Larva, and Abyssal Knight arenas. */
 var WORLD_W = 14 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
-var VERSION = "v1.40";
+var VERSION = "v1.65";
 
 var ST_LANGUAGE = 0, ST_DEVICE = 1, ST_MENU = 2, ST_PLAYING = 3, ST_PAUSED = 4, ST_TRANSITION = 5, ST_EXPLOSION = 6, ST_INVENTORY = 7, ST_DIALOGUE = 8;
 
@@ -47,7 +47,24 @@ var translations = {
     "Celular / Tablet": "Mobile / Tablet", "Control de Play": "Play Controller", "Choose your language": "Choose your language", "Escolha seu idioma": "Choose your language",
     "Espada": "Sword", "Modo": "Mode", "JUGADOR": "PLAYER", "Tiempo": "Time", "Vida": "Health",
     "Murciélago Sombrío": "Shadow Bat", "Criatura alada que habita las profundidades. se alimenta de energia de hechizos.": "Winged creature that dwells in the depths and feeds on spell energy.",
-    "Larva-Mosca": "Fly Larva", "Aberración híbrida que embiste con ferocidad.": "A hybrid aberration that charges with ferocity."
+    "Larva-Mosca": "Fly Larva", "Aberración híbrida que embiste con ferocidad.": "A hybrid aberration that charges with ferocity.",
+    "⚙️ Configuración": "⚙️ Settings", "Panel del admin": "Admin Panel", "Dificultad": "Difficulty",
+    "ELIGE LA DIFICULTAD": "CHOOSE DIFFICULTY", "Esta opción se guardará con la nueva partida": "This choice will be saved with the new game",
+    "FÁCIL": "EASY", "NORMAL": "NORMAL", "DIFÍCIL": "HARD", "Recibes menos daño de los enemigos.": "You take less damage from enemies.",
+    "La experiencia equilibrada.": "The balanced experience.", "Recibes más daño de los enemigos.": "You take more damage from enemies.",
+    "Idioma": "Language", "Dispositivo": "Device", "Admin activado": "Admin enabled", "Activar modo admin": "Enable admin mode",
+    "INVENTARIO": "INVENTORY", "Presiona ` o SHARE para cerrar": "Press ` or SHARE to close", "cerrar mapa": "close map", "usar mapa": "use map",
+    "JUGADOR 1": "PLAYER 1", "Arco": "Bow", "Flechas": "Arrows", "Bendición codiciosa": "Greedy blessing", "Saltos": "Jumps",
+    "Doble": "Double", "Simple": "Single", "MAPA DE TODAS LAS ZONAS": "MAP OF ALL AREAS", "ZONA": "AREA", "JEFE": "BOSS",
+    "ESTADÍSTICAS": "STATS", "Nueva criatura descubierta!": "New creature discovered!", "Listo": "Ready", "Encuentra la espada...": "Find the sword...",
+    "Dash": "Dash", "CONSOLA ADMIN  •  COMANDOS DISPONIBLES": "ADMIN CONSOLE  •  AVAILABLE COMMANDS",
+    "Ejemplo: /give azari 1000": "Example: /give azari 1000", "Ejemplo: /tp habitacion 5": "Example: /tp room 5",
+    "ENTER ejecutar  •  ESC cerrar": "ENTER execute  •  ESC close", "ENTER / ESPACIO para continuar": "ENTER / SPACE to continue",
+    "¿BORRAR RANURA": "DELETE SLOT", "Esta acción no se puede deshacer": "This action cannot be undone",
+    "Confirmar": "Confirm", "Cancelar": "Cancel",     "ENTER confirmar  •  ESC cancelar": "ENTER confirm  •  ESC cancel", "Música y sonido": "Music & sound",
+    "Dorado: zona actual  •  Morado: jefe  •  Verde: tienda  •  Rojo: peligro": "Gold: current area  •  Purple: boss  •  Green: shop  •  Red: danger",
+    "Introduce la contraseña": "Enter the password", "para nueva partida": "for a new game", "ENEMIGOS": "ENEMIES", "JEFES": "BOSSES",
+    "Registro de criaturas y grandes enemigos": "Record of creatures and great enemies"
   },
   pt: {
     "CABALLERO MÍSTICO": "CAVALEIRO MÍSTICO", "Selecciona una ranura": "Selecione um espaço", "RANURA": "ESPAÇO",
@@ -72,7 +89,22 @@ var translations = {
     "Celular / Tablet": "Celular / Tablet", "Control de Play": "Controle de Play", "Choose your language": "Escolha seu idioma", "Escolha seu idioma": "Escolha seu idioma",
     "Espada": "Espada", "Modo": "Modo", "JUGADOR": "JOGADOR", "Tiempo": "Tempo", "Vida": "Vida",
     "Murciélago Sombrío": "Morcego Sombrio", "Criatura alada que habita las profundidades. se alimenta de energia de hechizos.": "Criatura alada das profundezas que se alimenta de energia de feitiços.",
-    "Larva-Mosca": "Larva-Mosca", "Aberración híbrida que embiste con ferocidad.": "Aberração híbrida que investe com ferocidade."
+    "Larva-Mosca": "Larva-Mosca", "Aberración híbrida que embiste con ferocidad.": "Aberração híbrida que investe com ferocidade.",
+    "⚙️ Configuración": "⚙️ Configurações", "Panel del admin": "Painel do admin", "ELIGE LA DIFICULTAD": "ESCOLHA A DIFICULDADE",
+    "Esta opción se guardará con la nueva partida": "Esta opção será salva com o novo jogo", "FÁCIL": "FÁCIL", "NORMAL": "NORMAL", "DIFÍCIL": "DIFÍCIL",
+    "Recibes menos daño de los enemigos.": "Você recebe menos dano dos inimigos.", "La experiencia equilibrada.": "A experiência equilibrada.", "Recibes más daño de los enemigos.": "Você recebe mais dano dos inimigos.",
+    "Idioma": "Idioma", "Dispositivo": "Dispositivo", "Admin activado": "Admin ativado", "Activar modo admin": "Ativar modo admin",
+    "INVENTARIO": "INVENTÁRIO", "Presiona ` o SHARE para cerrar": "Pressione ` ou SHARE para fechar", "cerrar mapa": "fechar mapa", "usar mapa": "usar mapa",
+    "JUGADOR 1": "JOGADOR 1", "Arco": "Arco", "Flechas": "Flechas", "Bendición codiciosa": "Bênção gananciosa", "Saltos": "Saltos",
+    "Doble": "Duplo", "Simple": "Simples", "MAPA DE TODAS LAS ZONAS": "MAPA DE TODAS AS ÁREAS", "ZONA": "ÁREA", "JEFE": "CHEFE",
+    "Dash": "Dash", "CONSOLA ADMIN  •  COMANDOS DISPONIBLES": "CONSOLE ADMIN  •  COMANDOS DISPONÍVEIS",
+    "Ejemplo: /give azari 1000": "Exemplo: /give azari 1000", "Ejemplo: /tp habitacion 5": "Exemplo: /tp sala 5",
+    "ENTER ejecutar  •  ESC cerrar": "ENTER executar  •  ESC fechar", "ENTER / ESPACIO para continuar": "ENTER / ESPAÇO para continuar",
+    "¿BORRAR RANURA": "APAGAR ESPAÇO", "Esta acción no se puede deshacer": "Esta ação não pode ser desfeita",
+    "Confirmar": "Confirmar", "Cancelar": "Cancelar",     "ENTER confirmar  •  ESC cancelar": "ENTER confirmar  •  ESC cancelar", "Música y sonido": "Música e som",
+    "Dorado: zona actual  •  Morado: jefe  •  Verde: tienda  •  Rojo: peligro": "Dourado: área atual  •  Roxo: chefe  •  Verde: loja  •  Vermelho: perigo",
+    "Introduce la contraseña": "Digite a senha", "para nueva partida": "para novo jogo", "ENEMIGOS": "INIMIGOS", "JEFES": "CHEFES",
+    "Registro de criaturas y grandes enemigos": "Registro de criaturas e grandes inimigos"
   }
 };
 
@@ -80,12 +112,19 @@ function translateText(text) {
   if (language === "es") return text;
   var result = String(text);
   var dictionary = translations[language] || {};
-  Object.keys(dictionary).forEach(function(key) {
+  Object.keys(dictionary).sort(function(a, b) { return b.length - a.length; }).forEach(function(key) {
     result = result.split(key).join(dictionary[key]);
   });
   return result;
 }
 var menuSelection = 0, menuSubState = "slots", slotToDelete = -1, activeSlot = -1;
+var settingsSelection = 0, settingsReturn = false, adminFromSettings = false;
+var difficultySelection = 1, difficulty = "normal";
+var difficultyOptions = [
+  { id: "easy", name: "FÁCIL", desc: "Recibes menos daño de los enemigos.", damage: 0.7 },
+  { id: "normal", name: "NORMAL", desc: "La experiencia equilibrada.", damage: 1 },
+  { id: "hard", name: "DIFÍCIL", desc: "Recibes más daño de los enemigos.", damage: 1.35 }
+];
 var adminPassword = "", adminMessage = "";
 var adminMode = false, adminConsoleOpen = false, adminCommand = "", adminCommandMessage = "";
 var pauseSelection = 0, pauseSubState = "menu", diaryCategory = "enemies";
@@ -209,6 +248,7 @@ function saveGame(i) {
       abyssal_knight: !!bossArenaState.abyssal_knight
     },
     bestiary: JSON.parse(JSON.stringify(bestiary)),
+    difficulty: difficulty,
     stats: { playTime: stats.playTime || 0, enemiesKilled: stats.enemiesKilled || 0,
              roomsVisited: stats.roomsVisited || 1, jumps: stats.jumps || 0,
              attacks: stats.attacks || 0, deaths: stats.deaths || 0 },
@@ -220,6 +260,7 @@ function saveGame(i) {
 function loadGame(i) {
   var s = getSaves().slots[i];
   if (!s) return false;
+  difficulty = s.difficulty || "normal";
   currentRoom = Math.max(0, Math.min(rooms.length - 1, s.room || 0));
   targetCamX = currentRoom * ROOM_W; cameraX = targetCamX;
   player.x = s.px; player.y = s.py; player.vx = 0; player.vy = 0;
@@ -248,10 +289,16 @@ function loadGame(i) {
   if (s.enemiesKilled) {
     s.enemiesKilled.forEach(function(dead, idx){ if (enemies[idx]) enemies[idx].dead = dead; });
   }
+
   enemies.forEach(function(e) {
     if (e.boss && bossArenaState[e.type]) { e.dead = true; e.hp = 0; }
   });
   return true;
+}
+
+function applyDifficultyToNewGame() {
+  var selected = difficultyOptions[difficultySelection] || difficultyOptions[1];
+  difficulty = selected.id;
 }
 
 function deleteSave(i) {
