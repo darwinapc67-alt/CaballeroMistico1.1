@@ -223,11 +223,27 @@ function updateBossProjectiles() {
 function updateEnemies() {
   if (gameState !== ST_PLAYING) return;
   enemies.forEach(function(e) {
-    if (e.dead || e.room !== currentRoom) return;
-    var room = rooms[currentRoom];
-    var left = currentRoom * ROOM_W, right = left + ROOM_W;
+    if (e.dead) return;
+    if (e.boss && e.room !== currentRoom) return;
+    var room = rooms[e.room];
+    var left = e.room * ROOM_W, right = left + ROOM_W;
     if (e.boss) {
       updateBoss(e, room);
+    } else if (e.type === 'cazador_paramo') {
+      var hunterLeft = left + 25, hunterRight = right - 25 - e.w;
+      var hunterTarget = player.x + player.w / 2;
+      var hunterDistance = Math.abs(hunterTarget - (e.x + e.w / 2));
+      if (hunterDistance < 220 && !player.frozen) {
+        e.vx = hunterTarget < e.x + e.w / 2 ? -e.speed : e.speed;
+      } else if (!e.canRoam && (e.x <= hunterLeft || e.x >= hunterRight)) {
+        e.vx *= -1;
+      }
+      e.x += e.vx;
+      e.y = e.baseY;
+      if (!e.canRoam) {
+        if (e.x < hunterLeft) { e.x = hunterLeft; e.vx = Math.abs(e.vx); }
+        if (e.x > hunterRight) { e.x = hunterRight; e.vx = -Math.abs(e.vx); }
+      }
     } else if (e.type === 'larva_mosca') {
       var ecx = e.x + e.w/2, ecy = e.y + e.h/2;
       var pcx = player.x + player.w/2, pcy = player.y + player.h/2;
@@ -247,14 +263,26 @@ function updateEnemies() {
         e.vx *= 0.92; e.vy *= 0.92;
       }
       e.x += e.vx; e.y += e.vy;
-      if (e.x < left + 10) { e.x = left + 10; e.vx *= -1; }
-      if (e.x + e.w > right - 10) { e.x = right - 10 - e.w; e.vx *= -1; }
+      if (!e.canRoam) {
+        if (e.x < left + 10) { e.x = left + 10; e.vx *= -1; }
+        if (e.x + e.w > right - 10) { e.x = right - 10 - e.w; e.vx *= -1; }
+      }
       if (e.y < 0) { e.y = 0; e.vy *= -1; }
       if (e.y + e.h > room.height - 10) { e.y = room.height - 10 - e.h; e.vy *= -1; }
     } else {
       e.x += e.vx;
       e.y = e.baseY + Math.sin(Date.now() / 400 + e.x * 0.01) * e.range * 0.3;
-      if (e.x < left + 20 || e.x + e.w > right - 20) e.vx *= -1;
+      if (!e.canRoam && (e.x < left + 20 || e.x + e.w > right - 20)) e.vx *= -1;
+    }
+    if (e.canRoam) {
+      if (e.x < 0) { e.x = 0; e.vx = Math.abs(e.vx); }
+      if (e.x + e.w > WORLD_W) { e.x = WORLD_W - e.w; e.vx = -Math.abs(e.vx); }
+      var nextRoom = Math.floor((e.x + e.w / 2) / ROOM_W);
+      if (nextRoom !== e.room && nextRoom >= 0 && nextRoom < rooms.length) {
+        e.room = nextRoom;
+        e.baseY = Math.min(e.baseY || e.y, rooms[nextRoom].height - e.h - 10);
+        e.y = Math.min(e.y, rooms[nextRoom].height - e.h - 10);
+      }
     }
     if (player.inv <= 0 && !player.frozen && rectHit(player, e)) {
       var dmg = e.type === 'larva_mosca' ? 2 : 1;

@@ -138,9 +138,10 @@ var frameCounter = 0;
 
 var bestiaryInfo = {
   bat: { name: "Murciélago Sombrío", desc: "Criatura alada que habita las profundidades. se alimenta de energia de hechizos." },
-  larva_mosca: { name: "Larva-Mosca", desc: "Aberración híbrida que embiste con ferocidad." }
+  larva_mosca: { name: "Larva-Mosca", desc: "Aberración híbrida que embiste con ferocidad." },
+  cazador_paramo: { name: "Cazador del Páramo", desc: "Depredador terrestre que patrulla los páramos y persigue a los intrusos." }
 };
-var bestiary = { bat: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 } };
+var bestiary = { bat: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 }, cazador_paramo: { discovered: false, count: 0 } };
 var discoveryNotify = { active: false, timer: 0, name: "" };
 
 var player = {
@@ -233,6 +234,9 @@ function loadGame(i) {
   bossArenaState.abyssal_knight = !!(s.bossesDefeated && s.bossesDefeated.abyssal_knight);
   if (hasDoubleJump) { player.maxJumps = 2; player2.maxJumps = 2; }
   if (s.bestiary) bestiary = JSON.parse(JSON.stringify(s.bestiary));
+  Object.keys(bestiaryInfo).forEach(function(key) {
+    if (!bestiary[key]) bestiary[key] = { discovered: false, count: 0 };
+  });
   if (s.stats) stats = { playTime: s.stats.playTime || 0, enemiesKilled: s.stats.enemiesKilled || 0, roomsVisited: s.stats.roomsVisited || 1, jumps: s.stats.jumps || 0, attacks: s.stats.attacks || 0, deaths: s.stats.deaths || 0 };
   if (s.enemiesKilled) {
     s.enemiesKilled.forEach(function(dead, idx){ if (enemies[idx]) enemies[idx].dead = dead; });
@@ -510,6 +514,8 @@ var enemies = [
   {x: 5150, y: 710, w: 24, h: 20, vx: 1.2, vy: 0, baseY: 710, range: 50, dead: false, room: 6, type: 'bat'},
   {x: 5000, y: 1020, w: 28, h: 22, vx: 0, vy: 0, speed: 1.8, visionRadius: 180, dead: false, room: 6, type: 'larva_mosca'},
   {x: 5350, y: 590, w: 28, h: 22, vx: 0, vy: 0, speed: 1.8, visionRadius: 180, dead: false, room: 6, type: 'larva_mosca'},
+  {x: 7480, y: 540, w: 24, h: 20, vx: 1.2, vy: 0, baseY: 540, range: 180, speed: 1.4, dead: false, room: 9, type: 'cazador_paramo', terrestrial: true},
+  {x: 8200, y: 1140, w: 24, h: 20, vx: -1.1, vy: 0, baseY: 1140, range: 110, speed: 1.3, dead: false, room: 10, type: 'cazador_paramo', terrestrial: true},
   {x: 5750, y: 350, w: 24, h: 20, vx: 1.4, vy: 0, baseY: 350, range: 55, dead: false, room: 7, type: 'bat'},
   {x: 5900, y: 420, w: 24, h: 20, vx: -1.2, vy: 0, baseY: 420, range: 50, dead: false, room: 7, type: 'bat'},
   {x: 6100, y: 300, w: 24, h: 20, vx: 1.6, vy: 0, baseY: 300, range: 70, dead: false, room: 7, type: 'bat'},
@@ -529,5 +535,6 @@ var enemies = [
   {x:10740, y:460, w:60, h:100, vx: 0, vy: 0, dead: false, room: 13, type: 'abyssal_knight',
     boss: true, bossName: "ABYSSAL KNIGHT", hp: 180, maxHp: 180, aiTimer: 70, attackTimer: 50, phase: 1, enraged: false}
 ];
+enemies.forEach(function(e) { e.canRoam = !e.boss; });
 
 var midScene = null;

@@ -18,7 +18,7 @@ function resetAll() {
   if (twoPlayerMode) player2.hp = player2.maxHp = 10;
   stats = { playTime: 0, enemiesKilled: 0, roomsVisited: 1, jumps: 0, attacks: 0, deaths: 0 };
   frameCounter = 0;
-  bestiary = { bat: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 } };
+  bestiary = { bat: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 }, cazador_paramo: { discovered: false, count: 0 } };
   deathParticles = [];
   playerDead = false; deathTimer = 0;
   room0.transitionZone = null; room1.transitionZone = null; room2.transitionZone = null;

@@ -217,7 +217,7 @@ function drawHealingStone() {
 function drawEnemies() {
   var camLeft = cameraX, camRight = cameraX + 800, camTop = cameraY, camBottom = cameraY + 600;
   enemies.forEach(function(e) {
-    if (e.dead || e.room !== currentRoom) return;
+    if (e.dead) return;
     if (e.x + e.w < camLeft - 50 || e.x > camRight + 50) return;
     if (e.y + e.h < camTop - 50 || e.y > camBottom + 50) return;
     ctx.save();
@@ -244,6 +244,25 @@ function drawEnemies() {
       }
       ctx.fillStyle = "#f44"; ctx.fillRect(e.x, e.y - 14, e.w * Math.max(0, e.hp / e.maxHp), 5);
       ctx.strokeStyle = "#fff"; ctx.lineWidth = 1; ctx.strokeRect(e.x, e.y - 14, e.w, 5);
+    } else if (e.type === 'cazador_paramo') {
+      var hunterWobble = Math.sin(Date.now() / 120) * 2;
+      var hunterFacing = e.vx < 0 ? -1 : 1;
+      ctx.fillStyle = "rgba(20, 20, 25, 0.45)";
+      ctx.beginPath();
+      ctx.ellipse(e.x + e.w / 2, e.y + e.h, 15, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#62646b";
+      ctx.beginPath();
+      ctx.ellipse(e.x + e.w / 2, e.y + 11 + hunterWobble, 12, 8, 0, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#3b3d43";
+      ctx.fillRect(e.x + 4, e.y + 14, e.w - 8, 5);
+      ctx.fillStyle = "#b6b8bd";
+      ctx.fillRect(e.x + (hunterFacing > 0 ? 15 : 5), e.y + 8, 3, 3);
+      ctx.fillStyle = "#292b30";
+      ctx.fillRect(e.x + 3, e.y + 17, 5, 5);
+      ctx.fillRect(e.x + e.w - 8, e.y + 17, 5, 5);
     } else if (e.type === 'larva_mosca') {
       var wiggle = Math.sin(Date.now()/100) * 3;
       ctx.fillStyle = "#6a4";
@@ -884,16 +903,18 @@ function drawShop() {
   ctx.fillText("E: salir", 101, 585);
   if (shopGreetingTimer > 0) {
     ctx.fillStyle = "rgba(5,5,15,0.92)";
-    ctx.fillRect(270, 390, 350, 72);
+    ctx.fillRect(250, 390, 400, 82);
     ctx.strokeStyle = "#d4af37";
     ctx.lineWidth = 2;
-    ctx.strokeRect(270, 390, 350, 72);
+    ctx.strokeRect(250, 390, 400, 82);
+    ctx.textAlign = "left";
     ctx.fillStyle = "#ffd700";
     ctx.font = "bold 13px monospace";
-    ctx.fillText("COMERCIANTE:", 290, 414);
+    ctx.fillText("COMERCIANTE:", 270, 414);
     ctx.fillStyle = "#fff";
     ctx.font = "12px monospace";
-    ctx.fillText(shopGreeting, 290, 438, 310);
+    ctx.fillText(shopGreeting, 270, 442, 360);
+    ctx.textAlign = "center";
   }
   if (!shopMenuOpen) {
     ctx.fillStyle = "#aaa"; ctx.font = "14px monospace";
