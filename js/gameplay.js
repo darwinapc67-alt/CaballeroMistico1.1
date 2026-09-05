@@ -6,6 +6,7 @@ function playerTakeDamage(p, dmg) {
     spawnFloatText(p.x, p.y - 18, "¡BLOQUEADO!", "#9de8ff");
     return;
   }
+
   var difficultyData = difficultyOptions.find(function(option) { return option.id === difficulty; }) || difficultyOptions[1];
   var guardianGuard = bossAbilities.guardian ? 0.8 : 1;
   p.hp -= Math.max(1, Math.ceil(dmg * difficultyData.damage * guardianGuard));
@@ -32,6 +33,30 @@ function playerTakeDamage(p, dmg) {
     p.y = 400; p.vx = 0; p.vy = 0;
     spawnFloatText(p.x, p.y - 20, "¡J" + p.id + " cayó!", "#f44");
     spawnParticles(p.x + p.w/2, p.y + p.h/2, "#f00", 20, 5);
+  }
+}
+
+function checkAchievementProgress(isBoss) {
+  var unlocked = [];
+  if (isBoss && !achievements.firstBoss) {
+    achievements.firstBoss = true;
+    unlocked.push("Primer jefe");
+  }
+  if (!isBoss && !achievements.firstEnemy) {
+    achievements.firstEnemy = true;
+    unlocked.push("Primer enemigo");
+  }
+  if (stats.enemiesKilled >= 50 && !achievements.enemies50) {
+    achievements.enemies50 = true;
+    unlocked.push("50 enemigos");
+  }
+  if (stats.enemiesKilled >= 100 && !achievements.enemies100) {
+    achievements.enemies100 = true;
+    unlocked.push("100 enemigos");
+  }
+  if (unlocked.length) {
+    achievementNotify = { active: true, timer: 240, title: unlocked[unlocked.length - 1] };
+    sfxDiscovery();
   }
 }
 
@@ -493,7 +518,7 @@ function updateArrows() {
           spawnParticles(e.x + e.w/2, e.y + e.h/2, "#7af", 8, 3);
           if (e.hp <= 0) defeatBoss(e);
         } else {
-          e.dead = true; stats.enemiesKilled++; hitEnemy = true;
+          e.dead = true; stats.enemiesKilled++; checkAchievementProgress(false); hitEnemy = true;
           if (bestiary[e.type]) { bestiary[e.type].count++; bestiary[e.type].discovered = true; }
           var gain = e.type === "larva_mosca" ? 4 : 2;
           azari += hasAzariCharm ? gain * 2 : gain;
@@ -512,7 +537,7 @@ function updateArrows() {
 
 function defeatBoss(e) {
   if (e.dead) return;
-  e.dead = true; e.hp = 0; stats.enemiesKilled++;
+  e.dead = true; e.hp = 0; stats.enemiesKilled++; checkAchievementProgress(true);
   bossArenaState[e.type] = true;
   bossAbilities[e.type] = true;
   bossZonesUnlocked[e.type] = true;
@@ -550,7 +575,29 @@ function defeatBoss(e) {
 
 function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed, interactPressed, shootPressed, blockPressed, dashPressed) {
   if (gameState !== ST_PLAYING) return;
-  p.blocking = !!blockPressed && !p.frozen;
+  var hasStoneGuard = p.id === 1 && bossAbilities.guardian;
+  if (hasStoneGuard) {
+    if (p.guardCooldown > 0) p.guardCooldown--;
+    if (p.guardTimer > 0) {
+      p.guardTimer--;
+      p.blocking = true;
+      if (p.guardTimer === 0) {
+        p.blocking = false;
+        p.guardCooldown = 600;
+        spawnFloatText(p.x, p.y - 22, translateText("Guardia agotada"), "#9de8ff");
+      }
+    } else if (blockPressed && p.guardCooldown <= 0 && !p.frozen) {
+      p.guardTimer = 600;
+      p.blocking = true;
+      p.swordSheathed = true;
+      p.swordSheathTimer = 0;
+      spawnFloatText(p.x, p.y - 22, translateText("Guardia pétrea"), "#9de8ff");
+    } else {
+      p.blocking = false;
+    }
+  } else {
+    p.blocking = !!blockPressed && !p.frozen;
+  }
   if (playerDead && p === player) {
     deathTimer--;
     if (deathTimer <= 0) { playerDead = false; p.inv = 40; }
@@ -721,7 +768,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     if (p.swordSheathTimer <= 0) p.swordSheathed = true;
   }
 
-  if (attackPressed && p.hasSword && p.swordEquipped && p.swordCooldown <= 0 && p.swordSwing <= 0 && !p.frozen) {
+  if (attackPressed && p.hasSword && p.swordEquipped && p.swordCooldown <= 0 && p.swordSwing <= 0 && !p.frozen && !p.blocking) {
     p.swordSwing = 12; p.swordCooldown = 22;
     p.swordSheathed = false;
     p.swordSheathTimer = 180;
@@ -819,6 +866,7 @@ function checkSwordHitEnemiesFor(p) {
       }
       e.dead = true;
       stats.enemiesKilled++;
+      checkAchievementProgress(false);
       dropHealingHeart(e);
       for (var i = 0; i < 15; i++) {
         deathParticles.push({

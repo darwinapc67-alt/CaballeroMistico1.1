@@ -716,6 +716,16 @@ function drawGame() {
     ctx.fillText("💎 " + translateText("Bendición codiciosa"), canvas.width - 20, twoPlayerMode ? 90 : 58);
     ctx.textAlign = "left";
   }
+  if (bossAbilities.guardian) {
+    ctx.textAlign = "right";
+    ctx.fillStyle = player.guardTimer > 0 ? "#9de8ff" : (player.guardCooldown > 0 ? "#667" : "#9de8ff");
+    ctx.font = "bold 11px monospace";
+    var guardText = player.guardTimer > 0
+      ? translateText("Guardia") + ": " + Math.ceil(player.guardTimer / 60) + "s"
+      : (player.guardCooldown > 0 ? translateText("Recarga") + ": " + Math.ceil(player.guardCooldown / 60) + "s" : translateText("Guardia lista"));
+    ctx.fillText("🪨 " + guardText, canvas.width - 20, twoPlayerMode ? 106 : 76);
+    ctx.textAlign = "left";
+  }
   if (zoneNameTimer > 0) {
     ctx.globalAlpha = Math.min(1, zoneNameTimer/30);
     ctx.fillStyle = "#ffd700"; ctx.font = "bold 20px monospace"; ctx.textAlign = "center";
@@ -761,6 +771,25 @@ function drawGame() {
     ctx.fillStyle = "#f66";
     ctx.font = "bold 11px monospace";
     ctx.fillText("ADMIN", 12, canvas.height - 38);
+  }
+  if (achievementNotify.active) {
+    var achievementAlpha = Math.min(1, achievementNotify.timer / 30);
+    ctx.save();
+    ctx.globalAlpha = achievementAlpha;
+    ctx.textAlign = "right";
+    ctx.fillStyle = "rgba(24, 18, 8, 0.94)";
+    ctx.fillRect(canvas.width - 285, canvas.height - 105, 265, 66);
+    ctx.strokeStyle = "#ffd700";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(canvas.width - 285, canvas.height - 105, 265, 66);
+    ctx.fillStyle = "#ffd700";
+    ctx.font = "bold 12px monospace";
+    ctx.fillText("🏆 " + translateText("LOGRO DESBLOQUEADO"), canvas.width - 32, canvas.height - 80);
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 14px monospace";
+    ctx.fillText(translateText(achievementNotify.title), canvas.width - 32, canvas.height - 55);
+    ctx.restore();
+    ctx.textAlign = "left";
   }
   if (adminConsoleOpen) drawAdminConsole();
 }

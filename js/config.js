@@ -64,6 +64,9 @@ var translations = {
     "Confirmar": "Confirm", "Cancelar": "Cancel",     "ENTER confirmar  •  ESC cancelar": "ENTER confirm  •  ESC cancel", "Música y sonido": "Music & sound",
     "Dorado: zona actual  •  Morado: jefe  •  Verde: tienda  •  Rojo: peligro": "Gold: current area  •  Purple: boss  •  Green: shop  •  Red: danger",
     "Introduce la contraseña": "Enter the password", "para nueva partida": "for a new game", "ENEMIGOS": "ENEMIES", "JEFES": "BOSSES",
+    "LOGRO DESBLOQUEADO": "ACHIEVEMENT UNLOCKED", "Primer enemigo": "First enemy", "Primer jefe": "First boss",
+    "50 enemigos": "50 enemies", "100 enemigos": "100 enemies",
+    "Guardia": "Guard", "Recarga": "Cooldown", "Guardia lista": "Guard ready", "Guardia agotada": "Guard expired",
     "Registro de criaturas y grandes enemigos": "Record of creatures and great enemies",
     "Guardián de la Cueva": "Cave Guardian", "Reina Larva": "Larva Queen", "Caballero Abismal": "Abyssal Knight",
     "JEFE DERROTADO": "BOSS DEFEATED", "Recompensa": "Reward", "Habilidad nueva": "New ability",
@@ -111,6 +114,9 @@ var translations = {
     "Confirmar": "Confirmar", "Cancelar": "Cancelar",     "ENTER confirmar  •  ESC cancelar": "ENTER confirmar  •  ESC cancelar", "Música y sonido": "Música e som",
     "Dorado: zona actual  •  Morado: jefe  •  Verde: tienda  •  Rojo: peligro": "Dourado: área atual  •  Roxo: chefe  •  Verde: loja  •  Vermelho: perigo",
     "Introduce la contraseña": "Digite a senha", "para nueva partida": "para novo jogo", "ENEMIGOS": "INIMIGOS", "JEFES": "CHEFES",
+    "LOGRO DESBLOQUEADO": "CONQUISTA DESBLOQUEADA", "Primer enemigo": "Primeiro inimigo", "Primer jefe": "Primeiro chefe",
+    "50 enemigos": "50 inimigos", "100 enemigos": "100 inimigos",
+    "Guardia": "Guarda", "Recarga": "Recarga", "Guardia lista": "Guarda pronta", "Guardia agotada": "Guarda esgotada",
     "Registro de criaturas y grandes enemigos": "Registro de criaturas e grandes inimigos",
     "Guardián de la Cueva": "Guardião da Caverna", "Reina Larva": "Rainha Larva", "Caballero Abismal": "Cavaleiro Abissal",
     "JEFE DERROTADO": "CHEFE DERROTADO", "Recompensa": "Recompensa", "Habilidad nueva": "Nova habilidade",
@@ -207,13 +213,15 @@ var bossDiaryInfo = {
   abyssal_knight: { name: "Caballero Abismal", desc: "Guerrero final del abismo, capaz de cambiar de fase durante el combate." }
 };
 var discoveryNotify = { active: false, timer: 0, name: "" };
+var achievements = { firstEnemy: false, firstBoss: false, enemies50: false, enemies100: false };
+var achievementNotify = { active: false, timer: 0, title: "" };
 
 var player = {
   x: 100, y: 400, w: 22, h: 30, vx: 0, vy: 0, onGround: false, facing: 1,
   jumpsLeft: 1, maxJumps: 2, inv: 0, anim: 0, autoWalk: 0, frozen: false,
   hp: 10, maxHp: 10, id: 1, color: "#0aa", headColor: "#0cc",
   hasSword: false, swordEquipped: false, swordSwing: 0, swordCooldown: 0, bowCooldown: 0,
-  swordSheathed: true, swordSheathTimer: 0, blocking: false,
+  swordSheathed: true, swordSheathTimer: 0, blocking: false, guardTimer: 0, guardCooldown: 0,
   dashTimer: 0, dashCooldown: 0, dashDir: 1, dashing: false, recoilTimer: 0
 };
 
@@ -222,7 +230,7 @@ var player2 = {
   jumpsLeft: 1, maxJumps: 2, inv: 0, anim: 0, autoWalk: 0, frozen: false,
   hp: 10, maxHp: 10, id: 2, color: "#a0a", headColor: "#c0c",
   hasSword: false, swordEquipped: false, swordSwing: 0, swordCooldown: 0, bowCooldown: 0,
-  swordSheathed: true, swordSheathTimer: 0, blocking: false,
+  swordSheathed: true, swordSheathTimer: 0, blocking: false, guardTimer: 0, guardCooldown: 0,
   dashTimer: 0, dashCooldown: 0, dashDir: 1, dashing: false, recoilTimer: 0
 };
 
@@ -272,6 +280,7 @@ function saveGame(i) {
       abyssal_knight: !!bossAbilities.abyssal_knight
     },
     bestiary: JSON.parse(JSON.stringify(bestiary)),
+    achievements: JSON.parse(JSON.stringify(achievements)),
     difficulty: difficulty,
     stats: { playTime: stats.playTime || 0, enemiesKilled: stats.enemiesKilled || 0,
              roomsVisited: stats.roomsVisited || 1, jumps: stats.jumps || 0,
@@ -285,6 +294,12 @@ function loadGame(i) {
   var s = getSaves().slots[i];
   if (!s) return false;
   bossVictory.active = false;
+  achievements = {
+    firstEnemy: !!(s.achievements && s.achievements.firstEnemy),
+    firstBoss: !!(s.achievements && s.achievements.firstBoss),
+    enemies50: !!(s.achievements && s.achievements.enemies50),
+    enemies100: !!(s.achievements && s.achievements.enemies100)
+  };
   bossDeathEffects = [];
   difficulty = s.difficulty || "normal";
   currentRoom = Math.max(0, Math.min(rooms.length - 1, s.room || 0));

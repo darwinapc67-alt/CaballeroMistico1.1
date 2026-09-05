@@ -36,6 +36,10 @@ function resetAll() {
   bossZonesUnlocked = { guardian: false, queen_larva: false, abyssal_knight: false };
   bossVictory = { active: false, timer: 0, type: "", reward: "", ability: "", zone: "" };
   bossIntroTimer = 0;
+  achievements = { firstEnemy: false, firstBoss: false, enemies50: false, enemies100: false };
+  achievementNotify = { active: false, timer: 0, title: "" };
+  player.guardTimer = 0; player.guardCooldown = 0; player.blocking = false;
+  player2.guardTimer = 0; player2.guardCooldown = 0; player2.blocking = false;
   bossDoorSoundRoom = -1;
   bossDialogueSeen = {};
   bossDialogueLines = [];
@@ -64,6 +68,10 @@ function update() {
   if (bossVictory.active) {
     bossVictory.timer--;
     if (bossVictory.timer <= 0) bossVictory.active = false;
+  }
+  if (achievementNotify.active) {
+    achievementNotify.timer--;
+    if (achievementNotify.timer <= 0) achievementNotify.active = false;
   }
   updateBossDeathEffects();
   if (shopOpen && gameState === ST_PLAYING) { updateShopPlayer(); return; }
