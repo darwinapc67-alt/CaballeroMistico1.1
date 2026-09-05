@@ -178,6 +178,7 @@ var deathParticles = [];
 var playerDead = false;
 var deathTimer = 0;
 var deathChoice = 0, deathAnimTimer = 0;
+var consecutiveDeaths = 0;
 var checkpointState = null;
 var highestRoomReached = 0;
 var tutorialStep = 0, tutorialTimer = 0;
@@ -566,7 +567,7 @@ var room10 = {
 var room11 = {
   height: 600,
   platforms: [{x:8800, y:560, w:800, h:40}],
-  spikes: [], walls: [{x:8800, y:0, w:18, h:600}, {x:9582, y:0, w:18, h:600}],
+  spikes: [], walls: [{x:9582, y:0, w:18, h:600}],
   transitionZone: {x:9540, y:460, w:40, h:100, to:12},
   decor: genDecor(8800, 6, 5, 600), bossName: "GUARDIÁN DE LA CUEVA"
 };
@@ -574,7 +575,7 @@ var room11 = {
 var room12 = {
   height: 600,
   platforms: [{x:9600, y:560, w:800, h:40}],
-  spikes: [], walls: [{x:9600, y:0, w:18, h:600}, {x:10382, y:0, w:18, h:600}],
+  spikes: [], walls: [{x:10382, y:0, w:18, h:600}],
   transitionZone: {x:10340, y:460, w:40, h:100, to:13},
   decor: genDecor(9600, 8, 4, 600), bossName: "REINA LARVA"
 };
@@ -582,7 +583,7 @@ var room12 = {
 var room13 = {
   height: 600,
   platforms: [{x:10400, y:560, w:800, h:40}],
-  spikes: [], walls: [{x:10400, y:0, w:18, h:600}, {x:11182, y:0, w:18, h:600}],
+  spikes: [], walls: [{x:11182, y:0, w:18, h:600}],
   transitionZone: null,
   decor: genDecor(10400, 10, 5, 600), bossName: "CABALLERO ABISMAL"
 };

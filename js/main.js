@@ -23,6 +23,7 @@ function resetAll() {
   deathParticles = [];
   playerDead = false; deathTimer = 0;
   deathChoice = 0; deathAnimTimer = 0;
+  consecutiveDeaths = 0;
   highestRoomReached = 0;
   tutorialStep = 0; tutorialTimer = 240;
   checkpointState = { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasDoubleJump: false };

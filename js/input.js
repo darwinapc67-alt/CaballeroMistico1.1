@@ -97,7 +97,10 @@ window.addEventListener("keydown", function(e) {
   if (gameState === ST_DEATH) {
     if (up || k === "w" || down || k === "s") deathChoice = deathChoice === 0 ? 1 : 0;
     if (confirm) {
-      if (deathChoice === 0) restoreCheckpoint();
+      if (deathChoice === 0) {
+        if (consecutiveDeaths >= 3) restoreCheckpoint();
+        else retryCurrentRoom();
+      }
       else { resetAll(); gameState = ST_MENU; menuSubState = "slots"; }
       e.preventDefault();
     }

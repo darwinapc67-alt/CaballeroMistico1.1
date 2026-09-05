@@ -797,8 +797,9 @@ function drawDeathScreen() {
   ctx.fillText("HAS MUERTO", canvas.width / 2, 170);
   ctx.fillStyle = "#ddd";
   ctx.font = "14px monospace";
-  ctx.fillText("La oscuridad reclama este intento.", canvas.width / 2, 215);
-  ["Continuar desde el punto de guardado", "Reintentar desde el menú"].forEach(function(option, index) {
+  ctx.fillText(consecutiveDeaths >= 3 ? "Tres derrotas: regresarás al último punto de guardado." : "La oscuridad reclama este intento.", canvas.width / 2, 215);
+  var continueText = consecutiveDeaths >= 3 ? "Volver al último punto de guardado" : "Reintentar en esta habitación";
+  [continueText, "Reintentar desde el menú"].forEach(function(option, index) {
     var y = 300 + index * 54;
     ctx.fillStyle = deathChoice === index ? "rgba(100, 220, 200, 0.2)" : "rgba(0,0,0,0.25)";
     ctx.fillRect(145, y - 28, canvas.width - 290, 40);

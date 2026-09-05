@@ -1,4 +1,4 @@
-function playerTakeDamage(p, dmg) {
+function playerTakeDamage(p, dmg, isBossDamage) {
   if (p.inv > 0 || p.frozen) return;
   if (p.blocking) {
     p.inv = 8;
@@ -9,13 +9,14 @@ function playerTakeDamage(p, dmg) {
 
   var difficultyData = difficultyOptions.find(function(option) { return option.id === difficulty; }) || difficultyOptions[1];
   var guardianGuard = bossAbilities.guardian ? 0.8 : 1;
-  p.hp -= Math.max(1, Math.ceil(dmg * difficultyData.damage * guardianGuard));
+  p.hp -= isBossDamage ? 1 : Math.max(1, Math.ceil(dmg * difficultyData.damage * guardianGuard));
   p.inv = 40;
   spawnParticles(p.x + p.w/2, p.y + p.h/2, "#f44", 10);
   flash = 0.4;
   sfxHit();
   if (p.hp <= 0) {
     stats.deaths++;
+    consecutiveDeaths++;
     playerDead = true;
     deathTimer = 0;
     deathAnimTimer = 0;
@@ -97,7 +98,23 @@ function restoreCheckpoint() {
     player.hasSword = hasSword; player.swordEquipped = swordEquipped;
     player.maxJumps = hasDoubleJump ? 2 : 1; player.jumpsLeft = player.maxJumps;
     player.frozen = false; player.vx = 0; player.vy = 0; playerDead = false;
+    consecutiveDeaths = 0;
     cameraX = currentRoom * ROOM_W; targetCamX = cameraX; cameraY = 0; targetCamY = 0;
+    resetDeathState();
+  }
+
+  function retryCurrentRoom() {
+    var room = rooms[currentRoom];
+    player.hp = player.maxHp;
+    player.x = currentRoom * ROOM_W + 100;
+    player.y = room.height - player.h - 40;
+    player.vx = 0;
+    player.vy = 0;
+    player.frozen = false;
+    cameraX = Math.max(0, player.x - canvas.width / 2);
+    targetCamX = cameraX;
+    cameraY = 0;
+    targetCamY = 0;
     resetDeathState();
   }
 
@@ -260,8 +277,8 @@ function announceBossPhase(e, phase) {
 function bossMeleeHit(e, damage, reach) {
   if (e.attackHit) return;
   var hitbox = { x: e.x - reach, y: e.y - 10, w: e.w + reach * 2, h: e.h + 20 };
-  if (rectHit(player, hitbox)) { playerTakeDamage(player, damage, e.x + e.w / 2); e.attackHit = true; }
-  if (twoPlayerMode && rectHit(player2, hitbox)) { playerTakeDamage(player2, damage, e.x + e.w / 2); e.attackHit = true; }
+  if (rectHit(player, hitbox)) { playerTakeDamage(player, damage, true); e.attackHit = true; }
+  if (twoPlayerMode && rectHit(player2, hitbox)) { playerTakeDamage(player2, damage, true); e.attackHit = true; }
 }
 
 function updateBoss(e, room) {
@@ -390,8 +407,8 @@ function updateBossProjectiles() {
     }
     var hit = false;
     if (currentRoom === b.room) {
-      if (rectHit(player, b)) { playerTakeDamage(player, b.damage); hit = true; }
-      if (twoPlayerMode && rectHit(player2, b)) { playerTakeDamage(player2, b.damage); hit = true; }
+      if (rectHit(player, b)) { playerTakeDamage(player, b.damage, true); hit = true; }
+      if (twoPlayerMode && rectHit(player2, b)) { playerTakeDamage(player2, b.damage, true); hit = true; }
     }
     if (hit || b.life <= 0 || b.x < b.room * ROOM_W || b.x > (b.room + 1) * ROOM_W || b.y > rooms[b.room].height + 30) {
       bossProjectiles.splice(i, 1);
@@ -472,11 +489,11 @@ function updateEnemies() {
     }
     if (e.room === currentRoom && player.inv <= 0 && !player.frozen && rectHit(player, e)) {
       var dmg = e.type === 'larva_mosca' ? 2 : 1;
-      playerTakeDamage(player, e.boss ? (e.type === "guardian" ? 4 : 3) : dmg);
+      playerTakeDamage(player, e.boss ? 1 : dmg, e.boss);
     }
     if (e.room === currentRoom && twoPlayerMode && player2.inv <= 0 && !player2.frozen && rectHit(player2, e)) {
       var dmg2 = e.type === 'larva_mosca' ? 2 : 1;
-      playerTakeDamage(player2, e.boss ? (e.type === "guardian" ? 4 : 3) : dmg2);
+      playerTakeDamage(player2, e.boss ? 1 : dmg2, e.boss);
     }
   });
 }
@@ -743,6 +760,13 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       else if (p.vx < 0) { p.x = w.x + w.w; p.vx = 0; }
     }
   });
+  var arenaBoss = enemies.find ? enemies.find(function(enemy) {
+    return enemy.boss && enemy.room === currentRoom && !enemy.dead;
+  }) : null;
+  if (room.bossName && arenaBoss && p.x < currentRoom * ROOM_W + 20) {
+    p.x = currentRoom * ROOM_W + 20;
+    p.vx = 0;
+  }
 
   if (p.onGround && p.inv <= 0) {
     if (p === player) {
@@ -1115,13 +1139,16 @@ function updateTransition() {
       zoneName = names[currentRoom] || "";
       zoneNameTimer = 120;
     }
-    if (transTimer <= 0) { transPhase = "in"; transTimer = transIsFall ? 35 : 50; }
+    if (transTimer <= 0) { transPhase = "in"; transTimer = transIsFall ? 155 : 50; }
   } else if (transPhase === "in") {
-    transFade = transTimer / (transIsFall ? 35 : 50);
+    transFade = transTimer / (transIsFall ? 155 : 50);
     if (transIsFall) {
       player.vy += GRAVITY; if (player.vy > 8) player.vy = 8;
       player.y += player.vy;
       if (twoPlayerMode) { player2.vy += GRAVITY; if (player2.vy > 8) player2.vy = 8; player2.y += player2.vy; }
+      var landingY = rooms[currentRoom].height - 120;
+      if (player.y >= landingY) { player.y = landingY; player.vy = 0; }
+      if (twoPlayerMode && player2.y >= landingY) { player2.y = landingY; player2.vy = 0; }
     } else {
       player.x += player.vx;
       if (twoPlayerMode) player2.x += player2.vx;
