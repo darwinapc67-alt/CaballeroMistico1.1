@@ -312,6 +312,25 @@ function drawBossProjectiles() {
       ctx.beginPath(); ctx.arc(b.x + b.w / 2, b.y + b.h / 2, Math.max(b.w, b.h) / 2, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "rgba(255,255,255,0.45)"; ctx.fillRect(b.x + 2, b.y + 2, 3, 3);
     }
+
+  });
+}
+
+function drawHealingHearts() {
+  healingHearts.forEach(function(heart) {
+    if (heart.room !== currentRoom) return;
+    var pulse = Math.sin(heart.pulse) * 2;
+    ctx.save();
+    ctx.shadowColor = "#ff406b";
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = "#ff406b";
+    ctx.beginPath();
+    ctx.arc(heart.x + 6, heart.y + 6 + pulse, 5, Math.PI, 0);
+    ctx.arc(heart.x + 12, heart.y + 6 + pulse, 5, Math.PI, 0);
+    ctx.lineTo(heart.x + 9, heart.y + 17 + pulse);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
   });
 }
 
@@ -540,6 +559,7 @@ function drawGameWorld() {
     if (r === 9) { drawShopNPC(); drawHealingStone(); }
   }
   drawEnemies();
+  drawHealingHearts();
   drawBossProjectiles();
   arrowsInFlight.forEach(function(arrow) {
     ctx.fillStyle = "#d4af37";
@@ -565,21 +585,27 @@ function drawGameWorld() {
 }
 
 function drawHpBar(p, barX, barY) {
-  var segW = 14, segH = 10, gap = 1;
-  ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(barX - 4, barY - 4, (segW + gap) * p.maxHp + 6, segH + 8);
-  ctx.strokeStyle = p.id === 2 ? "#f4f" : "#f44"; ctx.lineWidth = 1; ctx.strokeRect(barX - 4, barY - 4, (segW + gap) * p.maxHp + 6, segH + 8);
+  var heartW = 15, heartH = 14, gap = 2;
+  ctx.fillStyle = "rgba(0,0,0,0.6)";
+  ctx.fillRect(barX - 6, barY - 5, (heartW + gap) * p.maxHp + 8, heartH + 10);
+  ctx.strokeStyle = p.id === 2 ? "#f4f" : "#f44";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(barX - 6, barY - 5, (heartW + gap) * p.maxHp + 8, heartH + 10);
   for (var i = 0; i < p.maxHp; i++) {
-    if (i < p.hp) {
-      ctx.fillStyle = p.id === 2 ? "#ff33ff" : "#ff3344";
-      ctx.fillRect(barX + i * (segW + gap), barY, segW, segH);
-      ctx.fillStyle = p.id === 2 ? "#ff77ff" : "#ff6677";
-      ctx.fillRect(barX + i * (segW + gap), barY, segW, 3);
-    } else {
-      ctx.fillStyle = p.id === 2 ? "#331133" : "#331111";
-      ctx.fillRect(barX + i * (segW + gap), barY, segW, segH);
-      ctx.strokeStyle = p.id === 2 ? "#441144" : "#441111"; ctx.lineWidth = 0.5;
-      ctx.strokeRect(barX + i * (segW + gap), barY, segW, segH);
-    }
+    var x = barX + i * (heartW + gap), color = p.id === 2 ? "#ff33ff" : "#ff3344";
+    ctx.save();
+    ctx.translate(x, barY);
+    ctx.fillStyle = i < p.hp ? color : (p.id === 2 ? "#331133" : "#331111");
+    ctx.strokeStyle = i < p.hp ? (p.id === 2 ? "#ff99ff" : "#ff8899") : "#552233";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(5, 5, 4.5, Math.PI, 0);
+    ctx.arc(10, 5, 4.5, Math.PI, 0);
+    ctx.lineTo(7.5, 14);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
   }
 }
 
@@ -655,6 +681,43 @@ function drawGame() {
   ctx.font = "12px monospace";
   ctx.textAlign = "right";
   ctx.fillText("` = Inventario", canvas.width - 10, canvas.height - 20);
+  ctx.textAlign = "left";
+  if (adminMode) {
+    ctx.fillStyle = "#f66";
+    ctx.font = "bold 11px monospace";
+    ctx.fillText("ADMIN", 12, canvas.height - 38);
+  }
+  if (adminConsoleOpen) drawAdminConsole();
+}
+
+function drawAdminConsole() {
+  ctx.fillStyle = "rgba(3, 5, 12, 0.94)";
+  ctx.fillRect(45, canvas.height - 255, canvas.width - 90, 215);
+  ctx.strokeStyle = "#f66";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(45, canvas.height - 255, canvas.width - 90, 215);
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#f66";
+  ctx.font = "bold 14px monospace";
+  ctx.fillText("CONSOLA ADMIN  •  COMANDOS DISPONIBLES", 65, canvas.height - 228);
+  ctx.fillStyle = "#d5def5";
+  ctx.font = "11px monospace";
+  ctx.fillText("/give azari [cantidad]", 65, canvas.height - 202);
+  ctx.fillText("/give espada", 65, canvas.height - 184);
+  ctx.fillText("/give arco", 65, canvas.height - 166);
+  ctx.fillText("/give mapa", 65, canvas.height - 148);
+  ctx.fillText("/give flechas [cantidad]", 65, canvas.height - 130);
+  ctx.fillText("/give vida", 65, canvas.height - 112);
+  ctx.fillText("/tp habitacion [1-14]", 330, canvas.height - 202);
+  ctx.fillText("Ejemplo: /give azari 1000", 330, canvas.height - 184);
+  ctx.fillText("Ejemplo: /tp habitacion 5", 330, canvas.height - 166);
+  ctx.fillStyle = "#fff";
+  ctx.font = "14px monospace";
+  ctx.fillText("> " + adminCommand + "_", 65, canvas.height - 78);
+  ctx.fillStyle = "#fff";
+  ctx.fillStyle = "#aaa";
+  ctx.font = "11px monospace";
+  ctx.fillText(adminCommandMessage || "ENTER ejecutar  •  ESC cerrar", 65, canvas.height - 55);
   ctx.textAlign = "left";
 }
 

@@ -44,7 +44,7 @@ function resetPlayer() {
   player.dashTimer = 0; player.dashCooldown = 0; player.dashDir = 1; player.dashing = false; player.recoilTimer = 0;
   playerDead = false;
   deathTimer = 0;
-  particles = []; floatTexts = []; arrowsInFlight = []; flash = 0;
+  particles = []; floatTexts = []; arrowsInFlight = []; healingHearts = []; flash = 0;
   healing = false; healTimer = 0;
   hitFlash = 0; needsRespawn = false;
   if (twoPlayerMode) {
@@ -56,6 +56,95 @@ function resetPlayer() {
     player2.swordSheathed = true; player2.swordSheathTimer = 0;
     player2.blocking = false;
     player2.dashTimer = 0; player2.dashCooldown = 0; player2.dashDir = 1; player2.dashing = false; player2.recoilTimer = 0;
+  }
+
+}
+
+function dropHealingHeart(e) {
+  if (e.boss || Math.random() >= 0.25) return;
+  healingHearts.push({
+    x: e.x + e.w / 2 - 9, y: e.y + e.h / 2 - 9,
+    w: 18, h: 18, room: e.room, vy: -2, life: 600, pulse: 0
+  });
+  spawnFloatText(e.x, e.y - 38, "¡CORAZÓN!", "#ff6688");
+}
+
+function updateHealingHearts() {
+  for (var i = healingHearts.length - 1; i >= 0; i--) {
+    var heart = healingHearts[i];
+    heart.pulse += 0.12;
+    heart.vy += 0.08;
+    var previousBottom = heart.y + heart.h;
+    heart.y += heart.vy;
+    var heartRoom = rooms[heart.room];
+    var landingY = heartRoom.height - heart.h;
+    heartRoom.platforms.forEach(function(platform) {
+      var overlapsX = heart.x < platform.x + platform.w && heart.x + heart.w > platform.x;
+      var crossedTop = previousBottom <= platform.y && heart.y + heart.h >= platform.y;
+      if (overlapsX && crossedTop && platform.y < landingY) landingY = platform.y - heart.h;
+    });
+    if (heart.y >= landingY) {
+      heart.y = landingY;
+      heart.vy = 0;
+    }
+
+    heart.life--;
+    var collected = false;
+    [player, player2].forEach(function(p) {
+      if (collected || (p === player2 && !twoPlayerMode)) return;
+      if (p.hp < p.maxHp && p.inv <= 0 && heart.room === currentRoom && rectHit(p, heart)) {
+        p.hp = Math.min(p.maxHp, p.hp + 1);
+        spawnParticles(p.x + p.w / 2, p.y, "#ff6688", 10, 3);
+        spawnFloatText(p.x, p.y - 18, "+1 ❤️", "#ff6688");
+        sfxHeal();
+        collected = true;
+      }
+    });
+    if (collected || heart.life <= 0) healingHearts.splice(i, 1);
+  }
+}
+
+function executeAdminCommand(rawCommand) {
+  var parts = rawCommand.trim().toLowerCase().split(/\s+/);
+  if (parts[0] === "/give") {
+    var item = parts[1];
+    var amount = parts[2] ? Number(parts[2]) : 1;
+    if (item === "azari" && Number.isFinite(amount)) {
+      azari += Math.max(0, amount);
+      adminCommandMessage = "Azari concedidos: +" + amount;
+    } else if (item === "espada" || item === "sword") {
+      hasSword = true; player.hasSword = true; player.swordEquipped = true; player.swordSheathed = false;
+      adminCommandMessage = "Espada concedida.";
+    } else if (item === "arco" || item === "bow") {
+      hasBow = true;
+      adminCommandMessage = "Arco concedido.";
+    } else if (item === "mapa" || item === "map") {
+      hasMap = true;
+      adminCommandMessage = "Mapa concedido.";
+    } else if (item === "flechas" || item === "arrows") {
+      arrows += Math.max(0, Number.isFinite(amount) ? amount : 20);
+      adminCommandMessage = "Flechas concedidas.";
+    } else if (item === "vida" || item === "hp") {
+      player.hp = player.maxHp;
+      adminCommandMessage = "Vida restaurada.";
+    } else {
+      adminCommandMessage = "Objeto no válido. Usa espada, arco, mapa, flechas o azari.";
+    }
+  } else if (parts[0] === "/tp" && parts[1] === "habitacion") {
+    var roomNumber = Number(parts[2]);
+    if (Number.isInteger(roomNumber) && roomNumber >= 1 && roomNumber <= rooms.length) {
+      currentRoom = roomNumber - 1;
+      player.x = currentRoom * ROOM_W + 100;
+      player.y = Math.max(40, rooms[currentRoom].height - 140);
+      player.vx = 0; player.vy = 0;
+      cameraX = Math.max(0, player.x - canvas.width / 2);
+      cameraY = 0;
+      adminCommandMessage = "Teletransportado a la habitación " + roomNumber + ".";
+    } else {
+      adminCommandMessage = "Habitación inválida. Usa un número del 1 al " + rooms.length + ".";
+    }
+  } else {
+    adminCommandMessage = "Comando no válido. Usa /give o /tp habitacion.";
   }
 }
 
@@ -374,6 +463,7 @@ function updateArrows() {
           if (bestiary[e.type]) { bestiary[e.type].count++; bestiary[e.type].discovered = true; }
           var gain = e.type === "larva_mosca" ? 4 : 2;
           azari += hasAzariCharm ? gain * 2 : gain;
+          dropHealingHeart(e);
           spawnParticles(e.x + e.w/2, e.y + e.h/2, "#f88", 12, 5);
           spawnFloatText(e.x, e.y - 10, "¡Muerto!", "#f88");
           sfxEnemyDie(); sfxCoin();
@@ -674,6 +764,7 @@ function checkSwordHitEnemiesFor(p) {
       }
       e.dead = true;
       stats.enemiesKilled++;
+      dropHealingHeart(e);
       for (var i = 0; i < 15; i++) {
         deathParticles.push({
           x: e.x + e.w/2, y: e.y + e.h/2,

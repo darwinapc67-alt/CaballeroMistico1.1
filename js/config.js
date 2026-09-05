@@ -87,6 +87,7 @@ function translateText(text) {
 }
 var menuSelection = 0, menuSubState = "slots", slotToDelete = -1, activeSlot = -1;
 var adminPassword = "", adminMessage = "";
+var adminMode = false, adminConsoleOpen = false, adminCommand = "", adminCommandMessage = "";
 var pauseSelection = 0, pauseSubState = "menu", diaryCategory = "enemies";
 
 var transTimer = 0, transPhase = "out", transTargetRoom = 0, transFade = 0;
@@ -170,6 +171,7 @@ var player2 = {
 var hasSword = false, swordEquipped = false;
 var currentRoom = 0, cameraX = 0, targetCamX = 0, cameraY = 0, targetCamY = 0;
 var particles = [], floatTexts = [], arrowsInFlight = [], flash = 0;
+var healingHearts = [];
 var keys = {};
 
 function formatTime(s) {

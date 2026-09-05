@@ -110,6 +110,7 @@ function update() {
     updatePlayer2();
     updateEnemies();
     updateArrows();
+    updateHealingHearts();
     updateBossProjectiles();
     if (healing) {
       healTimer--;

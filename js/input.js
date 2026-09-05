@@ -30,6 +30,12 @@ window.addEventListener("keydown", function(e) {
   }
 
   if (e.key === "Escape") {
+    if (adminConsoleOpen) {
+      adminConsoleOpen = false;
+      adminCommand = "";
+      e.preventDefault();
+      return;
+    }
     if (shopOpen && gameState === ST_PLAYING) {
       if (shopMenuOpen) { shopMenuOpen = false; shopConfirm = -1; }
       else { gameState = ST_PAUSED; pauseSubState = "menu"; pauseSelection = 0; sfxPause(); }
@@ -109,6 +115,10 @@ window.addEventListener("keydown", function(e) {
       if (confirm) {
         if (adminPassword === "123412") {
           azari = 1000;
+          adminMode = true;
+          adminConsoleOpen = false;
+          adminCommand = "";
+          adminCommandMessage = "Modo admin activado. Presiona / durante la partida.";
           currentRoom = rooms.length - 2;
           player.x = currentRoom * ROOM_W + 30;
           player.y = rooms[currentRoom].height - 120;
@@ -187,6 +197,27 @@ window.addEventListener("keydown", function(e) {
   }
 
   if (gameState === ST_PLAYING) {
+    if (adminMode && adminConsoleOpen) {
+      if (confirm) {
+        executeAdminCommand(adminCommand);
+        adminCommand = "";
+        e.preventDefault();
+        return;
+      }
+      if (e.key === "Backspace") { adminCommand = adminCommand.slice(0, -1); e.preventDefault(); return; }
+      if (e.key.length === 1 && adminCommand.length < 120) {
+        adminCommand += e.key;
+        e.preventDefault();
+      }
+      return;
+    }
+    if (adminMode && e.key === "/") {
+      adminConsoleOpen = true;
+      adminCommand = "/";
+      adminCommandMessage = "";
+      e.preventDefault();
+      return;
+    }
     if (e.key === "a" || e.key === "A") { keys["a"] = true; e.preventDefault(); }
     if (e.key === "d" || e.key === "D") { keys["d"] = true; e.preventDefault(); }
     if (e.key === "ArrowLeft") { keys["arrowleft"] = true; e.preventDefault(); }
