@@ -676,16 +676,11 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       var pl = room.platforms[i];
       if (pl.y + pl.h >= room.height - 5 && rectHit(p, pl)) { hasFloor = true; break; }
     }
-    if (currentRoom === 2 && room2.bombBox && !room2.bombBox.broken) {
-      var b = room2.bombBox;
-      if (b.y + b.h >= room.height - 5 && rectHit(p, b)) hasFloor = true;
-    }
     if (hasFloor) {
       p.y = room.height - p.h; p.vy = 0; p.onGround = true; p.jumpsLeft = p.maxJumps;
     }
   }
   if (p.y > room.height + 80) {
-    if (currentRoom === 2 && room2.bombBox && room2.bombBox.exploded) { startFallTransition(); return; }
     if (currentRoom === 5) { startTransition(6, "forward"); return; }
     if (currentRoom < rooms.length - 1) { sfxFall(); startFallThroughTransition(currentRoom + 1); return; }
     p.x = currentRoom * ROOM_W + ROOM_W / 2 - p.w / 2 + (p.id === 2 ? 30 : -30);
@@ -711,15 +706,6 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     }
   });
 
-  if (currentRoom === 2 && room2.bombBox && !room2.bombBox.broken) {
-    var b = room2.bombBox;
-    if (rectHit(p, b)) {
-      if (p.vy >= 0 && p.y + p.h - p.vy <= b.y + 10) {
-        p.y = b.y - p.h; p.vy = 0; p.onGround = true; p.jumpsLeft = p.maxJumps;
-      } else if (p.vx > 0) { p.x = b.x - p.w; p.vx = 0; }
-      else if (p.vx < 0) { p.x = b.x + b.w; p.vx = 0; }
-    }
-  }
   room.walls.forEach(function(w) {
     if (rectHit(p, w)) {
       if (p.vx > 0) { p.x = w.x - p.w; p.vx = 0; }
@@ -775,7 +761,6 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     stats.attacks++;
     spawnParticles(p.x + p.w/2 + p.facing * 18, p.y + p.h/2, "#ffd700", 6, 4);
     sfxAttack();
-    if (p.id === 1) { tryBreakBombBox(); }
     checkSwordHitEnemiesFor(p);
   }
 
@@ -943,75 +928,8 @@ function tryInteractFor(p) {
   }
 }
 
-function tryBreakBombBox() {
-  if (currentRoom !== 2 || !room2.bombBox || room2.bombBox.broken || room2.bombBox.exploded) return;
-  var swingBox = { x: player.x + (player.facing > 0 ? player.w : -26), y: player.y + 2, w: 26, h: 26 };
-  if (rectHit(swingBox, room2.bombBox)) {
-    room2.bombBox.broken = true;
-    startExplosion();
-  }
-}
-
-function startExplosion() {
-  gameState = ST_EXPLOSION;
-  explosionAnim = 60;
-  sfxExplosion();
-  var box = room2.bombBox;
-  explosionX = box.x + box.w/2;
-  explosionY = box.y + box.h/2;
-  player.frozen = true; player.vx = 0; player.vy = 0;
-  if (twoPlayerMode) { player2.frozen = true; player2.vx = 0; player2.vy = 0; }
-  spawnParticles(explosionX, explosionY, "#ff6600", 30, 8);
-  spawnParticles(explosionX, explosionY, "#ffcc00", 20, 6);
-  spawnParticles(explosionX, explosionY, "#ff0000", 15, 10);
-}
-
-function updateExplosion() {
-  explosionAnim--;
-  if (explosionAnim === 45) {
-    knockbackVX = 10; knockbackVY = -12;
-    player.vx = knockbackVX; player.vy = knockbackVY;
-    if (twoPlayerMode) { player2.vx = -knockbackVX; player2.vy = knockbackVY; }
-    spawnParticles(explosionX, explosionY, "#ff4400", 25, 12);
-    spawnParticles(explosionX, explosionY, "#ffaa00", 20, 10);
-    spawnParticles(player.x + player.w/2, player.y + player.h/2, "#ff6600", 10, 5);
-    if (twoPlayerMode) spawnParticles(player2.x + player2.w/2, player2.y + player2.h/2, "#ff6600", 10, 5);
-  }
-  if (explosionAnim < 45 && explosionAnim > 10) {
-    player.vx = knockbackVX * (explosionAnim / 45);
-    player.vy += GRAVITY;
-    player.x += player.vx; player.y += player.vy;
-    if (twoPlayerMode) {
-      player2.vx = -knockbackVX * (explosionAnim / 45);
-      player2.vy += GRAVITY;
-      player2.x += player2.vx; player2.y += player2.vy;
-    }
-    if (explosionAnim % 5 === 0) {
-      spawnParticles(explosionX + (Math.random()-0.5)*40, explosionY + (Math.random()-0.5)*40, "#555", 3, 2);
-    }
-  }
-  if (explosionAnim <= 10) { transFade = 1 - (explosionAnim / 10); }
-  if (explosionAnim <= 0) { startFallTransition(); }
-}
-
-function startFallTransition() {
-  gameState = ST_TRANSITION;
-  transPhase = "load";
-  transTimer = 60;
-  transTargetRoom = 3;
-  transFade = 1;
-  zoneName = "TÚNELES OLVIDADOS";
-  zoneNameTimer = 150;
-  currentRoom = 3;
-  targetCamX = currentRoom * ROOM_W;
-  cameraX = targetCamX;
-  player.x = 2450; player.y = 400; player.vx = 0; player.vy = 0; player.frozen = false;
-  if (twoPlayerMode) { player2.x = 2490; player2.y = 400; player2.vx = 0; player2.vy = 0; player2.frozen = false; }
-  room2.bombBox.exploded = true;
-}
-
 function startFallThroughTransition(toRoom) {
-  if (gameState === ST_TRANSITION || gameState === ST_EXPLOSION) return;
+  if (gameState === ST_TRANSITION) return;
   gameState = ST_TRANSITION;
   transPhase = "out";
   transTimer = 35;
@@ -1023,7 +941,7 @@ function startFallThroughTransition(toRoom) {
 }
 
 function startTransition(toRoom, direction) {
-  if (gameState === ST_TRANSITION || gameState === ST_EXPLOSION) return;
+  if (gameState === ST_TRANSITION) return;
   sfxTransition();
   particles = [];
   floatTexts = [];

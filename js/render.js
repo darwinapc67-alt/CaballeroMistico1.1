@@ -152,21 +152,6 @@ function drawPedestal() {
   }
 }
 
-function drawBombBox() {
-  if (!room2.bombBox || room2.bombBox.broken) return;
-  var b = room2.bombBox;
-  ctx.fillStyle = "#553311";
-  ctx.fillRect(b.x, b.y, b.w, b.h);
-  ctx.fillStyle = "#664422";
-  ctx.fillRect(b.x, b.y, b.w, 4);
-  ctx.fillStyle = "#331100";
-  ctx.fillRect(b.x + 5, b.y + 6, 8, 8);
-  ctx.fillStyle = "#ff0000";
-  ctx.beginPath(); ctx.arc(b.x + b.w/2, b.y + 4, 3, 0, Math.PI*2); ctx.fill();
-  ctx.strokeStyle = "#ff6600"; ctx.lineWidth = 1;
-  ctx.strokeRect(b.x - 2, b.y - 2, b.w + 4, b.h + 4);
-}
-
 function drawCityBuildings() {
   ctx.fillStyle = "#0a0a1a";
   ctx.fillRect(0, 300, 800, 300);
@@ -600,7 +585,6 @@ function drawGameWorld() {
     drawPlatforms(room);
     drawSpikes(room);
     if (r === 1) drawPedestal();
-    if (r === 2) drawBombBox();
     if (room.transitionZone) drawTransitionZone(room.transitionZone);
     if (room.bossName) drawBossDoor(r);
     if (r === 9) { drawShopNPC(); drawHealingStone(); }
@@ -1284,31 +1268,4 @@ function drawShop() {
   }
   ctx.fillStyle = "#777"; ctx.font = "12px monospace";
   ctx.fillText("ESC: pausa", canvas.width/2, 575);
-}
-
-function drawExplosion() {
-  drawGameWorld();
-  var flashIntensity = 0;
-  if (explosionAnim > 40) flashIntensity = (explosionAnim - 40) / 20;
-  else if (explosionAnim > 20) flashIntensity = 0.8;
-  else flashIntensity = explosionAnim / 25;
-  ctx.fillStyle = "rgba(255, " + (100 + explosionAnim) + ", 0, " + (flashIntensity * 0.5) + ")";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  var radius = (60 - explosionAnim) * 4;
-  ctx.strokeStyle = "rgba(255, " + (explosionAnim * 4) + ", 0, " + (explosionAnim / 60) + ")";
-  ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.arc(explosionX - cameraX, explosionY - cameraY, radius, 0, Math.PI*2); ctx.stroke();
-  ctx.strokeStyle = "rgba(255, 200, 0, " + (explosionAnim / 80) + ")";
-  ctx.beginPath(); ctx.arc(explosionX - cameraX, explosionY - cameraY, radius * 0.7, 0, Math.PI*2); ctx.stroke();
-  if (explosionAnim <= 15) {
-    ctx.fillStyle = "rgba(0, 0, 0, " + (1 - explosionAnim / 15) + ")";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
-  if (explosionAnim <= 20) {
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 14px monospace";
-    ctx.textAlign = "center";
-    ctx.fillText("CARGANDO", canvas.width/2, 30);
-    ctx.textAlign = "left";
-  }
 }

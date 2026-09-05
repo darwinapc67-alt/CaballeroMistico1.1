@@ -7,7 +7,7 @@ var WORLD_W = 14 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
 var VERSION = "v1.65";
 
-var ST_LANGUAGE = 0, ST_DEVICE = 1, ST_MENU = 2, ST_PLAYING = 3, ST_PAUSED = 4, ST_TRANSITION = 5, ST_EXPLOSION = 6, ST_INVENTORY = 7, ST_DIALOGUE = 8;
+var ST_LANGUAGE = 0, ST_DEVICE = 1, ST_MENU = 2, ST_PLAYING = 3, ST_PAUSED = 4, ST_TRANSITION = 5, ST_INVENTORY = 7, ST_DIALOGUE = 8;
 
 var gameState = ST_LANGUAGE;
 var languageSelection = 0, language = "es";
@@ -159,8 +159,6 @@ var gpButtons = {}, prevGPButtons = {}, gpAxes = { x: 0, y: 0 };
 var gamepadMenuAxisLock = 0;
 
 var zoneName = "", zoneNameTimer = 0;
-var explosionAnim = 0, explosionX = 0, explosionY = 0;
-var knockbackVX = 0, knockbackVY = 0;
 
 var azari = 0, hasMap = false, hasBow = false, arrows = 0, shopOpen = false, shopMenuOpen = false, shopId = 0, shopAnim = 0, shopConfirm = -1, shopGreeting = "", shopGreetingTimer = 0;
 var shopPreviousX = 0, shopPreviousY = 0, shopExitCooldown = 0;
@@ -427,14 +425,13 @@ var room1 = {
 var room2 = {
   height: 600,
   platforms: [
-    {x:1600, y:560, w:200, h:40}, {x:1650, y:480, w:70, h:14},
+    {x:1600, y:560, w:800, h:40}, {x:1650, y:480, w:70, h:14},
     {x:1750, y:410, w:70, h:14}, {x:1650, y:280, w:70, h:14},
     {x:1750, y:200, w:70, h:14}, {x:1650, y:130, w:70, h:14},
     {x:1600, y:80, w:200, h:40}
   ],
   spikes: [], walls: [],
   transitionZone: null,
-  bombBox: {x: 1720, y: 60, w: 50, h: 20, broken: false, exploded: false},
   decor: genDecor(1600, 6, 4, 600)
 };
 

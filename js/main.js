@@ -47,7 +47,6 @@ function resetAll() {
   bossProjectiles = [];
   bossDeathEffects = [];
   room1.pedestal.taken = false; room1.pedestal.glow = 0;
-  if (room2.bombBox) { room2.bombBox.broken = false; room2.bombBox.exploded = false; }
   if (room9.healingStone) room9.healingStone.active = true;
   enemies.forEach(function(e){
     e.dead = false;
@@ -75,7 +74,6 @@ function update() {
   }
   updateBossDeathEffects();
   if (shopOpen && gameState === ST_PLAYING) { updateShopPlayer(); return; }
-  if (gameState === ST_EXPLOSION) { updateExplosion(); return; }
   if (gameState === ST_TRANSITION) { updateTransition(); return; }
   if (gameState === ST_DIALOGUE) return;
   if (hitFlash > 0) {
@@ -176,7 +174,6 @@ function loop() {
   else if (gameState === ST_MENU) drawMenu();
   else if (gameState === ST_PAUSED) { drawGame(); drawPause(); }
   else if (gameState === ST_TRANSITION) drawTransition();
-  else if (gameState === ST_EXPLOSION) drawExplosion();
   else if (gameState === ST_INVENTORY) { drawGame(); drawInventory(); }
   else if (gameState === ST_DIALOGUE) { drawGame(); drawBossDialogue(); }
   else {
