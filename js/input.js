@@ -88,6 +88,12 @@ window.addEventListener("keydown", function(e) {
     return;
   }
 
+  if (bossVictory.active && (confirm || e.key === " " || k === "x" || k === "e")) {
+    bossVictory.active = false;
+    e.preventDefault();
+    return;
+  }
+
   if (gameState === ST_LANGUAGE) {
     if (up || k === "w") { languageSelection = (languageSelection - 1 + languages.length) % languages.length; e.preventDefault(); return; }
     if (down || k === "s") { languageSelection = (languageSelection + 1) % languages.length; e.preventDefault(); return; }
@@ -561,6 +567,10 @@ function processGamepadInput() {
   }
   if (gameState === ST_DIALOGUE) {
     if (btn0 || gpButtons[1] && !prevGPButtons[1]) advanceBossDialogue();
+    return;
+  }
+  if (bossVictory.active && (btn0 || gpButtons[1] && !prevGPButtons[1])) {
+    bossVictory.active = false;
     return;
   }
   if (btn9) {

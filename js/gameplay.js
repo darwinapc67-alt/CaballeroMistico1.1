@@ -7,7 +7,8 @@ function playerTakeDamage(p, dmg) {
     return;
   }
   var difficultyData = difficultyOptions.find(function(option) { return option.id === difficulty; }) || difficultyOptions[1];
-  p.hp -= Math.max(1, Math.ceil(dmg * difficultyData.damage));
+  var guardianGuard = bossAbilities.guardian ? 0.8 : 1;
+  p.hp -= Math.max(1, Math.ceil(dmg * difficultyData.damage * guardianGuard));
   p.inv = 40;
   spawnParticles(p.x + p.w/2, p.y + p.h/2, "#f44", 10);
   flash = 0.4;
@@ -173,6 +174,33 @@ function spawnBossProjectile(e, vx, vy, damage, kind, extra) {
   });
 }
 
+function updateBossDeathEffects() {
+  for (var i = bossDeathEffects.length - 1; i >= 0; i--) {
+    var effect = bossDeathEffects[i];
+    effect.life--;
+    effect.radius += 2.6;
+    if (effect.life % 3 === 0) {
+      spawnParticles(effect.x + (Math.random() - 0.5) * effect.radius,
+        effect.y + (Math.random() - 0.5) * effect.radius, effect.color, 2, 4);
+    }
+    if (effect.life <= 0) bossDeathEffects.splice(i, 1);
+  }
+}
+
+function bossPhaseFor(e) {
+  return e.hp <= e.maxHp / 3 ? 3 : (e.hp <= e.maxHp * 2 / 3 ? 2 : 1);
+}
+
+function announceBossPhase(e, phase) {
+  e.phase = phase;
+  e.enraged = phase > 1;
+  e.attackTimer = 1;
+  e.phaseNotice = 90;
+  spawnFloatText(e.x - 8, e.y - 30, translateText("FASE") + " " + phase, phase === 3 ? "#ff365f" : "#ffb347");
+  spawnParticles(e.x + e.w / 2, e.y + e.h / 2, phase === 3 ? "#ff315a" : "#ffc04a", 28, 6);
+  sfxBossPhase();
+}
+
 function bossMeleeHit(e, damage, reach) {
   if (e.attackHit) return;
   var hitbox = { x: e.x - reach, y: e.y - 10, w: e.w + reach * 2, h: e.h + 20 };
@@ -186,12 +214,9 @@ function updateBoss(e, room) {
   var floorY = room.height - 40 - e.h;
   e.aiTimer = (e.aiTimer || 0) - 1;
   e.attackTimer = (e.attackTimer || 0) - 1;
-  if (e.hp <= e.maxHp / 2 && !e.enraged) {
-    e.enraged = true; e.phase = Math.max(2, e.phase || 1);
-    e.attackTimer = 1;
-    spawnFloatText(e.x, e.y - 25, "¡ENRAGE!", "#f44");
-    spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#f22", 22, 5);
-  }
+  var phase = bossPhaseFor(e);
+  if (phase > (e.phase || 1)) announceBossPhase(e, phase);
+  if (e.phaseNotice > 0) e.phaseNotice--;
   if (e.type === "guardian") {
     if (e.actionTimer > 0) {
       e.actionTimer--;
@@ -199,16 +224,23 @@ function updateBoss(e, room) {
       if (e.action === "jump") { e.vy += GRAVITY; e.y += e.vy; }
       if (e.y >= floorY) { e.y = floorY; e.vy = 0; e.action = ""; e.attackHit = false; }
     } else if (e.attackTimer <= 0) {
-      e.attackTimer = e.enraged ? 45 : 70;
+      e.attackTimer = e.phase === 3 ? 30 : (e.phase === 2 ? 46 : 70);
       var choice = Math.random();
       if (target.dist < 125 && choice < 0.45) {
-        e.action = "melee"; e.actionTimer = 18; e.attackHit = false;
-      } else if (choice < 0.72) {
+        e.action = "melee"; e.actionTimer = e.phase === 3 ? 22 : 18; e.attackHit = false;
+      } else if (choice < (e.phase === 3 ? 0.62 : 0.72)) {
         e.action = "jump"; e.actionTimer = 34; e.vy = -11;
         e.vx = target.player.x < e.x ? -4 : 4;
+      } else if (e.phase >= 2 && choice < 0.84) {
+        e.action = "shockwave"; e.actionTimer = 16;
+        for (var sw = -1; sw <= 1; sw++) {
+          spawnBossProjectile(e, sw * (e.phase === 3 ? 6 : 4.5), 0, e.phase === 3 ? 6 : 4,
+            "guardian_shockwave", {w: 18, h: 10, color: "#d9a35f", life: 100});
+        }
       } else {
         var dx = target.dx, dy = target.dy, d = Math.max(1, target.dist);
-        spawnBossProjectile(e, dx / d * (e.enraged ? 6 : 5), dy / d * (e.enraged ? 6 : 5), e.enraged ? 5 : 3, "guardian_rock", {w:14, h:14, color:"#98704d"});
+        spawnBossProjectile(e, dx / d * (e.phase === 3 ? 7 : 5), dy / d * (e.phase === 3 ? 7 : 5),
+          e.phase === 3 ? 6 : (e.phase === 2 ? 4 : 3), "guardian_rock", {w:14, h:14, color:"#98704d"});
       }
     }
     if (!e.action || e.action === "melee") e.x += (target.player.x < e.x ? -1 : 1) * (e.enraged ? 1.6 : 1);
@@ -230,23 +262,24 @@ function updateBoss(e, room) {
       }
       if (e.actionTimer <= 0) { e.action = ""; e.attackHit = false; e.y = floorY; }
     } else if (e.attackTimer <= 0) {
-      e.attackTimer = e.enraged ? 42 : 68;
+      e.attackTimer = e.phase === 3 ? 28 : (e.phase === 2 ? 44 : 68);
       var q = Math.random();
-      if (q < 0.22) {
-        e.action = "wall"; e.actionTimer = e.enraged ? 60 : 42;
+      if (q < (e.phase >= 2 ? 0.3 : 0.22)) {
+        e.action = "wall"; e.actionTimer = e.phase === 3 ? 72 : (e.phase === 2 ? 60 : 42);
       } else if (q < 0.45) {
         e.action = "charge"; e.actionTimer = e.enraged ? 28 : 22; e.vx = target.player.x < e.x ? - (e.enraged ? 7 : 5) : (e.enraged ? 7 : 5); e.attackHit = false;
       } else if (q < 0.65) {
-        e.action = "ceiling"; e.actionTimer = e.enraged ? 55 : 40; e.y = 55;
-      } else if (q < 0.85) {
-        for (var i = 0; i < (e.enraged ? 3 : 2); i++) {
+        e.action = "ceiling"; e.actionTimer = e.phase === 3 ? 70 : (e.phase === 2 ? 55 : 40); e.y = 55;
+      } else if (q < (e.phase === 3 ? 0.92 : 0.85)) {
+        for (var i = 0; i < (e.phase === 3 ? 4 : (e.phase === 2 ? 3 : 2)); i++) {
           enemies.push({x: e.x + (i - 1) * 35, y: floorY - 22, w: 28, h: 22, vx: 0, vy: 0,
             speed: 1.8, visionRadius: 260, dead: false, room: e.room, type: "larva_mosca"});
         }
         spawnFloatText(e.x, e.y - 25, "¡CRÍA!", "#d98");
       } else {
         var dxq = target.dx, dyq = target.dy, dq = Math.max(1, target.dist);
-        spawnBossProjectile(e, dxq / dq * 5, dyq / dq * 5, 4, "queen_spit", {w:12, h:12, color:"#b35c9c", homing:true});
+        spawnBossProjectile(e, dxq / dq * (e.phase === 3 ? 6.5 : 5), dyq / dq * (e.phase === 3 ? 6.5 : 5),
+          e.phase === 3 ? 6 : 4, "queen_spit", {w:12, h:12, color:"#b35c9c", homing:true});
       }
     }
     if (e.x < arenaLeft) e.x = arenaLeft;
@@ -481,14 +514,34 @@ function defeatBoss(e) {
   if (e.dead) return;
   e.dead = true; e.hp = 0; stats.enemiesKilled++;
   bossArenaState[e.type] = true;
-  spawnFloatText(e.x - 20, e.y - 22, "¡" + e.bossName + " DERROTADO!", "#ffd700");
+  bossAbilities[e.type] = true;
+  bossZonesUnlocked[e.type] = true;
+  e.deathTimer = 90;
+  bossDeathEffects.push({
+    x: e.x + e.w / 2, y: e.y + e.h / 2, w: e.w, h: e.h,
+    room: e.room, type: e.type, color: e.type === "guardian" ? "#d9a35f" :
+      (e.type === "queen_larva" ? "#e36ac0" : "#79c"), life: 90, maxLife: 90, radius: 8
+  });
   spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#ffd700", 35, 8);
   sfxEnemyDie(); sfxCoin();
   bossProjectiles = bossProjectiles.filter(function(p) { return p.room !== e.room; });
+  var rewards = {
+    guardian: { reward: "Corazón de piedra", ability: "Guardia pétrea", zone: "Santuario de la Cueva" },
+    queen_larva: { reward: "Núcleo de la colonia", ability: "Llamada de crías", zone: "Nido Carmesí" },
+    abyssal_knight: { reward: "Fragmento del abismo", ability: "Corte abisal", zone: "Trono del Abismo" }
+  };
+  var result = rewards[e.type] || rewards.guardian;
+  bossVictory = { active: true, timer: 260, type: e.type, reward: result.reward, ability: result.ability, zone: result.zone };
+  spawnFloatText(e.x - 20, e.y - 22, translateText("JEFE DERROTADO"), "#ffd700");
+  speakBossDialogue("JEFE DERROTADO");
+  startMusic();
   if (e.type === "guardian") {
     player.maxHp++;
     player.hp = player.maxHp;
     spawnFloatText(player.x, player.y - 40, "¡Corazón +1!", "#f44");
+  } else if (e.type === "queen_larva") {
+    hasDoubleJump = true;
+    player.maxJumps = 2; player2.maxJumps = 2;
   }
   if (e.room < rooms.length - 1) {
     rooms[e.room].transitionZone = {x: e.room * ROOM_W + ROOM_W - 70, y: 450, w: 60, h: 110, to: e.room + 1};
@@ -757,8 +810,9 @@ function checkSwordHitEnemiesFor(p) {
       if (e.boss) {
         if (e.lastSwordHit === frameCounter) return;
         e.lastSwordHit = frameCounter;
-        e.hp -= 12;
-        spawnFloatText(e.x, e.y - 10, "-12", "#ffd700");
+        var swordDamage = bossAbilities.abyssal_knight ? 16 : 12;
+        e.hp -= swordDamage;
+        spawnFloatText(e.x, e.y - 10, "-" + swordDamage, "#ffd700");
         spawnParticles(e.x + e.w/2, e.y + e.h/2, "#7af", 10, 4);
         if (e.hp <= 0) defeatBoss(e);
         return;
@@ -976,7 +1030,11 @@ function startBossDialogue(roomIndex) {
   if (!bossDialogueLines.length) return false;
   bossDialogueSeen[roomIndex] = true;
   bossDialogueIndex = 0;
+  bossIntroTimer = 110;
   gameState = ST_DIALOGUE;
+  var introBoss = enemies.find ? enemies.find(function(enemy) { return enemy.boss && enemy.room === roomIndex; }) : null;
+  startBossMusic(introBoss ? introBoss.type : "guardian");
+  speakBossDialogue(bossDialogueLines[0][1]);
   sfxTransition();
   return true;
 }
@@ -988,6 +1046,8 @@ function advanceBossDialogue() {
     bossDialogueLines = [];
     gameState = ST_PLAYING;
     sfxAttack();
+  } else {
+    speakBossDialogue(bossDialogueLines[bossDialogueIndex][1]);
   }
 }
 

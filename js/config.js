@@ -64,7 +64,14 @@ var translations = {
     "Confirmar": "Confirm", "Cancelar": "Cancel",     "ENTER confirmar  •  ESC cancelar": "ENTER confirm  •  ESC cancel", "Música y sonido": "Music & sound",
     "Dorado: zona actual  •  Morado: jefe  •  Verde: tienda  •  Rojo: peligro": "Gold: current area  •  Purple: boss  •  Green: shop  •  Red: danger",
     "Introduce la contraseña": "Enter the password", "para nueva partida": "for a new game", "ENEMIGOS": "ENEMIES", "JEFES": "BOSSES",
-    "Registro de criaturas y grandes enemigos": "Record of creatures and great enemies"
+    "Registro de criaturas y grandes enemigos": "Record of creatures and great enemies",
+    "Guardián de la Cueva": "Cave Guardian", "Reina Larva": "Larva Queen", "Caballero Abismal": "Abyssal Knight",
+    "JEFE DERROTADO": "BOSS DEFEATED", "Recompensa": "Reward", "Habilidad nueva": "New ability",
+    "Zona desbloqueada": "Zone unlocked", "Guardia pétrea": "Stone Guard", "Llamada de crías": "Brood Call",
+    "Corte abisal": "Abyssal Slash", "FASE": "PHASE", "ENTRADA CINEMÁTICA": "CINEMATIC ENTRANCE",
+    "Ataque especial": "Special attack", "¡COMIENZA EL COMBATE!": "THE FIGHT BEGINS!",
+    "Corazón de piedra": "Stone Heart", "Núcleo de la colonia": "Colony Core", "Fragmento del abismo": "Abyss Shard",
+    "Santuario de la Cueva": "Cave Sanctuary", "Nido Carmesí": "Crimson Nest", "Trono del Abismo": "Abyssal Throne"
   },
   pt: {
     "CABALLERO MÍSTICO": "CAVALEIRO MÍSTICO", "Selecciona una ranura": "Selecione um espaço", "RANURA": "ESPAÇO",
@@ -104,7 +111,14 @@ var translations = {
     "Confirmar": "Confirmar", "Cancelar": "Cancelar",     "ENTER confirmar  •  ESC cancelar": "ENTER confirmar  •  ESC cancelar", "Música y sonido": "Música e som",
     "Dorado: zona actual  •  Morado: jefe  •  Verde: tienda  •  Rojo: peligro": "Dourado: área atual  •  Roxo: chefe  •  Verde: loja  •  Vermelho: perigo",
     "Introduce la contraseña": "Digite a senha", "para nueva partida": "para novo jogo", "ENEMIGOS": "INIMIGOS", "JEFES": "CHEFES",
-    "Registro de criaturas y grandes enemigos": "Registro de criaturas e grandes inimigos"
+    "Registro de criaturas y grandes enemigos": "Registro de criaturas e grandes inimigos",
+    "Guardián de la Cueva": "Guardião da Caverna", "Reina Larva": "Rainha Larva", "Caballero Abismal": "Cavaleiro Abissal",
+    "JEFE DERROTADO": "CHEFE DERROTADO", "Recompensa": "Recompensa", "Habilidad nueva": "Nova habilidade",
+    "Zona desbloqueada": "Área desbloqueada", "Guardia pétrea": "Guarda pétrea", "Llamada de crías": "Chamado da ninhada",
+    "Corte abisal": "Corte abissal", "FASE": "FASE", "ENTRADA CINEMÁTICA": "ENTRADA CINEMATOGRÁFICA",
+    "Ataque especial": "Ataque especial", "¡COMIENZA EL COMBATE!": "A LUTA COMEÇA!",
+    "Corazón de piedra": "Coração de pedra", "Núcleo de la colonia": "Núcleo da colônia", "Fragmento del abismo": "Fragmento do abismo",
+    "Santuario de la Cueva": "Santuário da Caverna", "Nido Carmesí": "Ninho Carmesim", "Trono del Abismo": "Trono do Abismo"
   }
 };
 
@@ -160,7 +174,12 @@ var deathParticles = [];
 var playerDead = false;
 var deathTimer = 0;
 var bossProjectiles = [];
+var bossDeathEffects = [];
 var bossArenaState = { guardian: false, queen_larva: false, abyssal_knight: false };
+var bossAbilities = { guardian: false, queen_larva: false, abyssal_knight: false };
+var bossZonesUnlocked = { guardian: false, queen_larva: false, abyssal_knight: false };
+var bossVictory = { active: false, timer: 0, type: "", reward: "", ability: "", zone: "" };
+var bossIntroTimer = 0;
 var bossDoorSoundRoom = -1;
 var bossDialogueSeen = {};
 var bossDialogueLines = [];
@@ -247,6 +266,11 @@ function saveGame(i) {
       queen_larva: !!bossArenaState.queen_larva,
       abyssal_knight: !!bossArenaState.abyssal_knight
     },
+    bossAbilities: {
+      guardian: !!bossAbilities.guardian,
+      queen_larva: !!bossAbilities.queen_larva,
+      abyssal_knight: !!bossAbilities.abyssal_knight
+    },
     bestiary: JSON.parse(JSON.stringify(bestiary)),
     difficulty: difficulty,
     stats: { playTime: stats.playTime || 0, enemiesKilled: stats.enemiesKilled || 0,
@@ -260,6 +284,8 @@ function saveGame(i) {
 function loadGame(i) {
   var s = getSaves().slots[i];
   if (!s) return false;
+  bossVictory.active = false;
+  bossDeathEffects = [];
   difficulty = s.difficulty || "normal";
   currentRoom = Math.max(0, Math.min(rooms.length - 1, s.room || 0));
   targetCamX = currentRoom * ROOM_W; cameraX = targetCamX;
@@ -280,6 +306,14 @@ function loadGame(i) {
   bossArenaState.guardian = !!(s.bossesDefeated && s.bossesDefeated.guardian);
   bossArenaState.queen_larva = !!(s.bossesDefeated && s.bossesDefeated.queen_larva);
   bossArenaState.abyssal_knight = !!(s.bossesDefeated && s.bossesDefeated.abyssal_knight);
+  bossAbilities.guardian = !!(s.bossAbilities && s.bossAbilities.guardian) || bossArenaState.guardian;
+  bossAbilities.queen_larva = !!(s.bossAbilities && s.bossAbilities.queen_larva) || bossArenaState.queen_larva;
+  bossAbilities.abyssal_knight = !!(s.bossAbilities && s.bossAbilities.abyssal_knight) || bossArenaState.abyssal_knight;
+  bossZonesUnlocked.guardian = bossArenaState.guardian;
+  bossZonesUnlocked.queen_larva = bossArenaState.queen_larva;
+  bossZonesUnlocked.abyssal_knight = bossArenaState.abyssal_knight;
+  rooms[11].transitionZone = bossArenaState.guardian ? {x: 9540, y: 460, w: 40, h: 100, to: 12} : null;
+  rooms[12].transitionZone = bossArenaState.queen_larva ? {x: 10340, y: 460, w: 40, h: 100, to: 13} : null;
   if (hasDoubleJump) { player.maxJumps = 2; player2.maxJumps = 2; }
   if (s.bestiary) bestiary = JSON.parse(JSON.stringify(s.bestiary));
   Object.keys(bestiaryInfo).forEach(function(key) {
@@ -523,7 +557,7 @@ var room12 = {
   platforms: [{x:9600, y:560, w:800, h:40}],
   spikes: [], walls: [{x:9600, y:0, w:18, h:600}, {x:10382, y:0, w:18, h:600}],
   transitionZone: {x:10340, y:460, w:40, h:100, to:13},
-  decor: genDecor(9600, 8, 4, 600), bossName: "LARVA REINA"
+  decor: genDecor(9600, 8, 4, 600), bossName: "REINA LARVA"
 };
 
 var room13 = {
@@ -583,11 +617,11 @@ var enemies = [
   {x: 7750, y: 300, w: 24, h: 20, vx: 1.2, vy: 0, baseY: 300, range: 50, dead: false, room: 9, type: 'bat'},
   {x:7450, y:250, w:24, h:20, vx: -1.4, vy: 0, baseY: 250, range: 70, dead: false, room: 9, type: 'bat'},
   {x:9140, y:470, w:70, h:90, vx: 0, vy: 0, dead: false, room: 11, type: 'guardian',
-    boss: true, bossName: "GUARDIAN", hp: 100, maxHp: 100, aiTimer: 80, attackTimer: 60, phase: 1, enraged: false},
+    boss: true, bossName: "GUARDIÁN DE LA CUEVA", hp: 100, maxHp: 100, aiTimer: 80, attackTimer: 60, phase: 1, enraged: false},
   {x:9940, y:470, w:78, h:90, vx: 0, vy: 0, dead: false, room: 12, type: 'queen_larva',
-    boss: true, bossName: "QUEEN LARVA", hp: 140, maxHp: 140, aiTimer: 90, attackTimer: 70, phase: 1, enraged: false},
+    boss: true, bossName: "REINA LARVA", hp: 140, maxHp: 140, aiTimer: 90, attackTimer: 70, phase: 1, enraged: false},
   {x:10740, y:460, w:60, h:100, vx: 0, vy: 0, dead: false, room: 13, type: 'abyssal_knight',
-    boss: true, bossName: "ABYSSAL KNIGHT", hp: 180, maxHp: 180, aiTimer: 70, attackTimer: 50, phase: 1, enraged: false}
+    boss: true, bossName: "CABALLERO ABISMAL", hp: 180, maxHp: 180, aiTimer: 70, attackTimer: 50, phase: 1, enraged: false}
 ];
 enemies.forEach(function(e) { e.canRoam = !e.boss; });
 

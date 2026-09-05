@@ -32,11 +32,16 @@ function resetAll() {
   room12.transitionZone = {x:10340, y:460, w:40, h:100, to:13};
   room13.transitionZone = null;
   bossArenaState = { guardian: false, queen_larva: false, abyssal_knight: false };
+  bossAbilities = { guardian: false, queen_larva: false, abyssal_knight: false };
+  bossZonesUnlocked = { guardian: false, queen_larva: false, abyssal_knight: false };
+  bossVictory = { active: false, timer: 0, type: "", reward: "", ability: "", zone: "" };
+  bossIntroTimer = 0;
   bossDoorSoundRoom = -1;
   bossDialogueSeen = {};
   bossDialogueLines = [];
   bossDialogueIndex = 0;
   bossProjectiles = [];
+  bossDeathEffects = [];
   room1.pedestal.taken = false; room1.pedestal.glow = 0;
   if (room2.bombBox) { room2.bombBox.broken = false; room2.bombBox.exploded = false; }
   if (room9.healingStone) room9.healingStone.active = true;
@@ -45,6 +50,7 @@ function resetAll() {
     if (e.boss) {
       e.hp = e.maxHp; e.phase = 1; e.enraged = false; e.action = "";
       e.actionTimer = 0; e.attackTimer = e.type === "abyssal_knight" ? 50 : 70;
+      e.deathTimer = 0; e.attackHit = false; e.phaseNotice = 0;
     }
     e.vy = 0;
   });
@@ -55,6 +61,11 @@ function update() {
   if (shopAnim > 0) shopAnim--;
   if (shopGreetingTimer > 0) shopGreetingTimer--;
   if (shopExitCooldown > 0) shopExitCooldown--;
+  if (bossVictory.active) {
+    bossVictory.timer--;
+    if (bossVictory.timer <= 0) bossVictory.active = false;
+  }
+  updateBossDeathEffects();
   if (shopOpen && gameState === ST_PLAYING) { updateShopPlayer(); return; }
   if (gameState === ST_EXPLOSION) { updateExplosion(); return; }
   if (gameState === ST_TRANSITION) { updateTransition(); return; }

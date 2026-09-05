@@ -81,9 +81,24 @@ function speakShopGreeting(text) {
   utterance.volume = 0.85;
   window.speechSynthesis.speak(utterance);
 }
+function speakBossDialogue(text) {
+  if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
+    sfxBossVoice();
+    return;
+  }
+  window.speechSynthesis.cancel();
+  var utterance = new SpeechSynthesisUtterance(translateText(text));
+  utterance.lang = language === "pt" ? "pt-BR" : (language === "en" ? "en-US" : "es-ES");
+  utterance.rate = 0.82;
+  utterance.pitch = 0.62;
+  utterance.volume = 0.9;
+  window.speechSynthesis.speak(utterance);
+}
+function sfxBossVoice() { playTone(110, 0.18, "sawtooth", 0.08, 0); playTone(82, 0.24, "triangle", 0.06, 0.1); }
 function sfxWaterDrop() { playTone(1050, 0.05, "sine", 0.07, 0); playTone(1450, 0.09, "sine", 0.05, 0.04); }
 function sfxBossDoorsLock() { playTone(95, 0.28, "sawtooth", 0.12, 0); playTone(58, 0.42, "square", 0.1, 0.08); playNoise(0.18, 0.08, 0.04); }
 function sfxBossDoorsOpen() { playTone(180, 0.16, "sine", 0.1, 0); playTone(360, 0.22, "sine", 0.09, 0.12); playTone(720, 0.28, "triangle", 0.07, 0.24); }
+function sfxBossPhase() { playTone(70, 0.25, "sawtooth", 0.12, 0); playTone(140, 0.25, "square", 0.08, 0.12); playNoise(0.18, 0.08, 0.04); }
 
 function playAmbientChord(baseFreq, delay) {
   if (!audioCtx || !musicPlaying) return;
@@ -93,20 +108,31 @@ function playAmbientChord(baseFreq, delay) {
   playMusicTone(baseFreq * 2, 2.5, "sine", 0.02, delay + 0.3);
 }
 
-function startMusic() {
+var currentMusicTrack = "exploration";
+function startMusic(trackName) {
   initAudio();
-  if (musicPlaying) return;
+  trackName = trackName || "exploration";
+  if (musicPlaying && currentMusicTrack === trackName) return;
+  if (musicPlaying) stopMusic();
+  currentMusicTrack = trackName;
   musicPlaying = true;
-  var chords = [82.41, 98, 110, 130.81, 110, 98, 82.41, 73.42];
+  var chordSets = {
+    exploration: [82.41, 98, 110, 130.81, 110, 98, 82.41, 73.42],
+    guardian: [55, 65.41, 73.42, 82.41, 73.42, 65.41],
+    queen_larva: [73.42, 87.31, 98, 110, 98, 87.31],
+    abyssal_knight: [46.25, 55, 61.74, 69.3, 61.74, 55]
+  };
+  var chords = chordSets[trackName] || chordSets.exploration;
   var chordIdx = 0;
-  playAmbientChord(chords[chordIdx], 0);
+  playAmbientChord(chords[chordIdx], 0, trackName);
   musicInterval = setInterval(function() {
     if (!musicPlaying) return;
     chordIdx = (chordIdx + 1) % chords.length;
-    playAmbientChord(chords[chordIdx], 0);
+    playAmbientChord(chords[chordIdx], 0, trackName);
   }, 3200);
 }
 function stopMusic() { musicPlaying = false; if (musicInterval) { clearInterval(musicInterval); musicInterval = null; } }
+function startBossMusic(type) { startMusic(type || "guardian"); }
 function toggleMusic() { initAudio(); if (musicPlaying) stopMusic(); else startMusic(); }
 function toggleSfx() { sfxEnabled = !sfxEnabled; }
 function adjustMusicVolume(delta) { musicVolume = Math.max(0, Math.min(1, musicVolume + delta)); }

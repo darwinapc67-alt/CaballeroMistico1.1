@@ -103,6 +103,14 @@ function drawBossDoor(roomIndex) {
 function drawBossDialogue() {
   var line = bossDialogueLines[bossDialogueIndex];
   if (!line) return;
+  ctx.fillStyle = "rgba(0, 0, 8, 0.72)";
+  ctx.fillRect(0, 0, canvas.width, 105);
+  ctx.fillRect(0, canvas.height - 105, canvas.width, 105);
+  ctx.fillStyle = "#ffd36a";
+  ctx.font = "bold 14px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(translateText("ENTRADA CINEMÁTICA"), canvas.width / 2, 32);
+  ctx.textAlign = "left";
   ctx.fillStyle = "rgba(3, 3, 12, 0.88)";
   ctx.fillRect(42, 385, canvas.width - 84, 150);
   ctx.strokeStyle = "#a85cff";
@@ -110,15 +118,15 @@ function drawBossDialogue() {
   ctx.strokeRect(42, 385, canvas.width - 84, 150);
   ctx.fillStyle = line[0] ? "#ffd36a" : "#ff5f86";
   ctx.font = "bold 16px monospace";
-  ctx.fillText(line[0] ? line[0] + ":" : "", 64, 420);
+  ctx.fillText(line[0] ? translateText(line[0]) + ":" : "", 64, 420);
   ctx.fillStyle = "#fff";
   ctx.font = line[0] ? "15px monospace" : "bold 18px monospace";
   ctx.textAlign = line[0] ? "left" : "center";
-  ctx.fillText("«" + line[1] + "»", line[0] ? 64 : canvas.width / 2, line[0] ? 458 : 460);
+  ctx.fillText("«" + translateText(line[1]) + "»", line[0] ? 64 : canvas.width / 2, line[0] ? 458 : 460);
   ctx.textAlign = "left";
   ctx.fillStyle = "rgba(200, 220, 255, 0.8)";
   ctx.font = "11px monospace";
-  ctx.fillText("ENTER / ESPACIO para continuar", 64, 505);
+  ctx.fillText(translateText("ENTER / ESPACIO para continuar"), 64, 505);
 }
 
 function drawPedestal() {
@@ -223,12 +231,19 @@ function drawEnemies() {
     ctx.save();
     if (e.boss) {
       var bossColor = e.type === "guardian" ? "#b77b45" : (e.type === "queen_larva" ? "#9b4c9b" : "#415f98");
+      var attackPulse = e.actionTimer > 0 ? Math.sin(e.actionTimer * 0.7) * 4 : 0;
+      var bossBob = e.action === "jump" ? Math.sin(e.actionTimer * 0.35) * 5 : attackPulse * 0.35;
+      var phaseColor = e.phase === 3 ? "#ff315a" : (e.phase === 2 ? "#ffb347" : "#8cf");
+      ctx.globalAlpha = 0.16 + (e.phase || 1) * 0.04;
+      ctx.fillStyle = phaseColor;
+      ctx.beginPath(); ctx.arc(e.x + e.w / 2, e.y + e.h / 2, 48 + (e.phase || 1) * 8, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
       ctx.fillStyle = "rgba(255,80,80,0.18)";
       ctx.fillRect(e.x - 8, e.y - 8, e.w + 16, e.h + 16);
       ctx.fillStyle = bossColor;
-      ctx.fillRect(e.x, e.y + 14, e.w, e.h - 14);
+      ctx.fillRect(e.x, e.y + 14 + bossBob, e.w, e.h - 14);
       ctx.fillStyle = "#d8b18a";
-      ctx.fillRect(e.x + 10, e.y, e.w - 20, 18);
+      ctx.fillRect(e.x + 10, e.y + bossBob, e.w - 20, 18);
       ctx.fillStyle = "#ff3344";
       ctx.fillRect(e.x + 15, e.y + 7, 5, 4);
       ctx.fillRect(e.x + e.w - 20, e.y + 7, 5, 4);
@@ -239,8 +254,19 @@ function drawEnemies() {
         ctx.fillStyle = "#d971bd";
         for (var q = 0; q < 3; q++) ctx.fillRect(e.x + 8 + q * 22, e.y + 40 + (q % 2) * 8, 12, 6);
       } else {
-        ctx.fillStyle = "#d9e4ff"; ctx.fillRect(e.x + e.w - 5, e.y + 28, 28, 5);
+        ctx.fillStyle = "#d9e4ff"; ctx.fillRect(e.x + e.w - 5, e.y + 28 + bossBob, 28, 5);
         ctx.fillStyle = "#26385f"; ctx.fillRect(e.x - 5, e.y + 25, 10, 48);
+      }
+      if (e.action === "melee" || e.action === "sword" || e.action === "dash") {
+        ctx.strokeStyle = e.phase === 3 ? "#ff315a" : "#ffd36a";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(e.x + e.w / 2, e.y + e.h / 2, 32 + Math.max(0, e.actionTimer), -0.9, 0.9);
+        ctx.stroke();
+      }
+      if (e.action === "shockwave" || e.action === "wall" || e.action === "ceiling") {
+        ctx.strokeStyle = phaseColor; ctx.lineWidth = 2;
+        ctx.strokeRect(e.x - 14, e.y - 14, e.w + 28, e.h + 28);
       }
       ctx.fillStyle = "#f44"; ctx.fillRect(e.x, e.y - 14, e.w * Math.max(0, e.hp / e.maxHp), 5);
       ctx.strokeStyle = "#fff"; ctx.lineWidth = 1; ctx.strokeRect(e.x, e.y - 14, e.w, 5);
@@ -313,6 +339,24 @@ function drawBossProjectiles() {
       ctx.fillStyle = "rgba(255,255,255,0.45)"; ctx.fillRect(b.x + 2, b.y + 2, 3, 3);
     }
 
+  });
+}
+
+function drawBossDeathEffects() {
+  bossDeathEffects.forEach(function(effect) {
+    if (effect.room !== currentRoom) return;
+    var alpha = Math.max(0, effect.life / effect.maxLife);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = effect.color;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(effect.x, effect.y, effect.radius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = effect.color;
+    ctx.globalAlpha = alpha * 0.45;
+    ctx.fillRect(effect.x - effect.radius / 2, effect.y - effect.radius / 2, effect.radius, effect.radius);
+    ctx.restore();
   });
 }
 
@@ -422,6 +466,9 @@ function drawInventory() {
   items.push("❤️ Fragmentos: " + heartFragments1 + "/3");
   items.push("💠 Azari: " + azari);
   items.push("🔄 Saltos: " + (hasDoubleJump ? "Doble" : "Simple"));
+  if (bossAbilities.guardian) items.push("🪨 " + translateText("Guardia pétrea") + ": ✓");
+  if (bossAbilities.queen_larva) items.push("🐛 " + translateText("Llamada de crías") + ": ✓");
+  if (bossAbilities.abyssal_knight) items.push("🌑 " + translateText("Corte abisal") + ": ✓");
 
   var y = 125;
   items.forEach(function(item) {
@@ -559,6 +606,7 @@ function drawGameWorld() {
     if (r === 9) { drawShopNPC(); drawHealingStone(); }
   }
   drawEnemies();
+  drawBossDeathEffects();
   drawHealingHearts();
   drawBossProjectiles();
   arrowsInFlight.forEach(function(arrow) {
@@ -607,6 +655,26 @@ function drawHpBar(p, barX, barY) {
     ctx.stroke();
     ctx.restore();
   }
+}
+
+function drawBossVictory() {
+  var alpha = Math.min(0.86, 0.35 + Math.sin(Date.now() / 180) * 0.08);
+  ctx.fillStyle = "rgba(4, 4, 18, " + alpha + ")";
+  ctx.fillRect(70, 145, canvas.width - 140, 250);
+  ctx.strokeStyle = "#ffd700"; ctx.lineWidth = 3;
+  ctx.strokeRect(70, 145, canvas.width - 140, 250);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#ffd700"; ctx.font = "bold 30px monospace";
+  ctx.fillText(translateText("JEFE DERROTADO"), canvas.width / 2, 190);
+  ctx.fillStyle = "#fff"; ctx.font = "bold 15px monospace";
+  ctx.fillText(translateText("Recompensa") + ": " + translateText(bossVictory.reward), canvas.width / 2, 235);
+  ctx.fillStyle = "#7ff"; ctx.font = "bold 15px monospace";
+  ctx.fillText(translateText("Habilidad nueva") + ": " + translateText(bossVictory.ability), canvas.width / 2, 275);
+  ctx.fillStyle = "#8f8"; ctx.font = "bold 14px monospace";
+  ctx.fillText(translateText("Zona desbloqueada") + ": " + translateText(bossVictory.zone), canvas.width / 2, 315);
+  ctx.fillStyle = "#bbb"; ctx.font = "12px monospace";
+  ctx.fillText(translateText("Ataque especial") + " • " + translateText(bossVictory.ability), canvas.width / 2, 355);
+  ctx.textAlign = "left";
 }
 
 function drawGame() {
@@ -658,13 +726,19 @@ function drawGame() {
   enemies.forEach(function(e) { if (e.boss && e.room === currentRoom && !e.dead) activeBoss = e; });
   if (activeBoss) {
     ctx.textAlign = "center";
-    ctx.fillStyle = "#f66"; ctx.font = "bold 13px monospace";
-    ctx.fillText(activeBoss.bossName + "  " + activeBoss.hp + "/" + activeBoss.maxHp, canvas.width / 2, canvas.height - 42);
-    ctx.fillStyle = "#421"; ctx.fillRect(190, canvas.height - 34, canvas.width - 380, 8);
-    ctx.fillStyle = activeBoss.enraged ? "#ff3344" : "#d66";
-    ctx.fillRect(190, canvas.height - 34, (canvas.width - 380) * Math.max(0, activeBoss.hp / activeBoss.maxHp), 8);
+    var displayName = bossDiaryInfo[activeBoss.type] ? bossDiaryInfo[activeBoss.type].name : activeBoss.bossName;
+    ctx.fillStyle = activeBoss.phase === 3 ? "#ff315a" : "#ffd36a";
+    ctx.font = "bold 17px monospace";
+    ctx.fillText(translateText(displayName) + "  " + activeBoss.hp + "/" + activeBoss.maxHp, canvas.width / 2, canvas.height - 55);
+    ctx.fillStyle = "#180d16"; ctx.fillRect(120, canvas.height - 46, canvas.width - 240, 22);
+    ctx.strokeStyle = "#ffd36a"; ctx.lineWidth = 2; ctx.strokeRect(120, canvas.height - 46, canvas.width - 240, 22);
+    ctx.fillStyle = activeBoss.phase === 3 ? "#ff315a" : (activeBoss.phase === 2 ? "#ff9b3d" : "#d66");
+    ctx.fillRect(124, canvas.height - 42, (canvas.width - 248) * Math.max(0, activeBoss.hp / activeBoss.maxHp), 14);
+    ctx.fillStyle = "#fff"; ctx.font = "bold 11px monospace";
+    ctx.fillText(translateText("FASE") + " " + (activeBoss.phase || 1), canvas.width / 2, canvas.height - 28);
     ctx.textAlign = "left";
   }
+  if (bossVictory.active) drawBossVictory();
   if (discoveryNotify.active) {
     var alpha = Math.min(1, discoveryNotify.timer / 40);
     ctx.globalAlpha = alpha;
@@ -674,6 +748,7 @@ function drawGame() {
     ctx.fillText(discoveryNotify.name, canvas.width/2, 105);
     ctx.textAlign = "left"; ctx.globalAlpha = 1;
   }
+
   ctx.textAlign = "right"; ctx.fillStyle = "#0ff"; ctx.font = "bold 13px monospace";
   ctx.fillText("💠 " + azari, canvas.width - 20, 98);
   ctx.textAlign = "left";
