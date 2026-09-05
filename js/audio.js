@@ -122,10 +122,13 @@ function zoneMusicTrack() {
     return enemy.boss && enemy.room === currentRoom && !enemy.dead;
   }) : null;
   if (activeBoss) return activeBoss.type;
-  var nearbyDanger = player.hp <= Math.max(2, player.maxHp * 0.3);
+  // Las dos primeras habitaciones funcionan como introducción y conservan
+  // su música de exploración aunque contengan enemigos de tutorial.
+  var nearbyDanger = false;
   enemies.forEach(function(enemy) {
-    if (enemy.room === currentRoom && !enemy.dead && !enemy.boss &&
-        Math.abs(enemy.x - player.x) < 180) nearbyDanger = true;
+    if (currentRoom > 1 && enemy.room === currentRoom && !enemy.dead && !enemy.boss &&
+        Math.abs(enemy.x - player.x) < 120 &&
+        Math.abs(enemy.y - player.y) < 150) nearbyDanger = true;
   });
   if (nearbyDanger) return "danger";
   return "zone_" + Math.min(currentRoom, 9);
