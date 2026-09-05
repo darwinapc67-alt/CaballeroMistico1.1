@@ -789,6 +789,19 @@ function drawGame() {
 
 function drawDeathScreen() {
   drawGameWorld();
+  if (consecutiveDeaths < 3) {
+    ctx.fillStyle = "rgba(2, 2, 10, 0.72)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#ff526f";
+    ctx.font = "bold 30px monospace";
+    ctx.fillText("HAS MUERTO", canvas.width / 2, 220);
+    ctx.fillStyle = "#aaa";
+    ctx.font = "13px monospace";
+    ctx.fillText("Regresando al combate...", canvas.width / 2, 260);
+    ctx.textAlign = "left";
+    return;
+  }
   ctx.fillStyle = "rgba(2, 2, 10, 0.86)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.textAlign = "center";
@@ -797,9 +810,8 @@ function drawDeathScreen() {
   ctx.fillText("HAS MUERTO", canvas.width / 2, 170);
   ctx.fillStyle = "#ddd";
   ctx.font = "14px monospace";
-  ctx.fillText(consecutiveDeaths >= 3 ? "Tres derrotas: regresarás al último punto de guardado." : "La oscuridad reclama este intento.", canvas.width / 2, 215);
-  var continueText = consecutiveDeaths >= 3 ? "Volver al último punto de guardado" : "Reintentar en esta habitación";
-  [continueText, "Reintentar desde el menú"].forEach(function(option, index) {
+  ctx.fillText("Tres derrotas: elige cómo continuar.", canvas.width / 2, 215);
+  ["Volver al último punto de guardado", "Ir al menú principal"].forEach(function(option, index) {
     var y = 300 + index * 54;
     ctx.fillStyle = deathChoice === index ? "rgba(100, 220, 200, 0.2)" : "rgba(0,0,0,0.25)";
     ctx.fillRect(145, y - 28, canvas.width - 290, 40);
@@ -1110,10 +1122,13 @@ function drawAudioMenu() {
   ctx.fillStyle = "#ffd700"; ctx.font = "bold 28px monospace";
   ctx.fillText(translateText("MÚSICA Y SONIDO"), canvas.width/2, 130);
   ctx.fillStyle = "#aaa"; ctx.font = "15px monospace";
-  ctx.fillText("Música: " + Math.round(musicVolume * 100) + "%", canvas.width/2, 220);
-  ctx.fillText(translateText("Efectos") + ": " + Math.round(sfxVolume * 100) + "%", canvas.width/2, 270);
+  var audioLabels = ["Volumen general: " + Math.round(masterVolume * 100) + "%", "Música: " + Math.round(musicVolume * 100) + "%", translateText("Efectos") + ": " + Math.round(sfxVolume * 100) + "%"];
+  audioLabels.forEach(function(label, index) {
+    ctx.fillStyle = audioSelection === index ? "#6cc" : "#aaa";
+    ctx.fillText((audioSelection === index ? "▶ " : "") + label, canvas.width/2, 200 + index * 45);
+  });
   ctx.fillStyle = "#6cc"; ctx.font = "13px monospace";
-  ctx.fillText("↑/↓ Música  •  ←/→ Efectos", canvas.width/2, 355);
+  ctx.fillText("↑/↓ Seleccionar  •  ←/→ Ajustar", canvas.width/2, 355);
   ctx.fillStyle = "#666";
   ctx.fillText(translateText("ESC para volver"), canvas.width/2, 410);
   ctx.textAlign = "left";
@@ -1262,7 +1277,7 @@ function drawShop() {
   ctx.fillRect(590, 500, 180, 5);
   drawPlayerEntity(player);
   ctx.fillStyle = "#ffd700"; ctx.font = "bold 18px monospace"; ctx.textAlign = "center";
-  ctx.fillText(shopId === 0 ? "TIENDA DEL EXPLORADOR" : "TIENDA DEL CORAZÓN", canvas.width/2, 85);
+  ctx.fillText(shopId === 0 ? "TIENDA DEL EXPLORADOR" : "CASA DE COMBATE", canvas.width/2, 85);
   ctx.fillStyle = "#6cc"; ctx.font = "16px monospace";
   ctx.fillText("💠 Azari: " + azari, canvas.width/2, 120);
   ctx.fillStyle = "#553311"; ctx.fillRect(82, 500, 38, 60);
@@ -1292,7 +1307,7 @@ function drawShop() {
     return;
   }
   if (shopId === 0) {
-    var shopItems = ["🗺️ Mapa - 45 Azari", "🏹 Arco - 35 Azari", "🏹 20 flechas - 5 Azari"];
+    var shopItems = ["🗺️ Mapa - 45 Azari", "🏹 Arco - 35 Azari", "🏹 20 flechas - 5 Azari", "❤️ Fragmento J1 - 25 Azari", "💗 Fragmento J2 - 25 Azari", "💎 Amuleto de Azari - 45 Azari"];
     for (var i = 0; i < shopItems.length; i++) {
       var itemY = 225 + i * 40;
       var selected = menuSelection === i;
@@ -1306,8 +1321,32 @@ function drawShop() {
     ctx.fillStyle = "#666"; ctx.font = "13px monospace";
     ctx.fillText(shopConfirm >= 0 ? "ENTER confirmar compra  •  ESC cancelar" : "↑/↓ Elegir  •  ENTER Comprar", canvas.width/2, 355);
   } else if (shopId === 1) {
+    var combatItems = [
+      "⚔️ Mejorar espada (" + swordLevel + "/3) - 30",
+      "🏹 Mejorar arco (" + bowLevel + "/3) - 30",
+      "🔥 Flechas pesadas - 20",
+      "⚡ Ataque cargado - 35",
+      "⬇️ Ataque aéreo - 35",
+      "🌀 Combo de combate - 50",
+      "💎 Árbol: Amuleto - 45"
+    ];
     ctx.fillStyle = "#6cc"; ctx.font = "18px monospace";
-    ctx.fillText("💎 CASA DEL CORAZÓN", canvas.width/2, 200);
+    ctx.fillText("⚔️ CASA DE COMBATE", canvas.width/2, 200);
+    for (var combatIndex = 0; combatIndex < combatItems.length; combatIndex++) {
+      var combatY = 225 + combatIndex * 38;
+      var combatSelected = menuSelection === combatIndex;
+      ctx.fillStyle = combatSelected ? "rgba(100,200,255,0.18)" : "transparent";
+      ctx.fillRect(120, combatY - 23, 560, 32);
+      ctx.strokeStyle = combatSelected ? "#6cc" : "#333";
+      ctx.strokeRect(120, combatY - 23, 560, 32);
+      ctx.fillStyle = combatSelected ? "#6cc" : "#aaa";
+      ctx.font = "bold 13px monospace";
+      ctx.fillText((combatSelected ? "▶ " : "  ") + combatItems[combatIndex], canvas.width / 2, combatY);
+    }
+    ctx.fillStyle = "#666"; ctx.font = "12px monospace";
+    ctx.fillText("↑/↓ Elegir  •  ENTER Comprar", canvas.width / 2, 510);
+    ctx.textAlign = "left";
+    return;
     var heartItems = ["❤️ Fragmento J1 - 25 Azari", "💗 Fragmento J2 - 25 Azari", "💎 Bendición codiciosa - 45 Azari"];
     for (var i = 0; i < heartItems.length; i++) {
       var heartY = 240 + i * 38, heartSelected = menuSelection === i;

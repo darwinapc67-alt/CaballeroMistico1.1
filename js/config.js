@@ -153,7 +153,8 @@ var transTimer = 0, transPhase = "out", transTargetRoom = 0, transFade = 0;
 var transIsFall = false, transitionCooldown = 0;
 
 var audioCtx = null, musicPlaying = false, musicInterval = null, sfxEnabled = true;
-var musicVolume = 0.35, sfxVolume = 0.7;
+var masterVolume = 1, musicVolume = 0.75, sfxVolume = 0.7, audioSelection = 0;
+var ambientTimer = 0;
 var gamepadConnected = false, gamepadIndex = -1;
 var gpButtons = {}, prevGPButtons = {}, gpAxes = { x: 0, y: 0 };
 var gamepadMenuAxisLock = 0;
@@ -165,6 +166,8 @@ var shopPreviousX = 0, shopPreviousY = 0, shopExitCooldown = 0;
 var heartFragments1 = 0, heartFragments2 = 0;
 var heartFragmentsBought1 = 0, heartFragmentsBought2 = 0;
 var hasAzariCharm = false, hasDoubleJump = false;
+var swordLevel = 0, bowLevel = 0, arrowType = "normal";
+var combatSkills = { charged: false, aerial: false, combo: false };
 
 var lastSafeX = 100, lastSafeY = 400;
 var healing = false, healTimer = 0, hitFlash = 0, needsRespawn = false;
@@ -274,6 +277,7 @@ function saveGame(i) {
     heartFragments1: heartFragments1, heartFragments2: heartFragments2,
     heartFragmentsBought1: heartFragmentsBought1, heartFragmentsBought2: heartFragmentsBought2,
     hasAzariCharm: hasAzariCharm, hasDoubleJump: hasDoubleJump,
+    swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: combatSkills,
     bossesDefeated: {
       guardian: !!bossArenaState.guardian,
       queen_larva: !!bossArenaState.queen_larva,
@@ -325,6 +329,9 @@ function loadGame(i) {
   heartFragmentsBought2 = s.heartFragmentsBought2 || 0;
   hasAzariCharm = s.hasAzariCharm || false;
   hasDoubleJump = s.hasDoubleJump || false;
+  swordLevel = s.swordLevel || 0; bowLevel = s.bowLevel || 0;
+  arrowType = s.arrowType || "normal";
+  combatSkills = s.combatSkills || { charged: false, aerial: false, combo: false };
   bossArenaState.guardian = !!(s.bossesDefeated && s.bossesDefeated.guardian);
   bossArenaState.queen_larva = !!(s.bossesDefeated && s.bossesDefeated.queen_larva);
   bossArenaState.abyssal_knight = !!(s.bossesDefeated && s.bossesDefeated.abyssal_knight);

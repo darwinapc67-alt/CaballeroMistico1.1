@@ -14,6 +14,8 @@ function resetAll() {
   heartFragments1 = 0; heartFragments2 = 0;
   heartFragmentsBought1 = 0; heartFragmentsBought2 = 0;
   hasAzariCharm = false; hasDoubleJump = false;
+  swordLevel = 0; bowLevel = 0; arrowType = "normal";
+  combatSkills = { charged: false, aerial: false, combo: false };
   hitFlash = 0; needsRespawn = false;
   player.hp = player.maxHp = 10;
   if (twoPlayerMode) player2.hp = player2.maxHp = 10;
@@ -26,7 +28,7 @@ function resetAll() {
   consecutiveDeaths = 0;
   highestRoomReached = 0;
   tutorialStep = 0; tutorialTimer = 240;
-  checkpointState = { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasDoubleJump: false };
+  checkpointState = { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false } };
   room0.transitionZone = null; room1.transitionZone = null; room2.transitionZone = null;
   room3.transitionZone = null; room4.transitionZone = null;
   room5.transitionZone = {x:4750, y:460, w:50, h:100, to:6};
@@ -78,6 +80,7 @@ function update() {
     if (achievementNotify.timer <= 0) achievementNotify.active = false;
   }
   updateBossDeathEffects();
+  updateAudioEnvironment();
   if (shopOpen && gameState === ST_PLAYING) { updateShopPlayer(); return; }
   if (gameState === ST_TRANSITION) { updateTransition(); return; }
   if (gameState === ST_DEATH) {
@@ -87,6 +90,7 @@ function update() {
       deathParticle.x += deathParticle.vx; deathParticle.y += deathParticle.vy; deathParticle.vy += 0.1; deathParticle.life--;
       if (deathParticle.life <= 0) deathParticles.splice(deathIndex, 1);
     }
+    if (consecutiveDeaths < 3 && deathAnimTimer >= 60) retryCurrentRoom();
     return;
   }
   if (gameState === ST_DIALOGUE) return;

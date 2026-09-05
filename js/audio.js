@@ -11,7 +11,7 @@ function playTone(freq, duration, type, vol, delay) {
     var gain = audioCtx.createGain();
     osc.type = type;
     osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
-    gain.gain.setValueAtTime(vol * sfxVolume, audioCtx.currentTime + delay);
+    gain.gain.setValueAtTime(vol * sfxVolume * masterVolume, audioCtx.currentTime + delay);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
     osc.connect(gain); gain.connect(audioCtx.destination);
     osc.start(audioCtx.currentTime + delay);
@@ -27,7 +27,7 @@ function playMusicTone(freq, duration, type, vol, delay) {
     var gain = audioCtx.createGain();
     osc.type = type;
     osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
-    gain.gain.setValueAtTime(vol * musicVolume, audioCtx.currentTime + delay);
+    gain.gain.setValueAtTime(vol * musicVolume * masterVolume, audioCtx.currentTime + delay);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
     osc.connect(gain); gain.connect(audioCtx.destination);
     osc.start(audioCtx.currentTime + delay);
@@ -46,7 +46,7 @@ function playNoise(duration, vol, delay) {
     var noise = audioCtx.createBufferSource();
     noise.buffer = buffer;
     var gain = audioCtx.createGain();
-    gain.gain.setValueAtTime(vol, audioCtx.currentTime + delay);
+    gain.gain.setValueAtTime(vol * sfxVolume * masterVolume, audioCtx.currentTime + delay);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
     noise.connect(gain); gain.connect(audioCtx.destination);
     noise.start(audioCtx.currentTime + delay);
@@ -101,13 +101,52 @@ function sfxBossPhase() { playTone(70, 0.25, "sawtooth", 0.12, 0); playTone(140,
 
 function playAmbientChord(baseFreq, delay) {
   if (!audioCtx || !musicPlaying) return;
-  playMusicTone(baseFreq, 3.5, "sine", 0.05, delay);
-  playMusicTone(baseFreq * 1.25, 3.2, "triangle", 0.03, delay + 0.1);
-  playMusicTone(baseFreq * 1.5, 2.8, "sine", 0.025, delay + 0.2);
-  playMusicTone(baseFreq * 2, 2.5, "sine", 0.02, delay + 0.3);
+  playMusicTone(baseFreq, 3.5, "sine", 0.22, delay);
+  playMusicTone(baseFreq * 1.25, 3.2, "triangle", 0.13, delay + 0.1);
+  playMusicTone(baseFreq * 1.5, 2.8, "sine", 0.09, delay + 0.2);
+  playMusicTone(baseFreq * 2, 2.5, "sine", 0.06, delay + 0.3);
+  if (currentMusicTrack === "guardian" || currentMusicTrack === "queen_larva" || currentMusicTrack === "abyssal_knight" || currentMusicTrack === "danger") {
+    playMusicTone(baseFreq * 2, 0.22, "square", 0.16, delay);
+    playMusicTone(baseFreq * 1.5, 0.18, "square", 0.12, delay + 0.28);
+    playMusicTone(baseFreq * 2.5, 0.26, "sawtooth", 0.1, delay + 0.56);
+    playMusicTone(baseFreq * 1.25, 0.2, "square", 0.12, delay + 0.9);
+    playMusicTone(baseFreq * 2, 0.22, "square", 0.14, delay + 1.18);
+    playMusicTone(baseFreq * 3, 0.3, "triangle", 0.1, delay + 1.5);
+  }
 }
 
 var currentMusicTrack = "exploration";
+function zoneMusicTrack() {
+  if (gameState === ST_DIALOGUE) return currentMusicTrack;
+  var activeBoss = enemies.find ? enemies.find(function(enemy) {
+    return enemy.boss && enemy.room === currentRoom && !enemy.dead;
+  }) : null;
+  if (activeBoss) return activeBoss.type;
+  var nearbyDanger = player.hp <= Math.max(2, player.maxHp * 0.3);
+  enemies.forEach(function(enemy) {
+    if (enemy.room === currentRoom && !enemy.dead && !enemy.boss &&
+        Math.abs(enemy.x - player.x) < 180) nearbyDanger = true;
+  });
+  if (nearbyDanger) return "danger";
+  return "zone_" + Math.min(currentRoom, 9);
+}
+function updateAudioEnvironment() {
+  if (gameState !== ST_PLAYING || shopOpen) return;
+  if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+  if (!musicPlaying) {
+    startMusic(zoneMusicTrack());
+    return;
+  }
+  var track = zoneMusicTrack();
+  if (currentMusicTrack !== track) startMusic(track);
+  ambientTimer--;
+  if (ambientTimer <= 0) {
+    ambientTimer = 180 + Math.floor(Math.random() * 240);
+    if (currentRoom === 0 || currentRoom === 1 || currentRoom === 9) sfxWaterDrop();
+    else if (currentRoom >= 10) sfxCaveEcho();
+    else sfxWind();
+  }
+}
 function startMusic(trackName) {
   initAudio();
   trackName = trackName || "exploration";
@@ -117,6 +156,17 @@ function startMusic(trackName) {
   musicPlaying = true;
   var chordSets = {
     exploration: [82.41, 98, 110, 130.81, 110, 98, 82.41, 73.42],
+    zone_0: [82.41, 98, 110, 98, 73.42, 82.41],
+    zone_1: [65.41, 73.42, 87.31, 73.42, 61.74, 65.41],
+    zone_2: [98, 110, 130.81, 146.83, 130.81, 110],
+    zone_3: [73.42, 82.41, 98, 110, 98, 82.41],
+    zone_4: [55, 65.41, 73.42, 82.41, 73.42, 61.74],
+    zone_5: [110, 123.47, 146.83, 164.81, 146.83, 123.47],
+    zone_6: [61.74, 73.42, 82.41, 98, 82.41, 73.42],
+    zone_7: [46.25, 55, 65.41, 73.42, 65.41, 55],
+    zone_8: [82.41, 92.5, 110, 123.47, 110, 92.5],
+    zone_9: [130.81, 146.83, 164.81, 196, 164.81, 146.83],
+    danger: [55, 58.27, 65.41, 77.78, 65.41, 58.27],
     guardian: [55, 65.41, 73.42, 82.41, 73.42, 65.41],
     queen_larva: [73.42, 87.31, 98, 110, 98, 87.31],
     abyssal_knight: [46.25, 55, 61.74, 69.3, 61.74, 55]
@@ -136,3 +186,11 @@ function toggleMusic() { initAudio(); if (musicPlaying) stopMusic(); else startM
 function toggleSfx() { sfxEnabled = !sfxEnabled; }
 function adjustMusicVolume(delta) { musicVolume = Math.max(0, Math.min(1, musicVolume + delta)); }
 function adjustSfxVolume(delta) { sfxVolume = Math.max(0, Math.min(1, sfxVolume + delta)); }
+function adjustMasterVolume(delta) { masterVolume = Math.max(0, Math.min(1, masterVolume + delta)); }
+function adjustAudioVolume(delta) {
+  if (audioSelection === 0) adjustMasterVolume(delta);
+  else if (audioSelection === 1) adjustMusicVolume(delta);
+  else adjustSfxVolume(delta);
+}
+function sfxWind() { playNoise(0.35, 0.035, 0); playTone(180, 0.35, "sine", 0.025, 0.05); }
+function sfxCaveEcho() { playTone(90, 0.35, "triangle", 0.04, 0); playTone(135, 0.5, "sine", 0.025, 0.18); }

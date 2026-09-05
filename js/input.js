@@ -95,11 +95,11 @@ window.addEventListener("keydown", function(e) {
   }
 
   if (gameState === ST_DEATH) {
+    if (consecutiveDeaths < 3) return;
     if (up || k === "w" || down || k === "s") deathChoice = deathChoice === 0 ? 1 : 0;
     if (confirm) {
       if (deathChoice === 0) {
-        if (consecutiveDeaths >= 3) restoreCheckpoint();
-        else retryCurrentRoom();
+        restoreCheckpoint();
       }
       else { resetAll(); gameState = ST_MENU; menuSubState = "slots"; }
       e.preventDefault();
@@ -273,10 +273,10 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (pauseSubState === "audio") {
-      if (up || k === "w") { adjustMusicVolume(0.05); e.preventDefault(); return; }
-      if (down || k === "s") { adjustMusicVolume(-0.05); e.preventDefault(); return; }
-      if (e.key === "ArrowLeft") { adjustSfxVolume(-0.05); e.preventDefault(); return; }
-      if (e.key === "ArrowRight") { adjustSfxVolume(0.05); e.preventDefault(); return; }
+      if (up || k === "w") { audioSelection = (audioSelection + 2) % 3; e.preventDefault(); return; }
+      if (down || k === "s") { audioSelection = (audioSelection + 1) % 3; e.preventDefault(); return; }
+      if (e.key === "ArrowLeft") { adjustAudioVolume(-0.05); e.preventDefault(); return; }
+      if (e.key === "ArrowRight") { adjustAudioVolume(0.05); e.preventDefault(); return; }
       return;
     }
     if (pauseSubState === "controls") { if (e.key === "Escape") { pauseSubState = "menu"; e.preventDefault(); } return; }
@@ -355,34 +355,32 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (shopId === 0) {
-      if (up || k === "w") { menuSelection = (menuSelection - 1 + 3) % 3; e.preventDefault(); return; }
-      if (down || k === "s") { menuSelection = (menuSelection + 1) % 3; e.preventDefault(); return; }
+      if (up || k === "w") { menuSelection = (menuSelection - 1 + 6) % 6; e.preventDefault(); return; }
+      if (down || k === "s") { menuSelection = (menuSelection + 1) % 6; e.preventDefault(); return; }
       if (confirm) {
         if (shopConfirm === menuSelection) {
           if (menuSelection === 0 && !hasMap && azari >= 45) { azari -= 45; hasMap = true; sfxBuy(); }
           if (menuSelection === 1 && !hasBow && azari >= 35) { azari -= 35; hasBow = true; sfxBuy(); }
           if (menuSelection === 2 && azari >= 5) { azari -= 5; arrows += 20; sfxBuy(); }
+          if (menuSelection === 3 && heartFragmentsBought1 < 2 && azari >= 25) { azari -= 25; heartFragments1++; heartFragmentsBought1++; sfxBuy(); if (heartFragments1 >= 3) { heartFragments1 -= 3; player.maxHp++; player.hp = player.maxHp; } }
+          if (menuSelection === 4 && heartFragmentsBought2 < 2 && azari >= 25) { azari -= 25; heartFragments2++; heartFragmentsBought2++; sfxBuy(); if (heartFragments2 >= 3) { heartFragments2 -= 3; player2.maxHp++; player2.hp = player2.maxHp; } }
+          if (menuSelection === 5 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; sfxBuy(); }
           shopConfirm = -1;
         } else shopConfirm = menuSelection;
         e.preventDefault(); return;
       }
     }
     if (shopId === 1) {
-      if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 3) % 3; e.preventDefault(); return; }
-      if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % 3; e.preventDefault(); return; }
+      if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 7) % 7; e.preventDefault(); return; }
+      if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % 7; e.preventDefault(); return; }
       if (e.key === "Enter") {
-        if (shopConfirm !== menuSelection) { shopConfirm = menuSelection; e.preventDefault(); return; }
-        if (menuSelection === 0 && heartFragmentsBought1 < 2 && azari >= 25) {
-          azari -= 25; heartFragments1++; heartFragmentsBought1++;
-          spawnFloatText(player.x, player.y - 30, "¡Fragmento J1!", "#f44");
-          sfxBuy();
-          if (heartFragments1 >= 3) { heartFragments1 -= 3; player.maxHp++; player.hp = player.maxHp; spawnFloatText(player.x, player.y - 50, "¡Vida +1!", "#f44"); spawnParticles(player.x + player.w/2, player.y + player.h/2, "#f44", 20, 5); }
-        }
-        if (menuSelection === 1 && heartFragmentsBought2 < 2 && azari >= 25) {
-          azari -= 25; heartFragments2++; heartFragmentsBought2++; sfxBuy();
-          if (heartFragments2 >= 3) { heartFragments2 -= 3; player2.maxHp++; player2.hp = player2.maxHp; }
-        }
-        if (menuSelection === 2 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; spawnFloatText(player.x, player.y - 30, "¡Bendición codiciosa!", "#0ff"); sfxBuy(); }
+        if (menuSelection === 0 && swordLevel < 3 && hasSword && azari >= 30) { azari -= 30; swordLevel++; sfxBuy(); }
+        if (menuSelection === 1 && bowLevel < 3 && hasBow && azari >= 30) { azari -= 30; bowLevel++; sfxBuy(); }
+        if (menuSelection === 2 && hasBow && arrowType === "normal" && azari >= 20) { azari -= 20; arrowType = "heavy"; sfxBuy(); }
+        if (menuSelection === 3 && !combatSkills.charged && hasSword && azari >= 35) { azari -= 35; combatSkills.charged = true; sfxBuy(); }
+        if (menuSelection === 4 && !combatSkills.aerial && hasSword && azari >= 35) { azari -= 35; combatSkills.aerial = true; sfxBuy(); }
+        if (menuSelection === 5 && !combatSkills.combo && hasSword && azari >= 50) { azari -= 50; combatSkills.combo = true; sfxBuy(); }
+        if (menuSelection === 6 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; sfxBuy(); }
         shopConfirm = -1;
         e.preventDefault(); return;
       }
@@ -470,13 +468,28 @@ function processGamepadInput() {
   var btn13 = gpButtons[13] && !prevGPButtons[13];
   var btn14 = gpButtons[14] && !prevGPButtons[14];
   var btn15 = gpButtons[15] && !prevGPButtons[15];
-  if (shopOpen && shopId === 0) {
-    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + 3) % 3; gamepadMenuAxisLock = 1; }
-    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % 3; gamepadMenuAxisLock = 1; }
+  if (shopOpen && (shopId === 0 || shopId === 1)) {
+    var shopOptions = shopId === 0 ? 6 : 7;
+    if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
+    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + shopOptions) % shopOptions; gamepadMenuAxisLock = 1; }
+    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % shopOptions; gamepadMenuAxisLock = 1; }
     if (btn0) {
-      if (menuSelection === 0 && !hasMap && azari >= 45) { azari -= 45; hasMap = true; sfxBuy(); }
-      if (menuSelection === 1 && !hasBow && azari >= 35) { azari -= 35; hasBow = true; sfxBuy(); }
-      if (menuSelection === 2 && azari >= 5) { azari -= 5; arrows += 20; sfxBuy(); }
+      if (shopId === 0) {
+        if (menuSelection === 0 && !hasMap && azari >= 45) { azari -= 45; hasMap = true; sfxBuy(); }
+        if (menuSelection === 1 && !hasBow && azari >= 35) { azari -= 35; hasBow = true; sfxBuy(); }
+        if (menuSelection === 2 && azari >= 5) { azari -= 5; arrows += 20; sfxBuy(); }
+        if (menuSelection === 3 && heartFragmentsBought1 < 2 && azari >= 25) { azari -= 25; heartFragments1++; heartFragmentsBought1++; sfxBuy(); if (heartFragments1 >= 3) { heartFragments1 -= 3; player.maxHp++; player.hp = player.maxHp; } }
+        if (menuSelection === 4 && heartFragmentsBought2 < 2 && azari >= 25) { azari -= 25; heartFragments2++; heartFragmentsBought2++; sfxBuy(); if (heartFragments2 >= 3) { heartFragments2 -= 3; player2.maxHp++; player2.hp = player2.maxHp; } }
+        if (menuSelection === 5 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; sfxBuy(); }
+      } else {
+        if (menuSelection === 0 && swordLevel < 3 && hasSword && azari >= 30) { azari -= 30; swordLevel++; sfxBuy(); }
+        if (menuSelection === 1 && bowLevel < 3 && hasBow && azari >= 30) { azari -= 30; bowLevel++; sfxBuy(); }
+        if (menuSelection === 2 && hasBow && arrowType === "normal" && azari >= 20) { azari -= 20; arrowType = "heavy"; sfxBuy(); }
+        if (menuSelection === 3 && !combatSkills.charged && hasSword && azari >= 35) { azari -= 35; combatSkills.charged = true; sfxBuy(); }
+        if (menuSelection === 4 && !combatSkills.aerial && hasSword && azari >= 35) { azari -= 35; combatSkills.aerial = true; sfxBuy(); }
+        if (menuSelection === 5 && !combatSkills.combo && hasSword && azari >= 50) { azari -= 50; combatSkills.combo = true; sfxBuy(); }
+        if (menuSelection === 6 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; sfxBuy(); }
+      }
     }
     return;
   }

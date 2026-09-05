@@ -89,12 +89,15 @@ function resetPlayer() {
 }
 
 function restoreCheckpoint() {
-    var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasDoubleJump: false };
+    var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false } };
     currentRoom = cp.room; player.x = cp.px; player.y = cp.py;
     player.hp = cp.hp; player.maxHp = cp.maxHp;
     azari = cp.azari; hasSword = cp.hasSword; swordEquipped = cp.swordEquipped;
     hasBow = cp.hasBow; arrows = cp.arrows; hasMap = cp.hasMap;
     hasAzariCharm = cp.hasAzariCharm; hasDoubleJump = cp.hasDoubleJump;
+    swordLevel = cp.swordLevel || 0; bowLevel = cp.bowLevel || 0;
+    arrowType = cp.arrowType || "normal";
+    combatSkills = cp.combatSkills || { charged: false, aerial: false, combo: false };
     player.hasSword = hasSword; player.swordEquipped = swordEquipped;
     player.maxJumps = hasDoubleJump ? 2 : 1; player.jumpsLeft = player.maxJumps;
     player.frozen = false; player.vx = 0; player.vy = 0; playerDead = false;
@@ -561,8 +564,9 @@ function updateArrows() {
     enemies.forEach(function(e) {
       if (!e.dead && e.room === currentRoom && rectHit(arrow, e)) {
         if (e.boss) {
-          e.hp -= 5; hitEnemy = true;
-          spawnFloatText(e.x, e.y - 10, "-" + 5, "#ffd700");
+          var arrowDamage = arrow.damage || 1;
+          e.hp -= arrowDamage; hitEnemy = true;
+          spawnFloatText(e.x, e.y - 10, "-" + arrowDamage, "#ffd700");
           spawnParticles(e.x + e.w/2, e.y + e.h/2, "#7af", 8, 3);
           if (e.hp <= 0) defeatBoss(e);
         } else {
@@ -814,10 +818,10 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       p.attackHeld = true;
       p.attackCharge = 0;
       p.attackCharged = false;
-      p.attackDown = !p.onGround && downPressed;
+      p.attackDown = combatSkills.aerial && !p.onGround && downPressed;
     } else if (p.attackCharge < 45) {
       p.attackCharge++;
-      if (p.attackCharge === 30) {
+      if (combatSkills.charged && p.attackCharge === 30) {
         p.attackCharged = true;
         spawnFloatText(p.x, p.y - 22, "¡Golpe cargado!", "#ffd700");
       }
@@ -842,7 +846,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
 
   if (shootPressed && p.id === 1 && hasBow && arrows > 0 && p.bowCooldown <= 0 && !p.frozen) {
     arrows--; p.bowCooldown = 18;
-    arrowsInFlight.push({ x: p.x + (p.facing > 0 ? p.w : -12), y: p.y + 13, w: 12, h: 3, vx: p.facing * 8, vy: 0, life: 100 });
+    arrowsInFlight.push({ x: p.x + (p.facing > 0 ? p.w : -12), y: p.y + 13, w: 12, h: 3, vx: p.facing * 8, vy: arrowType === "heavy" ? 0.3 : 0, life: 100, damage: 1 + bowLevel, type: arrowType });
     sfxBow();
   }
 
@@ -923,9 +927,10 @@ function checkSwordHitEnemiesFor(p) {
       if (e.boss) {
         if (e.lastSwordHit === frameCounter) return;
         e.lastSwordHit = frameCounter;
-        var swordDamage = bossAbilities.abyssal_knight ? 16 : 12;
+        var swordDamage = (bossAbilities.abyssal_knight ? 16 : 12) + swordLevel * 3;
         if (p.attackType === "charged") swordDamage *= 2;
         if (p.attackType === "down") swordDamage = Math.round(swordDamage * 1.25);
+        if (combatSkills.combo && p.attackType === "normal") swordDamage += 1;
         e.hp -= swordDamage;
         spawnFloatText(e.x, e.y - 10, "-" + swordDamage, "#ffd700");
         spawnParticles(e.x + e.w/2, e.y + e.h/2, "#7af", 10, 4);
@@ -1114,7 +1119,7 @@ function updateTransition() {
       if (currentRoom > highestRoomReached) highestRoomReached = currentRoom;
       var room = rooms[currentRoom];
       if (currentRoom % 5 === 0) {
-        checkpointState = { room: currentRoom, px: currentRoom * ROOM_W + 100, py: room.height - 120, hp: player.hp, maxHp: player.maxHp, azari: azari, hasSword: hasSword, swordEquipped: swordEquipped, hasBow: hasBow, arrows: arrows, hasMap: hasMap, hasAzariCharm: hasAzariCharm, hasDoubleJump: hasDoubleJump };
+        checkpointState = { room: currentRoom, px: currentRoom * ROOM_W + 100, py: room.height - 120, hp: player.hp, maxHp: player.maxHp, azari: azari, hasSword: hasSword, swordEquipped: swordEquipped, hasBow: hasBow, arrows: arrows, hasMap: hasMap, hasAzariCharm: hasAzariCharm, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: JSON.parse(JSON.stringify(combatSkills)) };
         if (activeSlot >= 0) saveGame(activeSlot);
         spawnFloatText(player.x, player.y - 35, "PUNTO DE GUARDADO", "#64e6ae");
       }
