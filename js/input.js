@@ -8,16 +8,25 @@ window.addEventListener("keydown", function(e) {
   if (k === "`") {
     if (gameState === ST_PLAYING) {
       inventoryOpen = !inventoryOpen;
+      if (!inventoryOpen) mapOpen = false;
       if (inventoryOpen) gameState = ST_INVENTORY;
       else gameState = ST_PLAYING;
       e.preventDefault();
       return;
     } else if (gameState === ST_INVENTORY) {
       inventoryOpen = false;
+      mapOpen = false;
       gameState = ST_PLAYING;
       e.preventDefault();
       return;
     }
+
+  }
+
+  if (gameState === ST_INVENTORY && k === "m") {
+    if (hasMap) mapOpen = !mapOpen;
+    e.preventDefault();
+    return;
   }
 
   if (e.key === "Escape") {
@@ -38,6 +47,7 @@ window.addEventListener("keydown", function(e) {
       return;
     } else if (gameState === ST_INVENTORY) {
       inventoryOpen = false;
+      mapOpen = false;
       gameState = ST_PLAYING;
       e.preventDefault();
       return;
@@ -145,7 +155,13 @@ window.addEventListener("keydown", function(e) {
   }
 
   if (gameState === ST_PAUSED) {
-    if (pauseSubState === "diary") return;
+    if (pauseSubState === "diary") {
+      if (k === "a" || e.key === "ArrowLeft" || k === "q" || k === "1") diaryCategory = "enemies";
+      if (k === "d" || e.key === "ArrowRight" || k === "2") diaryCategory = "bosses";
+      if (k === "a" || e.key === "ArrowLeft" || k === "q" || k === "1" ||
+          k === "d" || e.key === "ArrowRight" || k === "2") e.preventDefault();
+      return;
+    }
     if (pauseSubState === "audio") {
       if (up || k === "w") { adjustMusicVolume(0.05); e.preventDefault(); return; }
       if (down || k === "s") { adjustMusicVolume(-0.05); e.preventDefault(); return; }
@@ -316,6 +332,8 @@ function processGamepadInput() {
   var btn0 = gpButtons[0] && !prevGPButtons[0];
   var btn12 = gpButtons[12] && !prevGPButtons[12];
   var btn13 = gpButtons[13] && !prevGPButtons[13];
+  var btn14 = gpButtons[14] && !prevGPButtons[14];
+  var btn15 = gpButtons[15] && !prevGPButtons[15];
   if (shopOpen && shopId === 0) {
     if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + 3) % 3; gamepadMenuAxisLock = 1; }
     if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % 3; gamepadMenuAxisLock = 1; }
@@ -364,6 +382,17 @@ function processGamepadInput() {
     }
     return;
   }
+  if (gameState === ST_PAUSED && pauseSubState === "diary") {
+    if (btn14 || (gpAxes.x < -0.5 && gamepadMenuAxisLock === 0)) {
+      diaryCategory = "enemies";
+      gamepadMenuAxisLock = 1;
+    }
+    if (btn15 || (gpAxes.x > 0.5 && gamepadMenuAxisLock === 0)) {
+      diaryCategory = "bosses";
+      gamepadMenuAxisLock = 1;
+    }
+    return;
+  }
   if (gameState === ST_PAUSED && pauseSubState === "menu") {
     if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
     if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { pauseSelection = (pauseSelection - 1 + 6) % 6; gamepadMenuAxisLock = 1; }
@@ -376,11 +405,12 @@ function processGamepadInput() {
       if (pauseSelection === 4) pauseSubState = "audio";
       if (pauseSelection === 5) { if (activeSlot >= 0) saveGame(activeSlot); gameState = ST_MENU; menuSubState = "slots"; }
     }
+
     return;
   }
   if (btn8) {
     if (gameState === ST_PLAYING) { inventoryOpen = !inventoryOpen; if (inventoryOpen) gameState = ST_INVENTORY; else gameState = ST_PLAYING; return; }
-    else if (gameState === ST_INVENTORY) { inventoryOpen = false; gameState = ST_PLAYING; return; }
+    else if (gameState === ST_INVENTORY) { inventoryOpen = false; mapOpen = false; gameState = ST_PLAYING; return; }
   }
   if (gameState === ST_DIALOGUE) {
     if (btn0 || gpButtons[1] && !prevGPButtons[1]) advanceBossDialogue();
@@ -394,7 +424,7 @@ function processGamepadInput() {
     if (shopOpen) { shopOpen = false; shopMenuOpen = false; shopConfirm = -1; shopExitCooldown = 30; keys["e"] = false; player.x = shopPreviousX; player.y = shopPreviousY; return; }
     if (gameState === ST_PLAYING) { gameState = ST_PAUSED; pauseSubState = "menu"; pauseSelection = 0; sfxPause(); return; }
     else if (gameState === ST_PAUSED) { if (pauseSubState === "diary" || pauseSubState === "controls" || pauseSubState === "audio") pauseSubState = "menu"; else gameState = ST_PLAYING; return; }
-    else if (gameState === ST_INVENTORY) { inventoryOpen = false; gameState = ST_PLAYING; return; }
+    else if (gameState === ST_INVENTORY) { inventoryOpen = false; mapOpen = false; gameState = ST_PLAYING; return; }
   }
 }
 

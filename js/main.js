@@ -4,6 +4,7 @@ function resetAll() {
   musicPlaying = false; gamepadConnected = false; gamepadIndex = -1;
   gpButtons = {}; prevGPButtons = {}; gpAxes = {x:0,y:0}; gamepadMenuAxisLock = 0;
   inventoryOpen = false;
+  mapOpen = false;
   resetPlayer();
   currentRoom = 0; cameraX = 0; targetCamX = 0; cameraY = 0; targetCamY = 0;
   hasSword = false; swordEquipped = false;

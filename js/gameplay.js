@@ -280,15 +280,22 @@ function updateEnemies() {
       var nextRoom = Math.floor((e.x + e.w / 2) / ROOM_W);
       if (nextRoom !== e.room && nextRoom >= 0 && nextRoom < rooms.length) {
         e.room = nextRoom;
-        e.baseY = Math.min(e.baseY || e.y, rooms[nextRoom].height - e.h - 10);
-        e.y = Math.min(e.y, rooms[nextRoom].height - e.h - 10);
+        if (e.type === "cazador_paramo") {
+          e.baseY = rooms[nextRoom].height - e.h - 40;
+          e.y = e.baseY;
+        } else if (e.type !== "larva_mosca" && e.baseY !== undefined) {
+          e.baseY = Math.min(e.baseY, rooms[nextRoom].height - e.h - 10);
+          e.y = e.baseY;
+        } else {
+          e.y = Math.max(0, Math.min(e.y, rooms[nextRoom].height - e.h - 10));
+        }
       }
     }
-    if (player.inv <= 0 && !player.frozen && rectHit(player, e)) {
+    if (e.room === currentRoom && player.inv <= 0 && !player.frozen && rectHit(player, e)) {
       var dmg = e.type === 'larva_mosca' ? 2 : 1;
       playerTakeDamage(player, e.boss ? (e.type === "guardian" ? 4 : 3) : dmg);
     }
-    if (twoPlayerMode && player2.inv <= 0 && !player2.frozen && rectHit(player2, e)) {
+    if (e.room === currentRoom && twoPlayerMode && player2.inv <= 0 && !player2.frozen && rectHit(player2, e)) {
       var dmg2 = e.type === 'larva_mosca' ? 2 : 1;
       playerTakeDamage(player2, e.boss ? (e.type === "guardian" ? 4 : 3) : dmg2);
     }

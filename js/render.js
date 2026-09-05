@@ -217,7 +217,7 @@ function drawHealingStone() {
 function drawEnemies() {
   var camLeft = cameraX, camRight = cameraX + 800, camTop = cameraY, camBottom = cameraY + 600;
   enemies.forEach(function(e) {
-    if (e.dead) return;
+    if (e.dead || (!e.canRoam && e.room !== currentRoom)) return;
     if (e.x + e.w < camLeft - 50 || e.x > camRight + 50) return;
     if (e.y + e.h < camTop - 50 || e.y > camBottom + 50) return;
     ctx.save();
@@ -379,6 +379,12 @@ function drawInventory() {
   ctx.fillStyle = "#446";
   ctx.font = "12px monospace";
   ctx.fillText("Presiona ` o SHARE para cerrar", canvas.width/2, 60);
+  if (hasMap) {
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#6cc";
+    ctx.font = "bold 12px monospace";
+    ctx.fillText("M: " + (mapOpen ? "cerrar mapa" : "usar mapa"), canvas.width / 2, 80);
+  }
 
   ctx.textAlign = "left";
   ctx.fillStyle = "#0cc";
@@ -405,8 +411,67 @@ function drawInventory() {
     ctx.fillText(item, 40, y);
     y += 25;
   });
+  if (mapOpen && hasMap) {
+    ctx.fillStyle = "rgba(3, 8, 20, 0.97)";
+    ctx.fillRect(14, 88, canvas.width - 28, 455);
+    ctx.strokeStyle = "#6cc";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(14, 88, canvas.width - 28, 455);
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#ffd700";
+    ctx.font = "bold 14px monospace";
+    ctx.fillText("🗺️ MAPA DE TODAS LAS ZONAS", canvas.width / 2, 110);
 
-  var statY = 300;
+    var cardW = 101, cardH = 184, gap = 6, startX = 18, startY = 122;
+    for (var roomIndex = 0; roomIndex < rooms.length; roomIndex++) {
+      var room = rooms[roomIndex];
+      var col = roomIndex % 7, row = Math.floor(roomIndex / 7);
+      var cardX = startX + col * (cardW + gap), cardY = startY + row * (cardH + gap);
+      var selected = roomIndex === currentRoom;
+      ctx.fillStyle = selected ? "rgba(93,72,12,0.75)" : "rgba(25,34,57,0.9)";
+      ctx.fillRect(cardX, cardY, cardW, cardH);
+      ctx.strokeStyle = selected ? "#ffd700" : (room.bossName ? "#a85cff" : "#43516f");
+      ctx.lineWidth = selected ? 2 : 1;
+      ctx.strokeRect(cardX, cardY, cardW, cardH);
+
+      ctx.fillStyle = selected ? "#ffd700" : "#d5def5";
+      ctx.font = "bold 11px monospace";
+      ctx.fillText("ZONA " + (roomIndex + 1), cardX + cardW / 2, cardY + 14);
+
+      var innerX = cardX + 7, innerY = cardY + 22, innerW = cardW - 14, innerH = cardH - 31;
+      var scaleX = innerW / 800, scaleY = innerH / room.height;
+      room.platforms.forEach(function(platform) {
+        var localX = platform.x - roomIndex * ROOM_W;
+        ctx.fillStyle = platform.y > room.height - 80 ? "#9b6b3e" : "#6c8a9b";
+        ctx.fillRect(innerX + localX * scaleX, innerY + platform.y * scaleY,
+          Math.max(3, platform.w * scaleX), Math.max(2, platform.h * scaleY));
+      });
+      (room.spikes || []).forEach(function(spike) {
+        var spikeX = innerX + (spike.x - roomIndex * ROOM_W) * scaleX;
+        ctx.fillStyle = "#e44";
+        ctx.fillRect(spikeX, innerY + spike.y * scaleY, Math.max(3, spike.w * scaleX), 2);
+      });
+      (room.shops || []).forEach(function(shop) {
+        ctx.fillStyle = "#4fdbb4";
+        ctx.fillRect(innerX + (shop.npc.x - roomIndex * ROOM_W) * scaleX, innerY + shop.npc.y * scaleY - 3, 4, 5);
+      });
+      if (room.bossName) {
+        ctx.fillStyle = "#d68cff";
+        ctx.font = "bold 9px monospace";
+        ctx.fillText("JEFE", cardX + cardW / 2, cardY + cardH - 8);
+      } else if (room.shops && room.shops.length) {
+        ctx.fillStyle = "#4fdbb4";
+        ctx.font = "9px monospace";
+        ctx.fillText("TIENDA", cardX + cardW / 2, cardY + cardH - 8);
+      }
+    }
+    ctx.fillStyle = "#aaa";
+    ctx.font = "11px monospace";
+    ctx.fillText("Dorado: zona actual  •  Morado: jefe  •  Verde: tienda  •  Rojo: peligro", canvas.width / 2, 532);
+    ctx.textAlign = "left";
+  }
+
+  var statY = mapOpen && hasMap ? 555 : 300;
   ctx.fillStyle = "rgba(0,0,0,0.5)";
   ctx.fillRect(30, statY, canvas.width - 60, 70);
   ctx.strokeStyle = "#ffd700";
@@ -771,11 +836,26 @@ function drawDiary() {
   ctx.textAlign = "center"; ctx.fillStyle = "#ffd700"; ctx.font = "bold 28px monospace";
   ctx.fillText("📖 DIARIO DEL CABALLERO", canvas.width/2, 60);
   ctx.fillStyle = "#446"; ctx.font = "12px monospace";
-  ctx.fillText("Bestiario de criaturas abatidas", canvas.width/2, 85);
-  var entries = Object.keys(bestiaryInfo);
-  var startY = 110;
+  ctx.fillText("Registro de criaturas y grandes enemigos", canvas.width/2, 85);
+  var tabs = [{ key: "enemies", label: "⚔️ ENEMIGOS" }, { key: "bosses", label: "👑 JEFES" }];
+  tabs.forEach(function(tab, idx) {
+    var tabX = idx === 0 ? 270 : 530;
+    var active = diaryCategory === tab.key;
+    ctx.fillStyle = active ? "rgba(100,200,255,0.18)" : "rgba(255,255,255,0.03)";
+    ctx.fillRect(tabX - 105, 98, 210, 32);
+    ctx.strokeStyle = active ? "#6cc" : "#333";
+    ctx.lineWidth = active ? 2 : 1;
+    ctx.strokeRect(tabX - 105, 98, 210, 32);
+    ctx.fillStyle = active ? "#6cc" : "#777";
+    ctx.font = "bold 14px monospace";
+    ctx.fillText(tab.label, tabX, 120);
+  });
+  var entries = diaryCategory === "enemies" ? Object.keys(bestiaryInfo) : ["guardian", "queen_larva", "abyssal_knight"];
+  var startY = 145;
   entries.forEach(function(key, idx) {
-    var data = bestiary[key], info = bestiaryInfo[key], y = startY + idx * 130;
+    var isBoss = diaryCategory === "bosses";
+    var data = isBoss ? { discovered: !!bossArenaState[key], count: bossArenaState[key] ? 1 : 0 } : bestiary[key];
+    var info = isBoss ? bossDiaryInfo[key] : bestiaryInfo[key], y = startY + idx * 130;
     var discovered = data.discovered;
     ctx.fillStyle = discovered ? "rgba(255,215,0,0.08)" : "rgba(255,255,255,0.02)";
     ctx.fillRect(120, y, 560, 115);
@@ -786,7 +866,7 @@ function drawDiary() {
       ctx.fillStyle = "#ffd700"; ctx.font = "bold 18px monospace";
       ctx.fillText("⚔️ " + info.name, 145, y + 26);
       ctx.fillStyle = "#0ff"; ctx.font = "bold 14px monospace";
-      ctx.fillText("Abatidos: " + data.count, 145, y + 48);
+      ctx.fillText(isBoss ? "Derrotado: ✓" : "Abatidos: " + data.count, 145, y + 48);
       ctx.fillStyle = "#aaa"; ctx.font = "12px monospace";
       var words = info.desc.split(' ');
       var line = "", lineY = y + 72;
@@ -807,7 +887,7 @@ function drawDiary() {
     }
   });
   ctx.textAlign = "center"; ctx.fillStyle = "#666"; ctx.font = "12px monospace";
-  ctx.fillText("Presiona ESC para volver", canvas.width/2, 560);
+  ctx.fillText("A/D o ←/→ cambiar categoría  •  ESC para volver", canvas.width/2, 560);
   ctx.textAlign = "left";
 }
 

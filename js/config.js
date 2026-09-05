@@ -87,7 +87,7 @@ function translateText(text) {
 }
 var menuSelection = 0, menuSubState = "slots", slotToDelete = -1, activeSlot = -1;
 var adminPassword = "", adminMessage = "";
-var pauseSelection = 0, pauseSubState = "menu";
+var pauseSelection = 0, pauseSubState = "menu", diaryCategory = "enemies";
 
 var transTimer = 0, transPhase = "out", transTargetRoom = 0, transFade = 0;
 var transIsFall = false, transitionCooldown = 0;
@@ -112,7 +112,7 @@ var lastSafeX = 100, lastSafeY = 400;
 var healing = false, healTimer = 0, hitFlash = 0, needsRespawn = false;
 
 var twoPlayerMode = false;
-var inventoryOpen = false;
+var inventoryOpen = false, mapOpen = false;
 
 var stalactites = [];
 var waterDrops = [];
@@ -142,6 +142,11 @@ var bestiaryInfo = {
   cazador_paramo: { name: "Cazador del Páramo", desc: "Depredador terrestre que patrulla los páramos y persigue a los intrusos." }
 };
 var bestiary = { bat: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 }, cazador_paramo: { discovered: false, count: 0 } };
+var bossDiaryInfo = {
+  guardian: { name: "Guardián de la Cueva", desc: "Protector ancestral de la primera arena. Su fuerza domina las profundidades." },
+  queen_larva: { name: "Reina Larva", desc: "Soberana de la colonia. Sus ataques convierten la arena en un nido mortal." },
+  abyssal_knight: { name: "Caballero Abismal", desc: "Guerrero final del abismo, capaz de cambiar de fase durante el combate." }
+};
 var discoveryNotify = { active: false, timer: 0, name: "" };
 
 var player = {
