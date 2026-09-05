@@ -348,14 +348,23 @@ function updateArrows() {
     if (hitEnemy || arrow.life <= 0 || arrow.x < 0 || arrow.x > WORLD_W) arrowsInFlight.splice(i, 1);
   }
 
-  function defeatBoss(e) {
-    if (e.dead) return;
-    e.dead = true; e.hp = 0; stats.enemiesKilled++;
-    bossArenaState[e.type] = true;
-    spawnFloatText(e.x, e.y - 22, "¡" + e.bossName + " DERROTADO!", "#ffd700");
-    spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#ffd700", 35, 8);
-    sfxEnemyDie(); sfxCoin();
-    bossProjectiles = bossProjectiles.filter(function(p) { return p.room !== e.room; });
+}
+
+function defeatBoss(e) {
+  if (e.dead) return;
+  e.dead = true; e.hp = 0; stats.enemiesKilled++;
+  bossArenaState[e.type] = true;
+  spawnFloatText(e.x - 20, e.y - 22, "¡" + e.bossName + " DERROTADO!", "#ffd700");
+  spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#ffd700", 35, 8);
+  sfxEnemyDie(); sfxCoin();
+  bossProjectiles = bossProjectiles.filter(function(p) { return p.room !== e.room; });
+  if (e.type === "guardian") {
+    player.maxHp++;
+    player.hp = player.maxHp;
+    spawnFloatText(player.x, player.y - 40, "¡Corazón +1!", "#f44");
+  }
+  if (e.room < rooms.length - 1) {
+    rooms[e.room].transitionZone = {x: e.room * ROOM_W + ROOM_W - 70, y: 450, w: 60, h: 110, to: e.room + 1};
   }
 }
 
