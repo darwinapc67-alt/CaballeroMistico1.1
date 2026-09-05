@@ -50,6 +50,15 @@ window.addEventListener("keydown", function(e) {
       e.preventDefault();
       return;
     }
+
+  }
+
+  if (gameState === ST_DIALOGUE) {
+    if (confirm || e.key === " " || k === "x" || k === "e") {
+      advanceBossDialogue();
+      e.preventDefault();
+    }
+    return;
   }
 
   if (gameState === ST_LANGUAGE) {
@@ -101,6 +110,7 @@ window.addEventListener("keydown", function(e) {
           adminPassword = "";
           adminMessage = "Contraseña incorrecta";
         }
+        if (gameState === ST_DIALOGUE) return;
         e.preventDefault(); return;
       }
       if (e.key === "Backspace") { adminPassword = adminPassword.slice(0, -1); e.preventDefault(); return; }
@@ -366,6 +376,10 @@ function processGamepadInput() {
   if (btn8) {
     if (gameState === ST_PLAYING) { inventoryOpen = !inventoryOpen; if (inventoryOpen) gameState = ST_INVENTORY; else gameState = ST_PLAYING; return; }
     else if (gameState === ST_INVENTORY) { inventoryOpen = false; gameState = ST_PLAYING; return; }
+  }
+  if (gameState === ST_DIALOGUE) {
+    if (btn0 || gpButtons[1] && !prevGPButtons[1]) advanceBossDialogue();
+    return;
   }
   if (btn9) {
     if (gameState === ST_DEVICE) {

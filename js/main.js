@@ -31,6 +31,10 @@ function resetAll() {
   room12.transitionZone = {x:10340, y:460, w:40, h:100, to:13};
   room13.transitionZone = null;
   bossArenaState = { guardian: false, queen_larva: false, abyssal_knight: false };
+  bossDoorSoundRoom = -1;
+  bossDialogueSeen = {};
+  bossDialogueLines = [];
+  bossDialogueIndex = 0;
   bossProjectiles = [];
   room1.pedestal.taken = false; room1.pedestal.glow = 0;
   if (room2.bombBox) { room2.bombBox.broken = false; room2.bombBox.exploded = false; }
@@ -51,6 +55,7 @@ function update() {
   if (shopOpen && gameState === ST_PLAYING) { updateShopPlayer(); return; }
   if (gameState === ST_EXPLOSION) { updateExplosion(); return; }
   if (gameState === ST_TRANSITION) { updateTransition(); return; }
+  if (gameState === ST_DIALOGUE) return;
   if (hitFlash > 0) {
     hitFlash--;
     if (hitFlash <= 0 && needsRespawn) {
@@ -150,6 +155,7 @@ function loop() {
   else if (gameState === ST_TRANSITION) drawTransition();
   else if (gameState === ST_EXPLOSION) drawExplosion();
   else if (gameState === ST_INVENTORY) { drawGame(); drawInventory(); }
+  else if (gameState === ST_DIALOGUE) { drawGame(); drawBossDialogue(); }
   else {
     drawGame();
     if (shopOpen) drawShop();

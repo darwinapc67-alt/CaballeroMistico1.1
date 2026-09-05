@@ -79,6 +79,48 @@ function drawTransitionZone(tz) {
   ctx.fillText("→", tz.x + tz.w/2 - 4, tz.y + tz.h/2 + 3);
 }
 
+function drawBossDoor(roomIndex) {
+  var room = rooms[roomIndex];
+  if (!room.bossName) return;
+  var boss = null;
+  enemies.forEach(function(e) {
+    if (e.boss && e.room === roomIndex) boss = e;
+  });
+  var locked = boss && !boss.dead;
+  var x = roomIndex * ROOM_W + ROOM_W - 18;
+  ctx.fillStyle = locked ? "rgba(126, 19, 52, 0.9)" : "rgba(25, 126, 91, 0.75)";
+  ctx.fillRect(x, 40, 12, room.height - 80);
+  ctx.strokeStyle = locked ? "#ff416d" : "#64e6ae";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x, 40, 12, room.height - 80);
+  ctx.fillStyle = locked ? "#ff416d" : "#64e6ae";
+  ctx.font = "bold 11px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(locked ? "BLOQUEADO" : "ABIERTO", x + 6, 28);
+  ctx.textAlign = "left";
+}
+
+function drawBossDialogue() {
+  var line = bossDialogueLines[bossDialogueIndex];
+  if (!line) return;
+  ctx.fillStyle = "rgba(3, 3, 12, 0.88)";
+  ctx.fillRect(42, 385, canvas.width - 84, 150);
+  ctx.strokeStyle = "#a85cff";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(42, 385, canvas.width - 84, 150);
+  ctx.fillStyle = line[0] ? "#ffd36a" : "#ff5f86";
+  ctx.font = "bold 16px monospace";
+  ctx.fillText(line[0] ? line[0] + ":" : "", 64, 420);
+  ctx.fillStyle = "#fff";
+  ctx.font = line[0] ? "15px monospace" : "bold 18px monospace";
+  ctx.textAlign = line[0] ? "left" : "center";
+  ctx.fillText("«" + line[1] + "»", line[0] ? 64 : canvas.width / 2, line[0] ? 458 : 460);
+  ctx.textAlign = "left";
+  ctx.fillStyle = "rgba(200, 220, 255, 0.8)";
+  ctx.font = "11px monospace";
+  ctx.fillText("ENTER / ESPACIO para continuar", 64, 505);
+}
+
 function drawPedestal() {
   var ped = room1.pedestal;
   ctx.fillStyle = "#4a4a5a";
@@ -410,6 +452,7 @@ function drawGameWorld() {
     if (r === 1) drawPedestal();
     if (r === 2) drawBombBox();
     if (room.transitionZone) drawTransitionZone(room.transitionZone);
+    if (room.bossName) drawBossDoor(r);
     if (r === 9) { drawShopNPC(); drawHealingStone(); }
   }
   drawEnemies();

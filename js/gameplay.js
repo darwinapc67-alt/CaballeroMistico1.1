@@ -342,6 +342,7 @@ function updateArrows() {
           spawnParticles(e.x + e.w/2, e.y + e.h/2, "#f88", 12, 5);
           spawnFloatText(e.x, e.y - 10, "¡Muerto!", "#f88");
           sfxEnemyDie(); sfxCoin();
+          sfxBossDoorsOpen();
         }
       }
     });
@@ -424,6 +425,12 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     zoneName = names[currentRoom] || "";
     zoneNameTimer = 120;
     p.inv = 30;
+    if (rooms[currentRoom].bossName && bossDoorSoundRoom !== currentRoom) {
+      bossDoorSoundRoom = currentRoom;
+      sfxBossDoorsLock();
+      spawnFloatText(p.x, p.y - 34, "¡Las puertas se bloquean!", "#ff526f");
+    }
+    startBossDialogue(currentRoom);
   }
 
   var room = rooms[currentRoom];
@@ -594,11 +601,11 @@ function updatePlayer2() {
 function checkSwordHitEnemiesFor(p) {
   if (p.swordSwing <= 0) return;
 
-  var reach = 30;
+  var reach = 48;
   var swingBoxes = [
-    { x: p.x + (p.facing > 0 ? p.w : -reach), y: p.y + 2, w: reach, h: 26 },
-    { x: p.x - 6, y: p.y - reach + 4, w: p.w + 12, h: reach },
-    { x: p.x - 6, y: p.y + p.h - 4, w: p.w + 12, h: reach }
+    { x: p.x + (p.facing > 0 ? p.w : -reach), y: p.y + 1, w: reach, h: 28 },
+    { x: p.x - 10, y: p.y - reach + 4, w: p.w + 20, h: reach },
+    { x: p.x - 10, y: p.y + p.h - 4, w: p.w + 20, h: reach }
   ];
 
   enemies.forEach(function(e) {
@@ -790,6 +797,60 @@ function startTransition(toRoom, direction) {
   else { player.vx = 2; if (twoPlayerMode) player2.vx = 2; }
 }
 
+function startBossDialogue(roomIndex) {
+  if (!rooms[roomIndex].bossName || bossDialogueSeen[roomIndex]) return false;
+  if (bossDoorSoundRoom !== roomIndex) {
+    bossDoorSoundRoom = roomIndex;
+    sfxBossDoorsLock();
+    spawnFloatText(player.x, player.y - 34, "¡Las puertas se bloquean!", "#ff526f");
+  }
+  var dialogues = {
+    11: [
+      ["GUARDIÁN", "¿Otro guerrero perdido?"],
+      ["CABALLERO", "No estoy perdido. Estoy buscando respuestas."],
+      ["GUARDIÁN", "Entonces has venido al lugar equivocado..."],
+      ["CABALLERO", "Apártate."],
+      ["GUARDIÁN", "¡Nadie atraviesa estas cavernas con vida!"],
+      ["", "⚔️ ¡COMIENZA EL COMBATE!"]
+    ],
+    12: [
+      ["REINA LARVA", "¿Quién se atreve a entrar en mi nido?"],
+      ["CABALLERO", "Tu reinado termina aquí."],
+      ["REINA LARVA", "¿Tú? ¿Un simple caballero?"],
+      ["CABALLERO", "No necesito ser más que eso."],
+      ["REINA LARVA", "¡Entonces muere junto a los demás!"],
+      ["", "⚔️ ¡COMIENZA EL COMBATE!"]
+    ],
+    13: [
+      ["CABALLERO ABISMAL", "Detente."],
+      ["CABALLERO", "¿Quién eres?"],
+      ["CABALLERO ABISMAL", "Alguien que una vez recorrió el mismo camino que tú."],
+      ["CABALLERO", "Entonces sabes por qué estoy aquí."],
+      ["CABALLERO ABISMAL", "Sí... y por eso no puedo dejarte continuar."],
+      ["CABALLERO", "No pienso retroceder."],
+      ["CABALLERO ABISMAL", "Entonces demuéstrame que eres digno."],
+      ["", "⚔️ ¡COMIENZA EL COMBATE!"]
+    ]
+  };
+  bossDialogueLines = dialogues[roomIndex] || [];
+  if (!bossDialogueLines.length) return false;
+  bossDialogueSeen[roomIndex] = true;
+  bossDialogueIndex = 0;
+  gameState = ST_DIALOGUE;
+  sfxTransition();
+  return true;
+}
+
+function advanceBossDialogue() {
+  if (gameState !== ST_DIALOGUE) return;
+  bossDialogueIndex++;
+  if (bossDialogueIndex >= bossDialogueLines.length) {
+    bossDialogueLines = [];
+    gameState = ST_PLAYING;
+    sfxAttack();
+  }
+}
+
 function updateTransition() {
   transTimer--;
   if (transPhase === "out") {
@@ -834,7 +895,12 @@ function updateTransition() {
       player.x += player.vx;
       if (twoPlayerMode) player2.x += player2.vx;
     }
-    if (transTimer <= 0) { gameState = ST_PLAYING; player.autoWalk = 0; player.vx = 0; if (twoPlayerMode) { player2.autoWalk = 0; player2.vx = 0; } transIsFall = false; transitionCooldown = 45; }
+    if (transTimer <= 0) {
+      gameState = ST_PLAYING; player.autoWalk = 0; player.vx = 0;
+      if (twoPlayerMode) { player2.autoWalk = 0; player2.vx = 0; }
+      transIsFall = false; transitionCooldown = 45;
+      startBossDialogue(currentRoom);
+    }
   }
 }
 
