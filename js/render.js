@@ -882,6 +882,19 @@ function drawShop() {
   ctx.fillStyle = "#ffd700"; ctx.fillRect(106, 532, 5, 5);
   ctx.fillStyle = "#aaa"; ctx.font = "12px monospace";
   ctx.fillText("E: salir", 101, 585);
+  if (shopGreetingTimer > 0) {
+    ctx.fillStyle = "rgba(5,5,15,0.92)";
+    ctx.fillRect(270, 390, 350, 72);
+    ctx.strokeStyle = "#d4af37";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(270, 390, 350, 72);
+    ctx.fillStyle = "#ffd700";
+    ctx.font = "bold 13px monospace";
+    ctx.fillText("COMERCIANTE:", 290, 414);
+    ctx.fillStyle = "#fff";
+    ctx.font = "12px monospace";
+    ctx.fillText(shopGreeting, 290, 438, 310);
+  }
   if (!shopMenuOpen) {
     ctx.fillStyle = "#aaa"; ctx.font = "14px monospace";
     ctx.fillText("Acércate al vendedor y pulsa E", canvas.width/2, 190);

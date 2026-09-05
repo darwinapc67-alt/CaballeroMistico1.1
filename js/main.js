@@ -9,7 +9,7 @@ function resetAll() {
   hasSword = false; swordEquipped = false;
   player.hasSword = false; player.swordEquipped = false;
   if (twoPlayerMode) { player2.hasSword = false; player2.swordEquipped = false; }
-  azari = 0; hasMap = false; hasBow = false; arrows = 0; shopOpen = false; shopId = 0;
+  azari = 0; hasMap = false; hasBow = false; arrows = 0; shopOpen = false; shopId = 0; shopGreeting = ""; shopGreetingTimer = 0;
   heartFragments1 = 0; heartFragments2 = 0;
   heartFragmentsBought1 = 0; heartFragmentsBought2 = 0;
   hasAzariCharm = false; hasDoubleJump = false;
@@ -45,12 +45,14 @@ function resetAll() {
       e.hp = e.maxHp; e.phase = 1; e.enraged = false; e.action = "";
       e.actionTimer = 0; e.attackTimer = e.type === "abyssal_knight" ? 50 : 70;
     }
+    e.vy = 0;
   });
   generateStalactites();
 }
 
 function update() {
   if (shopAnim > 0) shopAnim--;
+  if (shopGreetingTimer > 0) shopGreetingTimer--;
   if (shopExitCooldown > 0) shopExitCooldown--;
   if (shopOpen && gameState === ST_PLAYING) { updateShopPlayer(); return; }
   if (gameState === ST_EXPLOSION) { updateExplosion(); return; }

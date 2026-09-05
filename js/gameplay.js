@@ -41,7 +41,7 @@ function resetPlayer() {
   player.swordSwing = 0; player.swordCooldown = 0; player.bowCooldown = 0;
   player.swordSheathed = true; player.swordSheathTimer = 0;
   player.blocking = false;
-  player.dashTimer = 0; player.dashCooldown = 0; player.dashDir = 1; player.dashing = false;
+  player.dashTimer = 0; player.dashCooldown = 0; player.dashDir = 1; player.dashing = false; player.recoilTimer = 0;
   playerDead = false;
   deathTimer = 0;
   particles = []; floatTexts = []; arrowsInFlight = []; flash = 0;
@@ -55,7 +55,7 @@ function resetPlayer() {
     player2.swordSwing = 0; player2.swordCooldown = 0; player2.bowCooldown = 0;
     player2.swordSheathed = true; player2.swordSheathTimer = 0;
     player2.blocking = false;
-    player2.dashTimer = 0; player2.dashCooldown = 0; player2.dashDir = 1; player2.dashing = false;
+    player2.dashTimer = 0; player2.dashCooldown = 0; player2.dashDir = 1; player2.dashing = false; player2.recoilTimer = 0;
   }
 }
 
@@ -86,8 +86,8 @@ function spawnBossProjectile(e, vx, vy, damage, kind, extra) {
 function bossMeleeHit(e, damage, reach) {
   if (e.attackHit) return;
   var hitbox = { x: e.x - reach, y: e.y - 10, w: e.w + reach * 2, h: e.h + 20 };
-  if (rectHit(player, hitbox)) { playerTakeDamage(player, damage); e.attackHit = true; }
-  if (twoPlayerMode && rectHit(player2, hitbox)) { playerTakeDamage(player2, damage); e.attackHit = true; }
+  if (rectHit(player, hitbox)) { playerTakeDamage(player, damage, e.x + e.w / 2); e.attackHit = true; }
+  if (twoPlayerMode && rectHit(player2, hitbox)) { playerTakeDamage(player2, damage, e.x + e.w / 2); e.attackHit = true; }
 }
 
 function updateBoss(e, room) {
@@ -380,6 +380,16 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   if (p.autoWalk > 0 || p.frozen) { p.autoWalk--; return; }
 
   var wasOnGround = p.onGround;
+  if (p.recoilTimer > 0) {
+    p.recoilTimer--;
+    p.vx *= 0.9;
+    p.vy += GRAVITY;
+    if (p.vy > 12) p.vy = 12;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.x = Math.max(5, Math.min(WORLD_W - p.w - 5, p.x));
+    return;
+  }
   if (p.dashCooldown > 0) p.dashCooldown--;
   if (dashPressed && p.dashCooldown <= 0 && p.dashTimer <= 0 && !p.blocking) {
     p.dashTimer = DASH_DURATION;
@@ -615,6 +625,9 @@ function checkSwordHitEnemiesFor(p) {
       if (rectHit(swingBoxes[i], e)) { hit = true; break; }
     }
     if (hit) {
+      p.recoilTimer = 10;
+      p.vx = -p.facing * 8;
+      p.vy = -5;
       if (e.boss) {
         if (e.lastSwordHit === frameCounter) return;
         e.lastSwordHit = frameCounter;

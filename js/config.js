@@ -102,7 +102,7 @@ var zoneName = "", zoneNameTimer = 0;
 var explosionAnim = 0, explosionX = 0, explosionY = 0;
 var knockbackVX = 0, knockbackVY = 0;
 
-var azari = 0, hasMap = false, hasBow = false, arrows = 0, shopOpen = false, shopMenuOpen = false, shopId = 0, shopAnim = 0, shopConfirm = -1;
+var azari = 0, hasMap = false, hasBow = false, arrows = 0, shopOpen = false, shopMenuOpen = false, shopId = 0, shopAnim = 0, shopConfirm = -1, shopGreeting = "", shopGreetingTimer = 0;
 var shopPreviousX = 0, shopPreviousY = 0, shopExitCooldown = 0;
 var heartFragments1 = 0, heartFragments2 = 0;
 var heartFragmentsBought1 = 0, heartFragmentsBought2 = 0;
@@ -149,7 +149,7 @@ var player = {
   hp: 10, maxHp: 10, id: 1, color: "#0aa", headColor: "#0cc",
   hasSword: false, swordEquipped: false, swordSwing: 0, swordCooldown: 0, bowCooldown: 0,
   swordSheathed: true, swordSheathTimer: 0, blocking: false,
-  dashTimer: 0, dashCooldown: 0, dashDir: 1, dashing: false
+  dashTimer: 0, dashCooldown: 0, dashDir: 1, dashing: false, recoilTimer: 0
 };
 
 var player2 = {
@@ -158,7 +158,7 @@ var player2 = {
   hp: 10, maxHp: 10, id: 2, color: "#a0a", headColor: "#c0c",
   hasSword: false, swordEquipped: false, swordSwing: 0, swordCooldown: 0, bowCooldown: 0,
   swordSheathed: true, swordSheathTimer: 0, blocking: false,
-  dashTimer: 0, dashCooldown: 0, dashDir: 1, dashing: false
+  dashTimer: 0, dashCooldown: 0, dashDir: 1, dashing: false, recoilTimer: 0
 };
 
 var hasSword = false, swordEquipped = false;
