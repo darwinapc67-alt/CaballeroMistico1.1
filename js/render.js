@@ -49,21 +49,14 @@ function drawCityBg(rx, room) {
   ctx.fillRect(rx, 80, ROOM_W, 210);
   ctx.fillStyle = "#10182c";
   ctx.fillRect(rx, 470, ROOM_W, 90);
-  for (var i = 0; i < 5; i++) {
-    var bx = rx + 25 + i * 165;
-    var bh = 120 + (i % 3) * 45;
-    ctx.fillStyle = i % 2 ? "#473d55" : "#57465b";
-    ctx.fillRect(bx, 560 - bh, 125, bh);
-    ctx.fillStyle = "#b87855";
-    ctx.beginPath();
-    ctx.moveTo(bx - 10, 560 - bh);
-    ctx.lineTo(bx + 62, 520 - bh);
-    ctx.lineTo(bx + 135, 560 - bh);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = "#ffd36a";
-    for (var w = 0; w < 3; w++) {
-      ctx.fillRect(bx + 20 + w * 34, 575 - bh, 12, 18);
+  for (var i = 0; i < 6; i++) {
+    var bx = rx + i * 145 - 20;
+    var bh = 85 + (i % 3) * 28;
+    ctx.fillStyle = i % 2 ? "#31435a" : "#3a4960";
+    ctx.fillRect(bx, 470 - bh, 112, bh);
+    ctx.fillStyle = "rgba(255, 211, 106, 0.45)";
+    for (var w = 0; w < 2; w++) {
+      ctx.fillRect(bx + 22 + w * 42, 440 - bh, 11, 15);
     }
   }
   ctx.fillStyle = "rgba(255, 211, 106, 0.8)";
@@ -77,6 +70,38 @@ function drawCityBg(rx, room) {
   ctx.fillStyle = "#f4d38a";
   ctx.font = "bold 14px monospace";
   ctx.fillText(room.district, rx + 22, 42);
+}
+
+function drawCityHouses(room, roomIndex) {
+  (room.houses || []).forEach(function(house) {
+    var x = roomIndex * ROOM_W + house.x;
+    var width = 170;
+    var top = 390;
+    ctx.fillStyle = "#29243b";
+    ctx.fillRect(x, top, width, 170);
+    ctx.strokeStyle = "#80647a";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, top, width, 170);
+    ctx.fillStyle = "#ad674f";
+    ctx.beginPath();
+    ctx.moveTo(x - 14, top);
+    ctx.lineTo(x + width / 2, top - 55);
+    ctx.lineTo(x + width + 14, top);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#d9a85e";
+    ctx.fillRect(x + width / 2 - 16, 490, 32, 70);
+    ctx.fillStyle = "#ffe8a5";
+    ctx.fillRect(x + 24, 430, 30, 27);
+    ctx.fillRect(x + width - 54, 430, 30, 27);
+    ctx.fillStyle = "#fff4bc";
+    ctx.font = "10px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("E", x + width / 2, 480);
+    ctx.fillStyle = "#e6d5c4";
+    ctx.fillText(house.label, x + width / 2, top - 68);
+    ctx.textAlign = "left";
+  });
 }
 
 function drawPlatforms(room) {
@@ -147,7 +172,7 @@ function drawBossDialogue() {
   ctx.fillStyle = "#ffd36a";
   ctx.font = "bold 14px monospace";
   ctx.textAlign = "center";
-  ctx.fillText(translateText("ENTRADA CINEMÁTICA"), canvas.width / 2, 32);
+  ctx.fillText(translateText(dialogueMode === "story" ? "HISTORIA DE LA CIUDAD" : "ENTRADA CINEMÁTICA"), canvas.width / 2, 32);
   ctx.textAlign = "left";
   ctx.fillStyle = "rgba(3, 3, 12, 0.88)";
   ctx.fillRect(42, 385, canvas.width - 84, 150);
@@ -164,7 +189,99 @@ function drawBossDialogue() {
   ctx.textAlign = "left";
   ctx.fillStyle = "rgba(200, 220, 255, 0.8)";
   ctx.font = "11px monospace";
-  ctx.fillText(translateText("ENTER / ESPACIO para continuar"), 64, 505);
+  ctx.fillText(interiorInspecting ? "E / ENTER volver  •  ESC salir" : "A/D o ←/→ mover  •  E inspeccionar  •  puerta para salir", 64, 505);
+}
+
+function drawHouseInterior() {
+  var line = bossDialogueLines[bossDialogueIndex] || ["", ""];
+  ctx.fillStyle = "#120f20";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#2a2035";
+  ctx.fillRect(70, 70, canvas.width - 140, 455);
+  ctx.fillStyle = "#3b2b43";
+  ctx.fillRect(70, 70, canvas.width - 140, 28);
+  ctx.fillStyle = "#171525";
+  ctx.fillRect(70, 455, canvas.width - 140, 70);
+  ctx.fillStyle = "#5a4660";
+  ctx.fillRect(70, 525, canvas.width - 140, 15);
+  ctx.fillStyle = "#151322";
+  ctx.fillRect(70, 100, 14, 440);
+  ctx.fillRect(916, 100, 14, 440);
+  ctx.fillStyle = "#8c624c";
+  ctx.fillRect(98, 370, 50, 155);
+  ctx.fillStyle = "#d9a85e";
+  ctx.fillRect(108, 435, 28, 90);
+  ctx.fillStyle = "#fff0b0";
+  ctx.font = "11px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("SALIDA", 123, 420);
+  ctx.fillStyle = "#8c624c";
+  ctx.fillRect(135, 215, 145, 150);
+  ctx.fillStyle = "#b07a55";
+  ctx.fillRect(120, 195, 175, 25);
+  ctx.fillStyle = "#f4c96b";
+  ctx.fillRect(160, 250, 32, 45);
+  ctx.fillRect(222, 250, 32, 45);
+  ctx.fillStyle = "#534061";
+  ctx.fillRect(430, 180, 185, 185);
+  ctx.fillStyle = "#d7a064";
+  ctx.fillRect(452, 210, 140, 12);
+  ctx.fillRect(452, 245, 140, 12);
+  ctx.fillRect(452, 280, 140, 12);
+  ctx.fillStyle = "#b7e4da";
+  ctx.fillRect(700, 170, 48, 210);
+  ctx.fillStyle = "#6cc";
+  ctx.fillRect(710, 185, 28, 180);
+  var interiorObjects = currentHouse && currentHouse.objects ? currentHouse.objects : [];
+  interiorObjects.forEach(function(object, index) {
+    var objectX = 175 + index * 230;
+    var selected = index === interiorSelection && !interiorInspecting;
+    ctx.strokeStyle = selected ? "#ffd36a" : "#6f607d";
+    ctx.lineWidth = selected ? 3 : 1;
+    ctx.strokeRect(objectX - 12, 370, 120, 52);
+    ctx.fillStyle = selected ? "#ffd36a" : "#b8a9c9";
+    ctx.font = "11px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText(object.label, objectX + 48, 405);
+  });
+  ctx.fillStyle = "#0b1522";
+  ctx.fillRect(610, 390, 26, 48);
+  ctx.fillStyle = "#12b8c4";
+  ctx.fillRect(616, 398, 14, 40);
+  ctx.fillStyle = "#d8e6f5";
+  ctx.fillRect(617, 382, 12, 10);
+  ctx.fillStyle = "#78a5c0";
+  ctx.fillRect(608, 438, 30, 6);
+  ctx.fillStyle = "#0aa";
+  ctx.fillRect(370, 410, 24, 48);
+  ctx.fillStyle = "#0cc";
+  ctx.fillRect(366, 394, 32, 24);
+  ctx.fillStyle = "#d7e7f2";
+  ctx.fillRect(372, 398, 20, 8);
+  ctx.fillStyle = "#ffd36a";
+  ctx.fillRect(394, 420, 28, 4);
+  ctx.fillStyle = "#0a1824";
+  ctx.fillRect(interiorPlayer.x - 11, interiorPlayer.y - 30, 22, 30);
+  ctx.fillStyle = "#11bec6";
+  ctx.fillRect(interiorPlayer.x - 9, interiorPlayer.y - 46, 18, 18);
+  ctx.fillStyle = "#d5f4f4";
+  ctx.fillRect(interiorPlayer.x - 6, interiorPlayer.y - 43, 12, 6);
+  ctx.fillStyle = "#ffd36a";
+  ctx.fillRect(interiorPlayer.x + 10, interiorPlayer.y - 28, 18, 3);
+  ctx.fillStyle = "#ffd36a";
+  ctx.font = "bold 22px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(currentHouse ? currentHouse.label : "INTERIOR", canvas.width / 2, 45);
+  ctx.fillStyle = "#f2dfb0";
+  ctx.font = "bold 16px monospace";
+  ctx.fillText(line[0] || "Memoria de la ciudad", canvas.width / 2, 405);
+  ctx.font = "14px monospace";
+  ctx.fillStyle = "#fff";
+  ctx.fillText(line[1], canvas.width / 2, 435);
+  ctx.fillStyle = "#9fb3c8";
+  ctx.font = "12px monospace";
+  ctx.fillText(bossDialogueIndex < bossDialogueLines.length - 1 ? "E / ENTER continuar" : "E / ENTER salir  •  ESC salir", canvas.width / 2, 490);
+  ctx.textAlign = "left";
 }
 
 function drawPedestal() {
@@ -659,6 +776,7 @@ function drawGameWorld() {
     else drawCaveBg(rx, room.decor, room.height);
     drawPlatforms(room);
     drawSpikes(room);
+    if (room.city) drawCityHouses(room, r);
     if (r === 1) drawPedestal();
     if (room.transitionZone) drawTransitionZone(room.transitionZone);
     if (room.bossName) drawBossDoor(r);
@@ -937,7 +1055,7 @@ function drawAdminConsole() {
   ctx.fillText("/give mapa", 65, canvas.height - 148);
   ctx.fillText("/give flechas [cantidad]", 65, canvas.height - 130);
   ctx.fillText("/give vida", 65, canvas.height - 112);
-  ctx.fillText("/tp habitacion [1-14]", 330, canvas.height - 202);
+  ctx.fillText("/tp habitacion [1-23]", 330, canvas.height - 202);
   ctx.fillText(translateText("Ejemplo: /give azari 1000"), 330, canvas.height - 184);
   ctx.fillText(translateText("Ejemplo: /tp habitacion 5"), 330, canvas.height - 166);
   ctx.fillStyle = "#fff";

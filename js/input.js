@@ -101,9 +101,80 @@ window.addEventListener("keydown", function(e) {
   }
 
   if (gameState === ST_DIALOGUE) {
+    if (e.key === "Escape") {
+      bossDialogueLines = [];
+      dialogueMode = "boss";
+      gameState = ST_PLAYING;
+      e.preventDefault();
+      return;
+    }
     if (confirm || e.key === " " || k === "x" || k === "e") {
       advanceBossDialogue();
       e.preventDefault();
+    }
+    return;
+  }
+
+  if (gameState === ST_HOUSE) {
+    if (e.key === "Escape") {
+      currentHouse = null;
+      bossDialogueLines = [];
+      interiorInspecting = false;
+      dialogueMode = "boss";
+      gameState = ST_PLAYING;
+      e.preventDefault();
+      return;
+    }
+    var interiorObjects = currentHouse && currentHouse.objects ? currentHouse.objects : [];
+    if (!interiorInspecting) {
+      if (e.key === "a" || e.key === "A" || e.code === "KeyA" || e.key === "ArrowLeft" || e.code === "ArrowLeft") {
+        interiorMoveLeft = true; e.preventDefault();
+      }
+      if (e.key === "d" || e.key === "D" || e.code === "KeyD" || e.key === "ArrowRight" || e.code === "ArrowRight") {
+        interiorMoveRight = true; e.preventDefault();
+      }
+      if (e.key === " " || e.key === "Space" || e.code === "Space" || e.key === "ArrowUp" || e.code === "ArrowUp") {
+        interiorJump = true; e.preventDefault();
+      }
+    }
+    if (e.key === "Enter" || e.code === "Enter" || e.code === "NumpadEnter" || k === "e") {
+      if (!interiorInspecting && interiorPlayer.x < 155) {
+        currentHouse = null;
+        bossDialogueLines = [];
+        gameState = ST_PLAYING;
+        e.preventDefault();
+        return;
+      }
+      if (interiorInspecting) {
+        interiorInspecting = false;
+        bossDialogueLines = currentHouse.story;
+        bossDialogueIndex = 0;
+      } else if (interiorObjects.length) {
+        var nearest = 0;
+        var nearestDistance = Infinity;
+        interiorObjects.forEach(function(object, index) {
+          var objectX = 175 + index * 230 + 48;
+          var distance = Math.abs(interiorPlayer.x - objectX);
+          if (distance < nearestDistance) { nearest = index; nearestDistance = distance; }
+        });
+        interiorSelection = nearest;
+        var objectX = 175 + interiorSelection * 230 + 48;
+        if (Math.abs(interiorPlayer.x - objectX) < 115) {
+          bossDialogueLines = [["INSPECCIÓN", interiorObjects[interiorSelection].text]];
+          bossDialogueIndex = 0;
+          interiorInspecting = true;
+        }
+      } else if (bossDialogueIndex < bossDialogueLines.length - 1) {
+        bossDialogueIndex++;
+      } else {
+        currentHouse = null;
+        bossDialogueLines = [];
+        interiorInspecting = false;
+        dialogueMode = "boss";
+        gameState = ST_PLAYING;
+      }
+      e.preventDefault();
+      return;
     }
     return;
   }
@@ -185,7 +256,7 @@ window.addEventListener("keydown", function(e) {
           adminConsoleOpen = false;
           adminCommand = "";
           adminCommandMessage = "Modo admin activado. Presiona / durante la partida.";
-          currentRoom = rooms.length - 2;
+          currentRoom = rooms.length - 1;
           player.x = currentRoom * ROOM_W + 30;
           player.y = rooms[currentRoom].height - 120;
           player.vx = 0; player.vy = 0;
@@ -423,11 +494,14 @@ function toggleBlessing(id) {
 }
 
 document.addEventListener("keyup", function(e) {
+  if (e.key === "a" || e.key === "A" || e.code === "KeyA" || e.key === "ArrowLeft" || e.code === "ArrowLeft") interiorMoveLeft = false;
+  if (e.key === "d" || e.key === "D" || e.code === "KeyD" || e.key === "ArrowRight" || e.code === "ArrowRight") interiorMoveRight = false;
   if (e.key === "a" || e.key === "A") keys["a"] = false;
   if (e.key === "d" || e.key === "D") keys["d"] = false;
   if (e.key === "ArrowLeft") keys["arrowleft"] = false;
   if (e.key === "ArrowRight") keys["arrowright"] = false;
   if (e.key === " " || e.key === "Space") keys[" "] = false;
+  if (e.key === "ArrowUp") keys["arrowup"] = false;
   if (e.key === "ArrowUp") keys["arrowup"] = false;
   if (e.key === "ArrowDown") keys["arrowdown"] = false;
   if (e.key === "s" || e.key === "S") keys["s"] = false;
@@ -616,6 +690,21 @@ function processGamepadInput() {
   }
   if (gameState === ST_DIALOGUE) {
     if (btn0 || gpButtons[1] && !prevGPButtons[1]) advanceBossDialogue();
+    return;
+  }
+  if (gameState === ST_HOUSE) {
+    if (btn9) {
+      currentHouse = null;
+      bossDialogueLines = [];
+      gameState = ST_PLAYING;
+    } else if (btn0 || gpButtons[1] && !prevGPButtons[1]) {
+      if (bossDialogueIndex < bossDialogueLines.length - 1) bossDialogueIndex++;
+      else {
+        currentHouse = null;
+        bossDialogueLines = [];
+        gameState = ST_PLAYING;
+      }
+    }
     return;
   }
   if (bossVictory.active && (btn0 || gpButtons[1] && !prevGPButtons[1])) {

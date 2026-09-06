@@ -1024,6 +1024,31 @@ function checkSwordHitEnemiesFor(p) {
 }
 
 function tryInteractFor(p) {
+  var room = rooms[currentRoom];
+  if (room.city && room.houses) {
+    for (var h = 0; h < room.houses.length; h++) {
+      var house = room.houses[h];
+      var door = {x: currentRoom * ROOM_W + house.x + 42, y: 475, w: 55, h: 85};
+      if (rectHit(p, {x: door.x - 24, y: door.y - 24, w: door.w + 48, h: door.h + 48})) {
+        currentHouse = house;
+        interiorSelection = 0;
+        interiorInspecting = false;
+        interiorPlayer.x = 400;
+        interiorPlayer.y = 420;
+        interiorPlayer.vx = 0;
+        interiorPlayer.vy = 0;
+        interiorMoveLeft = false;
+        interiorMoveRight = false;
+        interiorJump = false;
+        bossDialogueLines = house.story;
+        bossDialogueIndex = 0;
+        dialogueMode = "story";
+        gameState = ST_HOUSE;
+        return;
+      }
+    }
+
+  }
   if (currentRoom === 1 && !room1.pedestal.taken) {
     var ped = room1.pedestal;
     var dx = (p.x + p.w/2) - (ped.glass.x + ped.glass.w/2);
@@ -1043,7 +1068,7 @@ function tryInteractFor(p) {
       return;
     }
   }
-  var room = rooms[currentRoom];
+
   if (room.shops) {
     for (var i = 0; i < room.shops.length; i++) {
       var s = room.shops[i];
@@ -1080,6 +1105,28 @@ function startFallThroughTransition(toRoom) {
   transIsFall = true;
   player.vx = 0; player.vy = 0;
   if (twoPlayerMode) { player2.vx = 0; player2.vy = 0; }
+}
+
+function updateHouseInterior() {
+  if (gameState !== ST_HOUSE || interiorInspecting) return;
+  var left = 155, right = 690;
+  if (interiorMoveLeft || keys["a"] || keys["arrowleft"]) interiorPlayer.vx = -3.5;
+  else if (interiorMoveRight || keys["d"] || keys["arrowright"]) interiorPlayer.vx = 3.5;
+  else interiorPlayer.vx *= 0.7;
+  interiorPlayer.x += interiorPlayer.vx;
+  interiorPlayer.x = Math.max(left, Math.min(right, interiorPlayer.x));
+  if ((interiorJump || keys[" "] || keys["arrowup"]) && interiorPlayer.onGround) {
+    interiorPlayer.vy = -10;
+    interiorPlayer.onGround = false;
+    interiorJump = false;
+  }
+  interiorPlayer.vy += 0.55;
+  interiorPlayer.y += interiorPlayer.vy;
+  if (interiorPlayer.y >= 420) {
+    interiorPlayer.y = 420;
+    interiorPlayer.vy = 0;
+    interiorPlayer.onGround = true;
+  }
 }
 
 function startTransition(toRoom, direction) {
@@ -1138,6 +1185,7 @@ function startBossDialogue(roomIndex) {
   if (!bossDialogueLines.length) return false;
   bossDialogueSeen[roomIndex] = true;
   bossDialogueIndex = 0;
+  dialogueMode = "boss";
   bossIntroTimer = 110;
   gameState = ST_DIALOGUE;
   var introBoss = enemies.find ? enemies.find(function(enemy) { return enemy.boss && enemy.room === roomIndex; }) : null;

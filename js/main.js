@@ -100,6 +100,10 @@ function update() {
     return;
   }
   if (gameState === ST_DIALOGUE) return;
+  if (gameState === ST_HOUSE) {
+    updateHouseInterior();
+    return;
+  }
   if (hitFlash > 0) {
     hitFlash--;
     if (hitFlash <= 0 && needsRespawn) {
@@ -202,6 +206,7 @@ function loop() {
   else if (gameState === ST_TRANSITION) drawTransition();
   else if (gameState === ST_INVENTORY) { drawGame(); drawInventory(); }
   else if (gameState === ST_DIALOGUE) { drawGame(); drawBossDialogue(); }
+  else if (gameState === ST_HOUSE) drawHouseInterior();
   else if (gameState === ST_DEATH) drawDeathScreen();
   else {
     drawGame();

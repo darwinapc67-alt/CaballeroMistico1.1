@@ -7,7 +7,7 @@ var WORLD_W = 23 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
 var VERSION = "v1.65";
 
-var ST_LANGUAGE = 0, ST_DEVICE = 1, ST_MENU = 2, ST_PLAYING = 3, ST_PAUSED = 4, ST_TRANSITION = 5, ST_INVENTORY = 7, ST_DIALOGUE = 8, ST_DEATH = 9;
+var ST_LANGUAGE = 0, ST_DEVICE = 1, ST_MENU = 2, ST_PLAYING = 3, ST_PAUSED = 4, ST_TRANSITION = 5, ST_INVENTORY = 7, ST_DIALOGUE = 8, ST_DEATH = 9, ST_HOUSE = 10;
 
 var gameState = ST_LANGUAGE;
 var languageSelection = 0, language = "es";
@@ -207,6 +207,12 @@ var bossDoorSoundRoom = -1;
 var bossDialogueSeen = {};
 var bossDialogueLines = [];
 var bossDialogueIndex = 0;
+var dialogueMode = "boss";
+var currentHouse = null;
+var interiorSelection = 0;
+var interiorInspecting = false;
+var interiorPlayer = { x: 400, y: 420, vx: 0, vy: 0, onGround: true };
+var interiorMoveLeft = false, interiorMoveRight = false, interiorJump = false;
 
 var stats = {
   playTime: 0,
@@ -639,14 +645,35 @@ function createCityRoom(index, district, features) {
     city: true,
     district: district,
     cityFeatures: features,
+    houses: features.houses || [],
     decor: []
   };
 }
 
 var cityRooms = [
-  createCityRoom(14, "PLAZA CENTRAL", {roofs: true, towers: true}),
-  createCityRoom(15, "BARRIO DE LOS ARTESANOS", {roofs: true, bridge: true}),
-  createCityRoom(16, "MERCADO DE LAS LUCES", {roofs: true, towers: true}),
+  createCityRoom(14, "PLAZA CENTRAL", {roofs: true, towers: true, houses: [
+    {x: 80, label: "Casa del cronista", story: [["CRONISTA", "Antes de que llegara la oscuridad, la ciudad unía todos los caminos."], ["", "En sus plazas se reunían viajeros de cavernas lejanas."], ["", "Ahora solo queda memoria entre estas paredes."]], objects: [
+      {label: "Mapa antiguo", text: "Las rutas de la ciudad terminan en una puerta marcada con el símbolo del vacío."},
+      {label: "Libro abierto", text: "El cronista escribió: quien recuerde el pasado podrá reconstruir el futuro."},
+      {label: "Ventana", text: "Desde aquí se ve la plaza y las luces que todavía resisten."}
+    ]},
+    {x: 610, label: "Casa de la campana", story: [["GUARDIANA", "La campana sonaba cada amanecer para llamar a los protectores."], ["", "Un día dejó de sonar... y nadie volvió a ocupar la torre."]], objects: [
+      {label: "Campana rota", text: "Una grieta atraviesa el metal. Aun así, conserva un débil eco mágico."},
+      {label: "Escudo", text: "El escudo lleva las marcas de muchos defensores, pero ninguno terminó la batalla."}
+    ]}
+  ]}),
+  createCityRoom(15, "BARRIO DE LOS ARTESANOS", {roofs: true, bridge: true, houses: [
+    {x: 190, label: "Taller abandonado", story: [["MAESTRO FORJADOR", "Aquí se fabricaban armas para defender la civilización."], ["", "La última espada fue entregada a un caballero que nunca regresó."]], objects: [
+      {label: "Yunque", text: "El metal del yunque todavía está tibio, como si alguien hubiera trabajado aquí hace poco."},
+      {label: "Molde vacío", text: "El molde tiene la forma exacta de una espada que se parece a la tuya."}
+    ]}
+  ]}),
+  createCityRoom(16, "MERCADO DE LAS LUCES", {roofs: true, towers: true, houses: [
+    {x: 470, label: "Archivo del mercado", story: [["MERCADER", "Cada puesto guardaba una historia: semillas, mapas, sal y secretos."], ["", "Los comerciantes partieron cuando las luces del subsuelo se apagaron."]], objects: [
+      {label: "Cofre vacío", text: "Solo quedan monedas antiguas y una nota: protege la última llama."},
+      {label: "Farol", text: "La llama no consume aceite. Brilla con la energía de la civilización."}
+    ]}
+  ]}),
   createCityRoom(17, "JARDINES ELEVADOS", {roofs: false, bridge: true}),
   createCityRoom(18, "ACUEDUCTO REAL", {roofs: false, towers: true, bridge: true}),
   createCityRoom(19, "TEMPLO DEL SOL", {roofs: true, towers: true}),
