@@ -16,7 +16,8 @@ function resetAll() {
   heartFragments1 = 0; heartFragments2 = 0;
   heartFragmentsBought1 = 0; heartFragmentsBought2 = 0;
   hasAzariCharm = false; hasDoubleJump = false;
-  hasAzariMagnet = false; hasAzariBag = false; hasLantern = false;
+  hasAzariMagnet = false; hasAzariBag = false; hasLantern = false; lanternLevel = 0;
+  hasDash = false;
   swordLevel = 0; bowLevel = 0; arrowType = "normal";
   combatSkills = { charged: false, aerial: false, combo: false };
   blessingSlots = 2; equippedBlessings = []; armorId = "vacío";
@@ -28,7 +29,8 @@ function resetAll() {
   if (twoPlayerMode) player2.hp = player2.maxHp = 10;
   stats = { playTime: 0, enemiesKilled: 0, roomsVisited: 1, jumps: 0, attacks: 0, deaths: 0 };
   frameCounter = 0;
-  bestiary = { bat: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 }, cazador_paramo: { discovered: false, count: 0 } };
+  bestiary = { bat: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 }, cazador_paramo: { discovered: false, count: 0 }, dark_knight: { discovered: false, count: 0 } };
+  diaryScroll = 0;
   deathParticles = [];
   azariDrops = [];
   playerDead = false; deathTimer = 0;
@@ -36,7 +38,7 @@ function resetAll() {
   consecutiveDeaths = 0;
   highestRoomReached = 0;
   tutorialStep = 0; tutorialTimer = 240;
-  checkpointState = { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false } };
+  checkpointState = { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasLantern: false, lanternLevel: 0, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false } };
   room0.transitionZone = null; room1.transitionZone = null; room2.transitionZone = null;
   room3.transitionZone = null; room4.transitionZone = null;
   room5.transitionZone = {x:4750, y:460, w:50, h:100, to:6};
@@ -44,8 +46,8 @@ function resetAll() {
   room9.transitionZone = {x:7960, y:460, w:40, h:100, to:10};
   room10.transitionZone = null;
   room11.transitionZone = {x:9540, y:460, w:40, h:100, to:12};
-  room12.transitionZone = {x:10340, y:460, w:40, h:100, to:13};
-  room13.transitionZone = null;
+  rooms[19].transitionZone = {x:15940, y:460, w:40, h:100, to:20};
+  rooms[20].transitionZone = null;
   bossArenaState = { guardian: false, queen_larva: false, abyssal_knight: false };
   bossAbilities = { guardian: false, queen_larva: false, abyssal_knight: false };
   bossZonesUnlocked = { guardian: false, queen_larva: false, abyssal_knight: false };

@@ -3,7 +3,7 @@ var ROOM_W = 800, ROOM_H = 600, GRAVITY = 0.6;
 var DASH_SPEED = 12, DASH_DURATION = 10, DASH_COOLDOWN = 45, DASH_INV_FRAMES = 12;
 /* Rooms 0-9 are the original route, room 10 is the final descent, and
    rooms 11-13 are the Guardian, Queen Larva, and Abyssal Knight arenas. */
-var WORLD_W = 23 * ROOM_W;
+var WORLD_W = 34 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
 var VERSION = "v1.65";
 
@@ -147,7 +147,7 @@ var difficultyOptions = [
 ];
 var adminPassword = "", adminMessage = "";
 var adminMode = false, adminConsoleOpen = false, adminCommand = "", adminCommandMessage = "";
-var pauseSelection = 0, pauseSubState = "menu", diaryCategory = "enemies";
+var pauseSelection = 0, pauseSubState = "menu", diaryCategory = "enemies", diaryScroll = 0;
 
 var transTimer = 0, transPhase = "out", transTargetRoom = 0, transFade = 0;
 var transIsFall = false, transitionCooldown = 0;
@@ -166,7 +166,8 @@ var shopPreviousX = 0, shopPreviousY = 0, shopExitCooldown = 0;
 var heartFragments1 = 0, heartFragments2 = 0;
 var heartFragmentsBought1 = 0, heartFragmentsBought2 = 0;
 var hasAzariCharm = false, hasDoubleJump = false;
-var hasAzariMagnet = false, hasAzariBag = false, hasLantern = false;
+var hasAzariMagnet = false, hasAzariBag = false, hasLantern = false, lanternLevel = 0;
+var hasDash = false;
 var swordLevel = 0, bowLevel = 0, arrowType = "normal";
 var combatSkills = { charged: false, aerial: false, combo: false };
 var blessingSlots = 2;
@@ -229,9 +230,10 @@ var frameCounter = 0;
 var bestiaryInfo = {
   bat: { name: "Murciélago Sombrío", desc: "Criatura alada que habita las profundidades. se alimenta de energia de hechizos." },
   larva_mosca: { name: "Larva-Mosca", desc: "Aberración híbrida que embiste con ferocidad." },
-  cazador_paramo: { name: "Cazador del Páramo", desc: "Depredador terrestre que patrulla los páramos y persigue a los intrusos." }
+  cazador_paramo: { name: "Cazador del Páramo", desc: "Depredador terrestre que patrulla los páramos y persigue a los intrusos." },
+  dark_knight: { name: "Caballero oscuro", desc: "Guerrero blindado que combate con espada, bloquea golpes y carga con un dash." }
 };
-var bestiary = { bat: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 }, cazador_paramo: { discovered: false, count: 0 } };
+var bestiary = { bat: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 }, cazador_paramo: { discovered: false, count: 0 }, dark_knight: { discovered: false, count: 0 } };
 var bossDiaryInfo = {
   guardian: { name: "Guardián de la Cueva", desc: "Protector ancestral de la primera arena. Su fuerza domina las profundidades." },
   queen_larva: { name: "Reina Larva", desc: "Soberana de la colonia. Sus ataques convierten la arena en un nido mortal." },
@@ -243,7 +245,7 @@ var achievementNotify = { active: false, timer: 0, title: "" };
 
 var player = {
   x: 100, y: 400, w: 22, h: 30, vx: 0, vy: 0, onGround: false, facing: 1,
-  jumpsLeft: 1, maxJumps: 2, inv: 0, anim: 0, autoWalk: 0, frozen: false,
+  jumpsLeft: 1, maxJumps: 2, jumpHeld: false, inv: 0, anim: 0, autoWalk: 0, frozen: false,
   hp: 10, maxHp: 10, id: 1, color: "#0aa", headColor: "#0cc",
   hasSword: false, swordEquipped: false, swordSwing: 0, swordCooldown: 0, bowCooldown: 0, attackHeld: false, attackCharge: 0, attackCharged: false, attackDown: false, attackType: "",
   swordSheathed: true, swordSheathTimer: 0, blocking: false, guardTimer: 0, guardCooldown: 0,
@@ -252,7 +254,7 @@ var player = {
 
 var player2 = {
   x: 140, y: 400, w: 22, h: 30, vx: 0, vy: 0, onGround: false, facing: 1,
-  jumpsLeft: 1, maxJumps: 2, inv: 0, anim: 0, autoWalk: 0, frozen: false,
+  jumpsLeft: 1, maxJumps: 2, jumpHeld: false, inv: 0, anim: 0, autoWalk: 0, frozen: false,
   hp: 10, maxHp: 10, id: 2, color: "#a0a", headColor: "#c0c",
   hasSword: false, swordEquipped: false, swordSwing: 0, swordCooldown: 0, bowCooldown: 0, attackHeld: false, attackCharge: 0, attackCharged: false, attackDown: false, attackType: "",
   swordSheathed: true, swordSheathTimer: 0, blocking: false, guardTimer: 0, guardCooldown: 0,
@@ -296,7 +298,7 @@ function saveGame(i) {
     heartFragments1: heartFragments1, heartFragments2: heartFragments2,
     heartFragmentsBought1: heartFragmentsBought1, heartFragmentsBought2: heartFragmentsBought2,
     hasAzariCharm: hasAzariCharm, hasDoubleJump: hasDoubleJump,
-    hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, hasLantern: hasLantern,
+    hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, hasLantern: hasLantern, lanternLevel: lanternLevel, hasDash: hasDash,
     swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: combatSkills,
     blessingSlots: blessingSlots, equippedBlessings: equippedBlessings, armorId: armorId,
     permanentUpgrades: permanentUpgrades, bossUniqueItems: bossUniqueItems, hiddenCollectibles: hiddenCollectibles,
@@ -354,6 +356,8 @@ function loadGame(i) {
   hasAzariMagnet = s.hasAzariMagnet || false;
   hasAzariBag = s.hasAzariBag || false;
   hasLantern = s.hasLantern || false;
+  lanternLevel = Math.max(0, Math.min(3, s.lanternLevel || (hasLantern ? 1 : 0)));
+  hasDash = s.hasDash || false;
   swordLevel = s.swordLevel || 0; bowLevel = s.bowLevel || 0;
   arrowType = s.arrowType || "normal";
   combatSkills = s.combatSkills || { charged: false, aerial: false, combo: false };
@@ -373,8 +377,8 @@ function loadGame(i) {
   bossZonesUnlocked.queen_larva = bossArenaState.queen_larva;
   bossZonesUnlocked.abyssal_knight = bossArenaState.abyssal_knight;
   rooms[11].transitionZone = bossArenaState.guardian ? {x: 9540, y: 460, w: 40, h: 100, to: 12} : null;
-  rooms[12].transitionZone = bossArenaState.queen_larva ? {x: 10340, y: 460, w: 40, h: 100, to: 13} : null;
-  rooms[13].transitionZone = bossArenaState.abyssal_knight ? {x: 11130, y: 460, w: 40, h: 100, to: 14} : null;
+  rooms[19].transitionZone = bossArenaState.queen_larva ? {x: 15940, y: 460, w: 40, h: 100, to: 20} : null;
+  rooms[20].transitionZone = bossArenaState.abyssal_knight ? {x: 16730, y: 460, w: 40, h: 100, to: 21} : null;
   if (hasDoubleJump) { player.maxJumps = 2; player2.maxJumps = 2; }
   if (s.bestiary) bestiary = JSON.parse(JSON.stringify(s.bestiary));
   Object.keys(bestiaryInfo).forEach(function(key) {
@@ -613,19 +617,40 @@ var room11 = {
 
 var room12 = {
   height: 600,
-  platforms: [{x:9600, y:560, w:800, h:40}],
-  spikes: [], walls: [{x:10382, y:0, w:18, h:600}],
-  transitionZone: {x:10340, y:460, w:40, h:100, to:13},
-  decor: genDecor(9600, 8, 4, 600), bossName: "REINA LARVA"
+  platforms: [{x:15200, y:560, w:800, h:40}],
+  spikes: [], walls: [{x:15982, y:0, w:18, h:600}],
+  transitionZone: {x:15940, y:460, w:40, h:100, to:20},
+  decor: genDecor(15200, 8, 4, 600), bossName: "REINA LARVA"
 };
 
 var room13 = {
   height: 600,
-  platforms: [{x:10400, y:560, w:800, h:40}],
-  spikes: [], walls: [{x:11182, y:0, w:18, h:600}],
+  platforms: [{x:16000, y:560, w:800, h:40}],
+  spikes: [], walls: [{x:16782, y:0, w:18, h:600}],
   transitionZone: null,
-  decor: genDecor(10400, 10, 5, 600), bossName: "CABALLERO ABISMAL"
+  decor: genDecor(16000, 10, 5, 600), bossName: "CABALLERO ABISMAL"
 };
+
+function createInterludeRoom(index, name, variant) {
+  var off = index * ROOM_W;
+  var platforms = [{x: off, y: 560, w: ROOM_W, h: 40}];
+  platforms.push({x: off + 80, y: 420 + (variant % 2) * 40, w: 150, h: 16});
+  platforms.push({x: off + 330, y: 320 + (variant % 3) * 40, w: 180, h: 16});
+  platforms.push({x: off + 610, y: 400 - (variant % 2) * 80, w: 120, h: 16});
+  return {height: 600, platforms: platforms, spikes: variant === 3 ? [{x: off + 300, y: 540, w: 180, h: 20}] : [],
+    walls: [], transitionZone: {x: off + 750, y: 460, w: 40, h: 100, to: index + 1},
+    decor: genDecor(off, 7, 5, 600), zoneTitle: name};
+}
+
+var interludeRooms = [
+  createInterludeRoom(12, "", 0),
+  createInterludeRoom(13, "", 1),
+  createInterludeRoom(14, "", 2),
+  createInterludeRoom(15, "", 3),
+  createInterludeRoom(16, "", 4),
+  createInterludeRoom(17, "", 5),
+  createInterludeRoom(18, "", 6)
+];
 
 function createCityRoom(index, district, features) {
   var off = index * ROOM_W;
@@ -657,7 +682,7 @@ function createCityRoom(index, district, features) {
 }
 
 var cityRooms = [
-  createCityRoom(14, "PLAZA CENTRAL", {roofs: true, towers: true, houses: [
+  createCityRoom(21, "", {roofs: true, towers: true, houses: [
     {x: 80, label: "Casa", story: [["", "Antes de que llegara la oscuridad, la ciudad unía todos los caminos."], ["", "En sus plazas se reunían viajeros de cavernas lejanas."], ["", "Ahora solo queda memoria entre estas paredes."]], objects: [
       {label: "Mapa antiguo", text: "Las rutas de la ciudad terminan en una puerta marcada con el símbolo del vacío."},
       {label: "Libro abierto", text: "El cronista escribió: quien recuerde el pasado podrá reconstruir el futuro."},
@@ -668,30 +693,73 @@ var cityRooms = [
       {label: "Escudo", text: "El escudo lleva las marcas de muchos defensores, pero ninguno terminó la batalla."}
     ]}
   ]}),
-  createCityRoom(15, "BARRIO DE LOS ARTESANOS", {roofs: true, bridge: true, houses: [
+  createCityRoom(22, "", {roofs: true, bridge: true, houses: [
     {x: 190, label: "Taller abandonado", story: [["MAESTRO FORJADOR", "Aquí se fabricaban armas para defender la civilización."], ["", "La última espada fue entregada a un caballero que nunca regresó."]], objects: [
       {label: "Yunque", text: "El metal del yunque todavía está tibio, como si alguien hubiera trabajado aquí hace poco."},
       {label: "Molde vacío", text: "El molde tiene la forma exacta de una espada que se parece a la tuya."}
     ]}
   ]}),
-  createCityRoom(16, "MERCADO DE LAS LUCES", {roofs: true, towers: true, houses: [
+  createCityRoom(23, "", {roofs: true, towers: true, houses: [
     {x: 470, label: "Archivo del mercado", story: [["MERCADER", "Cada puesto guardaba una historia: semillas, mapas, sal y secretos."], ["", "Los comerciantes partieron cuando las luces del subsuelo se apagaron."]], objects: [
       {label: "Cofre vacío", text: "Solo quedan monedas antiguas y una nota: protege la última llama."},
       {label: "Farol", text: "La llama no consume aceite. Brilla con la energía de la civilización."}
     ]}
   ]}),
-  createCityRoom(17, "JARDINES ELEVADOS", {roofs: false, bridge: true}),
-  createCityRoom(18, "ACUEDUCTO REAL", {roofs: false, towers: true, bridge: true}),
-  createCityRoom(19, "TEMPLO DEL SOL", {roofs: true, towers: true}),
-  createCityRoom(20, "FORJA CELESTE", {roofs: true, bridge: true}),
-  createCityRoom(21, "PALACIO DE CRISTAL", {roofs: true, towers: true}),
-  createCityRoom(22, "PUERTA DE LA CIVILIZACIÓN", {roofs: false, towers: true, bridge: true})
+  createCityRoom(24, "", {roofs: false, bridge: true}),
+  createCityRoom(25, "", {roofs: false, towers: true, bridge: true}),
+  createCityRoom(26, "", {roofs: true, towers: true}),
+  createCityRoom(27, "", {roofs: true, bridge: true}),
+  createCityRoom(28, "", {roofs: true, towers: true}),
+  createCityRoom(29, "", {roofs: false, towers: true, bridge: true})
 ];
 
+cityRooms[cityRooms.length - 1].transitionZone = {x: 29 * ROOM_W + 750, y: 460, w: 40, h: 100, to: 30};
+cityRooms[cityRooms.length - 1].platforms = [{x: 29 * ROOM_W, y: 560, w: ROOM_W, h: 40}];
+
+var room30 = {
+  height: 600,
+  platforms: [
+    {x: 30 * ROOM_W, y: 560, w: ROOM_W, h: 40},
+    {x: 30 * ROOM_W + 285, y: 350, w: 515, h: 18}
+  ],
+  spikes: [],
+  walls: [],
+  transitionZone: null,
+  noDoor: true,
+  decor: genDecor(30 * ROOM_W, 10, 6, 600)
+};
+
+function createCorridorRoom(index, variant, nextRoom) {
+  var off = index * ROOM_W;
+  return {
+    height: 600,
+    platforms: [
+      {x: off, y: 560, w: ROOM_W, h: 40},
+      {x: off + 285, y: 350 + (variant % 2) * 15, w: 515, h: 18}
+    ],
+    spikes: [],
+    walls: [],
+    transitionZone: null,
+    noDoor: true,
+    decor: genDecor(off, 9 + variant, 5, 600)
+  };
+}
+
+var room31 = createCorridorRoom(31, 1, 32);
+var room32 = createCorridorRoom(32, 2, 33);
+var room33 = createCorridorRoom(33, 3, null);
+
 var rooms = [room0, room1, room2, room3, room4, room5, room6, room7, room8, room9,
-  room10, room11, room12, room13].concat(cityRooms);
+  room10, room11].concat(interludeRooms, [room12, room13], cityRooms, [room30, room31, room32, room33]);
 
 var enemies = [
+  {x: 9630, y: 520, w: 24, h: 20, vx: 1.2, vy: 0, baseY: 520, range: 180, speed: 1.2, dead: false, room: 12, type: 'cazador_paramo', terrestrial: true},
+  {x: 10420, y: 520, w: 24, h: 20, vx: -1.4, vy: 0, baseY: 520, range: 180, speed: 1.4, dead: false, room: 13, type: 'cazador_paramo', terrestrial: true},
+  {x: 11230, y: 520, w: 34, h: 48, vx: -1, vy: 0, baseY: 512, speed: 1.1, dead: false, room: 14, type: 'dark_knight', hp: 48, maxHp: 48, blockTimer: 80, dashCooldown: 100, dashTimer: 0, staysRoom: true},
+  {x: 12020, y: 520, w: 34, h: 48, vx: 1, vy: 0, baseY: 512, speed: 1.2, dead: false, room: 15, type: 'dark_knight', hp: 48, maxHp: 48, blockTimer: 120, dashCooldown: 140, dashTimer: 0, staysRoom: true},
+  {x: 12810, y: 520, w: 34, h: 48, vx: -1, vy: 0, baseY: 512, speed: 1.15, dead: false, room: 16, type: 'dark_knight', hp: 48, maxHp: 48, blockTimer: 60, dashCooldown: 120, dashTimer: 0, staysRoom: true},
+  {x: 13600, y: 520, w: 34, h: 48, vx: 1, vy: 0, baseY: 512, speed: 1.3, dead: false, room: 17, type: 'dark_knight', hp: 48, maxHp: 48, blockTimer: 100, dashCooldown: 160, dashTimer: 0, staysRoom: true},
+  {x: 14390, y: 520, w: 34, h: 48, vx: -1, vy: 0, baseY: 512, speed: 1.25, dead: false, room: 18, type: 'dark_knight', hp: 48, maxHp: 48, blockTimer: 90, dashCooldown: 110, dashTimer: 0, staysRoom: true},
   {x: 150, y: 350, w: 24, h: 20, vx: 1.5, vy: 0, baseY: 350, range: 60, dead: false, room: 0, type: 'bat'},
   {x: 350, y: 400, w: 24, h: 20, vx: -1.2, vy: 0, baseY: 400, range: 50, dead: false, room: 0, type: 'bat'},
   {x: 550, y: 300, w: 24, h: 20, vx: 1.8, vy: 0, baseY: 300, range: 80, dead: false, room: 0, type: 'bat'},
@@ -738,9 +806,9 @@ var enemies = [
   {x:7450, y:250, w:24, h:20, vx: -1.4, vy: 0, baseY: 250, range: 70, dead: false, room: 9, type: 'bat'},
   {x:9140, y:470, w:70, h:90, vx: 0, vy: 0, dead: false, room: 11, type: 'guardian',
     boss: true, bossName: "GUARDIÁN DE LA CUEVA", hp: 100, maxHp: 100, aiTimer: 80, attackTimer: 60, phase: 1, enraged: false},
-  {x:9940, y:470, w:78, h:90, vx: 0, vy: 0, dead: false, room: 12, type: 'queen_larva',
+  {x:15540, y:470, w:78, h:90, vx: 0, vy: 0, dead: false, room: 19, type: 'queen_larva',
     boss: true, bossName: "REINA LARVA", hp: 140, maxHp: 140, aiTimer: 90, attackTimer: 70, phase: 1, enraged: false},
-  {x:10740, y:460, w:60, h:100, vx: 0, vy: 0, dead: false, room: 13, type: 'abyssal_knight',
+  {x:16340, y:460, w:60, h:100, vx: 0, vy: 0, dead: false, room: 20, type: 'abyssal_knight',
     boss: true, bossName: "CABALLERO ABISMAL", hp: 180, maxHp: 180, aiTimer: 70, attackTimer: 50, phase: 1, enraged: false}
 ];
 enemies.forEach(function(e) { e.canRoam = !e.boss; });

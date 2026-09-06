@@ -422,6 +422,32 @@ function drawEnemies() {
       }
       ctx.fillStyle = "#f44"; ctx.fillRect(e.x, e.y - 14, e.w * Math.max(0, e.hp / e.maxHp), 5);
       ctx.strokeStyle = "#fff"; ctx.lineWidth = 1; ctx.strokeRect(e.x, e.y - 14, e.w, 5);
+    } else if (e.type === 'dark_knight') {
+      var knightFacing = e.vx < 0 ? -1 : 1;
+      ctx.fillStyle = "rgba(8, 10, 20, 0.5)";
+      ctx.beginPath(); ctx.ellipse(e.x + e.w / 2, e.y + e.h, 19, 5, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#171b2b"; ctx.fillRect(e.x + 5, e.y + 14, e.w - 10, e.h - 14);
+      ctx.fillStyle = "#303950"; ctx.fillRect(e.x + 8, e.y + 2, e.w - 16, 18);
+      ctx.fillStyle = "#9db5e8"; ctx.fillRect(e.x + (knightFacing > 0 ? 21 : 8), e.y + 9, 4, 3);
+      ctx.fillStyle = e.blocking ? "#80b7ff" : "#9aa7c4";
+      ctx.fillRect(e.x + (knightFacing > 0 ? e.w : -18), e.y + 18, 18, 4);
+      if (e.blocking) {
+        ctx.fillStyle = "rgba(96, 170, 255, 0.8)";
+        ctx.beginPath();
+        ctx.moveTo(e.x + (knightFacing > 0 ? e.w + 2 : -2), e.y + 12);
+        ctx.lineTo(e.x + (knightFacing > 0 ? e.w + 20 : -20), e.y + 18);
+        ctx.lineTo(e.x + (knightFacing > 0 ? e.w + 20 : -20), e.y + 43);
+        ctx.lineTo(e.x + (knightFacing > 0 ? e.w + 2 : -2), e.y + 50);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.fillStyle = "#dce7ff"; ctx.fillRect(e.x + (knightFacing > 0 ? e.w + 12 : -28), e.y + 5, 3, 32);
+      if (e.dashTimer > 0) {
+        ctx.strokeStyle = "#7fb3ff"; ctx.lineWidth = 3;
+        ctx.strokeRect(e.x - 5, e.y - 5, e.w + 10, e.h + 10);
+      }
+      ctx.fillStyle = "#f44"; ctx.fillRect(e.x, e.y - 12, e.w * Math.max(0, e.hp / e.maxHp), 4);
+      ctx.strokeStyle = "#fff"; ctx.lineWidth = 1; ctx.strokeRect(e.x, e.y - 12, e.w, 4);
     } else if (e.type === 'cazador_paramo') {
       var hunterWobble = Math.sin(Date.now() / 120) * 2;
       var hunterFacing = e.vx < 0 ? -1 : 1;
@@ -789,7 +815,7 @@ function drawGameWorld() {
     drawSpikes(room);
     if (room.city) drawCityHouses(room, r);
     if (r === 1) drawPedestal();
-    if (room.transitionZone) drawTransitionZone(room.transitionZone);
+    if (room.transitionZone && !room.noDoor) drawTransitionZone(room.transitionZone);
     if (room.bossName) drawBossDoor(r);
     if (r === 9) { drawShopNPC(); drawHealingStone(); }
   }
@@ -842,7 +868,7 @@ function drawGameWorld() {
 
   var lightX = player.x - cameraX + player.w / 2;
   var lightY = player.y - cameraY + player.h / 2;
-  var lightRadius = hasLantern ? 235 : 125;
+  var lightRadius = hasLantern ? 190 + lanternLevel * 55 : 125;
   var darkness = ctx.createRadialGradient(lightX, lightY, lightRadius * 0.35, lightX, lightY, lightRadius);
   darkness.addColorStop(0, "rgba(4, 6, 16, 0)");
   darkness.addColorStop(0.72, "rgba(4, 6, 16, 0.42)");
@@ -1091,6 +1117,9 @@ function drawAdminConsole() {
   ctx.fillText("/give mapa", 65, canvas.height - 148);
   ctx.fillText("/give flechas [cantidad]", 65, canvas.height - 130);
   ctx.fillText("/give vida", 65, canvas.height - 112);
+  ctx.fillText("/give dash", 65, canvas.height - 94);
+  ctx.fillText("/give linterna [nivel]", 65, canvas.height - 76);
+  ctx.fillText("/give ds  |  /give qds", 65, canvas.height - 58);
   ctx.fillText("/tp habitacion [1-23]", 330, canvas.height - 202);
   ctx.fillText(translateText("Ejemplo: /give azari 1000"), 330, canvas.height - 184);
   ctx.fillText(translateText("Ejemplo: /tp habitacion 5"), 330, canvas.height - 166);
@@ -1382,10 +1411,12 @@ function drawDiary() {
   });
   var entries = diaryCategory === "enemies" ? Object.keys(bestiaryInfo) : ["guardian", "queen_larva", "abyssal_knight"];
   var startY = 145;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(100, 135, 600, 415); ctx.clip();
   entries.forEach(function(key, idx) {
     var isBoss = diaryCategory === "bosses";
     var data = isBoss ? { discovered: !!bossArenaState[key], count: bossArenaState[key] ? 1 : 0 } : bestiary[key];
-    var info = isBoss ? bossDiaryInfo[key] : bestiaryInfo[key], y = startY + idx * 130;
+    var info = isBoss ? bossDiaryInfo[key] : bestiaryInfo[key], y = startY + (idx - diaryScroll) * 130;
     var discovered = data.discovered;
     ctx.fillStyle = discovered ? "rgba(255,215,0,0.08)" : "rgba(255,255,255,0.02)";
     ctx.fillRect(120, y, 560, 115);
@@ -1416,8 +1447,10 @@ function drawDiary() {
       ctx.fillText("?", 580, y + 65); ctx.textAlign = "left";
     }
   });
+  ctx.restore();
   ctx.textAlign = "center"; ctx.fillStyle = "#666"; ctx.font = "12px monospace";
   ctx.fillText("A/D o ←/→ cambiar categoría  •  ESC para volver", canvas.width/2, 560);
+  ctx.fillText(diaryScroll > 0 ? "↑ W / Flecha arriba" : "↓ S / Flecha abajo", canvas.width/2, 578);
   ctx.textAlign = "left";
 }
 
@@ -1534,10 +1567,12 @@ function drawShop() {
     return;
   }
   if (shopId === 0) {
-    var shopItems = ["🗺️ Mapa - 45 Azari", "🏹 Arco - 35 Azari", "🏹 20 flechas - 5 Azari", "❤️ Fragmento J1 - 25 Azari", "💗 Fragmento J2 - 25 Azari", "💎 Amuleto de Azari - 45 Azari", "🧲 Imán de Azari - 60 Azari", "🎒 Bolsa de Azari - 80 Azari", "🏮 Linterna - 70 Azari"];
+    var lanternPrice = !hasLantern ? 70 : (lanternLevel === 1 ? 110 : 180);
+    var lanternLabel = !hasLantern ? "🏮 Linterna I - 70 Azari" : (lanternLevel < 3 ? "🏮 Mejorar linterna " + (lanternLevel + 1) + " - " + lanternPrice + " Azari" : "🏮 Linterna III - MAX");
+    var shopItems = ["🗺️ Mapa - 45 Azari", "🏹 Arco - 35 Azari", "🏹 20 flechas - 5 Azari", "❤️ Fragmento J1 - 25 Azari", "💗 Fragmento J2 - 25 Azari", "💎 Amuleto de Azari - 45 Azari", "🧲 Imán de Azari - 60 Azari", "🎒 Bolsa de Azari - 80 Azari", lanternLabel];
     if (hasAzariMagnet) shopItems[6] += "  ✓";
     if (hasAzariBag) shopItems[7] += "  ✓";
-    if (hasLantern) shopItems[8] += "  ✓";
+    if (hasLantern && lanternLevel >= 3) shopItems[8] += "  ✓";
     for (var i = 0; i < shopItems.length; i++) {
       var itemY = 185 + i * 34;
       var selected = menuSelection === i;

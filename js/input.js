@@ -371,8 +371,10 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (pauseSubState === "diary") {
-      if (k === "a" || e.key === "ArrowLeft" || k === "q" || k === "1") diaryCategory = "enemies";
-      if (k === "d" || e.key === "ArrowRight" || k === "2") diaryCategory = "bosses";
+      if (k === "a" || e.key === "ArrowLeft" || k === "q" || k === "1") { diaryCategory = "enemies"; diaryScroll = 0; }
+      if (k === "d" || e.key === "ArrowRight" || k === "2") { diaryCategory = "bosses"; diaryScroll = 0; }
+      if (up || k === "w") { diaryScroll = Math.max(0, diaryScroll - 1); e.preventDefault(); return; }
+      if (down || k === "s") { diaryScroll = Math.min(diaryCategory === "enemies" ? 1 : 0, diaryScroll + 1); e.preventDefault(); return; }
       if (k === "a" || e.key === "ArrowLeft" || k === "q" || k === "1" ||
           k === "d" || e.key === "ArrowRight" || k === "2") e.preventDefault();
       return;
@@ -428,7 +430,7 @@ window.addEventListener("keydown", function(e) {
     if (e.key === "d" || e.key === "D") { keys["d"] = true; e.preventDefault(); }
     if (e.key === "ArrowLeft") { keys["arrowleft"] = true; e.preventDefault(); }
     if (e.key === "ArrowRight") { keys["arrowright"] = true; e.preventDefault(); }
-    if (e.key === " " || e.key === "Space") { keys[" "] = true; e.preventDefault(); }
+    if (e.key === " " || e.key === "Space" || e.code === "Space") { keys[" "] = true; e.preventDefault(); }
     if (e.key === "ArrowUp") { keys["arrowup"] = true; e.preventDefault(); }
     if (e.key === "ArrowDown") { keys["arrowdown"] = true; e.preventDefault(); }
     if (e.key === "s" || e.key === "S") { keys["s"] = true; e.preventDefault(); }
@@ -472,7 +474,10 @@ window.addEventListener("keydown", function(e) {
           if (menuSelection === 5 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; sfxBuy(); }
           if (menuSelection === 6 && !hasAzariMagnet && azari >= 60) { azari -= 60; hasAzariMagnet = true; sfxBuy(); }
           if (menuSelection === 7 && !hasAzariBag && azari >= 80) { azari -= 80; hasAzariBag = true; sfxBuy(); }
-          if (menuSelection === 8 && !hasLantern && azari >= 70) { azari -= 70; hasLantern = true; sfxBuy(); }
+          if (menuSelection === 8 && ((!hasLantern && azari >= 70) || (hasLantern && lanternLevel < 3 && azari >= (lanternLevel === 1 ? 110 : 180)))) {
+            azari -= hasLantern ? (lanternLevel === 1 ? 110 : 180) : 70;
+            hasLantern = true; lanternLevel = Math.min(3, lanternLevel + 1); sfxBuy();
+          }
           shopConfirm = -1;
         } else shopConfirm = menuSelection;
         e.preventDefault(); return;
@@ -525,7 +530,7 @@ document.addEventListener("keyup", function(e) {
   if (e.key === "d" || e.key === "D") keys["d"] = false;
   if (e.key === "ArrowLeft") keys["arrowleft"] = false;
   if (e.key === "ArrowRight") keys["arrowright"] = false;
-  if (e.key === " " || e.key === "Space") keys[" "] = false;
+  if (e.key === " " || e.key === "Space" || e.code === "Space") keys[" "] = false;
   if (e.key === "ArrowUp") keys["arrowup"] = false;
   if (e.key === "ArrowUp") keys["arrowup"] = false;
   if (e.key === "ArrowDown") keys["arrowdown"] = false;
@@ -601,7 +606,10 @@ function processGamepadInput() {
         if (menuSelection === 5 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; sfxBuy(); }
         if (menuSelection === 6 && !hasAzariMagnet && azari >= 60) { azari -= 60; hasAzariMagnet = true; sfxBuy(); }
         if (menuSelection === 7 && !hasAzariBag && azari >= 80) { azari -= 80; hasAzariBag = true; sfxBuy(); }
-        if (menuSelection === 8 && !hasLantern && azari >= 70) { azari -= 70; hasLantern = true; sfxBuy(); }
+        if (menuSelection === 8 && ((!hasLantern && azari >= 70) || (hasLantern && lanternLevel < 3 && azari >= (lanternLevel === 1 ? 110 : 180)))) {
+          azari -= hasLantern ? (lanternLevel === 1 ? 110 : 180) : 70;
+          hasLantern = true; lanternLevel = Math.min(3, lanternLevel + 1); sfxBuy();
+        }
       } else {
         if (menuSelection === 0 && swordLevel < 3 && hasSword && azari >= 30) { azari -= 30; swordLevel++; sfxBuy(); }
         if (menuSelection === 1 && bowLevel < 3 && hasBow && azari >= 30) { azari -= 30; bowLevel++; sfxBuy(); }

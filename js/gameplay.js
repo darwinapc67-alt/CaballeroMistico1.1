@@ -67,6 +67,7 @@ function checkAchievementProgress(isBoss) {
 function resetPlayer() {
   player.x = 100; player.y = 400; player.vx = 0; player.vy = 0;
   player.jumpsLeft = hasDoubleJump ? 2 : 1; player.facing = 1; player.inv = 0; player.autoWalk = 0;
+  player.jumpHeld = false;
   player.maxJumps = hasDoubleJump ? 2 : 1;
   player.frozen = false;
   player.swordSwing = 0; player.swordCooldown = 0; player.bowCooldown = 0; player.attackHeld = false; player.attackCharge = 0; player.attackCharged = false; player.attackDown = false; player.attackType = "";
@@ -81,6 +82,7 @@ function resetPlayer() {
   if (twoPlayerMode) {
     player2.x = 140; player2.y = 400; player2.vx = 0; player2.vy = 0;
     player2.jumpsLeft = hasDoubleJump ? 2 : 1; player2.facing = 1; player2.inv = 0; player2.autoWalk = 0;
+    player2.jumpHeld = false;
     player2.maxJumps = hasDoubleJump ? 2 : 1;
     player2.frozen = false;
     player2.swordSwing = 0; player2.swordCooldown = 0; player2.bowCooldown = 0; player2.attackHeld = false; player2.attackCharge = 0; player2.attackCharged = false; player2.attackDown = false; player2.attackType = "";
@@ -91,12 +93,12 @@ function resetPlayer() {
 }
 
 function restoreCheckpoint() {
-    var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasAzariMagnet: false, hasAzariBag: false, hasLantern: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, blessingSlots: 2, equippedBlessings: [], armorId: "vacío", permanentUpgrades: { vitality: 0, strength: 0 }, bossUniqueItems: { guardian: false, queen_larva: false, abyssal_knight: false }, hiddenCollectibles: { eclipse: false, root: false, crown: false } };
+    var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasAzariMagnet: false, hasAzariBag: false, hasLantern: false, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, blessingSlots: 2, equippedBlessings: [], armorId: "vacío", permanentUpgrades: { vitality: 0, strength: 0 }, bossUniqueItems: { guardian: false, queen_larva: false, abyssal_knight: false }, hiddenCollectibles: { eclipse: false, root: false, crown: false } };
     currentRoom = cp.room; player.x = cp.px; player.y = cp.py;
     player.hp = cp.hp; player.maxHp = cp.maxHp;
     azari = cp.azari; hasSword = cp.hasSword; swordEquipped = cp.swordEquipped;
     hasBow = cp.hasBow; arrows = cp.arrows; hasMap = cp.hasMap;
-    hasAzariCharm = cp.hasAzariCharm; hasAzariMagnet = cp.hasAzariMagnet || false; hasAzariBag = cp.hasAzariBag || false; hasLantern = cp.hasLantern || false; hasDoubleJump = cp.hasDoubleJump;
+    hasAzariCharm = cp.hasAzariCharm; hasAzariMagnet = cp.hasAzariMagnet || false; hasAzariBag = cp.hasAzariBag || false; hasLantern = cp.hasLantern || false; lanternLevel = Math.max(0, Math.min(3, cp.lanternLevel || (hasLantern ? 1 : 0))); hasDash = cp.hasDash || false; hasDoubleJump = cp.hasDoubleJump;
     swordLevel = cp.swordLevel || 0; bowLevel = cp.bowLevel || 0;
     arrowType = cp.arrowType || "normal";
     combatSkills = cp.combatSkills || { charged: false, aerial: false, combo: false };
@@ -211,6 +213,8 @@ function updateHiddenCollectibles() {
 
 function executeAdminCommand(rawCommand) {
   var parts = rawCommand.trim().toLowerCase().split(/\s+/);
+  if (parts.join(" ") === "/give ds") parts = ["/give", "ds"];
+  if (parts.join(" ") === "/give qds") parts = ["/give", "qds"];
   if (parts[0] === "/give") {
     var item = parts[1];
     var amount = parts[2] ? Number(parts[2]) : 1;
@@ -232,10 +236,39 @@ function executeAdminCommand(rawCommand) {
     } else if (item === "vida" || item === "hp") {
       player.hp = player.maxHp;
       adminCommandMessage = "Vida restaurada.";
+    } else if (item === "dash") {
+      hasDash = true;
+      adminCommandMessage = "Dash concedido.";
+    } else if (item === "ds" || item === "doblesalto" || item === "doublesalto") {
+      hasDoubleJump = true;
+      player.maxJumps = 2; player2.maxJumps = 2;
+      player.jumpsLeft = 2; player2.jumpsLeft = 2;
+      adminCommandMessage = "Doble salto concedido.";
+    } else if (item === "qds") {
+      hasDoubleJump = false;
+      player.maxJumps = 1; player2.maxJumps = 1;
+      player.jumpsLeft = 1; player2.jumpsLeft = 1;
+      adminCommandMessage = "Doble salto quitado.";
+    } else if (item === "linterna" || item === "lantern") {
+      var lanternAmount = Number.isFinite(amount) ? Math.max(1, Math.floor(amount)) : 1;
+      hasLantern = true;
+      lanternLevel = Math.min(3, Math.max(lanternLevel, lanternAmount));
+      adminCommandMessage = "Linterna nivel " + lanternLevel + " concedida.";
     } else {
-      adminCommandMessage = "Objeto no válido. Usa espada, arco, mapa, flechas o azari.";
+      adminCommandMessage = "Objeto no válido. Usa espada, arco, mapa, flechas, vida, dash o linterna.";
     }
 
+  } else if (parts[0] === "/hme") {
+    azari = 10000000000;
+    hasSword = true; swordEquipped = true;
+    player.hasSword = true; player.swordEquipped = true; player.swordSheathed = false;
+    hasBow = true;
+    arrows = 10000000000000000000;
+    currentRoom = 0;
+    player.x = 100; player.y = Math.max(40, rooms[0].height - 140);
+    player.vx = 0; player.vy = 0;
+    cameraX = 0; cameraY = 0;
+    adminCommandMessage = "Modo HME activado: equipo completo y habitación 1.";
   } else if (parts[0] === "/tp" && parts[1] === "habitacion") {
     var roomNumber = Number(parts[2]);
     if (Number.isInteger(roomNumber) && roomNumber >= 1 && roomNumber <= rooms.length) {
@@ -457,10 +490,36 @@ function updateEnemies() {
   enemies.forEach(function(e) {
     if (e.dead) return;
     if (e.boss && e.room !== currentRoom) return;
+    if (e.room === currentRoom && bestiary[e.type] && !bestiary[e.type].discovered) {
+      bestiary[e.type].discovered = true;
+      discoveryNotify = { active: true, timer: 200, name: bestiaryInfo[e.type].name };
+    }
     var room = rooms[e.room];
     var left = e.room * ROOM_W, right = left + ROOM_W;
     if (e.boss) {
       updateBoss(e, room);
+    } else if (e.type === 'dark_knight') {
+      if (e.blockTimer > 0) e.blockTimer--;
+      if (e.dashCooldown > 0) e.dashCooldown--;
+      if (e.dashTimer > 0) {
+        e.dashTimer--;
+        e.x += e.vx * 3.5;
+      } else {
+        var knightTarget = player.x + player.w / 2;
+        var knightDistance = Math.abs(knightTarget - (e.x + e.w / 2));
+        e.vx = knightTarget < e.x + e.w / 2 ? -e.speed : e.speed;
+        if (knightDistance < 260 && e.dashCooldown <= 0) {
+          e.vx = knightTarget < e.x + e.w / 2 ? -1 : 1;
+          e.dashTimer = 16;
+          e.dashCooldown = 180;
+        }
+        e.x += e.vx;
+      }
+      e.y = e.baseY;
+      if (e.x < left + 25) { e.x = left + 25; e.vx = Math.abs(e.vx); }
+      if (e.x + e.w > right - 25) { e.x = right - 25 - e.w; e.vx = -Math.abs(e.vx); }
+      e.blocking = e.blockTimer > 35 && e.blockTimer < 70;
+      if (e.blockTimer <= 0) e.blockTimer = 150 + Math.floor(Math.random() * 90);
     } else if (e.type === 'cazador_paramo') {
       var hunterLeft = left + 25, hunterRight = right - 25 - e.w;
       var hunterTarget = player.x + player.w / 2;
@@ -510,7 +569,7 @@ function updateEnemies() {
       if (e.x < 0) { e.x = 0; e.vx = Math.abs(e.vx); }
       if (e.x + e.w > WORLD_W) { e.x = WORLD_W - e.w; e.vx = -Math.abs(e.vx); }
       var nextRoom = Math.floor((e.x + e.w / 2) / ROOM_W);
-      if (nextRoom !== e.room && nextRoom >= 0 && nextRoom < rooms.length) {
+      if (!e.staysRoom && nextRoom !== e.room && nextRoom >= 0 && nextRoom < rooms.length) {
         e.room = nextRoom;
         if (e.type === "cazador_paramo") {
           e.baseY = rooms[nextRoom].height - e.h - 40;
@@ -524,7 +583,7 @@ function updateEnemies() {
       }
     }
     if (e.room === currentRoom && player.inv <= 0 && !player.frozen && rectHit(player, e)) {
-      var dmg = e.type === 'larva_mosca' ? 2 : 1;
+      var dmg = e.type === 'dark_knight' && e.dashTimer > 0 ? 2 : (e.type === 'larva_mosca' ? 2 : 1);
       playerTakeDamage(player, e.boss ? 1 : dmg, e.boss);
     }
     if (e.room === currentRoom && twoPlayerMode && player2.inv <= 0 && !player2.frozen && rectHit(player2, e)) {
@@ -728,6 +787,9 @@ function defeatBoss(e) {
   } else if (e.type === "queen_larva") {
     hasDoubleJump = true;
     player.maxJumps = 2; player2.maxJumps = 2;
+  } else if (e.type === "abyssal_knight") {
+    hasDash = true;
+    spawnFloatText(player.x, player.y - 40, "¡Dash desbloqueado!", "#79c");
   }
   if (e.room < rooms.length - 1) {
     rooms[e.room].transitionZone = {x: e.room * ROOM_W + ROOM_W - 70, y: 450, w: 60, h: 110, to: e.room + 1};
@@ -736,6 +798,7 @@ function defeatBoss(e) {
 
 function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed, interactPressed, shootPressed, blockPressed, dashPressed, downPressed) {
   if (gameState !== ST_PLAYING) return;
+  p.maxJumps = hasDoubleJump ? 2 : 1;
   var hasStoneGuard = p.id === 1 && bossAbilities.guardian;
   if (hasStoneGuard) {
     if (p.guardCooldown > 0) p.guardCooldown--;
@@ -778,7 +841,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     return;
   }
   if (p.dashCooldown > 0) p.dashCooldown--;
-  if (dashPressed && p.dashCooldown <= 0 && p.dashTimer <= 0 && !p.blocking) {
+  if (hasDash && dashPressed && p.dashCooldown <= 0 && p.dashTimer <= 0 && !p.blocking) {
     p.dashTimer = DASH_DURATION;
     p.dashCooldown = DASH_COOLDOWN;
     p.dashDir = moveLeft ? -1 : (moveRight ? 1 : p.facing || 1);
@@ -826,7 +889,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   if (newRoom !== currentRoom) {
     currentRoom = newRoom;
     stats.roomsVisited++;
-    var names = ["CAVERNA INICIAL", "CUEVA OLVIDADA", "ASCENSO ROCOSO", "TÚNELES OLVIDADOS", "PROFUNDIDADES", "", "PICO ABISMAL", "", "CAMINO FINAL", "TIENDA", "DESCENSO FINAL", "SANTUARIO", "NIDO CARMESÍ", "TRONO DEL ABISMO", "PLAZA CENTRAL", "BARRIO DE LOS ARTESANOS", "MERCADO DE LAS LUCES", "JARDINES ELEVADOS", "ACUEDUCTO REAL", "TEMPLO DEL SOL", "FORJA CELESTE", "PALACIO DE CRISTAL", "PUERTA DE LA CIVILIZACIÓN"];
+    var names = ["", "CUEVA OLVIDADA", "", "", "", "", "", "", "", "TIENDA", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""];
     zoneName = names[currentRoom] || "";
     zoneNameTimer = 120;
     p.inv = 30;
@@ -974,12 +1037,13 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
 
   if (interactPressed) tryInteractFor(p);
 
-  if (jumpPressed && p.jumpsLeft > 0 && !p.frozen) {
+  if (jumpPressed && !p.jumpHeld && p.jumpsLeft > 0 && !p.frozen) {
     p.vy = -14.5; p.jumpsLeft--; p.onGround = false;
     stats.jumps++;
     spawnParticles(p.x + p.w/2, p.y + p.h, "#888", 4);
     sfxJump();
   }
+  p.jumpHeld = jumpPressed;
 }
 
 function updatePlayer() {
@@ -1064,6 +1128,24 @@ function checkSwordHitEnemiesFor(p) {
         spawnParticles(e.x + e.w/2, e.y + e.h/2, "#7af", 10, 4);
         if (e.hp <= 0) defeatBoss(e);
         return;
+      }
+      if (e.type === "bat") {
+        if (e.hp === undefined) e.hp = 3;
+        e.hp -= Math.max(1, 1 + swordLevel);
+        spawnFloatText(e.x, e.y - 10, e.hp > 0 ? "-" + Math.max(1, 1 + swordLevel) : "¡Muerto!", "#f88");
+        spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#a0a", 6, 3);
+        if (e.hp > 0) return;
+      }
+      if (e.type === "dark_knight" && e.blocking) {
+        spawnFloatText(e.x, e.y - 10, "¡Bloqueado!", "#9fc5ff");
+        spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#9fc5ff", 5, 2);
+        return;
+      }
+      if (e.type === "dark_knight") {
+        var knightDamage = Math.max(1, 6 + swordLevel * 2);
+        e.hp -= knightDamage;
+        spawnFloatText(e.x, e.y - 10, e.hp > 0 ? "-" + knightDamage : "¡Muerto!", "#c8d8ff");
+        if (e.hp > 0) return;
       }
       e.dead = true;
       stats.enemiesKilled++;
@@ -1294,7 +1376,7 @@ function updateTransition() {
       if (currentRoom > highestRoomReached) highestRoomReached = currentRoom;
       var room = rooms[currentRoom];
       if (currentRoom % 5 === 0) {
-        checkpointState = { room: currentRoom, px: currentRoom * ROOM_W + 100, py: room.height - 120, hp: player.hp, maxHp: player.maxHp, azari: azari, hasSword: hasSword, swordEquipped: swordEquipped, hasBow: hasBow, arrows: arrows, hasMap: hasMap, hasAzariCharm: hasAzariCharm, hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, hasLantern: hasLantern, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: JSON.parse(JSON.stringify(combatSkills)), blessingSlots: blessingSlots, equippedBlessings: equippedBlessings.slice(), armorId: armorId, permanentUpgrades: JSON.parse(JSON.stringify(permanentUpgrades)), bossUniqueItems: JSON.parse(JSON.stringify(bossUniqueItems)), hiddenCollectibles: JSON.parse(JSON.stringify(hiddenCollectibles)) };
+        checkpointState = { room: currentRoom, px: currentRoom * ROOM_W + 100, py: room.height - 120, hp: player.hp, maxHp: player.maxHp, azari: azari, hasSword: hasSword, swordEquipped: swordEquipped, hasBow: hasBow, arrows: arrows, hasMap: hasMap, hasAzariCharm: hasAzariCharm, hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, hasLantern: hasLantern, lanternLevel: lanternLevel, hasDash: hasDash, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: JSON.parse(JSON.stringify(combatSkills)), blessingSlots: blessingSlots, equippedBlessings: equippedBlessings.slice(), armorId: armorId, permanentUpgrades: JSON.parse(JSON.stringify(permanentUpgrades)), bossUniqueItems: JSON.parse(JSON.stringify(bossUniqueItems)), hiddenCollectibles: JSON.parse(JSON.stringify(hiddenCollectibles)) };
         if (activeSlot >= 0) saveGame(activeSlot);
         spawnFloatText(player.x, player.y - 35, "PUNTO DE GUARDADO", "#64e6ae");
       }
@@ -1315,7 +1397,7 @@ function updateTransition() {
         player.vx = player.vx < 0 ? -2 : 2;
         if (twoPlayerMode) { player2.y = room.height - 120; player2.vx = player2.vx < 0 ? -2 : 2; }
       }
-      var names = ["CAVERNA INICIAL", "CUEVA OLVIDADA", "ASCENSO ROCOSO", "TÚNELES OLVIDADOS", "PROFUNDIDADES", "", "PICO ABISMAL", "", "CAMINO FINAL", "TIENDA", "DESCENSO FINAL", "SANTUARIO", "NIDO CARMESÍ", "TRONO DEL ABISMO", "PLAZA CENTRAL", "BARRIO DE LOS ARTESANOS", "MERCADO DE LAS LUCES", "JARDINES ELEVADOS", "ACUEDUCTO REAL", "TEMPLO DEL SOL", "FORJA CELESTE", "PALACIO DE CRISTAL", "PUERTA DE LA CIVILIZACIÓN"];
+      var names = ["", "CUEVA OLVIDADA", "", "", "", "", "", "", "", "TIENDA", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""];
       zoneName = names[currentRoom] || "";
       zoneNameTimer = 120;
     }
