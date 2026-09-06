@@ -3,12 +3,29 @@ window.addEventListener("keydown", function(e) {
   var k = e.key.toLowerCase();
   var up = e.key === "ArrowUp" || e.code === "ArrowUp";
   var down = e.key === "ArrowDown" || e.code === "ArrowDown";
-  var confirm = e.key === "Enter" || e.code === "Enter" || e.code === "NumpadEnter" || e.key === " ";
+  var confirm = e.key === "Enter" || e.key === "Return" || e.code === "Enter" || e.code === "NumpadEnter" || e.key === " ";
 
-  if (gameState === ST_MENU && menuSubState === "difficulty" && confirm) {
+  if (gameState === ST_MENU && menuSubState === "difficulty") {
+    var keyCode = e.which || e.keyCode;
+    var difficultyUp = up || keyCode === 38 || k === "w";
+    var difficultyDown = down || keyCode === 40 || k === "s";
+    var difficultyConfirm = confirm || keyCode === 13;
+    var directDifficulty = k === "1" ? 0 : (k === "2" ? 1 : (k === "3" ? 2 : -1));
+    if (difficultyUp) {
+      difficultySelection = (difficultySelection + difficultyOptions.length - 1) % difficultyOptions.length;
+    } else if (difficultyDown) {
+      difficultySelection = (difficultySelection + 1) % difficultyOptions.length;
+    } else if (directDifficulty >= 0) {
+      difficultySelection = directDifficulty;
+    } else if (difficultyConfirm) {
+      beginNewGameFromDifficulty();
+    } else if (e.key === "Escape") {
+      menuSubState = "slots";
+    } else {
+      return;
+    }
     e.preventDefault();
     e.stopImmediatePropagation();
-    beginNewGameFromDifficulty();
     return;
   }
 
@@ -156,7 +173,7 @@ window.addEventListener("keydown", function(e) {
           var objectX = 175 + index * 230 + 48;
           var distance = Math.abs(interiorPlayer.x - objectX);
           if (distance < nearestDistance) { nearest = index; nearestDistance = distance; }
-        });
+        }, true);
         interiorSelection = nearest;
         var objectX = 175 + interiorSelection * 230 + 48;
         if (Math.abs(interiorPlayer.x - objectX) < 115) {
@@ -304,6 +321,11 @@ window.addEventListener("keydown", function(e) {
     if (menuSubState === "difficulty") {
       if (up || k === "w") { difficultySelection = (difficultySelection - 1 + difficultyOptions.length) % difficultyOptions.length; e.preventDefault(); return; }
       if (down || k === "s") { difficultySelection = (difficultySelection + 1) % difficultyOptions.length; e.preventDefault(); return; }
+      if (confirm) {
+        beginNewGameFromDifficulty();
+        e.preventDefault();
+        return;
+      }
       return;
     }
 
@@ -319,7 +341,7 @@ window.addEventListener("keydown", function(e) {
           if (loadGame(menuSelection)) { gameState = ST_PLAYING; startMusic(); updateUI(); }
         } else {
           difficultySelection = 1;
-          menuSubState = "difficulty";
+          beginNewGameFromDifficulty();
         }
         e.preventDefault();
         return;
@@ -487,7 +509,7 @@ window.addEventListener("keydown", function(e) {
     }
     if (e.key === "Escape") { shopOpen = false; shopMenuOpen = false; shopConfirm = -1; shopExitCooldown = 30; player.x = shopPreviousX; player.y = shopPreviousY; e.preventDefault(); return; }
   }
-});
+}, true);
 
 function toggleBlessing(id) {
   var index = equippedBlessings.indexOf(id);
@@ -647,7 +669,7 @@ function processGamepadInput() {
         if (loadGame(menuSelection)) { gameState = ST_PLAYING; startMusic(); updateUI(); }
       } else {
         difficultySelection = 1;
-        menuSubState = "difficulty";
+        beginNewGameFromDifficulty();
       }
     }
     return;

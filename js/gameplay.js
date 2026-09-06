@@ -75,7 +75,7 @@ function resetPlayer() {
   player.dashTimer = 0; player.dashCooldown = 0; player.dashDir = 1; player.dashing = false; player.recoilTimer = 0;
   playerDead = false;
   deathTimer = 0;
-  particles = []; floatTexts = []; arrowsInFlight = []; healingHearts = []; flash = 0;
+  particles = []; floatTexts = []; arrowsInFlight = []; healingHearts = []; azariDrops = []; flash = 0;
   healing = false; healTimer = 0;
   hitFlash = 0; needsRespawn = false;
   if (twoPlayerMode) {
@@ -236,11 +236,6 @@ function executeAdminCommand(rawCommand) {
       adminCommandMessage = "Objeto no válido. Usa espada, arco, mapa, flechas o azari.";
     }
 
-    function collectAzari(amount) {
-      var maxAzari = hasAzariBag ? 9999 : 999;
-      var magnetBonus = hasAzariMagnet ? 1 : 0;
-      azari = Math.min(maxAzari, azari + Math.max(0, amount) + magnetBonus);
-    }
   } else if (parts[0] === "/tp" && parts[1] === "habitacion") {
     var roomNumber = Number(parts[2]);
     if (Number.isInteger(roomNumber) && roomNumber >= 1 && roomNumber <= rooms.length) {
@@ -257,6 +252,11 @@ function executeAdminCommand(rawCommand) {
   } else {
     adminCommandMessage = "Comando no válido. Usa /give o /tp habitacion.";
   }
+}
+
+function collectAzari(amount) {
+  var maxAzari = hasAzariBag ? 9999 : 999;
+  azari = Math.min(maxAzari, azari + Math.max(0, amount));
 }
 
 function bossTarget(e) {
@@ -589,8 +589,50 @@ function updateWaterDrops() {
     waterDrops.push({ x: currentRoom * ROOM_W + 20 + Math.random() * (ROOM_W - 40), y: cameraY - 12, vy: 3 + Math.random() * 2, life: 90 });
     sfxWaterDrop();
   }
+
   waterDrops.forEach(function(drop) { drop.y += drop.vy; drop.life--; });
   waterDrops = waterDrops.filter(function(drop) { return drop.life > 0 && drop.y < cameraY + canvas.height + 10; });
+}
+
+function dropAzari(e, amount) {
+  azariDrops.push({
+    x: e.x + e.w / 2 - 8, y: e.y + e.h / 2 - 8, w: 16, h: 16,
+    vx: (Math.random() - 0.5) * 2, vy: -3, amount: amount, life: 900
+  });
+}
+
+function updateAzariDrops() {
+  for (var i = azariDrops.length - 1; i >= 0; i--) {
+    var drop = azariDrops[i];
+    var target = null;
+    var bestDistance = hasAzariMagnet ? 260 : 34;
+    [player, twoPlayerMode ? player2 : null].forEach(function(p) {
+      if (!p) return;
+      var dx = p.x + p.w / 2 - (drop.x + drop.w / 2);
+      var dy = p.y + p.h / 2 - (drop.y + drop.h / 2);
+      var distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance < bestDistance) { bestDistance = distance; target = p; }
+    });
+    if (target) {
+      var tx = target.x + target.w / 2 - (drop.x + drop.w / 2);
+      var ty = target.y + target.h / 2 - (drop.y + drop.h / 2);
+      var distanceToTarget = Math.max(1, Math.sqrt(tx * tx + ty * ty));
+      drop.vx += tx / distanceToTarget * (hasAzariMagnet ? 0.45 : 0.15);
+      drop.vy += ty / distanceToTarget * (hasAzariMagnet ? 0.45 : 0.15);
+    } else {
+      drop.vy += 0.14;
+    }
+    drop.vx *= 0.98;
+    drop.x += drop.vx; drop.y += drop.vy; drop.life--;
+    if (target && rectHit(drop, target)) {
+      collectAzari(drop.amount);
+      spawnFloatText(drop.x, drop.y - 8, "+" + drop.amount + " Azari", "#0ff");
+      sfxCoin();
+      azariDrops.splice(i, 1);
+    } else if (drop.life <= 0) {
+      azariDrops.splice(i, 1);
+    }
+  }
 }
 
 function updateArrows() {
@@ -612,11 +654,11 @@ function updateArrows() {
           e.dead = true; stats.enemiesKilled++; checkAchievementProgress(false); hitEnemy = true;
           if (bestiary[e.type]) { bestiary[e.type].count++; bestiary[e.type].discovered = true; }
           var gain = e.type === "larva_mosca" ? 4 : 2;
-          collectAzari(gain);
+          dropAzari(e, gain);
           dropHealingHeart(e);
           spawnParticles(e.x + e.w/2, e.y + e.h/2, "#f88", 12, 5);
           spawnFloatText(e.x, e.y - 10, "¡Muerto!", "#f88");
-          sfxEnemyDie(); sfxCoin();
+          sfxEnemyDie();
           sfxBossDoorsOpen();
         }
       }
@@ -1012,7 +1054,7 @@ function checkSwordHitEnemiesFor(p) {
       }
       var baseGain = e.type === 'larva_mosca' ? 4 : 2;
       var azariGain = hasAzariCharm ? baseGain * 2 : baseGain;
-      collectAzari(azariGain);
+      dropAzari(e, azariGain);
       if (bestiary[e.type]) bestiary[e.type].count++;
       if (bestiary[e.type] && !bestiary[e.type].discovered) {
         bestiary[e.type].discovered = true;
@@ -1023,8 +1065,7 @@ function checkSwordHitEnemiesFor(p) {
       spawnParticles(e.x + e.w/2, e.y + e.h/2, "#440", 8, 3);
       p.vy = -11; p.onGround = false; p.jumpsLeft = p.maxJumps;
       spawnFloatText(e.x, e.y - 10, "¡Muerto!", "#f88");
-      spawnFloatText(e.x, e.y - 25, "+" + azariGain + " Azari", "#0ff");
-      sfxEnemyDie(); sfxCoin();
+      sfxEnemyDie();
     }
   });
 }

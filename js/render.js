@@ -809,6 +809,19 @@ function drawGameWorld() {
     ctx.fillStyle = "#eee";
     ctx.fillRect(arrow.x + (arrow.vx > 0 ? arrow.w : -4), arrow.y - 2, 4, arrow.h + 4);
   });
+  azariDrops.forEach(function(drop) {
+    var pulse = 1 + Math.sin(Date.now() / 140 + drop.x) * 0.15;
+    ctx.save();
+    ctx.translate(drop.x + drop.w / 2, drop.y + drop.h / 2);
+    ctx.scale(pulse, pulse);
+    ctx.fillStyle = "#42d9ff";
+    ctx.shadowColor = "#42d9ff";
+    ctx.shadowBlur = hasAzariMagnet ? 14 : 7;
+    ctx.beginPath();
+    ctx.moveTo(0, -8); ctx.lineTo(7, 0); ctx.lineTo(0, 8); ctx.lineTo(-7, 0);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  });
   drawPlayerEntity(player);
   if (twoPlayerMode) drawPlayerEntity(player2);
 
@@ -1191,7 +1204,7 @@ function drawMenu() {
     });
     ctx.fillStyle = "#666";
     ctx.font = "12px monospace";
-    ctx.fillText("↑/↓ Navegar  •  ENTER Confirmar  •  ESC Volver", canvas.width / 2, 500);
+    ctx.fillText("↑/↓ Navegar  •  1/2/3 Elegir  •  ENTER Confirmar  •  ESC Volver", canvas.width / 2, 500);
   }
   if (menuSubState === "settings") {
     ctx.fillStyle = "rgba(0,0,0,0.94)";

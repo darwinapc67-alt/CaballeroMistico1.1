@@ -30,6 +30,7 @@ function resetAll() {
   frameCounter = 0;
   bestiary = { bat: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 }, cazador_paramo: { discovered: false, count: 0 } };
   deathParticles = [];
+  azariDrops = [];
   playerDead = false; deathTimer = 0;
   deathChoice = 0; deathAnimTimer = 0;
   consecutiveDeaths = 0;
@@ -156,6 +157,7 @@ function update() {
     updatePlayer2();
     updateEnemies();
     updateArrows();
+    updateAzariDrops();
     updateHealingHearts();
     updateHiddenCollectibles();
     updateBossProjectiles();
@@ -252,13 +254,4 @@ ctx.fillText = function(text, x, y, maxWidth) {
 };
 resetAll();
 setupTouchControls();
-window.addEventListener("keydown", function(event) {
-  var confirmDifficulty = event.key === "Enter" || event.code === "Enter" ||
-    event.code === "NumpadEnter" || event.key === " ";
-  if (gameState === ST_MENU && menuSubState === "difficulty" && confirmDifficulty) {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    beginNewGameFromDifficulty();
-  }
-}, true);
 loop();

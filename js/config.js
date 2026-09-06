@@ -189,6 +189,7 @@ var inventoryOpen = false, mapOpen = false, inventorySelection = 0, inventoryHov
 
 var stalactites = [];
 var waterDrops = [];
+var azariDrops = [];
 var deathParticles = [];
 var playerDead = false;
 var deathTimer = 0;
