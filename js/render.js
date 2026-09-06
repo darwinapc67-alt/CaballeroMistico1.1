@@ -811,14 +811,16 @@ function drawGameWorld() {
   });
   azariDrops.forEach(function(drop) {
     var pulse = 1 + Math.sin(Date.now() / 140 + drop.x) * 0.15;
+    var crystalColor = drop.type === "large" ? "#ffd447" : (drop.type === "small" ? "#9eeaff" : "#42d9ff");
     ctx.save();
     ctx.translate(drop.x + drop.w / 2, drop.y + drop.h / 2);
     ctx.scale(pulse, pulse);
-    ctx.fillStyle = "#42d9ff";
-    ctx.shadowColor = "#42d9ff";
+    ctx.fillStyle = crystalColor;
+    ctx.shadowColor = crystalColor;
     ctx.shadowBlur = hasAzariMagnet ? 14 : 7;
     ctx.beginPath();
-    ctx.moveTo(0, -8); ctx.lineTo(7, 0); ctx.lineTo(0, 8); ctx.lineTo(-7, 0);
+    ctx.moveTo(0, -drop.h / 2); ctx.lineTo(drop.w / 2, 0);
+    ctx.lineTo(0, drop.h / 2); ctx.lineTo(-drop.w / 2, 0);
     ctx.closePath(); ctx.fill();
     ctx.restore();
   });

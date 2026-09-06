@@ -595,9 +595,23 @@ function updateWaterDrops() {
 }
 
 function dropAzari(e, amount) {
+  var roll = Math.random();
+  var dropAmount = amount;
+  var dropSize = 16;
+  var dropType = "normal";
+  if (roll >= 0.85 && roll < 0.95) {
+    dropAmount = 10;
+    dropSize = 26;
+    dropType = "large";
+  } else if (roll >= 0.95) {
+    dropAmount = 0.5;
+    dropSize = 8;
+    dropType = "small";
+  }
   azariDrops.push({
-    x: e.x + e.w / 2 - 8, y: e.y + e.h / 2 - 8, w: 16, h: 16,
-    vx: (Math.random() - 0.5) * 2, vy: -3, amount: amount, life: 900
+    x: e.x + e.w / 2 - dropSize / 2, y: e.y + e.h / 2 - dropSize / 2,
+    w: dropSize, h: dropSize, vx: (Math.random() - 0.5) * 2, vy: -3,
+    amount: dropAmount, type: dropType, life: 900
   });
 }
 
@@ -622,8 +636,20 @@ function updateAzariDrops() {
     } else {
       drop.vy += 0.14;
     }
+    var dropRoom = rooms[Math.max(0, Math.min(rooms.length - 1, Math.floor((drop.x + drop.w / 2) / ROOM_W)))];
+    var previousBottom = drop.y + drop.h;
     drop.vx *= 0.98;
     drop.x += drop.vx; drop.y += drop.vy; drop.life--;
+    var landingY = dropRoom.height - drop.h;
+    dropRoom.platforms.forEach(function(platform) {
+      var overlapsX = drop.x < platform.x + platform.w && drop.x + drop.w > platform.x;
+      var crossedTop = previousBottom <= platform.y && drop.y + drop.h >= platform.y;
+      if (overlapsX && crossedTop && platform.y < landingY) landingY = platform.y - drop.h;
+    });
+    if (drop.y >= landingY) {
+      drop.y = landingY;
+      drop.vy = 0;
+    }
     if (target && rectHit(drop, target)) {
       collectAzari(drop.amount);
       spawnFloatText(drop.x, drop.y - 8, "+" + drop.amount + " Azari", "#0ff");
