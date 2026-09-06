@@ -3,7 +3,7 @@ var ROOM_W = 800, ROOM_H = 600, GRAVITY = 0.6;
 var DASH_SPEED = 12, DASH_DURATION = 10, DASH_COOLDOWN = 45, DASH_INV_FRAMES = 12;
 /* Rooms 0-9 are the original route, room 10 is the final descent, and
    rooms 11-13 are the Guardian, Queen Larva, and Abyssal Knight arenas. */
-var WORLD_W = 14 * ROOM_W;
+var WORLD_W = 23 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
 var VERSION = "v1.65";
 
@@ -362,6 +362,7 @@ function loadGame(i) {
   bossZonesUnlocked.abyssal_knight = bossArenaState.abyssal_knight;
   rooms[11].transitionZone = bossArenaState.guardian ? {x: 9540, y: 460, w: 40, h: 100, to: 12} : null;
   rooms[12].transitionZone = bossArenaState.queen_larva ? {x: 10340, y: 460, w: 40, h: 100, to: 13} : null;
+  rooms[13].transitionZone = bossArenaState.abyssal_knight ? {x: 11130, y: 460, w: 40, h: 100, to: 14} : null;
   if (hasDoubleJump) { player.maxJumps = 2; player2.maxJumps = 2; }
   if (s.bestiary) bestiary = JSON.parse(JSON.stringify(s.bestiary));
   Object.keys(bestiaryInfo).forEach(function(key) {
@@ -614,8 +615,48 @@ var room13 = {
   decor: genDecor(10400, 10, 5, 600), bossName: "CABALLERO ABISMAL"
 };
 
+function createCityRoom(index, district, features) {
+  var off = index * ROOM_W;
+  var platforms = [{x: off, y: 560, w: ROOM_W, h: 40}];
+  if (features.roofs) {
+    platforms.push({x: off + 65, y: 380, w: 190, h: 18});
+    platforms.push({x: off + 540, y: 320, w: 180, h: 18});
+  }
+  if (features.towers) {
+    platforms.push({x: off + 315, y: 250, w: 170, h: 18});
+    platforms.push({x: off + 350, y: 145, w: 100, h: 18});
+  }
+  if (features.bridge) {
+    platforms.push({x: off + 90, y: 430, w: 180, h: 16});
+    platforms.push({x: off + 500, y: 430, w: 210, h: 16});
+  }
+  return {
+    height: 600,
+    platforms: platforms,
+    spikes: [],
+    walls: [],
+    transitionZone: null,
+    city: true,
+    district: district,
+    cityFeatures: features,
+    decor: []
+  };
+}
+
+var cityRooms = [
+  createCityRoom(14, "PLAZA CENTRAL", {roofs: true, towers: true}),
+  createCityRoom(15, "BARRIO DE LOS ARTESANOS", {roofs: true, bridge: true}),
+  createCityRoom(16, "MERCADO DE LAS LUCES", {roofs: true, towers: true}),
+  createCityRoom(17, "JARDINES ELEVADOS", {roofs: false, bridge: true}),
+  createCityRoom(18, "ACUEDUCTO REAL", {roofs: false, towers: true, bridge: true}),
+  createCityRoom(19, "TEMPLO DEL SOL", {roofs: true, towers: true}),
+  createCityRoom(20, "FORJA CELESTE", {roofs: true, bridge: true}),
+  createCityRoom(21, "PALACIO DE CRISTAL", {roofs: true, towers: true}),
+  createCityRoom(22, "PUERTA DE LA CIVILIZACIÓN", {roofs: false, towers: true, bridge: true})
+];
+
 var rooms = [room0, room1, room2, room3, room4, room5, room6, room7, room8, room9,
-  room10, room11, room12, room13];
+  room10, room11, room12, room13].concat(cityRooms);
 
 var enemies = [
   {x: 150, y: 350, w: 24, h: 20, vx: 1.5, vy: 0, baseY: 350, range: 60, dead: false, room: 0, type: 'bat'},

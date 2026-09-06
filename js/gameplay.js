@@ -528,6 +528,12 @@ function updateEnemies() {
   });
 }
 
+function getActiveBoss(roomIndex) {
+  return enemies.find ? enemies.find(function(enemy) {
+    return enemy.boss && enemy.room === roomIndex && !enemy.dead;
+  }) : null;
+}
+
 function generateStalactites() {
   stalactites = [];
   for (var i = 0; i < 15; i++) {
@@ -733,12 +739,20 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   if (p.x < left + 5) { p.x = left + 5; p.vx = 0; }
   if (p.x + p.w > right - 5) { p.x = right - 5 - p.w; p.vx = 0; }
 
+  var activeArenaBoss = getActiveBoss(currentRoom);
+  if (activeArenaBoss && rooms[currentRoom].bossName) {
+    var arenaLeft = currentRoom * ROOM_W + 20;
+    var arenaRight = (currentRoom + 1) * ROOM_W - p.w - 20;
+    if (p.x < arenaLeft) { p.x = arenaLeft; p.vx = 0; }
+    if (p.x > arenaRight) { p.x = arenaRight; p.vx = 0; }
+  }
+
   var newRoom = Math.floor(p.x / ROOM_W);
   if (newRoom >= rooms.length) newRoom = rooms.length - 1;
   if (newRoom !== currentRoom) {
     currentRoom = newRoom;
     stats.roomsVisited++;
-    var names = ["CAVERNA INICIAL", "CUEVA OLVIDADA", "ASCENSO ROCOSO", "TÚNELES OLVIDADOS", "PROFUNDIDADES", "", "PICO ABISMAL", "", "CAMINO FINAL", "TIENDA"];
+    var names = ["CAVERNA INICIAL", "CUEVA OLVIDADA", "ASCENSO ROCOSO", "TÚNELES OLVIDADOS", "PROFUNDIDADES", "", "PICO ABISMAL", "", "CAMINO FINAL", "TIENDA", "DESCENSO FINAL", "SANTUARIO", "NIDO CARMESÍ", "TRONO DEL ABISMO", "PLAZA CENTRAL", "BARRIO DE LOS ARTESANOS", "MERCADO DE LAS LUCES", "JARDINES ELEVADOS", "ACUEDUCTO REAL", "TEMPLO DEL SOL", "FORJA CELESTE", "PALACIO DE CRISTAL", "PUERTA DE LA CIVILIZACIÓN"];
     zoneName = names[currentRoom] || "";
     zoneNameTimer = 120;
     p.inv = 30;
@@ -762,6 +776,12 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     }
   }
   if (p.y > room.height + 80) {
+    if (getActiveBoss(currentRoom) && room.bossName) {
+      p.x = Math.max(currentRoom * ROOM_W + 20, Math.min((currentRoom + 1) * ROOM_W - p.w - 20, p.x));
+      p.y = room.height - p.h - 10;
+      p.vx = 0; p.vy = 0;
+      return;
+    }
     if (currentRoom === 5) { startTransition(6, "forward"); return; }
     if (currentRoom < rooms.length - 1) { sfxFall(); startFallThroughTransition(currentRoom + 1); return; }
     p.x = currentRoom * ROOM_W + ROOM_W / 2 - p.w / 2 + (p.id === 2 ? 30 : -30);
@@ -793,9 +813,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       else if (p.vx < 0) { p.x = w.x + w.w; p.vx = 0; }
     }
   });
-  var arenaBoss = enemies.find ? enemies.find(function(enemy) {
-    return enemy.boss && enemy.room === currentRoom && !enemy.dead;
-  }) : null;
+  var arenaBoss = getActiveBoss(currentRoom);
   if (room.bossName && arenaBoss && p.x < currentRoom * ROOM_W + 20) {
     p.x = currentRoom * ROOM_W + 20;
     p.vx = 0;
@@ -1176,7 +1194,7 @@ function updateTransition() {
         player.vx = player.vx < 0 ? -2 : 2;
         if (twoPlayerMode) { player2.y = room.height - 120; player2.vx = player2.vx < 0 ? -2 : 2; }
       }
-      var names = ["CAVERNA INICIAL", "CUEVA OLVIDADA", "ASCENSO ROCOSO", "TÚNELES OLVIDADOS", "PROFUNDIDADES", "", "PICO ABISMAL", "", "CAMINO FINAL", "TIENDA"];
+      var names = ["CAVERNA INICIAL", "CUEVA OLVIDADA", "ASCENSO ROCOSO", "TÚNELES OLVIDADOS", "PROFUNDIDADES", "", "PICO ABISMAL", "", "CAMINO FINAL", "TIENDA", "DESCENSO FINAL", "SANTUARIO", "NIDO CARMESÍ", "TRONO DEL ABISMO", "PLAZA CENTRAL", "BARRIO DE LOS ARTESANOS", "MERCADO DE LAS LUCES", "JARDINES ELEVADOS", "ACUEDUCTO REAL", "TEMPLO DEL SOL", "FORJA CELESTE", "PALACIO DE CRISTAL", "PUERTA DE LA CIVILIZACIÓN"];
       zoneName = names[currentRoom] || "";
       zoneNameTimer = 120;
     }

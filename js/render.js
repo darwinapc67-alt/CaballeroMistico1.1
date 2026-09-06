@@ -41,6 +41,44 @@ function drawCaveBg(rx, decor, roomH) {
   });
 }
 
+function drawCityBg(rx, room) {
+  var palette = ["#182848", "#213b59", "#294a62", "#31586a"];
+  ctx.fillStyle = palette[room.district.length % palette.length];
+  ctx.fillRect(rx, 0, ROOM_W, room.height);
+  ctx.fillStyle = "rgba(255, 210, 120, 0.08)";
+  ctx.fillRect(rx, 80, ROOM_W, 210);
+  ctx.fillStyle = "#10182c";
+  ctx.fillRect(rx, 470, ROOM_W, 90);
+  for (var i = 0; i < 5; i++) {
+    var bx = rx + 25 + i * 165;
+    var bh = 120 + (i % 3) * 45;
+    ctx.fillStyle = i % 2 ? "#473d55" : "#57465b";
+    ctx.fillRect(bx, 560 - bh, 125, bh);
+    ctx.fillStyle = "#b87855";
+    ctx.beginPath();
+    ctx.moveTo(bx - 10, 560 - bh);
+    ctx.lineTo(bx + 62, 520 - bh);
+    ctx.lineTo(bx + 135, 560 - bh);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#ffd36a";
+    for (var w = 0; w < 3; w++) {
+      ctx.fillRect(bx + 20 + w * 34, 575 - bh, 12, 18);
+    }
+  }
+  ctx.fillStyle = "rgba(255, 211, 106, 0.8)";
+  for (var j = 0; j < 8; j++) {
+    var lampX = rx + 35 + j * 105;
+    ctx.fillRect(lampX, 120 + (j % 2) * 35, 4, 42);
+    ctx.beginPath();
+    ctx.arc(lampX + 2, 165 + (j % 2) * 35, 8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = "#f4d38a";
+  ctx.font = "bold 14px monospace";
+  ctx.fillText(room.district, rx + 22, 42);
+}
+
 function drawPlatforms(room) {
   room.platforms.forEach(function(p) {
     ctx.fillStyle = "#2a2a3a";
@@ -617,7 +655,8 @@ function drawGameWorld() {
     if (rx + ROOM_W < camLeft - 100 || rx > camRight + 100) continue;
     var room = rooms[r];
     if (room.height < camTop - 100 || 0 > camBottom + 100) continue;
-    drawCaveBg(rx, room.decor, room.height);
+    if (room.city) drawCityBg(rx, room);
+    else drawCaveBg(rx, room.decor, room.height);
     drawPlatforms(room);
     drawSpikes(room);
     if (r === 1) drawPedestal();
