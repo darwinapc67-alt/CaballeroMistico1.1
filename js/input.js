@@ -438,8 +438,8 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (shopId === 0) {
-      if (up || k === "w") { menuSelection = (menuSelection - 1 + 6) % 6; e.preventDefault(); return; }
-      if (down || k === "s") { menuSelection = (menuSelection + 1) % 6; e.preventDefault(); return; }
+      if (up || k === "w") { menuSelection = (menuSelection - 1 + 9) % 9; e.preventDefault(); return; }
+      if (down || k === "s") { menuSelection = (menuSelection + 1) % 9; e.preventDefault(); return; }
       if (confirm) {
         if (shopConfirm === menuSelection) {
           if (menuSelection === 0 && !hasMap && azari >= 45) { azari -= 45; hasMap = true; sfxBuy(); }
@@ -448,6 +448,9 @@ window.addEventListener("keydown", function(e) {
           if (menuSelection === 3 && heartFragmentsBought1 < 2 && azari >= 25) { azari -= 25; heartFragments1++; heartFragmentsBought1++; sfxBuy(); if (heartFragments1 >= 3) { heartFragments1 -= 3; player.maxHp++; player.hp = player.maxHp; } }
           if (menuSelection === 4 && heartFragmentsBought2 < 2 && azari >= 25) { azari -= 25; heartFragments2++; heartFragmentsBought2++; sfxBuy(); if (heartFragments2 >= 3) { heartFragments2 -= 3; player2.maxHp++; player2.hp = player2.maxHp; } }
           if (menuSelection === 5 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; sfxBuy(); }
+          if (menuSelection === 6 && !hasAzariMagnet && azari >= 60) { azari -= 60; hasAzariMagnet = true; sfxBuy(); }
+          if (menuSelection === 7 && !hasAzariBag && azari >= 80) { azari -= 80; hasAzariBag = true; sfxBuy(); }
+          if (menuSelection === 8 && !hasLantern && azari >= 70) { azari -= 70; hasLantern = true; sfxBuy(); }
           shopConfirm = -1;
         } else shopConfirm = menuSelection;
         e.preventDefault(); return;
@@ -562,7 +565,7 @@ function processGamepadInput() {
   var btn14 = gpButtons[14] && !prevGPButtons[14];
   var btn15 = gpButtons[15] && !prevGPButtons[15];
   if (shopOpen && (shopId === 0 || shopId === 1)) {
-    var shopOptions = shopId === 0 ? 6 : 7;
+    var shopOptions = shopId === 0 ? 9 : 7;
     if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
     if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + shopOptions) % shopOptions; gamepadMenuAxisLock = 1; }
     if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % shopOptions; gamepadMenuAxisLock = 1; }
@@ -574,6 +577,9 @@ function processGamepadInput() {
         if (menuSelection === 3 && heartFragmentsBought1 < 2 && azari >= 25) { azari -= 25; heartFragments1++; heartFragmentsBought1++; sfxBuy(); if (heartFragments1 >= 3) { heartFragments1 -= 3; player.maxHp++; player.hp = player.maxHp; } }
         if (menuSelection === 4 && heartFragmentsBought2 < 2 && azari >= 25) { azari -= 25; heartFragments2++; heartFragmentsBought2++; sfxBuy(); if (heartFragments2 >= 3) { heartFragments2 -= 3; player2.maxHp++; player2.hp = player2.maxHp; } }
         if (menuSelection === 5 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; sfxBuy(); }
+        if (menuSelection === 6 && !hasAzariMagnet && azari >= 60) { azari -= 60; hasAzariMagnet = true; sfxBuy(); }
+        if (menuSelection === 7 && !hasAzariBag && azari >= 80) { azari -= 80; hasAzariBag = true; sfxBuy(); }
+        if (menuSelection === 8 && !hasLantern && azari >= 70) { azari -= 70; hasLantern = true; sfxBuy(); }
       } else {
         if (menuSelection === 0 && swordLevel < 3 && hasSword && azari >= 30) { azari -= 30; swordLevel++; sfxBuy(); }
         if (menuSelection === 1 && bowLevel < 3 && hasBow && azari >= 30) { azari -= 30; bowLevel++; sfxBuy(); }

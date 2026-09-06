@@ -91,12 +91,12 @@ function resetPlayer() {
 }
 
 function restoreCheckpoint() {
-    var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, blessingSlots: 2, equippedBlessings: [], armorId: "vacío", permanentUpgrades: { vitality: 0, strength: 0 }, bossUniqueItems: { guardian: false, queen_larva: false, abyssal_knight: false }, hiddenCollectibles: { eclipse: false, root: false, crown: false } };
+    var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasAzariMagnet: false, hasAzariBag: false, hasLantern: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, blessingSlots: 2, equippedBlessings: [], armorId: "vacío", permanentUpgrades: { vitality: 0, strength: 0 }, bossUniqueItems: { guardian: false, queen_larva: false, abyssal_knight: false }, hiddenCollectibles: { eclipse: false, root: false, crown: false } };
     currentRoom = cp.room; player.x = cp.px; player.y = cp.py;
     player.hp = cp.hp; player.maxHp = cp.maxHp;
     azari = cp.azari; hasSword = cp.hasSword; swordEquipped = cp.swordEquipped;
     hasBow = cp.hasBow; arrows = cp.arrows; hasMap = cp.hasMap;
-    hasAzariCharm = cp.hasAzariCharm; hasDoubleJump = cp.hasDoubleJump;
+    hasAzariCharm = cp.hasAzariCharm; hasAzariMagnet = cp.hasAzariMagnet || false; hasAzariBag = cp.hasAzariBag || false; hasLantern = cp.hasLantern || false; hasDoubleJump = cp.hasDoubleJump;
     swordLevel = cp.swordLevel || 0; bowLevel = cp.bowLevel || 0;
     arrowType = cp.arrowType || "normal";
     combatSkills = cp.combatSkills || { charged: false, aerial: false, combo: false };
@@ -234,6 +234,12 @@ function executeAdminCommand(rawCommand) {
       adminCommandMessage = "Vida restaurada.";
     } else {
       adminCommandMessage = "Objeto no válido. Usa espada, arco, mapa, flechas o azari.";
+    }
+
+    function collectAzari(amount) {
+      var maxAzari = hasAzariBag ? 9999 : 999;
+      var magnetBonus = hasAzariMagnet ? 1 : 0;
+      azari = Math.min(maxAzari, azari + Math.max(0, amount) + magnetBonus);
     }
   } else if (parts[0] === "/tp" && parts[1] === "habitacion") {
     var roomNumber = Number(parts[2]);
@@ -606,7 +612,7 @@ function updateArrows() {
           e.dead = true; stats.enemiesKilled++; checkAchievementProgress(false); hitEnemy = true;
           if (bestiary[e.type]) { bestiary[e.type].count++; bestiary[e.type].discovered = true; }
           var gain = e.type === "larva_mosca" ? 4 : 2;
-          azari += hasAzariCharm ? gain * 2 : gain;
+          collectAzari(gain);
           dropHealingHeart(e);
           spawnParticles(e.x + e.w/2, e.y + e.h/2, "#f88", 12, 5);
           spawnFloatText(e.x, e.y - 10, "¡Muerto!", "#f88");
@@ -1006,7 +1012,7 @@ function checkSwordHitEnemiesFor(p) {
       }
       var baseGain = e.type === 'larva_mosca' ? 4 : 2;
       var azariGain = hasAzariCharm ? baseGain * 2 : baseGain;
-      azari += azariGain;
+      collectAzari(azariGain);
       if (bestiary[e.type]) bestiary[e.type].count++;
       if (bestiary[e.type] && !bestiary[e.type].discovered) {
         bestiary[e.type].discovered = true;
@@ -1221,7 +1227,7 @@ function updateTransition() {
       if (currentRoom > highestRoomReached) highestRoomReached = currentRoom;
       var room = rooms[currentRoom];
       if (currentRoom % 5 === 0) {
-        checkpointState = { room: currentRoom, px: currentRoom * ROOM_W + 100, py: room.height - 120, hp: player.hp, maxHp: player.maxHp, azari: azari, hasSword: hasSword, swordEquipped: swordEquipped, hasBow: hasBow, arrows: arrows, hasMap: hasMap, hasAzariCharm: hasAzariCharm, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: JSON.parse(JSON.stringify(combatSkills)), blessingSlots: blessingSlots, equippedBlessings: equippedBlessings.slice(), armorId: armorId, permanentUpgrades: JSON.parse(JSON.stringify(permanentUpgrades)), bossUniqueItems: JSON.parse(JSON.stringify(bossUniqueItems)), hiddenCollectibles: JSON.parse(JSON.stringify(hiddenCollectibles)) };
+        checkpointState = { room: currentRoom, px: currentRoom * ROOM_W + 100, py: room.height - 120, hp: player.hp, maxHp: player.maxHp, azari: azari, hasSword: hasSword, swordEquipped: swordEquipped, hasBow: hasBow, arrows: arrows, hasMap: hasMap, hasAzariCharm: hasAzariCharm, hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, hasLantern: hasLantern, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: JSON.parse(JSON.stringify(combatSkills)), blessingSlots: blessingSlots, equippedBlessings: equippedBlessings.slice(), armorId: armorId, permanentUpgrades: JSON.parse(JSON.stringify(permanentUpgrades)), bossUniqueItems: JSON.parse(JSON.stringify(bossUniqueItems)), hiddenCollectibles: JSON.parse(JSON.stringify(hiddenCollectibles)) };
         if (activeSlot >= 0) saveGame(activeSlot);
         spawnFloatText(player.x, player.y - 35, "PUNTO DE GUARDADO", "#64e6ae");
       }

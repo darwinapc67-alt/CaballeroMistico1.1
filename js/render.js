@@ -98,8 +98,6 @@ function drawCityHouses(room, roomIndex) {
     ctx.font = "10px monospace";
     ctx.textAlign = "center";
     ctx.fillText("E", x + width / 2, 480);
-    ctx.fillStyle = "#e6d5c4";
-    ctx.fillText(house.label, x + width / 2, top - 68);
     ctx.textAlign = "left";
   });
 }
@@ -215,27 +213,32 @@ function drawHouseInterior() {
   ctx.font = "11px monospace";
   ctx.textAlign = "center";
   ctx.fillText("SALIDA", 123, 420);
-  ctx.fillStyle = "#8c624c";
-  ctx.fillRect(135, 215, 145, 150);
-  ctx.fillStyle = "#b07a55";
-  ctx.fillRect(120, 195, 175, 25);
-  ctx.fillStyle = "#f4c96b";
-  ctx.fillRect(160, 250, 32, 45);
-  ctx.fillRect(222, 250, 32, 45);
-  ctx.fillStyle = "#534061";
-  ctx.fillRect(430, 180, 185, 185);
-  ctx.fillStyle = "#d7a064";
-  ctx.fillRect(452, 210, 140, 12);
-  ctx.fillRect(452, 245, 140, 12);
-  ctx.fillRect(452, 280, 140, 12);
-  ctx.fillStyle = "#b7e4da";
-  ctx.fillRect(700, 170, 48, 210);
-  ctx.fillStyle = "#6cc";
-  ctx.fillRect(710, 185, 28, 180);
   var interiorObjects = currentHouse && currentHouse.objects ? currentHouse.objects : [];
   interiorObjects.forEach(function(object, index) {
     var objectX = 175 + index * 230;
     var selected = index === interiorSelection && !interiorInspecting;
+    ctx.fillStyle = "#5b4667";
+    ctx.fillRect(objectX, 350, 96, 12);
+    ctx.fillStyle = "#e0b15f";
+    if (index % 3 === 0) {
+      ctx.fillRect(objectX + 20, 290, 56, 42);
+      ctx.strokeStyle = "#f5d27a";
+      ctx.strokeRect(objectX + 20, 290, 56, 42);
+      ctx.fillStyle = "#72578a";
+      ctx.fillRect(objectX + 47, 298, 2, 26);
+    } else if (index % 3 === 1) {
+      ctx.fillRect(objectX + 14, 294, 68, 42);
+      ctx.fillStyle = "#4c385e";
+      ctx.fillRect(objectX + 25, 300, 46, 28);
+      ctx.fillStyle = "#f0c871";
+      ctx.fillRect(objectX + 34, 304, 28, 3);
+      ctx.fillRect(objectX + 34, 313, 22, 3);
+    } else {
+      ctx.fillStyle = "#bd794f";
+      ctx.fillRect(objectX + 30, 286, 36, 48);
+      ctx.fillStyle = "#f1c66d";
+      ctx.fillRect(objectX + 39, 294, 18, 28);
+    }
     ctx.strokeStyle = selected ? "#ffd36a" : "#6f607d";
     ctx.lineWidth = selected ? 3 : 1;
     ctx.strokeRect(objectX - 12, 370, 120, 52);
@@ -252,26 +255,28 @@ function drawHouseInterior() {
   ctx.fillRect(617, 382, 12, 10);
   ctx.fillStyle = "#78a5c0";
   ctx.fillRect(608, 438, 30, 6);
-  ctx.fillStyle = "#0aa";
-  ctx.fillRect(370, 410, 24, 48);
-  ctx.fillStyle = "#0cc";
-  ctx.fillRect(366, 394, 32, 24);
-  ctx.fillStyle = "#d7e7f2";
-  ctx.fillRect(372, 398, 20, 8);
-  ctx.fillStyle = "#ffd36a";
-  ctx.fillRect(394, 420, 28, 4);
-  ctx.fillStyle = "#0a1824";
-  ctx.fillRect(interiorPlayer.x - 11, interiorPlayer.y - 30, 22, 30);
-  ctx.fillStyle = "#11bec6";
-  ctx.fillRect(interiorPlayer.x - 9, interiorPlayer.y - 46, 18, 18);
-  ctx.fillStyle = "#d5f4f4";
-  ctx.fillRect(interiorPlayer.x - 6, interiorPlayer.y - 43, 12, 6);
-  ctx.fillStyle = "#ffd36a";
-  ctx.fillRect(interiorPlayer.x + 10, interiorPlayer.y - 28, 18, 3);
+  drawPlayerEntity({
+    x: interiorPlayer.x - 11,
+    y: interiorPlayer.y - 30,
+    w: 22,
+    h: 30,
+    vx: interiorPlayer.vx,
+    vy: interiorPlayer.vy,
+    facing: interiorPlayer.vx < 0 ? -1 : 1,
+    color: player.color,
+    headColor: player.headColor,
+    inv: 0,
+    dashing: false,
+    blocking: false,
+    hasSword: false,
+    swordEquipped: false,
+    swordSheathed: true,
+    swordSwing: 0
+  });
   ctx.fillStyle = "#ffd36a";
   ctx.font = "bold 22px monospace";
   ctx.textAlign = "center";
-  ctx.fillText(currentHouse ? currentHouse.label : "INTERIOR", canvas.width / 2, 45);
+  ctx.fillText("INTERIOR", canvas.width / 2, 45);
   ctx.fillStyle = "#f2dfb0";
   ctx.font = "bold 16px monospace";
   ctx.fillText(line[0] || "Memoria de la ciudad", canvas.width / 2, 405);
@@ -280,7 +285,13 @@ function drawHouseInterior() {
   ctx.fillText(line[1], canvas.width / 2, 435);
   ctx.fillStyle = "#9fb3c8";
   ctx.font = "12px monospace";
-  ctx.fillText(bossDialogueIndex < bossDialogueLines.length - 1 ? "E / ENTER continuar" : "E / ENTER salir  •  ESC salir", canvas.width / 2, 490);
+  var nearbyObject = false;
+  if (!interiorInspecting && interiorObjects.length) {
+    var nearestObjectX = 175 + interiorSelection * 230 + 48;
+    nearbyObject = Math.abs(interiorPlayer.x - nearestObjectX) < 115;
+  }
+  ctx.fillText(interiorInspecting ? "E / ENTER volver  •  ESC salir" :
+    (nearbyObject ? "E inspeccionar objeto  •  A/D mover" : "Acércate a los objetos para inspeccionarlos"), canvas.width / 2, 490);
   ctx.textAlign = "left";
 }
 
@@ -813,6 +824,16 @@ function drawGameWorld() {
   floatTexts.forEach(function(t) { ctx.globalAlpha = Math.max(0, t.life/70); ctx.fillStyle = t.color; ctx.font = "bold 13px monospace"; ctx.fillText(t.text, t.x, t.y); });
   ctx.globalAlpha = 1;
   ctx.restore();
+
+  var lightX = player.x - cameraX + player.w / 2;
+  var lightY = player.y - cameraY + player.h / 2;
+  var lightRadius = hasLantern ? 235 : 125;
+  var darkness = ctx.createRadialGradient(lightX, lightY, lightRadius * 0.35, lightX, lightY, lightRadius);
+  darkness.addColorStop(0, "rgba(4, 6, 16, 0)");
+  darkness.addColorStop(0.72, "rgba(4, 6, 16, 0.42)");
+  darkness.addColorStop(1, "rgba(2, 3, 10, 0.88)");
+  ctx.fillStyle = darkness;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
 function drawHpBar(p, barX, barY) {
@@ -1498,9 +1519,12 @@ function drawShop() {
     return;
   }
   if (shopId === 0) {
-    var shopItems = ["🗺️ Mapa - 45 Azari", "🏹 Arco - 35 Azari", "🏹 20 flechas - 5 Azari", "❤️ Fragmento J1 - 25 Azari", "💗 Fragmento J2 - 25 Azari", "💎 Amuleto de Azari - 45 Azari"];
+    var shopItems = ["🗺️ Mapa - 45 Azari", "🏹 Arco - 35 Azari", "🏹 20 flechas - 5 Azari", "❤️ Fragmento J1 - 25 Azari", "💗 Fragmento J2 - 25 Azari", "💎 Amuleto de Azari - 45 Azari", "🧲 Imán de Azari - 60 Azari", "🎒 Bolsa de Azari - 80 Azari", "🏮 Linterna - 70 Azari"];
+    if (hasAzariMagnet) shopItems[6] += "  ✓";
+    if (hasAzariBag) shopItems[7] += "  ✓";
+    if (hasLantern) shopItems[8] += "  ✓";
     for (var i = 0; i < shopItems.length; i++) {
-      var itemY = 225 + i * 40;
+      var itemY = 185 + i * 34;
       var selected = menuSelection === i;
       ctx.fillStyle = selected ? "rgba(100,200,255,0.18)" : "transparent";
       ctx.fillRect(180, itemY - 23, 440, 34);
@@ -1510,7 +1534,7 @@ function drawShop() {
       ctx.fillText((selected ? "▶  " : "    ") + shopItems[i], canvas.width/2, itemY);
     }
     ctx.fillStyle = "#666"; ctx.font = "13px monospace";
-    ctx.fillText(shopConfirm >= 0 ? "ENTER confirmar compra  •  ESC cancelar" : "↑/↓ Elegir  •  ENTER Comprar", canvas.width/2, 355);
+    ctx.fillText(shopConfirm >= 0 ? "ENTER confirmar compra  •  ESC cancelar" : "↑/↓ Elegir  •  ENTER Comprar", canvas.width/2, 525);
   } else if (shopId === 1) {
     var combatItems = [
       "⚔️ Mejorar espada (" + swordLevel + "/3) - 30",

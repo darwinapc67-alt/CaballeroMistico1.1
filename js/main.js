@@ -16,6 +16,7 @@ function resetAll() {
   heartFragments1 = 0; heartFragments2 = 0;
   heartFragmentsBought1 = 0; heartFragmentsBought2 = 0;
   hasAzariCharm = false; hasDoubleJump = false;
+  hasAzariMagnet = false; hasAzariBag = false; hasLantern = false;
   swordLevel = 0; bowLevel = 0; arrowType = "normal";
   combatSkills = { charged: false, aerial: false, combo: false };
   blessingSlots = 2; equippedBlessings = []; armorId = "vacío";

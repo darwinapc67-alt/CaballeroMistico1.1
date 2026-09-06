@@ -166,6 +166,7 @@ var shopPreviousX = 0, shopPreviousY = 0, shopExitCooldown = 0;
 var heartFragments1 = 0, heartFragments2 = 0;
 var heartFragmentsBought1 = 0, heartFragmentsBought2 = 0;
 var hasAzariCharm = false, hasDoubleJump = false;
+var hasAzariMagnet = false, hasAzariBag = false, hasLantern = false;
 var swordLevel = 0, bowLevel = 0, arrowType = "normal";
 var combatSkills = { charged: false, aerial: false, combo: false };
 var blessingSlots = 2;
@@ -294,6 +295,7 @@ function saveGame(i) {
     heartFragments1: heartFragments1, heartFragments2: heartFragments2,
     heartFragmentsBought1: heartFragmentsBought1, heartFragmentsBought2: heartFragmentsBought2,
     hasAzariCharm: hasAzariCharm, hasDoubleJump: hasDoubleJump,
+    hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, hasLantern: hasLantern,
     swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: combatSkills,
     blessingSlots: blessingSlots, equippedBlessings: equippedBlessings, armorId: armorId,
     permanentUpgrades: permanentUpgrades, bossUniqueItems: bossUniqueItems, hiddenCollectibles: hiddenCollectibles,
@@ -348,6 +350,9 @@ function loadGame(i) {
   heartFragmentsBought2 = s.heartFragmentsBought2 || 0;
   hasAzariCharm = s.hasAzariCharm || false;
   hasDoubleJump = s.hasDoubleJump || false;
+  hasAzariMagnet = s.hasAzariMagnet || false;
+  hasAzariBag = s.hasAzariBag || false;
+  hasLantern = s.hasLantern || false;
   swordLevel = s.swordLevel || 0; bowLevel = s.bowLevel || 0;
   arrowType = s.arrowType || "normal";
   combatSkills = s.combatSkills || { charged: false, aerial: false, combo: false };
@@ -652,7 +657,7 @@ function createCityRoom(index, district, features) {
 
 var cityRooms = [
   createCityRoom(14, "PLAZA CENTRAL", {roofs: true, towers: true, houses: [
-    {x: 80, label: "Casa del cronista", story: [["CRONISTA", "Antes de que llegara la oscuridad, la ciudad unía todos los caminos."], ["", "En sus plazas se reunían viajeros de cavernas lejanas."], ["", "Ahora solo queda memoria entre estas paredes."]], objects: [
+    {x: 80, label: "Casa", story: [["", "Antes de que llegara la oscuridad, la ciudad unía todos los caminos."], ["", "En sus plazas se reunían viajeros de cavernas lejanas."], ["", "Ahora solo queda memoria entre estas paredes."]], objects: [
       {label: "Mapa antiguo", text: "Las rutas de la ciudad terminan en una puerta marcada con el símbolo del vacío."},
       {label: "Libro abierto", text: "El cronista escribió: quien recuerde el pasado podrá reconstruir el futuro."},
       {label: "Ventana", text: "Desde aquí se ve la plaza y las luces que todavía resisten."}
