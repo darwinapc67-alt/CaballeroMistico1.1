@@ -9,7 +9,9 @@ function playerTakeDamage(p, dmg, isBossDamage) {
 
   var difficultyData = difficultyOptions.find(function(option) { return option.id === difficulty; }) || difficultyOptions[1];
   var guardianGuard = bossAbilities.guardian ? 0.8 : 1;
-  p.hp -= isBossDamage ? 1 : Math.max(1, Math.ceil(dmg * difficultyData.damage * guardianGuard));
+  var armorGuard = armorId === "cave" ? 0.85 : 1;
+  var blessingGuard = equippedBlessings.indexOf("stone") >= 0 ? 0.85 : 1;
+  p.hp -= isBossDamage ? 1 : Math.max(1, Math.ceil(dmg * difficultyData.damage * guardianGuard * armorGuard * blessingGuard));
   p.inv = 40;
   spawnParticles(p.x + p.w/2, p.y + p.h/2, "#f44", 10);
   flash = 0.4;
@@ -89,7 +91,7 @@ function resetPlayer() {
 }
 
 function restoreCheckpoint() {
-    var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false } };
+    var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, blessingSlots: 2, equippedBlessings: [], armorId: "vacío", permanentUpgrades: { vitality: 0, strength: 0 }, bossUniqueItems: { guardian: false, queen_larva: false, abyssal_knight: false }, hiddenCollectibles: { eclipse: false, root: false, crown: false } };
     currentRoom = cp.room; player.x = cp.px; player.y = cp.py;
     player.hp = cp.hp; player.maxHp = cp.maxHp;
     azari = cp.azari; hasSword = cp.hasSword; swordEquipped = cp.swordEquipped;
@@ -98,6 +100,10 @@ function restoreCheckpoint() {
     swordLevel = cp.swordLevel || 0; bowLevel = cp.bowLevel || 0;
     arrowType = cp.arrowType || "normal";
     combatSkills = cp.combatSkills || { charged: false, aerial: false, combo: false };
+    blessingSlots = cp.blessingSlots || 2; equippedBlessings = cp.equippedBlessings || [];
+    armorId = cp.armorId || "vacío"; permanentUpgrades = cp.permanentUpgrades || { vitality: 0, strength: 0 };
+    bossUniqueItems = cp.bossUniqueItems || { guardian: false, queen_larva: false, abyssal_knight: false };
+    hiddenCollectibles = cp.hiddenCollectibles || { eclipse: false, root: false, crown: false };
     player.hasSword = hasSword; player.swordEquipped = swordEquipped;
     player.maxJumps = hasDoubleJump ? 2 : 1; player.jumpsLeft = player.maxJumps;
     player.frozen = false; player.vx = 0; player.vy = 0; playerDead = false;
@@ -180,6 +186,27 @@ function updateHealingHearts() {
     });
     if (collected || heart.life <= 0) healingHearts.splice(i, 1);
   }
+}
+
+function updateHiddenCollectibles() {
+  hiddenCollectibleData.forEach(function(item) {
+    if (hiddenCollectibles[item.id] || item.room !== currentRoom) return;
+    if (Math.abs(player.x - item.x) < 34 && Math.abs(player.y - item.y) < 50) {
+      hiddenCollectibles[item.id] = true;
+      if (item.id === "eclipse") {
+        permanentUpgrades.vitality++;
+        player.maxHp++;
+        player.hp = player.maxHp;
+      } else if (item.id === "root") {
+        permanentUpgrades.strength++;
+      } else if (item.id === "crown") {
+        blessingSlots++;
+      }
+      spawnFloatText(player.x, player.y - 28, "¡Coleccionable oculto!", "#ffd700");
+      spawnParticles(player.x + player.w / 2, player.y, "#ffd700", 18, 4);
+      sfxDiscovery();
+    }
+  });
 }
 
 function executeAdminCommand(rawCommand) {
@@ -609,6 +636,8 @@ function defeatBoss(e) {
   };
   var result = rewards[e.type] || rewards.guardian;
   bossVictory = { active: true, timer: 260, type: e.type, reward: result.reward, ability: result.ability, zone: result.zone };
+  bossUniqueItems[e.type] = true;
+  if (e.type === "guardian") armorId = "cave";
   spawnFloatText(e.x - 20, e.y - 22, translateText("JEFE DERROTADO"), "#ffd700");
   speakBossDialogue("JEFE DERROTADO");
   startMusic();
@@ -813,7 +842,8 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     if (p.swordSheathTimer <= 0) p.swordSheathed = true;
   }
 
-  if (attackPressed && p.hasSword && p.swordEquipped && !p.frozen && !p.blocking) {
+  if (attackPressed && p.hasSword && !p.frozen && !p.blocking) {
+    p.swordEquipped = true;
     if (!p.attackHeld) {
       p.attackHeld = true;
       p.attackCharge = 0;
@@ -867,6 +897,11 @@ function updatePlayer() {
   var moveRight = keys["d"] || keys["arrowright"];
   var jump = keys[" "] || keys["arrowup"];
   var attack = (keys["x"] || keys["j"]) && hasSword;
+  if (attack && !swordEquipped) {
+    swordEquipped = true;
+    player.swordEquipped = true;
+    player.swordSheathed = false;
+  }
   var down = keys["arrowdown"] || keys["s"];
   var shoot = keys["z"];
   var interact = keys["e"];
@@ -927,7 +962,8 @@ function checkSwordHitEnemiesFor(p) {
       if (e.boss) {
         if (e.lastSwordHit === frameCounter) return;
         e.lastSwordHit = frameCounter;
-        var swordDamage = (bossAbilities.abyssal_knight ? 16 : 12) + swordLevel * 3;
+        var swordDamage = (bossAbilities.abyssal_knight ? 16 : 12) + swordLevel * 3 + permanentUpgrades.strength;
+        if (equippedBlessings.indexOf("abyss") >= 0 && p.attackType === "charged") swordDamage += 4;
         if (p.attackType === "charged") swordDamage *= 2;
         if (p.attackType === "down") swordDamage = Math.round(swordDamage * 1.25);
         if (combatSkills.combo && p.attackType === "normal") swordDamage += 1;
@@ -1119,7 +1155,7 @@ function updateTransition() {
       if (currentRoom > highestRoomReached) highestRoomReached = currentRoom;
       var room = rooms[currentRoom];
       if (currentRoom % 5 === 0) {
-        checkpointState = { room: currentRoom, px: currentRoom * ROOM_W + 100, py: room.height - 120, hp: player.hp, maxHp: player.maxHp, azari: azari, hasSword: hasSword, swordEquipped: swordEquipped, hasBow: hasBow, arrows: arrows, hasMap: hasMap, hasAzariCharm: hasAzariCharm, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: JSON.parse(JSON.stringify(combatSkills)) };
+        checkpointState = { room: currentRoom, px: currentRoom * ROOM_W + 100, py: room.height - 120, hp: player.hp, maxHp: player.maxHp, azari: azari, hasSword: hasSword, swordEquipped: swordEquipped, hasBow: hasBow, arrows: arrows, hasMap: hasMap, hasAzariCharm: hasAzariCharm, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: JSON.parse(JSON.stringify(combatSkills)), blessingSlots: blessingSlots, equippedBlessings: equippedBlessings.slice(), armorId: armorId, permanentUpgrades: JSON.parse(JSON.stringify(permanentUpgrades)), bossUniqueItems: JSON.parse(JSON.stringify(bossUniqueItems)), hiddenCollectibles: JSON.parse(JSON.stringify(hiddenCollectibles)) };
         if (activeSlot >= 0) saveGame(activeSlot);
         spawnFloatText(player.x, player.y - 35, "PUNTO DE GUARDADO", "#64e6ae");
       }

@@ -168,12 +168,23 @@ var heartFragmentsBought1 = 0, heartFragmentsBought2 = 0;
 var hasAzariCharm = false, hasDoubleJump = false;
 var swordLevel = 0, bowLevel = 0, arrowType = "normal";
 var combatSkills = { charged: false, aerial: false, combo: false };
+var blessingSlots = 2;
+var equippedBlessings = [];
+var armorId = "vacío";
+var permanentUpgrades = { vitality: 0, strength: 0 };
+var bossUniqueItems = { guardian: false, queen_larva: false, abyssal_knight: false };
+var hiddenCollectibles = { eclipse: false, root: false, crown: false };
+var hiddenCollectibleData = [
+  { id: "eclipse", room: 2, x: 2360, y: 420 },
+  { id: "root", room: 6, x: 5480, y: 620 },
+  { id: "crown", room: 10, x: 8580, y: 1050 }
+];
 
 var lastSafeX = 100, lastSafeY = 400;
 var healing = false, healTimer = 0, hitFlash = 0, needsRespawn = false;
 
 var twoPlayerMode = false;
-var inventoryOpen = false, mapOpen = false;
+var inventoryOpen = false, mapOpen = false, inventorySelection = 0, inventoryHover = -1;
 
 var stalactites = [];
 var waterDrops = [];
@@ -278,6 +289,8 @@ function saveGame(i) {
     heartFragmentsBought1: heartFragmentsBought1, heartFragmentsBought2: heartFragmentsBought2,
     hasAzariCharm: hasAzariCharm, hasDoubleJump: hasDoubleJump,
     swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: combatSkills,
+    blessingSlots: blessingSlots, equippedBlessings: equippedBlessings, armorId: armorId,
+    permanentUpgrades: permanentUpgrades, bossUniqueItems: bossUniqueItems, hiddenCollectibles: hiddenCollectibles,
     bossesDefeated: {
       guardian: !!bossArenaState.guardian,
       queen_larva: !!bossArenaState.queen_larva,
@@ -332,6 +345,12 @@ function loadGame(i) {
   swordLevel = s.swordLevel || 0; bowLevel = s.bowLevel || 0;
   arrowType = s.arrowType || "normal";
   combatSkills = s.combatSkills || { charged: false, aerial: false, combo: false };
+  blessingSlots = s.blessingSlots || 2;
+  equippedBlessings = s.equippedBlessings || [];
+  armorId = s.armorId || "vacío";
+  permanentUpgrades = s.permanentUpgrades || { vitality: 0, strength: 0 };
+  bossUniqueItems = s.bossUniqueItems || { guardian: false, queen_larva: false, abyssal_knight: false };
+  hiddenCollectibles = s.hiddenCollectibles || { eclipse: false, root: false, crown: false };
   bossArenaState.guardian = !!(s.bossesDefeated && s.bossesDefeated.guardian);
   bossArenaState.queen_larva = !!(s.bossesDefeated && s.bossesDefeated.queen_larva);
   bossArenaState.abyssal_knight = !!(s.bossesDefeated && s.bossesDefeated.abyssal_knight);

@@ -443,26 +443,54 @@ function drawInventory() {
   ctx.font = "11px monospace";
   ctx.fillText("❤️ " + player.hp + "/" + player.maxHp, 200, 100);
 
-  var items = [];
-  if (player.hasSword) items.push("⚔️ Espada: ✓");
-  if (hasBow) items.push("🏹 Arco: ✓");
-  items.push("🏹 Flechas: " + arrows);
-  if (hasMap) items.push("🗺️ Mapa: ✓");
-  if (hasAzariCharm) items.push("💎 Bendición codiciosa: ✓");
-  items.push("❤️ Fragmentos: " + heartFragments1 + "/3");
-  items.push("💠 Azari: " + azari);
-  items.push("🔄 Saltos: " + (hasDoubleJump ? "Doble" : "Simple"));
-  if (bossAbilities.guardian) items.push("🪨 " + translateText("Guardia pétrea") + ": ✓");
-  if (bossAbilities.queen_larva) items.push("🐛 " + translateText("Llamada de crías") + ": ✓");
-  if (bossAbilities.abyssal_knight) items.push("🌑 " + translateText("Corte abisal") + ": ✓");
+  var items = [
+    "💎 Bendición codiciosa " + (hasAzariCharm ? "✓" : "—"),
+    "🪨 Corazón pétreo " + (bossUniqueItems.guardian ? "✓" : "—"),
+    "🐛 Núcleo de colonia " + (bossUniqueItems.queen_larva ? "✓" : "—"),
+    "🌑 Fragmento abisal " + (bossUniqueItems.abyssal_knight ? "✓" : "—"),
+    "🛡️ Armadura: " + armorId,
+    "⚔️ Espada +" + swordLevel + "  🏹 Arco +" + bowLevel,
+    "❤️ Vida: " + player.maxHp + "  Fragmentos " + heartFragments1 + "/3",
+    "💠 Azari: " + azari + "  Saltos: " + (hasDoubleJump ? "Doble" : "Simple")
+  ];
 
   var y = 125;
-  items.forEach(function(item) {
-    ctx.fillStyle = "#aaa";
+  items.forEach(function(item, index) {
+    var cardX = 25 + (index % 2) * 175;
+    var cardY = 115 + Math.floor(index / 2) * 55;
+    var active = !mapOpen && (inventorySelection === index || inventoryHover === index);
+    ctx.fillStyle = active ? "rgba(100,200,255,0.18)" : "rgba(255,255,255,0.03)";
+    ctx.fillRect(cardX, cardY, 165, 45);
+    ctx.strokeStyle = active ? "#6cc" : "#333";
+    ctx.lineWidth = active ? 2 : 1;
+    ctx.strokeRect(cardX, cardY, 165, 45);
+    ctx.fillStyle = active ? "#ffd700" : "#aaa";
     ctx.font = "12px monospace";
-    ctx.fillText(item, 40, y);
-    y += 25;
+    ctx.fillText(item, cardX + 10, cardY + 27);
   });
+  ctx.fillStyle = "#6cc"; ctx.font = "bold 12px monospace";
+  ctx.fillText("BENDICIONES (" + equippedBlessings.length + "/" + blessingSlots + ")", 390, 125);
+  ctx.fillStyle = "#bbb"; ctx.font = "11px monospace";
+  ctx.fillText(equippedBlessings.length ? equippedBlessings.join(" • ") : "Ninguna equipada", 390, 145);
+  ctx.fillStyle = "#ffd700"; ctx.font = "bold 12px monospace";
+  ctx.fillText("DESCRIPCIÓN", 390, 180);
+  ctx.fillStyle = "#ccc"; ctx.font = "11px monospace";
+  var descriptions = [
+    "Duplica las ganancias de Azari.",
+    "Reduce el daño recibido.",
+    "Invoca una ayuda breve al atacar.",
+    "Aumenta el daño de habilidades abisales.",
+    "Equipo defensivo intercambiable.",
+    "Nivel de daño permanente de armas.",
+    "Cada fragmento completa una mejora de vida.",
+    "Coleccionables y progreso de exploración."
+  ];
+  var descriptionIndex = inventoryHover >= 0 ? inventoryHover : inventorySelection;
+  ctx.fillText(descriptions[descriptionIndex], 390, 200);
+  ctx.fillStyle = "#8f8"; ctx.fillText("Coleccionables ocultos: " +
+    Object.keys(hiddenCollectibles).filter(function(key) { return hiddenCollectibles[key]; }).length + "/3", 390, 235);
+  ctx.fillStyle = "#aaa"; ctx.fillText("Ranuras: usa Enter para equipar", 390, 265);
+  ctx.fillText("Armadura actual: " + armorId + " | alternativa: " + (armorId === "cave" ? "vacío" : "caverna"), 390, 285);
   if (mapOpen && hasMap) {
     ctx.fillStyle = "rgba(3, 8, 20, 0.97)";
     ctx.fillRect(14, 88, canvas.width - 28, 455);
@@ -530,7 +558,7 @@ function drawInventory() {
     ctx.textAlign = "left";
   }
 
-  var statY = mapOpen && hasMap ? 555 : 300;
+  var statY = mapOpen && hasMap ? 555 : 335;
   ctx.fillStyle = "rgba(0,0,0,0.5)";
   ctx.fillRect(30, statY, canvas.width - 60, 70);
   ctx.strokeStyle = "#ffd700";
@@ -601,6 +629,12 @@ function drawGameWorld() {
   drawBossDeathEffects();
   drawHealingHearts();
   drawBossProjectiles();
+  hiddenCollectibleData.forEach(function(item) {
+    if (item.room !== currentRoom || hiddenCollectibles[item.id]) return;
+    ctx.fillStyle = "rgba(255,215,0,0.22)";
+    ctx.beginPath(); ctx.arc(item.x, item.y, 18 + Math.sin(Date.now() / 220) * 3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#ffd700"; ctx.font = "16px monospace"; ctx.fillText("✦", item.x - 6, item.y + 6);
+  });
   arrowsInFlight.forEach(function(arrow) {
     ctx.fillStyle = "#d4af37";
     ctx.fillRect(arrow.x, arrow.y, arrow.w, arrow.h);
@@ -955,7 +989,7 @@ function drawMenu() {
     ctx.fillText(adminMessage || translateText("ENTER confirmar  •  ESC cancelar"), canvas.width/2, 370);
   }
   if (menuSubState === "difficulty") {
-    ctx.fillStyle = "rgba(0,0,0,0.94)";
+    ctx.fillStyle = "#050510";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#ffd700";
     ctx.font = "bold 25px monospace";

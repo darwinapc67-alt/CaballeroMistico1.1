@@ -5,6 +5,8 @@ function resetAll() {
   gpButtons = {}; prevGPButtons = {}; gpAxes = {x:0,y:0}; gamepadMenuAxisLock = 0;
   inventoryOpen = false;
   mapOpen = false;
+  inventorySelection = 0;
+  inventoryHover = -1;
   resetPlayer();
   currentRoom = 0; cameraX = 0; targetCamX = 0; cameraY = 0; targetCamY = 0;
   hasSword = false; swordEquipped = false;
@@ -16,8 +18,12 @@ function resetAll() {
   hasAzariCharm = false; hasDoubleJump = false;
   swordLevel = 0; bowLevel = 0; arrowType = "normal";
   combatSkills = { charged: false, aerial: false, combo: false };
+  blessingSlots = 2; equippedBlessings = []; armorId = "vacío";
+  permanentUpgrades = { vitality: 0, strength: 0 };
+  bossUniqueItems = { guardian: false, queen_larva: false, abyssal_knight: false };
+  hiddenCollectibles = { eclipse: false, root: false, crown: false };
   hitFlash = 0; needsRespawn = false;
-  player.hp = player.maxHp = 10;
+  player.hp = player.maxHp = 10 + permanentUpgrades.vitality;
   if (twoPlayerMode) player2.hp = player2.maxHp = 10;
   stats = { playTime: 0, enemiesKilled: 0, roomsVisited: 1, jumps: 0, attacks: 0, deaths: 0 };
   frameCounter = 0;
@@ -146,6 +152,7 @@ function update() {
     updateEnemies();
     updateArrows();
     updateHealingHearts();
+    updateHiddenCollectibles();
     updateBossProjectiles();
     updateTutorial();
     if (healing) {
@@ -204,6 +211,32 @@ function loop() {
 }
 
 canvas = document.getElementById("gameCanvas");
+canvas.tabIndex = 0;
+canvas.focus();
+canvas.addEventListener("click", function() { canvas.focus(); });
+canvas.addEventListener("click", function(event) {
+  if (gameState !== ST_MENU || menuSubState !== "difficulty") return;
+  var rect = canvas.getBoundingClientRect();
+  var y = (event.clientY - rect.top) * canvas.height / rect.height;
+  var selected = Math.floor((y - 215) / 70);
+  if (selected >= 0 && selected < difficultyOptions.length) {
+    difficultySelection = selected;
+    beginNewGameFromDifficulty();
+  }
+});
+canvas.addEventListener("mousemove", function(event) {
+  if (gameState !== ST_INVENTORY || mapOpen) {
+    inventoryHover = -1;
+    return;
+  }
+  var rect = canvas.getBoundingClientRect();
+  var x = (event.clientX - rect.left) * canvas.width / rect.width;
+  var y = (event.clientY - rect.top) * canvas.height / rect.height;
+  var col = x >= 25 && x < 375 ? Math.floor((x - 25) / 175) : -1;
+  var row = Math.floor((y - 115) / 55);
+  inventoryHover = col >= 0 && row >= 0 ? row * 2 + col : -1;
+  if (inventoryHover < 0 || inventoryHover >= 8) inventoryHover = -1;
+});
 ctx = canvas.getContext("2d");
 var originalFillText = ctx.fillText.bind(ctx);
 ctx.fillText = function(text, x, y, maxWidth) {
@@ -213,4 +246,13 @@ ctx.fillText = function(text, x, y, maxWidth) {
 };
 resetAll();
 setupTouchControls();
+window.addEventListener("keydown", function(event) {
+  var confirmDifficulty = event.key === "Enter" || event.code === "Enter" ||
+    event.code === "NumpadEnter" || event.key === " ";
+  if (gameState === ST_MENU && menuSubState === "difficulty" && confirmDifficulty) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    beginNewGameFromDifficulty();
+  }
+}, true);
 loop();

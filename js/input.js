@@ -3,7 +3,14 @@ window.addEventListener("keydown", function(e) {
   var k = e.key.toLowerCase();
   var up = e.key === "ArrowUp" || e.code === "ArrowUp";
   var down = e.key === "ArrowDown" || e.code === "ArrowDown";
-  var confirm = e.key === "Enter" || e.code === "Enter" || e.code === "NumpadEnter";
+  var confirm = e.key === "Enter" || e.code === "Enter" || e.code === "NumpadEnter" || e.key === " ";
+
+  if (gameState === ST_MENU && menuSubState === "difficulty" && confirm) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    beginNewGameFromDifficulty();
+    return;
+  }
 
   if (k === "`") {
     if (gameState === ST_PLAYING) {
@@ -27,6 +34,19 @@ window.addEventListener("keydown", function(e) {
     if (hasMap) mapOpen = !mapOpen;
     e.preventDefault();
     return;
+  }
+  if (gameState === ST_INVENTORY && !mapOpen) {
+    var inventoryItems = 8;
+    if (up) { inventorySelection = (inventorySelection - 1 + inventoryItems) % inventoryItems; e.preventDefault(); return; }
+    if (down) { inventorySelection = (inventorySelection + 1) % inventoryItems; e.preventDefault(); return; }
+    if (confirm) {
+      if (inventorySelection === 0 && hasAzariCharm) toggleBlessing("greedy");
+      if (inventorySelection === 1 && bossUniqueItems.guardian) toggleBlessing("stone");
+      if (inventorySelection === 2 && bossUniqueItems.queen_larva) toggleBlessing("brood");
+      if (inventorySelection === 3 && bossUniqueItems.abyssal_knight) toggleBlessing("abyss");
+      if (inventorySelection === 4 && armorId !== "void") armorId = armorId === "cave" ? "void" : "cave";
+      e.preventDefault(); return;
+    }
   }
 
   if (e.key === "Escape") {
@@ -210,6 +230,12 @@ window.addEventListener("keydown", function(e) {
       }
       return;
     }
+    if (menuSubState === "difficulty") {
+      if (up || k === "w") { difficultySelection = (difficultySelection - 1 + difficultyOptions.length) % difficultyOptions.length; e.preventDefault(); return; }
+      if (down || k === "s") { difficultySelection = (difficultySelection + 1) % difficultyOptions.length; e.preventDefault(); return; }
+      return;
+    }
+
     if (menuSubState === "slots") {
       if (up || k === "w") { menuSelection = (menuSelection - 1 + 7) % 7; e.preventDefault(); return; }
       if (down || k === "s") { menuSelection = (menuSelection + 1) % 7; e.preventDefault(); return; }
@@ -235,20 +261,6 @@ window.addEventListener("keydown", function(e) {
     } else if (menuSubState === "confirm_delete") {
       if (k === "y" || k === "s") { deleteSave(slotToDelete); menuSubState = "slots"; slotToDelete = -1; e.preventDefault(); return; }
       if (k === "n" || e.key === "Escape") { menuSubState = "slots"; slotToDelete = -1; e.preventDefault(); return; }
-    }
-    if (menuSubState === "difficulty") {
-      if (up || k === "w") { difficultySelection = (difficultySelection - 1 + difficultyOptions.length) % difficultyOptions.length; e.preventDefault(); return; }
-      if (down || k === "s") { difficultySelection = (difficultySelection + 1) % difficultyOptions.length; e.preventDefault(); return; }
-      if (confirm) {
-        applyDifficultyToNewGame();
-        resetAll();
-        gameState = ST_PLAYING;
-        startMusic();
-        updateUI();
-        menuSubState = "slots";
-        e.preventDefault(); return;
-      }
-      return;
     }
     return;
   }
@@ -299,7 +311,7 @@ window.addEventListener("keydown", function(e) {
 
   if (gameState === ST_PLAYING) {
     if (adminMode && adminConsoleOpen) {
-      if (confirm) {
+      if (e.key === "Enter" || e.code === "Enter" || e.code === "NumpadEnter") {
         executeAdminCommand(adminCommand);
         adminCommand = "";
         e.preventDefault();
@@ -402,6 +414,13 @@ window.addEventListener("keydown", function(e) {
     if (e.key === "Escape") { shopOpen = false; shopMenuOpen = false; shopConfirm = -1; shopExitCooldown = 30; player.x = shopPreviousX; player.y = shopPreviousY; e.preventDefault(); return; }
   }
 });
+
+function toggleBlessing(id) {
+  var index = equippedBlessings.indexOf(id);
+  if (index >= 0) { equippedBlessings.splice(index, 1); return; }
+  if (equippedBlessings.length >= blessingSlots) equippedBlessings.shift();
+  equippedBlessings.push(id);
+}
 
 document.addEventListener("keyup", function(e) {
   if (e.key === "a" || e.key === "A") keys["a"] = false;
@@ -613,6 +632,15 @@ function processGamepadInput() {
     else if (gameState === ST_PAUSED) { if (pauseSubState === "diary" || pauseSubState === "controls" || pauseSubState === "audio") pauseSubState = "menu"; else gameState = ST_PLAYING; return; }
     else if (gameState === ST_INVENTORY) { inventoryOpen = false; mapOpen = false; gameState = ST_PLAYING; return; }
   }
+}
+
+function beginNewGameFromDifficulty() {
+  applyDifficultyToNewGame();
+  resetAll();
+  menuSubState = "slots";
+  gameState = ST_PLAYING;
+  updateUI();
+  startMusic();
 }
 
 function setupTouchControls() {
