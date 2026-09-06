@@ -16,7 +16,8 @@ function resetAll() {
   heartFragments1 = 0; heartFragments2 = 0;
   heartFragmentsBought1 = 0; heartFragmentsBought2 = 0;
   hasAzariCharm = false; hasDoubleJump = false;
-  hasAzariMagnet = false; hasAzariBag = false; hasLantern = false; lanternLevel = 0;
+  hasAzariMagnet = false; hasAzariBag = false; azariBagLevel = 0; hasLantern = false; lanternLevel = 0;
+  hasOldKey = false; keyReady = false; doorUnlocked = false; rewardAzariCollected = false;
   hasDash = false;
   swordLevel = 0; bowLevel = 0; arrowType = "normal";
   combatSkills = { charged: false, aerial: false, combo: false };
@@ -29,7 +30,7 @@ function resetAll() {
   if (twoPlayerMode) player2.hp = player2.maxHp = 10;
   stats = { playTime: 0, enemiesKilled: 0, roomsVisited: 1, jumps: 0, attacks: 0, deaths: 0 };
   frameCounter = 0;
-  bestiary = { bat: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 }, cazador_paramo: { discovered: false, count: 0 }, dark_knight: { discovered: false, count: 0 } };
+  bestiary = { bat: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 }, cazador_paramo: { discovered: false, count: 0 }, dark_knight: { discovered: false, count: 0 }, blue_sentry: { discovered: false, count: 0 } };
   diaryScroll = 0;
   deathParticles = [];
   azariDrops = [];
@@ -85,6 +86,7 @@ function update() {
     bossVictory.timer--;
     if (bossVictory.timer <= 0) bossVictory.active = false;
   }
+  if (bossIntroTimer > 0 && gameState === ST_PLAYING) bossIntroTimer--;
   if (achievementNotify.active) {
     achievementNotify.timer--;
     if (achievementNotify.timer <= 0) achievementNotify.active = false;

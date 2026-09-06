@@ -3,7 +3,7 @@ var ROOM_W = 800, ROOM_H = 600, GRAVITY = 0.6;
 var DASH_SPEED = 12, DASH_DURATION = 10, DASH_COOLDOWN = 45, DASH_INV_FRAMES = 12;
 /* Rooms 0-9 are the original route, room 10 is the final descent, and
    rooms 11-13 are the Guardian, Queen Larva, and Abyssal Knight arenas. */
-var WORLD_W = 35 * ROOM_W;
+var WORLD_W = 37 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
 var VERSION = "v1.65";
 
@@ -167,7 +167,7 @@ var shopPreviousX = 0, shopPreviousY = 0, shopExitCooldown = 0;
 var heartFragments1 = 0, heartFragments2 = 0;
 var heartFragmentsBought1 = 0, heartFragmentsBought2 = 0;
 var hasAzariCharm = false, hasDoubleJump = false;
-var hasAzariMagnet = false, hasAzariBag = false, hasLantern = false, lanternLevel = 0, infiniteLight = false;
+var hasAzariMagnet = false, hasAzariBag = false, azariBagLevel = 0, hasOldKey = false, keyReady = false, doorUnlocked = false, rewardAzariCollected = false, hasLantern = false, lanternLevel = 0, infiniteLight = false;
 var hasDash = false;
 var swordLevel = 0, bowLevel = 0, arrowType = "normal";
 var combatSkills = { charged: false, aerial: false, combo: false };
@@ -201,6 +201,7 @@ var checkpointState = null;
 var highestRoomReached = 0;
 var tutorialStep = 0, tutorialTimer = 0;
 var bossProjectiles = [];
+var doorTransition = false;
 var bossDeathEffects = [];
 var bossArenaState = { guardian: false, queen_larva: false, abyssal_knight: false };
 var bossAbilities = { guardian: false, queen_larva: false, abyssal_knight: false };
@@ -232,9 +233,10 @@ var bestiaryInfo = {
   bat: { name: "Murciélago Sombrío", desc: "Criatura alada que habita las profundidades. se alimenta de energia de hechizos." },
   larva_mosca: { name: "Larva-Mosca", desc: "Aberración híbrida que embiste con ferocidad." },
   cazador_paramo: { name: "Cazador del Páramo", desc: "Depredador terrestre que patrulla los páramos y persigue a los intrusos." },
-  dark_knight: { name: "Caballero oscuro", desc: "Guerrero blindado que combate con espada, bloquea golpes y carga con un dash." }
+  dark_knight: { name: "Caballero oscuro", desc: "Guerrero blindado que combate con espada, bloquea golpes y carga con un dash." },
+  blue_sentry: { name: "Centinela Azul", desc: "Entidad flotante que dispara rayos azules y puede recibirlos de vuelta con la Espada Mística." }
 };
-var bestiary = { bat: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 }, cazador_paramo: { discovered: false, count: 0 }, dark_knight: { discovered: false, count: 0 } };
+var bestiary = { bat: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 }, cazador_paramo: { discovered: false, count: 0 }, dark_knight: { discovered: false, count: 0 }, blue_sentry: { discovered: false, count: 0 } };
 var bossDiaryInfo = {
   guardian: { name: "Guardián de la Cueva", desc: "Protector ancestral de la primera arena. Su fuerza domina las profundidades." },
   queen_larva: { name: "Reina Larva", desc: "Soberana de la colonia. Sus ataques convierten la arena en un nido mortal." },
@@ -299,7 +301,7 @@ function saveGame(i) {
     heartFragments1: heartFragments1, heartFragments2: heartFragments2,
     heartFragmentsBought1: heartFragmentsBought1, heartFragmentsBought2: heartFragmentsBought2,
     hasAzariCharm: hasAzariCharm, hasDoubleJump: hasDoubleJump,
-    hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, hasLantern: hasLantern, lanternLevel: lanternLevel, hasDash: hasDash,
+    hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, azariBagLevel: azariBagLevel, hasOldKey: hasOldKey, doorUnlocked: doorUnlocked, rewardAzariCollected: rewardAzariCollected, hasLantern: hasLantern, lanternLevel: lanternLevel, hasDash: hasDash,
     brightnessBoost: brightnessBoost,
     swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: combatSkills,
     blessingSlots: blessingSlots, equippedBlessings: equippedBlessings, armorId: armorId,
@@ -356,7 +358,11 @@ function loadGame(i) {
   hasAzariCharm = s.hasAzariCharm || false;
   hasDoubleJump = s.hasDoubleJump || false;
   hasAzariMagnet = s.hasAzariMagnet || false;
-  hasAzariBag = s.hasAzariBag || false;
+  azariBagLevel = Math.max(0, Math.min(5, Number(s.azariBagLevel) || (s.hasAzariBag ? 1 : 0)));
+  hasAzariBag = azariBagLevel > 0;
+  hasOldKey = s.hasOldKey || false;
+  doorUnlocked = s.doorUnlocked || false;
+  rewardAzariCollected = s.rewardAzariCollected || false;
   hasLantern = s.hasLantern || false;
   lanternLevel = Math.max(0, Math.min(3, s.lanternLevel || (hasLantern ? 1 : 0)));
   brightnessBoost = Math.max(0, Math.min(1, Number(s.brightnessBoost) || 0));
@@ -615,7 +621,7 @@ var room11 = {
   platforms: [{x:8800, y:560, w:800, h:40}],
   spikes: [], walls: [{x:9582, y:0, w:18, h:600}],
   transitionZone: {x:9540, y:460, w:40, h:100, to:12},
-  decor: genDecor(8800, 6, 5, 600), bossName: "GUARDIÁN DE LA CUEVA"
+  decor: genDecor(8800, 6, 5, 600)
 };
 
 var room12 = {
@@ -779,6 +785,8 @@ var room34 = {
   worldX: 30 * ROOM_W,
   roomWidth: 1200,
   verticalRoom: true,
+  lockedDoor: {x: 30 * ROOM_W + 18, y: 3380, w: 55, h: 80},
+  openDoor: {x: 30 * ROOM_W + 1120, y: 3380, w: 55, h: 80},
   platforms: createVerticalRoomPlatforms(30 * ROOM_W),
   spikes: [],
   walls: [],
@@ -786,9 +794,34 @@ var room34 = {
   noDoor: true,
   decor: genDecor(30 * ROOM_W, 12, 6, 3500)
 };
+var room35 = {
+  height: 900,
+  worldX: 35 * ROOM_W,
+  roomWidth: 800,
+  platforms: [
+    {x: 35 * ROOM_W, y: 860, w: 800, h: 40},
+    {x: 35 * ROOM_W + 30, y: 330, w: 190, h: 18},
+    {x: 35 * ROOM_W + 285, y: 330, w: 170, h: 18},
+    {x: 35 * ROOM_W + 520, y: 330, w: 250, h: 18}
+  ],
+  spikes: [{x: 35 * ROOM_W + 225, y: 842, w: 45, h: 18}, {x: 35 * ROOM_W + 465, y: 842, w: 45, h: 18}],
+  walls: [{x: 35 * ROOM_W, y: 0, w: 18, h: 900}, {x: 35 * ROOM_W + 782, y: 0, w: 18, h: 900}],
+  transitionZone: {x: 35 * ROOM_W + 750, y: 760, w: 32, h: 100, to: 36},
+  noDoor: false, bossName: "GUARDIÁN DE LA CUEVA",
+  decor: genDecor(35 * ROOM_W, 16, 5, 900)
+};
+var room36 = {
+  height: 600,
+  worldX: 36 * ROOM_W,
+  roomWidth: 800,
+  platforms: [{x: 36 * ROOM_W, y: 560, w: 800, h: 40}],
+  spikes: [], walls: [], transitionZone: null, noDoor: true,
+  rewardPile: {x: 36 * ROOM_W + 350, y: 500, amount: 230},
+  decor: genDecor(36 * ROOM_W, 16, 5, 600)
+};
 
 var rooms = [room0, room1, room2, room3, room4, room5, room6, room7, room8, room9,
-  room10, room11].concat(interludeRooms, [room12, room13], cityRooms, [room30, room31, room32, room33, room34]);
+  room10, room11].concat(interludeRooms, [room12, room13], cityRooms, [room30, room31, room32, room33, room34, room35, room36]);
 
 var enemies = [
   {x: 9630, y: 520, w: 24, h: 20, vx: 1.2, vy: 0, baseY: 520, range: 180, speed: 1.2, dead: false, room: 12, type: 'cazador_paramo', terrestrial: true},
@@ -842,12 +875,16 @@ var enemies = [
   {x: 7550, y: 420, w: 24, h: 20, vx: -1.5, vy: 0, baseY: 420, range: 60, dead: false, room: 9, type: 'bat'},
   {x: 7750, y: 300, w: 24, h: 20, vx: 1.2, vy: 0, baseY: 300, range: 50, dead: false, room: 9, type: 'bat'},
   {x:7450, y:250, w:24, h:20, vx: -1.4, vy: 0, baseY: 250, range: 70, dead: false, room: 9, type: 'bat'},
-  {x:9140, y:470, w:70, h:90, vx: 0, vy: 0, dead: false, room: 11, type: 'guardian',
+  {x:35 * ROOM_W + 540, y:770, w:70, h:90, vx: 0, vy: 0, dead: false, room: 35, type: 'guardian',
     boss: true, bossName: "GUARDIÁN DE LA CUEVA", hp: 100, maxHp: 100, aiTimer: 80, attackTimer: 60, phase: 1, enraged: false},
   {x:15540, y:470, w:78, h:90, vx: 0, vy: 0, dead: false, room: 19, type: 'queen_larva',
     boss: true, bossName: "REINA LARVA", hp: 140, maxHp: 140, aiTimer: 90, attackTimer: 70, phase: 1, enraged: false},
   {x:16340, y:460, w:60, h:100, vx: 0, vy: 0, dead: false, room: 20, type: 'abyssal_knight',
-    boss: true, bossName: "CABALLERO ABISMAL", hp: 180, maxHp: 180, aiTimer: 70, attackTimer: 50, phase: 1, enraged: false}
+    boss: true, bossName: "CABALLERO ABISMAL", hp: 180, maxHp: 180, aiTimer: 70, attackTimer: 50, phase: 1, enraged: false},
+  {x: 24380, y: 3150, w: 32, h: 28, vx: 0, vy: 0, dead: false, room: 34, type: 'blue_sentry', shootTimer: 45, staysRoom: true},
+  {x: 24740, y: 2380, w: 32, h: 28, vx: 0, vy: 0, dead: false, room: 34, type: 'blue_sentry', shootTimer: 80, staysRoom: true},
+  {x: 24280, y: 1550, w: 32, h: 28, vx: 0, vy: 0, dead: false, room: 34, type: 'blue_sentry', shootTimer: 115, staysRoom: true},
+  {x: 24680, y: 700, w: 32, h: 28, vx: 0, vy: 0, dead: false, room: 34, type: 'blue_sentry', shootTimer: 150, staysRoom: true}
 ];
 enemies.forEach(function(e) { e.canRoam = !e.boss; });
 

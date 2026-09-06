@@ -97,6 +97,7 @@ function sfxBossVoice() { playTone(110, 0.18, "sawtooth", 0.08, 0); playTone(82,
 function sfxWaterDrop() { playTone(1050, 0.05, "sine", 0.07, 0); playTone(1450, 0.09, "sine", 0.05, 0.04); }
 function sfxBossDoorsLock() { playTone(95, 0.28, "sawtooth", 0.12, 0); playTone(58, 0.42, "square", 0.1, 0.08); playNoise(0.18, 0.08, 0.04); }
 function sfxBossDoorsOpen() { playTone(180, 0.16, "sine", 0.1, 0); playTone(360, 0.22, "sine", 0.09, 0.12); playTone(720, 0.28, "triangle", 0.07, 0.24); }
+function sfxDoorOpen() { playTone(110, 0.25, "square", 0.1, 0); playTone(220, 0.3, "sawtooth", 0.08, 0.2); playNoise(0.28, 0.08, 0.04); }
 function sfxBossPhase() { playTone(70, 0.25, "sawtooth", 0.12, 0); playTone(140, 0.25, "square", 0.08, 0.12); playNoise(0.18, 0.08, 0.04); }
 
 function playAmbientChord(baseFreq, delay) {

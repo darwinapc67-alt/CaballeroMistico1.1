@@ -108,6 +108,10 @@ function saveHealingStoneCheckpoint() {
     hasAzariCharm: hasAzariCharm,
     hasAzariMagnet: hasAzariMagnet,
     hasAzariBag: hasAzariBag,
+    azariBagLevel: azariBagLevel,
+    hasOldKey: hasOldKey,
+    doorUnlocked: doorUnlocked,
+    rewardAzariCollected: rewardAzariCollected,
     hasLantern: hasLantern,
     lanternLevel: lanternLevel,
     hasDash: hasDash,
@@ -128,12 +132,12 @@ function saveHealingStoneCheckpoint() {
 }
 
 function restoreCheckpoint() {
-    var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasAzariMagnet: false, hasAzariBag: false, hasLantern: false, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, blessingSlots: 2, equippedBlessings: [], armorId: "vacío", permanentUpgrades: { vitality: 0, strength: 0 }, bossUniqueItems: { guardian: false, queen_larva: false, abyssal_knight: false }, hiddenCollectibles: { eclipse: false, root: false, crown: false } };
+    var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasAzariMagnet: false, hasAzariBag: false, azariBagLevel: 0, hasOldKey: false, doorUnlocked: false, rewardAzariCollected: false, hasLantern: false, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, blessingSlots: 2, equippedBlessings: [], armorId: "vacío", permanentUpgrades: { vitality: 0, strength: 0 }, bossUniqueItems: { guardian: false, queen_larva: false, abyssal_knight: false }, hiddenCollectibles: { eclipse: false, root: false, crown: false } };
     currentRoom = cp.room; player.x = cp.px; player.y = cp.py;
     player.hp = cp.hp; player.maxHp = cp.maxHp;
     azari = cp.azari; hasSword = cp.hasSword; swordEquipped = cp.swordEquipped;
     hasBow = cp.hasBow; arrows = cp.arrows; hasMap = cp.hasMap;
-    hasAzariCharm = cp.hasAzariCharm; hasAzariMagnet = cp.hasAzariMagnet || false; hasAzariBag = cp.hasAzariBag || false; hasLantern = cp.hasLantern || false; lanternLevel = Math.max(0, Math.min(3, cp.lanternLevel || (hasLantern ? 1 : 0))); hasDash = cp.hasDash || false; hasDoubleJump = cp.hasDoubleJump;
+    hasAzariCharm = cp.hasAzariCharm; hasAzariMagnet = cp.hasAzariMagnet || false; azariBagLevel = Math.max(0, Math.min(5, Number(cp.azariBagLevel) || (cp.hasAzariBag ? 1 : 0))); hasAzariBag = azariBagLevel > 0; hasOldKey = cp.hasOldKey || false; doorUnlocked = cp.doorUnlocked || false; rewardAzariCollected = cp.rewardAzariCollected || false; hasLantern = cp.hasLantern || false; lanternLevel = Math.max(0, Math.min(3, cp.lanternLevel || (hasLantern ? 1 : 0))); hasDash = cp.hasDash || false; hasDoubleJump = cp.hasDoubleJump;
     swordLevel = cp.swordLevel || 0; bowLevel = cp.bowLevel || 0;
     arrowType = cp.arrowType || "normal";
     combatSkills = cp.combatSkills || { charged: false, aerial: false, combo: false };
@@ -341,7 +345,7 @@ function executeAdminCommand(rawCommand) {
 }
 
 function collectAzari(amount) {
-  var maxAzari = hasAzariBag ? 9999 : 999;
+  var maxAzari = azariBagLevel === 0 ? 999 : [999, 1999, 2999, 4999, 7499, 9999][azariBagLevel];
   azari = Math.min(maxAzari, azari + Math.max(0, amount));
 }
 
@@ -365,7 +369,7 @@ function spawnBossProjectile(e, vx, vy, damage, kind, extra) {
     x: e.x + e.w / 2 - (extra.w || 10) / 2, y: e.y + e.h / 2 - (extra.h || 10) / 2,
     w: extra.w || 10, h: extra.h || 10, vx: vx, vy: vy, gravity: extra.gravity || 0,
     damage: damage, life: extra.life || 180, room: e.room, kind: kind || "rock",
-    color: extra.color || "#b66", homing: !!extra.homing
+    color: extra.color || "#b66", homing: !!extra.homing, owner: e
   });
 }
 
@@ -527,12 +531,40 @@ function updateBossProjectiles() {
       var td = Math.max(1, Math.sqrt(tx * tx + ty * ty));
       b.vx += tx / td * 0.04; b.vy += ty / td * 0.04;
     }
+    if (b.reflected && b.owner && !b.owner.dead) {
+      var targetX = b.owner.x + b.owner.w / 2 - (b.x + b.w / 2);
+      var targetY = b.owner.y + b.owner.h / 2 - (b.y + b.h / 2);
+      var targetDistance = Math.max(1, Math.sqrt(targetX * targetX + targetY * targetY));
+      b.vx = targetX / targetDistance * 7;
+      b.vy = targetY / targetDistance * 7;
+    }
     var hit = false;
-    if (currentRoom === b.room) {
+    if (currentRoom === b.room && !b.reflected) {
       if (rectHit(player, b)) { playerTakeDamage(player, b.damage, true); hit = true; }
       if (twoPlayerMode && rectHit(player2, b)) { playerTakeDamage(player2, b.damage, true); hit = true; }
     }
-    if (hit || b.life <= 0 || b.x < b.room * ROOM_W || b.x > (b.room + 1) * ROOM_W || b.y > rooms[b.room].height + 30) {
+    if (!hit && b.reflected && b.owner && !b.owner.dead && rectHit(b.owner, b)) {
+      var reflectedEnemy = b.owner;
+      reflectedEnemy.dead = true;
+      stats.enemiesKilled++;
+      checkAchievementProgress(false);
+      dropHealingHeart(reflectedEnemy);
+      dropAzari(reflectedEnemy, 6);
+      if (bestiary[reflectedEnemy.type]) bestiary[reflectedEnemy.type].count++;
+      if (bestiary[reflectedEnemy.type] && !bestiary[reflectedEnemy.type].discovered) {
+        bestiary[reflectedEnemy.type].discovered = true;
+        discoveryNotify = { active: true, timer: 200, name: bestiaryInfo[reflectedEnemy.type].name };
+        sfxDiscovery();
+      }
+      spawnFloatText(reflectedEnemy.x, reflectedEnemy.y - 10, "¡Muerto! +6 Azari", "#35cfff");
+      spawnParticles(reflectedEnemy.x + reflectedEnemy.w / 2, reflectedEnemy.y + reflectedEnemy.h / 2, "#35cfff", 14, 5);
+      sfxEnemyDie();
+      hit = true;
+    }
+    var projectileRoom = rooms[b.room];
+    var projectileOrigin = projectileRoom.worldX !== undefined ? projectileRoom.worldX : b.room * ROOM_W;
+    var projectileWidth = projectileRoom.roomWidth || ROOM_W;
+    if (hit || b.life <= 0 || b.x < projectileOrigin - 40 || b.x > projectileOrigin + projectileWidth + 40 || b.y > projectileRoom.height + 30 || b.y < -40) {
       bossProjectiles.splice(i, 1);
     }
   }
@@ -543,6 +575,25 @@ function updateEnemies() {
   enemies.forEach(function(e) {
     if (e.dead) return;
     if (e.boss && e.room !== currentRoom) return;
+    if (e.type === "blue_sentry") {
+      if (e.room === currentRoom && bestiary[e.type] && !bestiary[e.type].discovered) {
+        bestiary[e.type].discovered = true;
+        discoveryNotify = { active: true, timer: 200, name: bestiaryInfo[e.type].name };
+        sfxDiscovery();
+      }
+      if (e.room === currentRoom && !player.frozen) {
+        e.shootTimer--;
+        if (e.shootTimer <= 0) {
+          var target = bossTarget(e);
+          var distance = Math.max(1, target.dist);
+          spawnBossProjectile(e, target.dx / distance * 4.5, target.dy / distance * 4.5, 1, "blue_ray", {
+            w: 14, h: 14, life: 240, color: "#35cfff"
+          });
+          e.shootTimer = 110;
+        }
+      }
+      return;
+    }
     if (e.room === currentRoom && bestiary[e.type] && !bestiary[e.type].discovered) {
       bestiary[e.type].discovered = true;
       discoveryNotify = { active: true, timer: 200, name: bestiaryInfo[e.type].name };
@@ -707,6 +758,13 @@ function updateWaterDrops() {
 }
 
 function dropAzari(e, amount) {
+  if (e.type === "blue_sentry") {
+    azariDrops.push({
+      x: e.x + e.w / 2 - 8, y: e.y + e.h / 2 - 8, w: 16, h: 16,
+      vx: (Math.random() - 0.5) * 2, vy: -3, amount: 6, type: "normal", life: 900
+    });
+    return;
+  }
   var roll = Math.random();
   var dropAmount = amount;
   var dropSize = 16;
@@ -920,6 +978,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     p.vy += GRAVITY; if (p.vy > 12) p.vy = 12;
   }
   p.x += p.vx; p.y += p.vy;
+  p.wallContact = 0;
 
   if (p.onGround && Math.abs(p.vx) > 1 && Math.random() < 0.3) {
     spawnParticles(p.x + p.w/2 + (p.facing > 0 ? 0 : p.w), p.y + p.h, "rgba(200,200,200,0.3)", 1, 0.5);
@@ -1015,8 +1074,8 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
 
   room.walls.forEach(function(w) {
     if (rectHit(p, w)) {
-      if (p.vx > 0) { p.x = w.x - p.w; p.vx = 0; }
-      else if (p.vx < 0) { p.x = w.x + w.w; p.vx = 0; }
+      if (p.vx > 0) { p.x = w.x - p.w; p.vx = 0; p.wallContact = 1; }
+      else if (p.vx < 0) { p.x = w.x + w.w; p.vx = 0; p.wallContact = -1; }
     }
   });
   var arenaBoss = getActiveBoss(currentRoom);
@@ -1051,6 +1110,30 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   } else { p.inv--; }
 
   if (p === player && transitionCooldown <= 0) {
+    if (currentRoom === 34 && room.openDoor && interactPressed && rectHit(p, {
+      x: room.openDoor.x - 18, y: room.openDoor.y - 25,
+      w: room.openDoor.w + 36, h: room.openDoor.h + 50
+    })) {
+      startTransition(35, "forward");
+      return;
+    }
+    if (currentRoom === 34 && room.lockedDoor && rectHit(p, {
+      x: room.lockedDoor.x - 42, y: room.lockedDoor.y - 35,
+      w: room.lockedDoor.w + 84, h: room.lockedDoor.h + 70
+    })) {
+      if (interactPressed) {
+        if (doorUnlocked) {
+          startTransition(36, "forward");
+        } else if (keyReady && hasOldKey) {
+          hasOldKey = false; keyReady = false; doorUnlocked = true;
+          sfxDoorOpen();
+          startTransition(36, "forward");
+        } else {
+          spawnFloatText(p.x, p.y - 35, "¡Necesitas una llave!", "#ff7777");
+        }
+        return;
+      }
+    }
     var roomBoss = enemies.find ? enemies.find(function(enemy) { return enemy.boss && enemy.room === currentRoom; }) : null;
     if (room.transitionZone && rectHit(p, room.transitionZone) && (!roomBoss || roomBoss.dead)) {
       startTransition(room.transitionZone.to, "forward");
@@ -1105,9 +1188,23 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   }
 
   if (interactPressed) tryInteractFor(p);
+  if (p === player && currentRoom === 36 && room.rewardPile && !rewardAzariCollected &&
+      rectHit(p, { x: room.rewardPile.x - 45, y: room.rewardPile.y - 45, w: 90, h: 55 })) {
+    collectAzari(room.rewardPile.amount);
+    rewardAzariCollected = true;
+    if (activeSlot >= 0) saveGame(activeSlot);
+    spawnFloatText(p.x, p.y - 30, "+230 AZARI", "#42d9ff");
+  }
 
-  if (jumpPressed && !p.jumpHeld && p.jumpsLeft > 0 && !p.frozen) {
-    p.vy = -14.5; p.jumpsLeft--; p.onGround = false;
+  if (jumpPressed && !p.jumpHeld && (p.jumpsLeft > 0 || p.wallContact) && !p.frozen) {
+    if (p.wallContact && !p.onGround) {
+      p.vy = -13.5;
+      p.vx = p.wallContact > 0 ? -5 : 5;
+      p.facing = p.wallContact > 0 ? -1 : 1;
+    } else {
+      p.vy = -14.5; p.jumpsLeft--;
+    }
+    p.onGround = false;
     stats.jumps++;
     spawnParticles(p.x + p.w/2, p.y + p.h, "#888", 4);
     sfxJump();
@@ -1174,6 +1271,19 @@ function checkSwordHitEnemiesFor(p) {
     { x: p.x - 10, y: p.y + p.h - 4, w: p.w + 20, h: reach }
   ];
   var room = rooms[currentRoom];
+  bossProjectiles.forEach(function(projectile) {
+    if (projectile.kind !== "blue_ray" || projectile.room !== currentRoom || projectile.reflected) return;
+    for (var projectileBoxIndex = 0; projectileBoxIndex < swingBoxes.length; projectileBoxIndex++) {
+      if (rectHit(swingBoxes[projectileBoxIndex], projectile)) {
+        projectile.reflected = true;
+        projectile.damage = 1;
+        projectile.life = 180;
+        spawnParticles(projectile.x + projectile.w / 2, projectile.y + projectile.h / 2, "#d9fbff", 8, 3);
+        spawnFloatText(p.x, p.y - 24, "¡Rayo devuelto!", "#35cfff");
+        break;
+      }
+    }
+  });
   enemies.forEach(function(e) {
     if (e.dead || e.room !== currentRoom) return;
     var hit = false;
@@ -1229,8 +1339,8 @@ function checkSwordHitEnemiesFor(p) {
           size: 2 + Math.random() * 4
         });
       }
-      var baseGain = e.type === 'larva_mosca' ? 4 : 2;
-      var azariGain = hasAzariCharm ? baseGain * 2 : baseGain;
+      var baseGain = e.type === "blue_sentry" ? 6 : (e.type === 'larva_mosca' ? 4 : 2);
+      var azariGain = e.type === "blue_sentry" ? 6 : (hasAzariCharm ? baseGain * 2 : baseGain);
       dropAzari(e, azariGain);
       if (bestiary[e.type]) bestiary[e.type].count++;
       if (bestiary[e.type] && !bestiary[e.type].discovered) {
@@ -1421,6 +1531,12 @@ function startBossDialogue(roomIndex) {
       ["CABALLERO", "No pienso retroceder."],
       ["CABALLERO ABISMAL", "Entonces demuéstrame que eres digno."],
       ["", "⚔️ ¡COMIENZA EL COMBATE!"]
+    ],
+    35: [
+      ["GUARDIÁN", "¿Quién ha osado cruzar este puente?"],
+      ["CABALLERO", "He venido a recuperar lo que me pertenece."],
+      ["GUARDIÁN", "Entonces tendrás que demostrar tu fuerza."],
+      ["", "⚔️ ¡EL GUARDIÁN DE LA CUEVA HA DESPERTADO!"]
     ]
   };
   bossDialogueLines = dialogues[roomIndex] || [];
@@ -1443,6 +1559,7 @@ function advanceBossDialogue() {
   if (bossDialogueIndex >= bossDialogueLines.length) {
     bossDialogueLines = [];
     gameState = ST_PLAYING;
+    bossIntroTimer = 45;
     sfxAttack();
   } else {
     speakBossDialogue(bossDialogueLines[bossDialogueIndex][1]);
@@ -1463,7 +1580,7 @@ function updateTransition() {
       if (currentRoom > highestRoomReached) highestRoomReached = currentRoom;
       var room = rooms[currentRoom];
       if (currentRoom % 5 === 0) {
-        checkpointState = { room: currentRoom, px: currentRoom * ROOM_W + 100, py: room.height - 120, hp: player.hp, maxHp: player.maxHp, azari: azari, hasSword: hasSword, swordEquipped: swordEquipped, hasBow: hasBow, arrows: arrows, hasMap: hasMap, hasAzariCharm: hasAzariCharm, hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, hasLantern: hasLantern, lanternLevel: lanternLevel, hasDash: hasDash, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: JSON.parse(JSON.stringify(combatSkills)), blessingSlots: blessingSlots, equippedBlessings: equippedBlessings.slice(), armorId: armorId, permanentUpgrades: JSON.parse(JSON.stringify(permanentUpgrades)), bossUniqueItems: JSON.parse(JSON.stringify(bossUniqueItems)), hiddenCollectibles: JSON.parse(JSON.stringify(hiddenCollectibles)) };
+        checkpointState = { room: currentRoom, px: currentRoom * ROOM_W + 100, py: room.height - 120, hp: player.hp, maxHp: player.maxHp, azari: azari, hasSword: hasSword, swordEquipped: swordEquipped, hasBow: hasBow, arrows: arrows, hasMap: hasMap, hasAzariCharm: hasAzariCharm, hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, azariBagLevel: azariBagLevel, hasOldKey: hasOldKey, doorUnlocked: doorUnlocked, rewardAzariCollected: rewardAzariCollected, hasLantern: hasLantern, lanternLevel: lanternLevel, hasDash: hasDash, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: JSON.parse(JSON.stringify(combatSkills)), blessingSlots: blessingSlots, equippedBlessings: equippedBlessings.slice(), armorId: armorId, permanentUpgrades: JSON.parse(JSON.stringify(permanentUpgrades)), bossUniqueItems: JSON.parse(JSON.stringify(bossUniqueItems)), hiddenCollectibles: JSON.parse(JSON.stringify(hiddenCollectibles)) };
         if (activeSlot >= 0) saveGame(activeSlot);
         spawnFloatText(player.x, player.y - 35, "PUNTO DE GUARDADO", "#64e6ae");
       }

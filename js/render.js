@@ -434,6 +434,19 @@ function drawEnemies() {
       }
       ctx.fillStyle = "#f44"; ctx.fillRect(e.x, e.y - 14, e.w * Math.max(0, e.hp / e.maxHp), 5);
       ctx.strokeStyle = "#fff"; ctx.lineWidth = 1; ctx.strokeRect(e.x, e.y - 14, e.w, 5);
+    } else if (e.type === 'blue_sentry') {
+      var sentryPulse = 0.75 + Math.sin(Date.now() / 120) * 0.2;
+      ctx.fillStyle = "rgba(35, 190, 255, " + (sentryPulse * 0.35) + ")";
+      ctx.beginPath();
+      ctx.arc(e.x + e.w / 2, e.y + e.h / 2, 25, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#123b68";
+      ctx.fillRect(e.x + 4, e.y + 4, e.w - 8, e.h - 8);
+      ctx.strokeStyle = "#35cfff";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(e.x + 4, e.y + 4, e.w - 8, e.h - 8);
+      ctx.fillStyle = "#d9fbff";
+      ctx.fillRect(e.x + 13, e.y + 10, 6, 8);
     } else if (e.type === 'dark_knight') {
       var knightFacing = e.vx < 0 ? -1 : 1;
       ctx.fillStyle = "rgba(8, 10, 20, 0.5)";
@@ -524,6 +537,14 @@ function drawBossProjectiles() {
     if (b.kind === "knight_bolt") {
       ctx.beginPath(); ctx.arc(b.x + b.w / 2, b.y + b.h / 2, b.w / 2, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "#bde"; ctx.fillRect(b.x + 2, b.y + 2, 3, 3);
+    } else if (b.kind === "blue_ray") {
+      ctx.shadowColor = "#35cfff";
+      ctx.shadowBlur = 14;
+      ctx.fillStyle = "#35cfff";
+      ctx.fillRect(b.x, b.y, b.w, b.h);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#d9fbff";
+      ctx.fillRect(b.x + 4, b.y + 4, b.w - 8, b.h - 8);
     } else {
       ctx.beginPath(); ctx.arc(b.x + b.w / 2, b.y + b.h / 2, Math.max(b.w, b.h) / 2, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "rgba(255,255,255,0.45)"; ctx.fillRect(b.x + 2, b.y + 2, 3, 3);
@@ -655,7 +676,8 @@ function drawInventory() {
     "🛡️ Armadura: " + armorId,
     "⚔️ Espada +" + swordLevel + "  🏹 Arco +" + bowLevel,
     "❤️ Vida: " + player.maxHp + "  Fragmentos " + heartFragments1 + "/3",
-    "💠 Azari: " + azari + "  Saltos: " + (hasDoubleJump ? "Doble" : "Simple")
+    "💠 Azari: " + azari + "  Saltos: " + (hasDoubleJump ? "Doble" : "Simple"),
+    "🗝️ Llave vieja " + (hasOldKey ? "✓" : "—")
   ];
 
   var y = 125;
@@ -687,7 +709,8 @@ function drawInventory() {
     "Equipo defensivo intercambiable.",
     "Nivel de daño permanente de armas.",
     "Cada fragmento completa una mejora de vida.",
-    "Coleccionables y progreso de exploración."
+    "Coleccionables y progreso de exploración.",
+    "Llave antigua. Selecciónala y pulsa E para prepararla junto a una puerta."
   ];
   var descriptionIndex = inventoryHover >= 0 ? inventoryHover : inventorySelection;
   ctx.fillText(descriptions[descriptionIndex], 390, 200);
@@ -846,6 +869,74 @@ function drawGameWorld() {
     if (room.city) drawCityHouses(room, r);
     if (r === 1) drawPedestal();
     if (room.transitionZone && !room.noDoor) drawTransitionZone(room.transitionZone);
+    if (r === 34 && room.lockedDoor) {
+      var door = room.lockedDoor;
+      ctx.fillStyle = doorUnlocked ? "#23834b" : "#a83232";
+      ctx.fillRect(door.x, door.y, door.w, door.h);
+      ctx.strokeStyle = doorUnlocked ? "#7dffad" : "#ff7777";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(door.x, door.y, door.w, door.h);
+      ctx.fillStyle = "#111";
+      ctx.fillRect(door.x + door.w - 13, door.y + 38, 6, 6);
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 12px monospace";
+      ctx.fillText(doorUnlocked ? "ABIERTA" : "CERRADA", door.x - 5, door.y - 10);
+    }
+    if (r === 34 && room.openDoor) {
+      var openDoor = room.openDoor;
+      ctx.fillStyle = "#111321";
+      ctx.fillRect(openDoor.x, openDoor.y, openDoor.w, openDoor.h);
+      ctx.strokeStyle = "#8cf0ff";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(openDoor.x, openDoor.y, openDoor.w, openDoor.h);
+      ctx.fillStyle = "#8cf0ff";
+      ctx.font = "bold 12px monospace";
+      ctx.fillText("SALIDA", openDoor.x - 2, openDoor.y - 10);
+    }
+    if (r === 36 && room.rewardPile && !rewardAzariCollected) {
+      var pileX = room.rewardPile.x;
+      var pileY = room.rewardPile.y + 48;
+      var pileGlow = ctx.createRadialGradient(pileX, pileY - 24, 10, pileX, pileY - 24, 115);
+      pileGlow.addColorStop(0, "rgba(76, 218, 255, 0.3)");
+      pileGlow.addColorStop(1, "rgba(76, 218, 255, 0)");
+      ctx.fillStyle = pileGlow;
+      ctx.beginPath();
+      ctx.arc(pileX, pileY - 24, 115, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+      ctx.beginPath();
+      ctx.ellipse(pileX, pileY + 3, 105, 18, 0, 0, Math.PI * 2);
+      ctx.fill();
+      var pileRows = [
+        { count: 11, width: 116, y: 0 },
+        { count: 9, width: 100, y: -13 },
+        { count: 7, width: 82, y: -26 },
+        { count: 5, width: 62, y: -39 },
+        { count: 3, width: 40, y: -52 }
+      ];
+      pileRows.forEach(function(row, rowIndex) {
+        for (var coinIndex = 0; coinIndex < row.count; coinIndex++) {
+          var coinX = pileX - row.width / 2 + (coinIndex + 0.5) * row.width / row.count;
+          var coinY = pileY + row.y - (coinIndex % 2) * 2;
+          ctx.fillStyle = rowIndex % 2 ? "#18a9d2" : "#28c9ed";
+          ctx.beginPath();
+          ctx.ellipse(coinX, coinY, 10, 6, -0.12, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = "#8cf0ff";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.fillStyle = "rgba(220, 252, 255, 0.9)";
+          ctx.beginPath();
+          ctx.ellipse(coinX - 3, coinY - 2, 3, 1.5, -0.12, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+      ctx.fillStyle = "#d9fbff";
+      ctx.font = "bold 15px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("230 AZARI", pileX, pileY - 70);
+      ctx.textAlign = "left";
+    }
     if (room.bossName) drawBossDoor(r);
     if (r === 9) { drawShopNPC(); drawHealingStone(); }
   }
@@ -1010,7 +1101,7 @@ function drawGame() {
   }
   var activeBoss = null;
   enemies.forEach(function(e) { if (e.boss && e.room === currentRoom && !e.dead) activeBoss = e; });
-  if (activeBoss) {
+  if (activeBoss && bossIntroTimer <= 0) {
     ctx.textAlign = "center";
     var displayName = bossDiaryInfo[activeBoss.type] ? bossDiaryInfo[activeBoss.type].name : activeBoss.bossName;
     ctx.fillStyle = activeBoss.phase === 3 ? "#ff315a" : "#ffd36a";
@@ -1625,10 +1716,13 @@ function drawShop() {
   if (shopId === 0) {
     var lanternPrice = !hasLantern ? 70 : (lanternLevel === 1 ? 110 : 180);
     var lanternLabel = !hasLantern ? "🏮 Linterna I - 70 Azari" : (lanternLevel < 3 ? "🏮 Mejorar linterna " + (lanternLevel + 1) + " - " + lanternPrice + " Azari" : "🏮 Linterna III - MAX");
-    var shopItems = ["🗺️ Mapa - 45 Azari", "🏹 Arco - 35 Azari", "🏹 20 flechas - 5 Azari", "❤️ Fragmento J1 - 25 Azari", "💗 Fragmento J2 - 25 Azari", "💎 Amuleto de Azari - 45 Azari", "🧲 Imán de Azari - 60 Azari", "🎒 Bolsa de Azari - 80 Azari", lanternLabel];
+    var bagPrices = [80, 120, 180, 260, 350];
+    var bagLabel = azariBagLevel >= 5 ? "🎒 Bolsa de Azari V - MAX" : "🎒 Bolsa de Azari " + (azariBagLevel + 1) + " - " + bagPrices[azariBagLevel] + " Azari";
+    var shopItems = ["🗺️ Mapa - 45 Azari", "🏹 Arco - 35 Azari", "🏹 20 flechas - 5 Azari", "❤️ Fragmento J1 - 25 Azari", "💗 Fragmento J2 - 25 Azari", "💎 Amuleto de Azari - 45 Azari", "🧲 Imán de Azari - 60 Azari", bagLabel, lanternLabel, "🗝️ Llave vieja - 40 Azari"];
     if (hasAzariMagnet) shopItems[6] += "  ✓";
-    if (hasAzariBag) shopItems[7] += "  ✓";
+    if (azariBagLevel > 0) shopItems[7] += "  (nivel " + azariBagLevel + "/5)";
     if (hasLantern && lanternLevel >= 3) shopItems[8] += "  ✓";
+    if (hasOldKey) shopItems[9] += "  ✓";
     for (var i = 0; i < shopItems.length; i++) {
       var itemY = 185 + i * 34;
       var selected = menuSelection === i;

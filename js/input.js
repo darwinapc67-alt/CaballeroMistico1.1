@@ -53,9 +53,16 @@ window.addEventListener("keydown", function(e) {
     return;
   }
   if (gameState === ST_INVENTORY && !mapOpen) {
-    var inventoryItems = 8;
+    var inventoryItems = 9;
     if (up) { inventorySelection = (inventorySelection - 1 + inventoryItems) % inventoryItems; e.preventDefault(); return; }
     if (down) { inventorySelection = (inventorySelection + 1) % inventoryItems; e.preventDefault(); return; }
+    if (k === "e" && inventorySelection === 8 && hasOldKey) {
+      keyReady = true;
+      inventoryOpen = false;
+      gameState = ST_PLAYING;
+      spawnFloatText(player.x, player.y - 28, "Llave vieja preparada", "#d4af37");
+      e.preventDefault(); return;
+    }
     if (confirm) {
       if (inventorySelection === 0 && hasAzariCharm) toggleBlessing("greedy");
       if (inventorySelection === 1 && bossUniqueItems.guardian) toggleBlessing("stone");
@@ -470,8 +477,8 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (shopId === 0) {
-      if (up || k === "w") { menuSelection = (menuSelection - 1 + 9) % 9; e.preventDefault(); return; }
-      if (down || k === "s") { menuSelection = (menuSelection + 1) % 9; e.preventDefault(); return; }
+      if (up || k === "w") { menuSelection = (menuSelection - 1 + 10) % 10; e.preventDefault(); return; }
+      if (down || k === "s") { menuSelection = (menuSelection + 1) % 10; e.preventDefault(); return; }
       if (confirm) {
         if (shopConfirm === menuSelection) {
           if (menuSelection === 0 && !hasMap && azari >= 45) { azari -= 45; hasMap = true; sfxBuy(); }
@@ -481,11 +488,16 @@ window.addEventListener("keydown", function(e) {
           if (menuSelection === 4 && heartFragmentsBought2 < 2 && azari >= 25) { azari -= 25; heartFragments2++; heartFragmentsBought2++; sfxBuy(); if (heartFragments2 >= 3) { heartFragments2 -= 3; player2.maxHp++; player2.hp = player2.maxHp; } }
           if (menuSelection === 5 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; sfxBuy(); }
           if (menuSelection === 6 && !hasAzariMagnet && azari >= 60) { azari -= 60; hasAzariMagnet = true; sfxBuy(); }
-          if (menuSelection === 7 && !hasAzariBag && azari >= 80) { azari -= 80; hasAzariBag = true; sfxBuy(); }
+          if (menuSelection === 7 && azariBagLevel < 5) {
+            var bagPrices = [80, 120, 180, 260, 350];
+            var bagPrice = bagPrices[azariBagLevel];
+            if (azari >= bagPrice) { azari -= bagPrice; azariBagLevel++; hasAzariBag = true; sfxBuy(); }
+          }
           if (menuSelection === 8 && ((!hasLantern && azari >= 70) || (hasLantern && lanternLevel < 3 && azari >= (lanternLevel === 1 ? 110 : 180)))) {
             azari -= hasLantern ? (lanternLevel === 1 ? 110 : 180) : 70;
             hasLantern = true; lanternLevel = Math.min(3, lanternLevel + 1); sfxBuy();
           }
+          if (menuSelection === 9 && !hasOldKey && azari >= 40) { azari -= 40; hasOldKey = true; sfxBuy(); }
           shopConfirm = -1;
         } else shopConfirm = menuSelection;
         e.preventDefault(); return;
@@ -600,7 +612,7 @@ function processGamepadInput() {
   var btn14 = gpButtons[14] && !prevGPButtons[14];
   var btn15 = gpButtons[15] && !prevGPButtons[15];
   if (shopOpen && (shopId === 0 || shopId === 1)) {
-    var shopOptions = shopId === 0 ? 9 : 7;
+    var shopOptions = shopId === 0 ? 10 : 7;
     if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
     if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + shopOptions) % shopOptions; gamepadMenuAxisLock = 1; }
     if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % shopOptions; gamepadMenuAxisLock = 1; }
@@ -613,7 +625,11 @@ function processGamepadInput() {
         if (menuSelection === 4 && heartFragmentsBought2 < 2 && azari >= 25) { azari -= 25; heartFragments2++; heartFragmentsBought2++; sfxBuy(); if (heartFragments2 >= 3) { heartFragments2 -= 3; player2.maxHp++; player2.hp = player2.maxHp; } }
         if (menuSelection === 5 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; sfxBuy(); }
         if (menuSelection === 6 && !hasAzariMagnet && azari >= 60) { azari -= 60; hasAzariMagnet = true; sfxBuy(); }
-        if (menuSelection === 7 && !hasAzariBag && azari >= 80) { azari -= 80; hasAzariBag = true; sfxBuy(); }
+        if (menuSelection === 7 && azariBagLevel < 5) {
+          var bagPrices2 = [80, 120, 180, 260, 350];
+          var bagPrice2 = bagPrices2[azariBagLevel];
+          if (azari >= bagPrice2) { azari -= bagPrice2; azariBagLevel++; hasAzariBag = true; sfxBuy(); }
+        }
         if (menuSelection === 8 && ((!hasLantern && azari >= 70) || (hasLantern && lanternLevel < 3 && azari >= (lanternLevel === 1 ? 110 : 180)))) {
           azari -= hasLantern ? (lanternLevel === 1 ? 110 : 180) : 70;
           hasLantern = true; lanternLevel = Math.min(3, lanternLevel + 1); sfxBuy();
