@@ -132,28 +132,6 @@ function update() {
     }
   }
 
-  var room = rooms[currentRoom];
-
-  if (twoPlayerMode) {
-    var midX = (player.x + player.w/2 + player2.x + player2.w/2) / 2;
-    targetCamX = midX - canvas.width/2;
-  } else {
-    targetCamX = player.x + player.w/2 - canvas.width/2;
-  }
-  targetCamX = Math.max(0, Math.min(targetCamX, WORLD_W - canvas.width));
-  var diff = targetCamX - cameraX; cameraX += diff * 0.08; if (Math.abs(diff) < 0.5) cameraX = targetCamX;
-
-  if (room.height > canvas.height) {
-    if (twoPlayerMode) {
-      var midY = (player.y + player.h/2 + player2.y + player2.h/2) / 2;
-      targetCamY = midY - canvas.height/2;
-    } else {
-      targetCamY = player.y + player.h/2 - canvas.height/2;
-    }
-    targetCamY = Math.max(0, Math.min(targetCamY, room.height - canvas.height));
-  } else { targetCamY = 0; }
-  var diffY = targetCamY - cameraY; cameraY += diffY * 0.08; if (Math.abs(diffY) < 0.5) cameraY = targetCamY;
-
   if (gameState === ST_PLAYING) {
     updatePlayer();
     updatePlayer2();
@@ -161,6 +139,7 @@ function update() {
     updateArrows();
     updateAzariDrops();
     updateHealingHearts();
+    if (healingStoneCooldown > 0) healingStoneCooldown--;
     updateHiddenCollectibles();
     updateBossProjectiles();
     updateTutorial();
@@ -184,6 +163,40 @@ function update() {
       if (discoveryNotify.timer <= 0) discoveryNotify.active = false;
     }
   }
+
+  var room = rooms[currentRoom];
+  if (!(gameState === ST_TRANSITION && transIsFall)) {
+    if (twoPlayerMode) {
+      var midX = (player.x + player.w/2 + player2.x + player2.w/2) / 2;
+      targetCamX = midX - canvas.width/2;
+    } else {
+      targetCamX = player.x + player.w/2 - canvas.width/2;
+    }
+    if (room.verticalRoom && room.worldX !== undefined) {
+      var roomWidth = room.roomWidth || ROOM_W;
+      targetCamX = Math.max(room.worldX, Math.min(targetCamX, room.worldX + roomWidth - canvas.width));
+    } else {
+      targetCamX = Math.max(0, Math.min(targetCamX, WORLD_W - canvas.width));
+    }
+    var diff = targetCamX - cameraX;
+    cameraX += diff * 0.08;
+    if (Math.abs(diff) < 0.5) cameraX = targetCamX;
+  }
+
+  if (room.height > canvas.height) {
+    if (twoPlayerMode) {
+      var midY = (player.y + player.h/2 + player2.y + player2.h/2) / 2;
+      targetCamY = midY - canvas.height/2;
+    } else {
+      targetCamY = player.y + player.h/2 - canvas.height/2;
+    }
+    targetCamY = Math.max(0, Math.min(targetCamY, room.height - canvas.height));
+  } else {
+    targetCamY = 0;
+  }
+  var diffY = targetCamY - cameraY;
+  cameraY += diffY * 0.08;
+  if (Math.abs(diffY) < 0.5) cameraY = targetCamY;
 }
 
 function updateShopPlayer() {

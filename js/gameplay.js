@@ -77,7 +77,7 @@ function resetPlayer() {
   playerDead = false;
   deathTimer = 0;
   particles = []; floatTexts = []; arrowsInFlight = []; healingHearts = []; azariDrops = []; flash = 0;
-  healing = false; healTimer = 0;
+  healing = false; healTimer = 0; healingStoneCooldown = 0;
   hitFlash = 0; needsRespawn = false;
   if (twoPlayerMode) {
     player2.x = 140; player2.y = 400; player2.vx = 0; player2.vy = 0;
@@ -90,6 +90,41 @@ function resetPlayer() {
     player2.blocking = false;
     player2.dashTimer = 0; player2.dashCooldown = 0; player2.dashDir = 1; player2.dashing = false; player2.recoilTimer = 0;
   }
+}
+
+function saveHealingStoneCheckpoint() {
+  checkpointState = {
+    room: currentRoom,
+    px: player.x,
+    py: player.y,
+    hp: player.hp,
+    maxHp: player.maxHp,
+    azari: azari,
+    hasSword: hasSword,
+    swordEquipped: swordEquipped,
+    hasBow: hasBow,
+    arrows: arrows,
+    hasMap: hasMap,
+    hasAzariCharm: hasAzariCharm,
+    hasAzariMagnet: hasAzariMagnet,
+    hasAzariBag: hasAzariBag,
+    hasLantern: hasLantern,
+    lanternLevel: lanternLevel,
+    hasDash: hasDash,
+    hasDoubleJump: hasDoubleJump,
+    swordLevel: swordLevel,
+    bowLevel: bowLevel,
+    arrowType: arrowType,
+    combatSkills: JSON.parse(JSON.stringify(combatSkills)),
+    blessingSlots: blessingSlots,
+    equippedBlessings: equippedBlessings.slice(),
+    armorId: armorId,
+    permanentUpgrades: JSON.parse(JSON.stringify(permanentUpgrades)),
+    bossUniqueItems: JSON.parse(JSON.stringify(bossUniqueItems)),
+    hiddenCollectibles: JSON.parse(JSON.stringify(hiddenCollectibles))
+  };
+  if (activeSlot >= 0) saveGame(activeSlot);
+  spawnFloatText(player.x, player.y - 48, "JUEGO GUARDADO", "#64e6ae");
 }
 
 function restoreCheckpoint() {
@@ -215,6 +250,10 @@ function executeAdminCommand(rawCommand) {
   var parts = rawCommand.trim().toLowerCase().split(/\s+/);
   if (parts.join(" ") === "/give ds") parts = ["/give", "ds"];
   if (parts.join(" ") === "/give qds") parts = ["/give", "qds"];
+  if (parts.join(" ") === "/give luz infinito" || parts.join(" ") === "/give luz inf" ||
+      parts.join(" ") === "/give linterna infinito" || parts.join(" ") === "/give linterna inf") {
+    parts = ["/give", "luz", "infinito"];
+  }
   if (parts[0] === "/give") {
     var item = parts[1];
     var amount = parts[2] ? Number(parts[2]) : 1;
@@ -250,10 +289,24 @@ function executeAdminCommand(rawCommand) {
       player.jumpsLeft = 1; player2.jumpsLeft = 1;
       adminCommandMessage = "Doble salto quitado.";
     } else if (item === "linterna" || item === "lantern") {
-      var lanternAmount = Number.isFinite(amount) ? Math.max(1, Math.floor(amount)) : 1;
-      hasLantern = true;
-      lanternLevel = Math.min(3, Math.max(lanternLevel, lanternAmount));
-      adminCommandMessage = "Linterna nivel " + lanternLevel + " concedida.";
+      if (parts[2] === "infinito" || parts[2] === "inf") {
+        hasLantern = true;
+        infiniteLight = true;
+        adminCommandMessage = "Nivel de luz infinito activado.";
+      } else {
+        var lanternAmount = Number.isFinite(amount) ? Math.max(1, Math.floor(amount)) : 1;
+        hasLantern = true;
+        lanternLevel = Math.min(3, Math.max(lanternLevel, lanternAmount));
+        adminCommandMessage = "Linterna nivel " + lanternLevel + " concedida.";
+      }
+    } else if (item === "luz" || item === "luzinfinita" || item === "infinite_light") {
+      if (parts[2] === "infinito" || parts[2] === "inf") {
+        hasLantern = true;
+        infiniteLight = true;
+        adminCommandMessage = "Nivel de luz infinito activado.";
+      } else {
+        adminCommandMessage = "Usa /give luz infinito.";
+      }
     } else {
       adminCommandMessage = "Objeto no válido. Usa espada, arco, mapa, flechas, vida, dash o linterna.";
     }
@@ -886,6 +939,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
 
   var newRoom = Math.floor(p.x / ROOM_W);
   if (newRoom >= rooms.length) newRoom = rooms.length - 1;
+  if (rooms[currentRoom].verticalRoom) newRoom = currentRoom;
   if (newRoom !== currentRoom) {
     currentRoom = newRoom;
     stats.roomsVisited++;
@@ -902,6 +956,10 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   }
 
   var room = rooms[currentRoom];
+  if (rooms[currentRoom].verticalRoom && p.y < -20 && currentRoom === 34) {
+    startRiseThroughTransition(30);
+    return;
+  }
   if (p.y + p.h > room.height) {
     var hasFloor = false;
     for (var i = 0; i < room.platforms.length; i++) {
@@ -920,6 +978,17 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       return;
     }
     if (currentRoom === 5) { startTransition(6, "forward"); return; }
+    if (currentRoom === 30) { sfxFall(); startFallThroughTransition(34); return; }
+    if (rooms[currentRoom].verticalRoom) {
+      var lowerRoomOrigin = rooms[currentRoom].worldX !== undefined ? rooms[currentRoom].worldX : currentRoom * ROOM_W;
+      p.x = Math.max(lowerRoomOrigin + 30, Math.min(lowerRoomOrigin + ROOM_W - p.w - 30, p.x));
+      p.y = room.height - p.h - 40;
+      p.vx = 0;
+      p.vy = 0;
+      p.onGround = true;
+      p.jumpsLeft = p.maxJumps;
+      return;
+    }
     if (currentRoom < rooms.length - 1) { sfxFall(); startFallThroughTransition(currentRoom + 1); return; }
     p.x = currentRoom * ROOM_W + ROOM_W / 2 - p.w / 2 + (p.id === 2 ? 30 : -30);
     p.y = 100; p.vx = 0; p.vy = 0;
@@ -1243,9 +1312,13 @@ function tryInteractFor(p) {
     var st = room.healingStone;
     var dx = (p.x + p.w/2) - (st.x + st.w/2);
     var dy = (p.y + p.h/2) - (st.y + st.h/2);
-    if (Math.sqrt(dx*dx + dy*dy) < 80 && p.hp < p.maxHp && !healing) {
-      healing = true; healTimer = 120; p.frozen = true;
-      spawnFloatText(p.x, p.y - 30, "J" + p.id + " sentándose...", "#4f4");
+    if (Math.sqrt(dx*dx + dy*dy) < 80 && !healing && healingStoneCooldown <= 0) {
+      saveHealingStoneCheckpoint();
+      healingStoneCooldown = 60;
+      if (p.hp < p.maxHp) {
+        healing = true; healTimer = 120; p.frozen = true;
+        spawnFloatText(p.x, p.y - 30, "J" + p.id + " sentándose...", "#4f4");
+      }
     }
   }
 }
@@ -1258,6 +1331,20 @@ function startFallThroughTransition(toRoom) {
   transTargetRoom = toRoom;
   transFade = 0;
   transIsFall = true;
+  transIsRise = false;
+  player.vx = 0; player.vy = 0;
+  if (twoPlayerMode) { player2.vx = 0; player2.vy = 0; }
+}
+
+function startRiseThroughTransition(toRoom) {
+  if (gameState === ST_TRANSITION) return;
+  gameState = ST_TRANSITION;
+  transPhase = "out";
+  transTimer = 35;
+  transTargetRoom = toRoom;
+  transFade = 0;
+  transIsFall = false;
+  transIsRise = true;
   player.vx = 0; player.vy = 0;
   if (twoPlayerMode) { player2.vx = 0; player2.vy = 0; }
 }
@@ -1381,10 +1468,15 @@ function updateTransition() {
         spawnFloatText(player.x, player.y - 35, "PUNTO DE GUARDADO", "#64e6ae");
       }
       if (transIsFall) {
-        player.x = currentRoom * ROOM_W + ROOM_W / 2 - player.w / 2 - 20;
+        var fallOrigin = room.worldX !== undefined ? room.worldX : currentRoom * ROOM_W;
+        player.x = fallOrigin + ROOM_W / 2 - player.w / 2 - 20;
         player.y = 80; player.vx = 0; player.vy = 2;
-        if (twoPlayerMode) { player2.x = currentRoom * ROOM_W + ROOM_W / 2 - player2.w / 2 + 20; player2.y = 80; player2.vx = 0; player2.vy = 2; }
+        if (twoPlayerMode) { player2.x = fallOrigin + ROOM_W / 2 - player2.w / 2 + 20; player2.y = 80; player2.vx = 0; player2.vy = 2; }
         spawnFloatText(player.x, player.y + 30, "No hay vuelta atrás...", "#f44");
+      } else if (transIsRise) {
+        var upperOrigin = room.worldX !== undefined ? room.worldX : currentRoom * ROOM_W;
+        player.x = upperOrigin + 420; player.y = 760; player.vx = 0; player.vy = 0;
+        if (twoPlayerMode) { player2.x = upperOrigin + 470; player2.y = 760; player2.vx = 0; player2.vy = 0; }
       } else {
         if (player.vx < 0) {
           player.x = currentRoom * ROOM_W + ROOM_W - 80;
@@ -1418,7 +1510,12 @@ function updateTransition() {
     if (transTimer <= 0) {
       gameState = ST_PLAYING; player.autoWalk = 0; player.vx = 0;
       if (twoPlayerMode) { player2.autoWalk = 0; player2.vx = 0; }
-      transIsFall = false; transitionCooldown = 45;
+      if (transIsFall || transIsRise) {
+        var cameraOrigin = rooms[currentRoom].worldX !== undefined ? rooms[currentRoom].worldX : currentRoom * ROOM_W;
+        cameraX = Math.max(0, Math.min(cameraOrigin, WORLD_W - canvas.width));
+        targetCamX = cameraX;
+      }
+      transIsFall = false; transIsRise = false; transitionCooldown = 45;
       startBossDialogue(currentRoom);
     }
   }

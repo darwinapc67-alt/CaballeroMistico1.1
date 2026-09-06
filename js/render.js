@@ -1,8 +1,9 @@
-function drawCaveBg(rx, decor, roomH) {
+function drawCaveBg(rx, decor, roomH, roomWidth) {
+  roomWidth = roomWidth || ROOM_W;
   ctx.fillStyle = "#080818";
-  ctx.fillRect(rx, 0, ROOM_W, roomH);
+  ctx.fillRect(rx, 0, roomWidth, roomH);
   for (var i = 0; i < 20; i++) {
-    var sx = rx + (i * 137) % ROOM_W, sy = (i * 89) % roomH;
+    var sx = rx + (i * 137) % roomWidth, sy = (i * 89) % roomH;
     ctx.globalAlpha = 0.1 + Math.sin(Date.now()/2000 + i) * 0.05;
     ctx.fillStyle = "#fff"; ctx.fillRect(sx, sy, 1, 1);
   }
@@ -110,6 +111,17 @@ function drawPlatforms(room) {
     ctx.fillRect(p.x, p.y, p.w, 3);
     ctx.fillStyle = "#1a1a2a";
     ctx.fillRect(p.x, p.y + p.h - 3, p.w, 3);
+  });
+}
+
+function drawWalls(room) {
+  room.walls.forEach(function(w) {
+    ctx.fillStyle = "#343447";
+    ctx.fillRect(w.x, w.y, w.w, w.h);
+    ctx.fillStyle = "#55556b";
+    ctx.fillRect(w.x, w.y, w.w, 4);
+    ctx.fillStyle = "#1b1b2b";
+    ctx.fillRect(w.x + w.w - 4, w.y, 4, w.h);
   });
 }
 
@@ -805,13 +817,31 @@ function drawGameWorld() {
 
   var camLeft = cameraX, camRight = cameraX + 800, camTop = cameraY, camBottom = cameraY + 600;
   for (var r = 0; r < rooms.length; r++) {
-    var rx = r * ROOM_W;
-    if (rx + ROOM_W < camLeft - 100 || rx > camRight + 100) continue;
+    if (currentRoom === 34 && r !== 34) continue;
+    if (r === 34 && currentRoom !== 34) continue;
+    var rx = rooms[r].worldX !== undefined ? rooms[r].worldX : r * ROOM_W;
+    var roomWidth = rooms[r].roomWidth || ROOM_W;
+    if (rx + roomWidth < camLeft - 100 || rx > camRight + 100) continue;
     var room = rooms[r];
     if (room.height < camTop - 100 || 0 > camBottom + 100) continue;
     if (room.city) drawCityBg(rx, room);
-    else drawCaveBg(rx, room.decor, room.height);
+    else drawCaveBg(rx, room.decor, room.height, roomWidth);
     drawPlatforms(room);
+    drawWalls(room);
+    if (r === 30) {
+      var holeX = 30 * ROOM_W + 580;
+      ctx.fillStyle = "#020208";
+      ctx.fillRect(holeX, 850, 200, 50);
+      ctx.strokeStyle = "#596078";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(holeX, 860);
+      ctx.lineTo(holeX + 200, 860);
+      ctx.stroke();
+      ctx.fillStyle = "#9aa3bd";
+      ctx.font = "bold 13px monospace";
+      ctx.fillText("↓", holeX + 100, 888);
+    }
     drawSpikes(room);
     if (room.city) drawCityHouses(room, r);
     if (r === 1) drawPedestal();
@@ -868,11 +898,12 @@ function drawGameWorld() {
 
   var lightX = player.x - cameraX + player.w / 2;
   var lightY = player.y - cameraY + player.h / 2;
-  var lightRadius = hasLantern ? 190 + lanternLevel * 55 : 125;
+  var lightRadius = infiniteLight ? Math.max(canvas.width, canvas.height) * 2 : (hasLantern ? 190 + lanternLevel * 55 : 125);
   var darkness = ctx.createRadialGradient(lightX, lightY, lightRadius * 0.35, lightX, lightY, lightRadius);
   darkness.addColorStop(0, "rgba(4, 6, 16, 0)");
-  darkness.addColorStop(0.72, "rgba(4, 6, 16, 0.42)");
-  darkness.addColorStop(1, "rgba(2, 3, 10, 0.88)");
+  var darknessFactor = 1 - brightnessBoost;
+  darkness.addColorStop(0.72, "rgba(4, 6, 16, " + (0.42 * darknessFactor) + ")");
+  darkness.addColorStop(1, "rgba(2, 3, 10, " + (0.88 * darknessFactor) + ")");
   ctx.fillStyle = darkness;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
@@ -1118,7 +1149,7 @@ function drawAdminConsole() {
   ctx.fillText("/give flechas [cantidad]", 65, canvas.height - 130);
   ctx.fillText("/give vida", 65, canvas.height - 112);
   ctx.fillText("/give dash", 65, canvas.height - 94);
-  ctx.fillText("/give linterna [nivel]", 65, canvas.height - 76);
+  ctx.fillText("/give linterna [nivel]  |  /give luz infinito", 65, canvas.height - 76);
   ctx.fillText("/give ds  |  /give qds", 65, canvas.height - 58);
   ctx.fillText("/tp habitacion [1-23]", 330, canvas.height - 202);
   ctx.fillText(translateText("Ejemplo: /give azari 1000"), 330, canvas.height - 184);
@@ -1245,6 +1276,7 @@ function drawMenu() {
     var settings = [
       "🌐 " + translateText("Idioma") + ": " + languages[languageSelection].label,
       "🎮 " + translateText("Dispositivo") + ": " + translateText(devices[deviceSelection].label),
+      "☀️ Brillo: " + Math.round(brightnessBoost * 100) + "%",
       "🔐 " + translateText(adminMode ? "Admin activado" : "Activar modo admin")
     ];
     settings.forEach(function(option, index) {
@@ -1257,7 +1289,7 @@ function drawMenu() {
       ctx.fillText((selected ? "▶  " : "    ") + option, canvas.width / 2, y + 5);
     });
     ctx.fillStyle = "#666"; ctx.font = "12px monospace";
-    ctx.fillText("↑/↓ " + translateText("Navegar") + "  •  ENTER " + translateText("Seleccionar") + "  •  ESC " + translateText("Volver"), canvas.width / 2, 470);
+    ctx.fillText("↑/↓ Navegar  •  ←/→ Ajustar brillo  •  ENTER Seleccionar  •  ESC Volver", canvas.width / 2, 470);
   }
   ctx.textAlign = "left";
 }
@@ -1331,6 +1363,7 @@ function drawPause() {
     var pauseSettings = [
       "🌐 Idioma: " + languages[languageSelection].label,
       "🎮 Dispositivo: " + devices[deviceSelection].label,
+      "☀️ Brillo: " + Math.round(brightnessBoost * 100) + "%",
       "🔐 " + (adminMode ? "Admin activado" : "Activar modo admin")
     ];
     pauseSettings.forEach(function(option, index) {
@@ -1343,7 +1376,7 @@ function drawPause() {
       ctx.fillText((selected ? "▶  " : "    ") + option, canvas.width / 2, y + 5);
     });
     ctx.fillStyle = "#666"; ctx.font = "12px monospace";
-    ctx.fillText("↑/↓ Navegar  •  ENTER Seleccionar  •  ESC Volver", canvas.width / 2, 430);
+    ctx.fillText("↑/↓ Navegar  •  ←/→ Ajustar brillo  •  ESC Volver", canvas.width / 2, 430);
     ctx.textAlign = "left";
     return;
   }
@@ -1477,7 +1510,24 @@ function drawControls() {
 }
 
 function drawTransition() {
-  drawGameWorld();
+  if (transIsFall || transIsRise) {
+    ctx.fillStyle = "#02030a";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "rgba(100, 220, 255, 0.8)";
+    for (var i = 0; i < 16; i++) {
+      var streakY = (i * 47 + (155 - transTimer) * 8) % (canvas.height + 40) - 20;
+      ctx.fillRect(canvas.width / 2 - 90 + (i % 5) * 45, streakY, 2, 24);
+    }
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 30px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText(transIsRise ? "↑" : "↓", canvas.width / 2, canvas.height / 2);
+    ctx.font = "bold 13px monospace";
+    ctx.fillText(transIsRise ? "SUBIENDO" : "DESCENDIENDO", canvas.width / 2, canvas.height / 2 + 34);
+    ctx.textAlign = "left";
+  } else {
+    drawGameWorld();
+  }
   ctx.fillStyle = "rgba(0, 0, 0, " + transFade + ")";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   if (transPhase === "load") {
@@ -1485,6 +1535,12 @@ function drawTransition() {
     ctx.font = "bold 14px monospace";
     ctx.textAlign = "center";
     ctx.fillText("CARGANDO", canvas.width/2, 30);
+    ctx.textAlign = "left";
+  } else if (transIsFall || transIsRise) {
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 18px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText(transIsRise ? "↑" : "↓", canvas.width / 2, canvas.height - 40);
     ctx.textAlign = "left";
   }
 }

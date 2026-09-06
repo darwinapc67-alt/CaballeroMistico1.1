@@ -3,7 +3,7 @@ var ROOM_W = 800, ROOM_H = 600, GRAVITY = 0.6;
 var DASH_SPEED = 12, DASH_DURATION = 10, DASH_COOLDOWN = 45, DASH_INV_FRAMES = 12;
 /* Rooms 0-9 are the original route, room 10 is the final descent, and
    rooms 11-13 are the Guardian, Queen Larva, and Abyssal Knight arenas. */
-var WORLD_W = 34 * ROOM_W;
+var WORLD_W = 35 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
 var VERSION = "v1.65";
 
@@ -139,6 +139,7 @@ function translateText(text) {
 }
 var menuSelection = 0, menuSubState = "slots", slotToDelete = -1, activeSlot = -1;
 var settingsSelection = 0, settingsReturn = false, adminFromSettings = false;
+var brightnessBoost = 0;
 var difficultySelection = 1, difficulty = "normal";
 var difficultyOptions = [
   { id: "easy", name: "FÁCIL", desc: "Recibes menos daño de los enemigos.", damage: 0.7 },
@@ -150,7 +151,7 @@ var adminMode = false, adminConsoleOpen = false, adminCommand = "", adminCommand
 var pauseSelection = 0, pauseSubState = "menu", diaryCategory = "enemies", diaryScroll = 0;
 
 var transTimer = 0, transPhase = "out", transTargetRoom = 0, transFade = 0;
-var transIsFall = false, transitionCooldown = 0;
+var transIsFall = false, transIsRise = false, transitionCooldown = 0;
 
 var audioCtx = null, musicPlaying = false, musicInterval = null, sfxEnabled = true;
 var masterVolume = 1, musicVolume = 0.75, sfxVolume = 0.7, audioSelection = 0;
@@ -166,7 +167,7 @@ var shopPreviousX = 0, shopPreviousY = 0, shopExitCooldown = 0;
 var heartFragments1 = 0, heartFragments2 = 0;
 var heartFragmentsBought1 = 0, heartFragmentsBought2 = 0;
 var hasAzariCharm = false, hasDoubleJump = false;
-var hasAzariMagnet = false, hasAzariBag = false, hasLantern = false, lanternLevel = 0;
+var hasAzariMagnet = false, hasAzariBag = false, hasLantern = false, lanternLevel = 0, infiniteLight = false;
 var hasDash = false;
 var swordLevel = 0, bowLevel = 0, arrowType = "normal";
 var combatSkills = { charged: false, aerial: false, combo: false };
@@ -183,7 +184,7 @@ var hiddenCollectibleData = [
 ];
 
 var lastSafeX = 100, lastSafeY = 400;
-var healing = false, healTimer = 0, hitFlash = 0, needsRespawn = false;
+var healing = false, healTimer = 0, healingStoneCooldown = 0, hitFlash = 0, needsRespawn = false;
 
 var twoPlayerMode = false;
 var inventoryOpen = false, mapOpen = false, inventorySelection = 0, inventoryHover = -1;
@@ -299,6 +300,7 @@ function saveGame(i) {
     heartFragmentsBought1: heartFragmentsBought1, heartFragmentsBought2: heartFragmentsBought2,
     hasAzariCharm: hasAzariCharm, hasDoubleJump: hasDoubleJump,
     hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, hasLantern: hasLantern, lanternLevel: lanternLevel, hasDash: hasDash,
+    brightnessBoost: brightnessBoost,
     swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: combatSkills,
     blessingSlots: blessingSlots, equippedBlessings: equippedBlessings, armorId: armorId,
     permanentUpgrades: permanentUpgrades, bossUniqueItems: bossUniqueItems, hiddenCollectibles: hiddenCollectibles,
@@ -357,6 +359,7 @@ function loadGame(i) {
   hasAzariBag = s.hasAzariBag || false;
   hasLantern = s.hasLantern || false;
   lanternLevel = Math.max(0, Math.min(3, s.lanternLevel || (hasLantern ? 1 : 0)));
+  brightnessBoost = Math.max(0, Math.min(1, Number(s.brightnessBoost) || 0));
   hasDash = s.hasDash || false;
   swordLevel = s.swordLevel || 0; bowLevel = s.bowLevel || 0;
   arrowType = s.arrowType || "normal";
@@ -717,16 +720,25 @@ cityRooms[cityRooms.length - 1].transitionZone = {x: 29 * ROOM_W + 750, y: 460, 
 cityRooms[cityRooms.length - 1].platforms = [{x: 29 * ROOM_W, y: 560, w: ROOM_W, h: 40}];
 
 var room30 = {
-  height: 600,
+  height: 900,
   platforms: [
-    {x: 30 * ROOM_W, y: 560, w: ROOM_W, h: 40},
-    {x: 30 * ROOM_W + 285, y: 350, w: 515, h: 18}
+    {x: 30 * ROOM_W, y: 860, w: 580, h: 40},
+    {x: 30 * ROOM_W + 780, y: 860, w: 220, h: 40},
+    {x: 30 * ROOM_W, y: 700, w: 180, h: 18},
+    {x: 30 * ROOM_W + 195, y: 760, w: 150, h: 18},
+    {x: 30 * ROOM_W + 360, y: 820, w: 150, h: 18},
+    {x: 30 * ROOM_W + 520, y: 840, w: 150, h: 18},
+    {x: 30 * ROOM_W + 690, y: 600, w: 110, h: 16},
+    {x: 30 * ROOM_W + 535, y: 500, w: 130, h: 16},
+    {x: 30 * ROOM_W + 500, y: 400, w: 130, h: 16},
+    {x: 30 * ROOM_W + 635, y: 300, w: 130, h: 16},
+    {x: 30 * ROOM_W + 670, y: 200, w: 130, h: 16}
   ],
   spikes: [],
   walls: [],
   transitionZone: null,
   noDoor: true,
-  decor: genDecor(30 * ROOM_W, 10, 6, 600)
+  decor: genDecor(30 * ROOM_W, 10, 6, 900)
 };
 
 function createCorridorRoom(index, variant, nextRoom) {
@@ -748,9 +760,35 @@ function createCorridorRoom(index, variant, nextRoom) {
 var room31 = createCorridorRoom(31, 1, 32);
 var room32 = createCorridorRoom(32, 2, 33);
 var room33 = createCorridorRoom(33, 3, null);
+function createVerticalRoomPlatforms(origin) {
+  var platforms = [{x: origin, y: 3460, w: 1200, h: 40}];
+  var positions = [70, 285, 500, 715, 930, 715, 500, 285];
+  for (var i = 0; i < 27; i++) {
+    platforms.push({
+      x: origin + positions[i % positions.length],
+      y: 3320 - i * 125,
+      w: 220,
+      h: 18
+    });
+  }
+  platforms.push({x: origin + 250, y: 120, w: 500, h: 18});
+  return platforms;
+}
+var room34 = {
+  height: 3500,
+  worldX: 30 * ROOM_W,
+  roomWidth: 1200,
+  verticalRoom: true,
+  platforms: createVerticalRoomPlatforms(30 * ROOM_W),
+  spikes: [],
+  walls: [],
+  transitionZone: null,
+  noDoor: true,
+  decor: genDecor(30 * ROOM_W, 12, 6, 3500)
+};
 
 var rooms = [room0, room1, room2, room3, room4, room5, room6, room7, room8, room9,
-  room10, room11].concat(interludeRooms, [room12, room13], cityRooms, [room30, room31, room32, room33]);
+  room10, room11].concat(interludeRooms, [room12, room13], cityRooms, [room30, room31, room32, room33, room34]);
 
 var enemies = [
   {x: 9630, y: 520, w: 24, h: 20, vx: 1.2, vy: 0, baseY: 520, range: 180, speed: 1.2, dead: false, room: 12, type: 'cazador_paramo', terrestrial: true},
