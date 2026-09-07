@@ -346,7 +346,8 @@ function executeAdminCommand(rawCommand) {
 
 function collectAzari(amount) {
   var maxAzari = azariBagLevel === 0 ? 999 : [999, 1999, 2999, 4999, 7499, 9999][azariBagLevel];
-  azari = Math.min(maxAzari, azari + Math.max(0, amount));
+  var rewardAmount = adAzariBonusTimer > 0 ? amount * 2 : amount;
+  azari = Math.min(maxAzari, azari + Math.max(0, rewardAmount));
 }
 
 function bossTarget(e) {

@@ -1190,7 +1190,10 @@ function drawDeathScreen() {
   ctx.fillStyle = "#ddd";
   ctx.font = "14px monospace";
   ctx.fillText("Tres derrotas: elige cómo continuar.", canvas.width / 2, 215);
-  ["Volver al último punto de guardado", "Ir al menú principal"].forEach(function(option, index) {
+  var deathOptions = adRewardedRevive
+    ? ["Volver al último punto de guardado", "💀 Revivir con anuncio", "Ir al menú principal"]
+    : ["Volver al último punto de guardado", "Ir al menú principal"];
+  deathOptions.forEach(function(option, index) {
     var y = 300 + index * 54;
     ctx.fillStyle = deathChoice === index ? "rgba(100, 220, 200, 0.2)" : "rgba(0,0,0,0.25)";
     ctx.fillRect(145, y - 28, canvas.width - 290, 40);
@@ -1202,7 +1205,7 @@ function drawDeathScreen() {
   });
   ctx.fillStyle = "#888";
   ctx.font = "11px monospace";
-  ctx.fillText("↑/↓ elegir • ENTER confirmar", canvas.width / 2, 440);
+  ctx.fillText("↑/↓ elegir • ENTER confirmar", canvas.width / 2, 440 + (deathOptions.length - 2) * 54);
   ctx.textAlign = "left";
 }
 
@@ -1467,6 +1470,23 @@ function drawPause() {
     drawAudioMenu();
     return;
   }
+  if (pauseSubState === "ads") {
+    ctx.fillStyle = "rgba(0,0,0,0.94)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.textAlign = "center"; ctx.fillStyle = "#ffd700"; ctx.font = "bold 25px monospace";
+    ctx.fillText("🎁 RECOMPENSAS OPCIONALES", canvas.width / 2, 130);
+    var adOptions = ["🎁 +35 Azari", "🎲 Recompensa aleatoria", "⚔️ Bonus Azari x2 (30s)", "💀 Preparar un renacer"];
+    adOptions.forEach(function(option, index) {
+      var y = 210 + index * 55, selected = adMenuSelection === index;
+      ctx.fillStyle = selected ? "rgba(100,200,255,0.16)" : "rgba(255,255,255,0.03)";
+      ctx.fillRect(150, y - 22, 500, 42); ctx.strokeStyle = selected ? "#6cc" : "#333";
+      ctx.strokeRect(150, y - 22, 500, 42); ctx.fillStyle = selected ? "#6cc" : "#aaa";
+      ctx.font = "bold 14px monospace"; ctx.fillText((selected ? "▶  " : "    ") + option, canvas.width / 2, y + 4);
+    });
+    ctx.fillStyle = adMessageTimer > 0 ? "#8f8" : "#777"; ctx.font = "12px monospace";
+    ctx.fillText(adMessage || "El anuncio solo se muestra si tú lo confirmas.", canvas.width / 2, 470);
+    ctx.fillText("↑/↓ elegir  •  ENTER ver anuncio  •  ESC volver", canvas.width / 2, 500);
+    ctx.textAlign = "left"; return;
+  }
   if (pauseSubState === "settings") {
     ctx.fillStyle = "rgba(0,0,0,0.94)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.textAlign = "center"; ctx.fillStyle = "#ffd700"; ctx.font = "bold 26px monospace";
@@ -1501,7 +1521,8 @@ function drawPause() {
     twoPlayerMode ? "👤  " + translateText("Quitar J2") : "👥  " + translateText("Agregar J2"),
     "🎮  " + translateText("Controles"), "🔊  " + translateText("MÚSICA Y SONIDO"), "⚙️  " + translateText("⚙️ Configuración"), "🚪  " + translateText("Salir al Menú")
   ];
-  for (var i = 0; i < 7; i++) {
+  opts.splice(6, 0, "🎁  Recompensas opcionales");
+  for (var i = 0; i < opts.length; i++) {
     var y = 200 + i * 40;
     var isSel = (i === pauseSelection);
     ctx.fillStyle = isSel ? "rgba(100,200,255,0.15)" : "transparent";

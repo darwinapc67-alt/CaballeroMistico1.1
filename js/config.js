@@ -143,6 +143,10 @@ var brightnessBoost = 0;
 var difficultySelection = 1, difficulty = "normal";
 var gameMode = "normal", modeSelection = 0;
 var infiniteWave = 0, infiniteSpawnTimer = 0;
+var adMenuSelection = 0, adMessage = "", adMessageTimer = 0;
+var adRewardedRevive = false, adAzariBonusTimer = 0;
+var GAM_AD_UNIT_PATH = "";
+var GAM_ENABLE_TEST_REWARDS = false;
 var modeOptions = [
   { id: "normal", name: "MODO NORMAL", desc: "Recorre la historia y derrota a los jefes." },
   { id: "infinite", name: "MODO INFINITO", desc: "Sobrevive a oleadas interminables de enemigos." }

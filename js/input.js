@@ -13,6 +13,10 @@ window.addEventListener("keydown", function(e) {
     else return;
     e.preventDefault(); return;
   }
+  if (gameState === ST_PLAYING && (k === "o" || k === "r")) {
+    gameState = ST_PAUSED; pauseSubState = "ads"; adMenuSelection = 0;
+    e.preventDefault(); return;
+  }
   if (gameState === ST_MENU && menuSubState === "difficulty") {
     var keyCode = e.which || e.keyCode;
     var difficultyUp = up || keyCode === 38 || k === "w";
@@ -98,7 +102,7 @@ window.addEventListener("keydown", function(e) {
       e.preventDefault();
       return;
     } else if (gameState === ST_PAUSED) {
-      if (pauseSubState === "diary" || pauseSubState === "settings") pauseSubState = "menu";
+      if (pauseSubState === "diary" || pauseSubState === "settings" || pauseSubState === "ads") pauseSubState = "menu";
       else if (pauseSubState === "controls" || pauseSubState === "audio") pauseSubState = "menu";
       else gameState = ST_PLAYING;
       e.preventDefault();
@@ -219,12 +223,19 @@ window.addEventListener("keydown", function(e) {
 
   if (gameState === ST_DEATH) {
     if (consecutiveDeaths < 3) return;
-    if (up || k === "w" || down || k === "s") deathChoice = deathChoice === 0 ? 1 : 0;
+    var deathOptions = adRewardedRevive ? 3 : 2;
+    if (up || k === "w") deathChoice = (deathChoice - 1 + deathOptions) % deathOptions;
+    if (down || k === "s") deathChoice = (deathChoice + 1) % deathOptions;
     if (confirm) {
       if (deathChoice === 0) {
         restoreCheckpoint();
-      }
-      else { resetAll(); gameState = ST_MENU; menuSubState = "slots"; }
+      } else if (deathChoice === 1 && adRewardedRevive) {
+        adRewardedRevive = false;
+        player.hp = Math.max(1, Math.ceil(player.maxHp / 2));
+        player.frozen = false; playerDead = false; player.inv = 90;
+        gameState = ST_PLAYING;
+        showAdMessage("¡Has vuelto al combate!");
+      } else { resetAll(); gameState = ST_MENU; menuSubState = "slots"; }
       e.preventDefault();
     }
     return;
@@ -415,8 +426,18 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (pauseSubState === "controls") { if (e.key === "Escape") { pauseSubState = "menu"; e.preventDefault(); } return; }
-    if (up || k === "w") { pauseSelection = (pauseSelection - 1 + 7) % 7; e.preventDefault(); return; }
-    if (down || k === "s") { pauseSelection = (pauseSelection + 1) % 7; e.preventDefault(); return; }
+    if (pauseSubState === "ads") {
+      if (up || k === "w") { adMenuSelection = (adMenuSelection + 3) % 4; e.preventDefault(); return; }
+      if (down || k === "s") { adMenuSelection = (adMenuSelection + 1) % 4; e.preventDefault(); return; }
+      if (e.key === "Escape") { pauseSubState = "menu"; e.preventDefault(); return; }
+      if (confirm) {
+        requestRewardedAd(["azari", "random", "bonus", "revive"][adMenuSelection]);
+        e.preventDefault(); return;
+      }
+      return;
+    }
+    if (up || k === "w") { pauseSelection = (pauseSelection - 1 + 8) % 8; e.preventDefault(); return; }
+    if (down || k === "s") { pauseSelection = (pauseSelection + 1) % 8; e.preventDefault(); return; }
     if (confirm) {
       if (pauseSelection === 0) gameState = ST_PLAYING;
       if (pauseSelection === 1) pauseSubState = "diary";
@@ -424,7 +445,8 @@ window.addEventListener("keydown", function(e) {
       if (pauseSelection === 3) { pauseSubState = "controls"; }
       if (pauseSelection === 4) pauseSubState = "audio";
       if (pauseSelection === 5) pauseSubState = "settings";
-      if (pauseSelection === 6) { if (activeSlot >= 0) saveGame(activeSlot); gameState = ST_MENU; menuSubState = "slots"; }
+      if (pauseSelection === 6) { pauseSubState = "ads"; adMenuSelection = 0; }
+      if (pauseSelection === 7) { if (activeSlot >= 0) saveGame(activeSlot); gameState = ST_MENU; menuSubState = "slots"; }
       e.preventDefault();
       return;
     }
@@ -745,8 +767,8 @@ function processGamepadInput() {
   }
   if (gameState === ST_PAUSED && pauseSubState === "menu") {
     if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
-    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { pauseSelection = (pauseSelection - 1 + 7) % 7; gamepadMenuAxisLock = 1; }
-    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { pauseSelection = (pauseSelection + 1) % 7; gamepadMenuAxisLock = 1; }
+    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { pauseSelection = (pauseSelection - 1 + 8) % 8; gamepadMenuAxisLock = 1; }
+    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { pauseSelection = (pauseSelection + 1) % 8; gamepadMenuAxisLock = 1; }
     if (btn0) {
       if (pauseSelection === 0) gameState = ST_PLAYING;
       if (pauseSelection === 1) pauseSubState = "diary";
@@ -754,9 +776,18 @@ function processGamepadInput() {
       if (pauseSelection === 3) pauseSubState = "controls";
       if (pauseSelection === 4) pauseSubState = "audio";
       if (pauseSelection === 5) pauseSubState = "settings";
-      if (pauseSelection === 6) { if (activeSlot >= 0) saveGame(activeSlot); gameState = ST_MENU; menuSubState = "slots"; }
+      if (pauseSelection === 6) { pauseSubState = "ads"; adMenuSelection = 0; }
+      if (pauseSelection === 7) { if (activeSlot >= 0) saveGame(activeSlot); gameState = ST_MENU; menuSubState = "slots"; }
     }
 
+    return;
+  }
+  if (gameState === ST_PAUSED && pauseSubState === "ads") {
+    if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
+    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { adMenuSelection = (adMenuSelection - 1 + 4) % 4; gamepadMenuAxisLock = 1; }
+    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { adMenuSelection = (adMenuSelection + 1) % 4; gamepadMenuAxisLock = 1; }
+    if (btn0) requestRewardedAd(["azari", "random", "bonus", "revive"][adMenuSelection]);
+    if (btn1 || btn9) pauseSubState = "menu";
     return;
   }
   if (btn8) {
