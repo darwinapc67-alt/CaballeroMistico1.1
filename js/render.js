@@ -868,7 +868,7 @@ function drawGameWorld() {
     drawSpikes(room);
     if (room.city) drawCityHouses(room, r);
     if (r === 1) drawPedestal();
-    if (room.transitionZone && !room.noDoor) drawTransitionZone(room.transitionZone);
+    if (room.transitionZone && !room.noDoor && !(r === 10 && room.transitionZone.sharedBoundary)) drawTransitionZone(room.transitionZone);
     if (r === 37 && room.lockedDoor) {
       var door = room.lockedDoor;
       ctx.fillStyle = doorUnlocked ? "#23834b" : "#a83232";

@@ -618,17 +618,20 @@ var room10 = {
   platforms: [
     {x:8000, y:1160, w:800, h:40}, {x:8060, y:1050, w:120, h:14},
     {x:8220, y:930, w:120, h:14}, {x:8420, y:810, w:120, h:14},
-    {x:8260, y:690, w:120, h:14}, {x:8460, y:570, w:120, h:14},
+    {x:8260, y:690, w:120, h:14},     {x:8460, y:570, w:120, h:14},
+    {x:8100, y:570, w:152, h:16},
     {x:8300, y:450, w:120, h:14}, {x:8500, y:330, w:120, h:14},
     {x:8340, y:210, w:120, h:14}, {x:8500, y:80, w:200, h:40}
   ],
-  spikes: [], walls: [], transitionZone: null,
+  spikes: [], walls: [],   transitionZone: {x:8000, y:500, w:40, h:100, to:9, sharedBoundary: true},
   decor: genDecor(8000, 8, 5, 1200)
 };
 
 var room11 = {
   height: 600,
-  platforms: [{x:8800, y:560, w:800, h:40}],
+  platforms: [
+    {x:8800, y:560, w:800, h:40}
+  ],
   spikes: [], walls: [{x:9582, y:0, w:18, h:600}],
   transitionZone: {x:9540, y:460, w:40, h:100, to:12},
   decor: genDecor(8800, 6, 5, 600)

@@ -1152,7 +1152,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   } else { p.inv--; }
 
   if (p === player && transitionCooldown <= 0) {
-    if (currentRoom === 37 && room.openDoor && interactPressed && rectHit(p, {
+    if (currentRoom === 37 && room.openDoor && rectHit(p, {
       x: room.openDoor.x - 18, y: room.openDoor.y - 25,
       w: room.openDoor.w + 36, h: room.openDoor.h + 50
     })) {
@@ -1178,7 +1178,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     }
     var roomBoss = enemies.find ? enemies.find(function(enemy) { return enemy.boss && enemy.room === currentRoom; }) : null;
     if (room.transitionZone && rectHit(p, room.transitionZone) && (!roomBoss || roomBoss.dead)) {
-      startTransition(room.transitionZone.to, "forward");
+      startTransition(room.transitionZone.to, room.transitionZone.to < currentRoom ? "back" : "forward");
       return;
     }
   }

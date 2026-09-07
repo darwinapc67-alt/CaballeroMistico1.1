@@ -44,9 +44,9 @@ function resetAll() {
   room0.transitionZone = null; room1.transitionZone = null; room2.transitionZone = null;
   room3.transitionZone = null; room4.transitionZone = null;
   room5.transitionZone = {x:4750, y:460, w:50, h:100, to:6};
-  room6.transitionZone = null; room7.transitionZone = null; room8.transitionZone = null; 
+  room6.transitionZone = null; room7.transitionZone = null; room8.transitionZone = null;
   room9.transitionZone = {x:7960, y:460, w:40, h:100, to:10};
-  room10.transitionZone = null;
+  room10.transitionZone = {x:8000, y:500, w:40, h:100, to:9, sharedBoundary: true};
   room11.transitionZone = {x:9540, y:460, w:40, h:100, to:12};
   rooms[19].transitionZone = {x:15940, y:460, w:40, h:100, to:20};
   rooms[20].transitionZone = null;
