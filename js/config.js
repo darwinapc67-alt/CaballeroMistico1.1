@@ -759,6 +759,7 @@ cityRooms[cityRooms.length - 1].transitionZone = {x: 29 * ROOM_W + 750, y: 460, 
 cityRooms[cityRooms.length - 1].platforms = [{x: 29 * ROOM_W, y: 560, w: ROOM_W, h: 40}];
 
 function shiftRoomGeometry(room, delta) {
+  if (room.worldX !== undefined) room.worldX += delta;
   room.platforms.forEach(function(item) { item.x += delta; });
   room.spikes.forEach(function(item) { item.x += delta; });
   room.walls.forEach(function(item) { item.x += delta; });
@@ -829,8 +830,8 @@ var room34 = {
   worldX: 30 * ROOM_W,
   roomWidth: 1200,
   verticalRoom: true,
-  lockedDoor: {x: 30 * ROOM_W + 18, y: 3380, w: 55, h: 80},
-  openDoor: {x: 30 * ROOM_W + 1120, y: 3380, w: 55, h: 80},
+  openDoor: {x: 30 * ROOM_W + 18, y: 3380, w: 55, h: 80},
+  lockedDoor: {x: 30 * ROOM_W + 1120, y: 3380, w: 55, h: 80},
   platforms: createVerticalRoomPlatforms(30 * ROOM_W),
   spikes: [],
   walls: [],
