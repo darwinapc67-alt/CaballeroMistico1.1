@@ -1178,6 +1178,9 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       else if (p.vx < 0) { p.x = w.x + w.w; p.vx = 0; p.wallContact = -1; }
     }
   });
+  if (wasOnGround && !p.onGround) {
+    p.jumpsLeft = Math.max(0, p.maxJumps - 1);
+  }
   var arenaBoss = getActiveBoss(currentRoom);
   if (room.bossName && arenaBoss && p.x < (room.worldX !== undefined ? room.worldX : currentRoom * ROOM_W) + 20) {
     p.x = (room.worldX !== undefined ? room.worldX : currentRoom * ROOM_W) + 20;

@@ -140,7 +140,7 @@ function translateText(text) {
 var menuSelection = 0, menuSubState = "slots", slotToDelete = -1, activeSlot = -1;
 var levelsSelection = 0;
 var settingsSelection = 0, settingsReturn = false, adminFromSettings = false;
-var brightnessBoost = 0;
+var brightnessBoost = 1;
 var difficultySelection = 1, difficulty = "normal";
 var gameMode = "normal", modeSelection = 0;
 var infiniteWave = 0, infiniteSpawnTimer = 0;

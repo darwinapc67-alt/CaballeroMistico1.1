@@ -1221,8 +1221,10 @@ function drawGame() {
   if (hasSword) { ctx.fillStyle = player.swordCooldown <= 0 ? "#ffd700" : "#444"; ctx.fillText("⚔️ J1: " + (player.swordCooldown <= 0 ? (player.swordSheathed ? "🔒" : "⚔️") : "···"), 12, 42); }
   else { ctx.fillStyle = "#555"; ctx.fillText(translateText("Encuentra la espada..."), 12, 42); }
   if (hasBow) { ctx.fillStyle = player.bowCooldown <= 0 ? "#ffd700" : "#444"; ctx.fillText("🏹 " + translateText("Arco") + ": " + (player.bowCooldown <= 0 ? translateText("Listo") : "···"), 12, 62); }
-  ctx.fillStyle = player.dashCooldown <= 0 ? "#7af" : "#446";
-  ctx.fillText("↯ " + translateText("Dash") + ": " + (player.dashCooldown <= 0 ? translateText("Listo") : "···"), 12, twoPlayerMode ? 76 : (hasBow ? 82 : 62));
+  if (hasDash) {
+    ctx.fillStyle = player.dashCooldown <= 0 ? "#7af" : "#446";
+    ctx.fillText("↯ " + translateText("Dash") + ": " + (player.dashCooldown <= 0 ? translateText("Listo") : "···"), 12, twoPlayerMode ? 76 : (hasBow ? 82 : 62));
+  }
   if (twoPlayerMode && hasSword) {
     ctx.fillStyle = player2.swordCooldown <= 0 ? "#f0f" : "#444"; ctx.fillText("⚔️ J2: " + (player2.swordCooldown <= 0 ? (player2.swordSheathed ? "🔒" : "⚔️") : "···"), 12, 58);
   }
