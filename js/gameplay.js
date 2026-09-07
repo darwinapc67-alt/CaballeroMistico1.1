@@ -591,15 +591,56 @@ function updateBossProjectiles() {
 function updateInfiniteMode() {
   if (gameMode !== "infinite" || gameState !== ST_PLAYING) return;
   infiniteSpawnTimer--;
-  var living = enemies.filter(function(e) { return e.room === 0 && !e.dead; }).length;
-  if (infiniteSpawnTimer <= 0 && living < 4) {
+  var living = enemies.filter(function(e) { return e.room === 0 && e.infiniteEnemy && !e.dead; }).length;
+  if (infiniteSpawnTimer <= 0 && living === 0) {
     infiniteWave++;
-    enemies.push({
-      x: 180 + Math.random() * 420, y: 500, w: 28, h: 22,
-      vx: infiniteWave % 2 ? 1.2 : -1.2, vy: 0, speed: 1.2 + Math.min(1.5, infiniteWave * 0.03),
-      visionRadius: 260, dead: false, room: 0, type: infiniteWave % 4 === 0 ? "dark_knight" : "larva_mosca"
-    });
-    infiniteSpawnTimer = Math.max(100, 360 - infiniteWave * 4);
+    swordLevel = Math.max(swordLevel, Math.min(3, infiniteWave - 1));
+    if (infiniteWave >= 3) hasDash = true;
+    if (infiniteWave >= 4) { hasDoubleJump = true; player.maxJumps = 2; player.jumpsLeft = 2; }
+    if (infiniteWave >= 5) { hasBow = true; arrows = Math.max(arrows, 12 + infiniteWave * 2); }
+    if (infiniteWave >= 6) combatSkills.charged = true;
+    var count = Math.min(5, 1 + Math.floor((infiniteWave + 1) / 2));
+    for (var i = 0; i < count; i++) {
+      var enemyType = (infiniteWave % 4 === 0 || (infiniteWave >= 7 && i === count - 1)) ? "dark_knight" : "larva_mosca";
+      var scale = 1 + infiniteWave * 0.18;
+      enemies.push({
+        x: 90 + Math.random() * 620, y: 520, w: enemyType === "dark_knight" ? 34 : 28, h: enemyType === "dark_knight" ? 48 : 22,
+        vx: (i % 2 ? 1 : -1) * (1.2 + Math.min(3, infiniteWave * 0.08)), vy: 0,
+        speed: 1.2 + Math.min(3, infiniteWave * 0.08), visionRadius: 260,
+        dead: false, room: 0, type: enemyType, hp: Math.round((enemyType === "dark_knight" ? 48 : 20) * scale),
+        maxHp: Math.round((enemyType === "dark_knight" ? 48 : 20) * scale),
+        blockTimer: 80 + infiniteWave * 3, dashCooldown: Math.max(45, 140 - infiniteWave * 3), dashTimer: 0,
+        infiniteDamage: 1 + Math.floor(infiniteWave / 3), infiniteEnemy: true
+      });
+    }
+
+    spawnFloatText(player.x, player.y - 40, "RONDA " + infiniteWave, "#ffd45c");
+    infiniteSpawnTimer = 120;
+  }
+}
+
+function updateCustomLevel() {
+  if (!customLevelActive || gameState !== ST_PLAYING || !customLevelGoal) return;
+  if (rectHit(player, customLevelGoal)) {
+    if (customLevelGoal.type === "door" && customRoomIndex < customRooms.length - 1) {
+      customRoomIndex++;
+      var nextRoom = customRooms[customRoomIndex];
+      room0.platforms = nextRoom.platforms;
+      room0.spikes = nextRoom.spikes;
+      room0.walls = nextRoom.walls;
+      enemies.forEach(function(enemy) {
+        if (enemy.customEnemy) enemy.dead = enemy.customRoom !== customRoomIndex;
+      });
+      customLevelGoal = nextRoom.goal;
+      player.x = nextRoom.start ? nextRoom.start.x : 32;
+      player.y = nextRoom.start ? nextRoom.start.y : 400;
+      player.vx = 0; player.vy = 0; player.inv = 30;
+      cameraX = 0; targetCamX = 0; cameraY = 0; targetCamY = 0;
+      spawnFloatText(player.x, player.y - 30, "HABITACION " + (customRoomIndex + 1), "#7dffad");
+      return;
+    }
+    spawnFloatText(player.x, player.y - 30, "¡NIVEL COMPLETADO!", "#ffd700");
+    exitCustomLevel();
   }
 }
 
@@ -607,6 +648,8 @@ function updateEnemies() {
   if (gameState !== ST_PLAYING) return;
   enemies.forEach(function(e) {
     if (e.dead) return;
+    if (gameMode === "custom" && !e.customEnemy) return;
+    if (gameMode === "infinite" && e.room === 0 && !e.infiniteEnemy && !e.boss) return;
     if (e.boss && e.room !== currentRoom) return;
     if (e.type === "blue_sentry") {
       if (e.room === currentRoom && bestiary[e.type] && !bestiary[e.type].discovered) {
@@ -720,11 +763,11 @@ function updateEnemies() {
       }
     }
     if (e.room === currentRoom && player.inv <= 0 && !player.frozen && rectHit(player, e)) {
-      var dmg = e.type === 'dark_knight' && e.dashTimer > 0 ? 2 : (e.type === 'larva_mosca' ? 2 : 1);
+      var dmg = e.infiniteDamage || (e.type === 'dark_knight' && e.dashTimer > 0 ? 2 : (e.type === 'larva_mosca' ? 2 : 1));
       playerTakeDamage(player, e.boss ? 1 : dmg, e.boss);
     }
     if (e.room === currentRoom && twoPlayerMode && player2.inv <= 0 && !player2.frozen && rectHit(player2, e)) {
-      var dmg2 = e.type === 'larva_mosca' ? 2 : 1;
+      var dmg2 = e.infiniteDamage || (e.type === 'larva_mosca' ? 2 : 1);
       playerTakeDamage(player2, e.boss ? 1 : dmg2, e.boss);
     }
   });
@@ -1012,12 +1055,17 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   }
   p.x += p.vx; p.y += p.vy;
   p.wallContact = 0;
+  if (gameMode === "infinite" && currentRoom === 0) {
+    if (p.y < 20) { p.y = 20; p.vy = 0; }
+    if (p.y + p.h > 580) { p.y = 580 - p.h; p.vy = 0; p.onGround = true; p.jumpsLeft = p.maxJumps; }
+  }
 
   if (p.onGround && Math.abs(p.vx) > 1 && Math.random() < 0.3) {
     spawnParticles(p.x + p.w/2 + (p.facing > 0 ? 0 : p.w), p.y + p.h, "rgba(200,200,200,0.3)", 1, 0.5);
   }
 
   var left = 0, right = WORLD_W;
+  if (gameMode === "custom") { left = 16; right = 576; }
   if (p.x < left + 5) { p.x = left + 5; p.vx = 0; }
   if (p.x + p.w > right - 5) { p.x = right - 5 - p.w; p.vx = 0; }
 
@@ -1032,7 +1080,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   }
 
   var newRoom = Math.floor(p.x / ROOM_W);
-  if (gameMode === "infinite") newRoom = 0;
+  if (gameMode === "infinite" || gameMode === "custom") newRoom = 0;
   if (newRoom >= rooms.length) newRoom = rooms.length - 1;
   if (rooms[currentRoom].verticalRoom) newRoom = currentRoom;
   if (newRoom !== currentRoom) {
@@ -1046,6 +1094,10 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       bossDoorSoundRoom = currentRoom;
       sfxBossDoorsLock();
       spawnFloatText(p.x, p.y - 34, "¡Las puertas se bloquean!", "#ff526f");
+    }
+    if (gameMode === "custom" && currentRoom === 0) {
+      if (p.x < 18) { p.x = 18; p.vx = 0; }
+      if (p.x + p.w > 782) { p.x = 782 - p.w; p.vx = 0; }
     }
     startBossDialogue(currentRoom);
   }
@@ -1066,6 +1118,12 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     }
   }
   if (p.y > room.height + 80) {
+    if (gameMode === "custom") {
+      p.x = customRooms[customRoomIndex] && customRooms[customRoomIndex].start ? customRooms[customRoomIndex].start.x : 32;
+      p.y = 400; p.vx = 0; p.vy = 0; p.inv = 45;
+      spawnFloatText(p.x, p.y - 20, "REGRESAS AL INICIO", "#f4a");
+      return;
+    }
     if (gameMode === "infinite") {
       p.x = 390; p.y = room.height - p.h - 10; p.vx = 0; p.vy = 0; p.jumpsLeft = p.maxJumps;
       return;

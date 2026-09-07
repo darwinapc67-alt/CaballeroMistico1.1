@@ -50,6 +50,16 @@ function resetAll() {
   room11.transitionZone = {x:9540, y:460, w:40, h:100, to:12};
   rooms[19].transitionZone = {x:15940, y:460, w:40, h:100, to:20};
   rooms[20].transitionZone = null;
+  if (gameMode === "infinite") {
+    room0.platforms = [{x:20, y:560, w:760, h:40}];
+    room0.spikes = [];
+    room0.walls = [{x:0, y:0, w:20, h:600}, {x:780, y:0, w:20, h:600}, {x:0, y:0, w:800, h:20}, {x:0, y:580, w:800, h:20}];
+    hasSword = true; swordEquipped = true; player.hasSword = true; player.swordEquipped = true; player.swordSheathed = false;
+  } else {
+    room0.platforms = [{x:0, y:560, w:220, h:40}, {x:500, y:560, w:300, h:40}, {x:180, y:490, w:75, h:14}, {x:300, y:490, w:75, h:14}, {x:420, y:490, w:75, h:14}, {x:540, y:490, w:75, h:14}, {x:360, y:410, w:65, h:14}];
+    room0.spikes = [{x:220, y:580, w:280, h:20}];
+    room0.walls = [];
+  }
   bossArenaState = { guardian: false, queen_larva: false, abyssal_knight: false };
   bossAbilities = { guardian: false, queen_larva: false, abyssal_knight: false };
   bossZonesUnlocked = { guardian: false, queen_larva: false, abyssal_knight: false };
@@ -76,6 +86,9 @@ function resetAll() {
     }
     e.vy = 0;
   });
+  if (gameMode === "infinite") {
+    enemies.forEach(function(e) { if (e.room === 0 && !e.boss) e.dead = true; });
+  }
   generateStalactites();
 }
 
@@ -142,6 +155,7 @@ function update() {
     updatePlayer2();
     updateEnemies();
     updateInfiniteMode();
+    updateCustomLevel();
     updateArrows();
     updateAzariDrops();
     updateHealingHearts();
@@ -232,6 +246,7 @@ function loop() {
   else if (gameState === ST_DIALOGUE) { drawGame(); drawBossDialogue(); }
   else if (gameState === ST_HOUSE) drawHouseInterior();
   else if (gameState === ST_DEATH) drawDeathScreen();
+  else if (gameState === ST_LEVEL_EDITOR) drawLevelEditor();
   else {
     drawGame();
     if (shopOpen) drawShop();
@@ -251,6 +266,46 @@ canvas.addEventListener("click", function(event) {
   if (selected >= 0 && selected < difficultyOptions.length) {
     difficultySelection = selected;
     beginNewGameFromDifficulty();
+  }
+});
+canvas.addEventListener("mousedown", function(event) {
+  if (gameState !== ST_LEVEL_EDITOR) return;
+  event.preventDefault();
+  handleLevelEditorMouse(event);
+});
+canvas.addEventListener("contextmenu", function(event) {
+  if (gameState === ST_LEVEL_EDITOR) event.preventDefault();
+});
+canvas.addEventListener("click", function(event) {
+  if (gameState !== ST_MENU || menuSubState !== "levels") return;
+  var rect = canvas.getBoundingClientRect();
+  var y = (event.clientY - rect.top) * canvas.height / rect.height;
+  var selected = Math.floor((y - 223) / 75);
+  if (selected >= 0 && selected < 2) {
+    levelsSelection = selected;
+    if (selected === 1) { openNewEditorLevel(); menuSubState = "slots"; }
+    else if (startCustomLevel()) menuSubState = "slots";
+  }
+});
+canvas.addEventListener("click", function(event) {
+  if (gameState !== ST_MENU || menuSubState !== "slots") return;
+  var rect = canvas.getBoundingClientRect();
+  var y = (event.clientY - rect.top) * canvas.height / rect.height;
+  if (y >= 155 && y < 470) {
+    menuSelection = Math.floor((y - 155) / 63);
+  } else if (y >= 470 && y < 510) {
+    menuSelection = 5;
+    menuSubState = "levels";
+    levelsSelection = 0;
+  } else if (y >= 510 && y < 550) {
+    menuSelection = 6;
+    menuSubState = "settings";
+  } else if (y >= 550 && y < 590) {
+    menuSelection = 7;
+    menuSubState = "admin_password";
+    adminFromSettings = false;
+    adminPassword = "";
+    adminMessage = "";
   }
 });
 canvas.addEventListener("mousemove", function(event) {

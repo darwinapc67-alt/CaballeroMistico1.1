@@ -7,7 +7,7 @@ var WORLD_W = 40 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
 var VERSION = "v1.65";
 
-var ST_LANGUAGE = 0, ST_DEVICE = 1, ST_MENU = 2, ST_PLAYING = 3, ST_PAUSED = 4, ST_TRANSITION = 5, ST_INVENTORY = 7, ST_DIALOGUE = 8, ST_DEATH = 9, ST_HOUSE = 10;
+var ST_LANGUAGE = 0, ST_DEVICE = 1, ST_MENU = 2, ST_PLAYING = 3, ST_PAUSED = 4, ST_TRANSITION = 5, ST_INVENTORY = 7, ST_DIALOGUE = 8, ST_DEATH = 9, ST_HOUSE = 10, ST_LEVEL_EDITOR = 11;
 
 var gameState = ST_LANGUAGE;
 var languageSelection = 0, language = "es";
@@ -138,6 +138,7 @@ function translateText(text) {
   return result;
 }
 var menuSelection = 0, menuSubState = "slots", slotToDelete = -1, activeSlot = -1;
+var levelsSelection = 0;
 var settingsSelection = 0, settingsReturn = false, adminFromSettings = false;
 var brightnessBoost = 0;
 var difficultySelection = 1, difficulty = "normal";
@@ -198,6 +199,41 @@ var healing = false, healTimer = 0, healingStoneCooldown = 0, hitFlash = 0, need
 
 var twoPlayerMode = false;
 var inventoryOpen = false, mapOpen = false, inventorySelection = 0, inventoryHover = -1;
+
+var CUSTOM_LEVELS_KEY = "caballero_mistico_custom_levels_v1";
+var EDITOR_COLS = 18, EDITOR_ROWS = 12, EDITOR_CELL = 32;
+var EDITOR_GRID_X = 24, EDITOR_GRID_Y = 86, EDITOR_PANEL_X = 620;
+var editorCategory = 0, editorPaletteSelection = 0;
+var editorLevel = null, editorMessage = "";
+var customLevelActive = false;
+var customLevelGoal = null;
+var customRooms = [], customRoomIndex = 0;
+var editorRoomIndex = 0;
+var editorCategories = ["FAVORITOS", "PINCHOS", "ENEMIGOS", "PLATAFORMAS"];
+var editorPalette = [
+  [
+    {id: "start", label: "INICIO", kind: "start", color: "#ffd700"},
+    {id: "goal", label: "META", kind: "goal", color: "#6cc"},
+    {id: "door", label: "PUERTA / META", kind: "goal", color: "#7dffad"},
+    {id: "erase", label: "BORRAR", kind: "erase", color: "#f66"}
+  ],
+  [
+    {id: "spike", label: "PINCHO", kind: "spike", color: "#f55"}
+  ],
+  [
+    {id: "bat", label: "MURCIÉLAGO", kind: "enemy", color: "#d66cff"},
+    {id: "larva", label: "LARVA-MOSCA", kind: "enemy", color: "#ff9b3d"},
+    {id: "hunter", label: "CAZADOR", kind: "enemy", color: "#d98b58"},
+    {id: "dark_knight", label: "CABALLERO", kind: "enemy", color: "#7185c7"},
+    {id: "blue_sentry", label: "CENTINELA AZUL", kind: "enemy", color: "#4fdcff"}
+  ],
+  [
+    {id: "platform", label: "PLATAFORMA", kind: "platform", color: "#6cc"},
+    {id: "platform_small", label: "PLATAFORMA CORTA", kind: "platform", color: "#8bd"},
+    {id: "wall", label: "MURO", kind: "wall", color: "#789"},
+    {id: "floor", label: "SUELO", kind: "platform", color: "#a98"}
+  ]
+];
 
 var stalactites = [];
 var waterDrops = [];
@@ -297,6 +333,203 @@ function getSaves() {
   try { var d = localStorage.getItem(SAVE_KEY); if (d) return JSON.parse(d); }
   catch(e) {}
   return { slots: [null,null,null,null,null] };
+}
+
+function createBlankEditorLevel() {
+  var cells = [];
+  for (var i = 0; i < EDITOR_COLS * EDITOR_ROWS; i++) cells.push(null);
+  return {
+    name: "NIVEL PERSONALIZADO",
+    cols: EDITOR_COLS,
+    rows: EDITOR_ROWS,
+    cells: cells,
+    rooms: [{cells: cells}],
+    timestamp: 0
+  };
+}
+
+function getCustomLevels() {
+  try {
+    var data = localStorage.getItem(CUSTOM_LEVELS_KEY);
+    var levels = data ? JSON.parse(data) : [];
+    return Array.isArray(levels) ? levels : [];
+  } catch(e) {
+    return [];
+  }
+}
+
+function saveCustomEditorLevel() {
+  if (!editorLevel) editorLevel = createBlankEditorLevel();
+  editorLevel.rooms = editorLevel.rooms || [{cells: editorLevel.cells || []}];
+  editorLevel.rooms[editorRoomIndex] = {cells: editorLevel.cells.slice()};
+  editorLevel.timestamp = Date.now();
+  editorLevel.name = editorLevel.name || "NIVEL PERSONALIZADO";
+  var levels = getCustomLevels();
+  levels[0] = JSON.parse(JSON.stringify(editorLevel));
+  try {
+    localStorage.setItem(CUSTOM_LEVELS_KEY, JSON.stringify(levels));
+    editorMessage = "NIVEL GUARDADO";
+  } catch(e) {
+    editorMessage = "NO SE PUDO GUARDAR";
+  }
+}
+
+function loadCustomEditorLevel() {
+  var levels = getCustomLevels();
+  if (!levels.length || !levels[0]) return false;
+  var saved = levels[0];
+  editorLevel = createBlankEditorLevel();
+  editorLevel.name = saved.name || editorLevel.name;
+  editorLevel.timestamp = saved.timestamp || 0;
+  var savedRooms = Array.isArray(saved.rooms) && saved.rooms.length ? saved.rooms : [{cells: saved.cells || []}];
+  editorLevel.rooms = savedRooms.map(function(room) {
+    var roomCells = [];
+    for (var i = 0; i < EDITOR_COLS * EDITOR_ROWS; i++) roomCells.push(room.cells && room.cells[i] || null);
+    return {cells: roomCells};
+  });
+  editorRoomIndex = Math.min(editorRoomIndex, editorLevel.rooms.length - 1);
+  editorLevel.cells = editorLevel.rooms[editorRoomIndex].cells;
+  editorMessage = "NIVEL CARGADO";
+  return true;
+}
+
+function openNewEditorLevel() {
+  editorLevel = createBlankEditorLevel();
+  editorRoomIndex = 0;
+  editorCategory = 0;
+  editorPaletteSelection = 0;
+  editorMessage = "";
+  gameState = ST_LEVEL_EDITOR;
+}
+
+function openCustomEditorLevel() {
+  if (!loadCustomEditorLevel()) return false;
+  editorCategory = 0;
+  editorPaletteSelection = 0;
+  gameState = ST_LEVEL_EDITOR;
+  return true;
+}
+
+function selectEditorRoom(index) {
+  if (!editorLevel || !editorLevel.rooms) return;
+  editorLevel.rooms[editorRoomIndex] = {cells: editorLevel.cells.slice()};
+  editorRoomIndex = Math.max(0, Math.min(editorLevel.rooms.length - 1, index));
+  editorLevel.cells = editorLevel.rooms[editorRoomIndex].cells;
+  editorMessage = "HABITACION " + (editorRoomIndex + 1);
+}
+
+function addEditorRoom() {
+  if (!editorLevel) return;
+  editorLevel.rooms = editorLevel.rooms || [{cells: editorLevel.cells.slice()}];
+  editorLevel.rooms[editorRoomIndex] = {cells: editorLevel.cells.slice()};
+  var cells = [];
+  for (var i = 0; i < EDITOR_COLS * EDITOR_ROWS; i++) cells.push(null);
+  editorLevel.rooms.push({cells: cells});
+  selectEditorRoom(editorLevel.rooms.length - 1);
+}
+
+function buildCustomRoom(roomData, index) {
+  var platforms = [], spikes = [], walls = [], start = null, goal = null;
+  (roomData.cells || []).forEach(function(id, cellIndex) {
+    if (!id) return;
+    var col = cellIndex % EDITOR_COLS, row = Math.floor(cellIndex / EDITOR_COLS);
+    var x = col * EDITOR_CELL, y = row * EDITOR_CELL;
+    var item = getEditorPaletteItemById(id);
+    if (!item) return;
+    if (id === "start") start = {x: x + 5, y: y + 2};
+    else if (id === "goal" || id === "door") goal = {x: x, y: y, w: EDITOR_CELL, h: EDITOR_CELL, type: id};
+    else if (item.kind === "platform") platforms.push({x: x, y: y + 22, w: EDITOR_CELL, h: 10});
+    else if (item.kind === "wall") walls.push({x: x, y: y, w: EDITOR_CELL, h: EDITOR_CELL});
+    else if (item.kind === "spike") spikes.push({x: x + 2, y: y + 16, w: EDITOR_CELL - 4, h: 16});
+    else if (item.kind === "enemy") enemies.push({
+      x: x + 2, y: y + 4, w: id === "dark_knight" ? 34 : 28, h: id === "dark_knight" ? 48 : 22,
+      vx: -1.2, vy: 0, baseY: y + 4, range: 60, speed: 1.2, visionRadius: 240,
+      dead: false, room: 0, type: id === "larva" ? "larva_mosca" : id, staysRoom: true,
+      customEnemy: true, customRoom: index,
+      hp: id === "dark_knight" ? 48 : 20, maxHp: id === "dark_knight" ? 48 : 20
+    });
+  });
+  walls = [{x: 0, y: 0, w: 16, h: 600}, {x: 560, y: 0, w: 16, h: 600}].concat(walls);
+  if (!platforms.some(function(p) { return p.y + p.h >= 600; })) platforms.push({x: 16, y: 560, w: 544, h: 40});
+  return {platforms: platforms, spikes: spikes, walls: walls, transitionZone: null, height: 600, roomWidth: 576, start: start, goal: goal, custom: true};
+}
+
+function startCustomLevel() {
+  if (!loadCustomEditorLevel()) return false;
+  enemies.forEach(function(enemy) { if (!enemy.boss) enemy.dead = true; });
+  customRooms = (editorLevel.rooms || [{cells: editorLevel.cells}]).map(buildCustomRoom);
+  customRoomIndex = 0;
+  room0.platforms = customRooms[0].platforms; room0.spikes = customRooms[0].spikes;
+  room0.walls = customRooms[0].walls; room0.transitionZone = null; room0.roomWidth = 576;
+  room0.height = 600; room0.custom = true;
+  customLevelActive = true;
+  gameMode = "custom";
+  currentRoom = 0;
+  cameraX = 0; targetCamX = 0; cameraY = 0; targetCamY = 0;
+  hasSword = true; swordEquipped = true; player.hasSword = true; player.swordEquipped = true; player.swordSheathed = false;
+  player.x = customRooms[0].start ? customRooms[0].start.x : 32; player.y = customRooms[0].start ? customRooms[0].start.y : 400;
+  player.vx = 0; player.vy = 0; player.hp = player.maxHp = 10;
+  customLevelGoal = customRooms[0].goal;
+  gameState = ST_PLAYING;
+  return true;
+}
+
+function exitCustomLevel() {
+  customLevelActive = false;
+  gameMode = "normal";
+  resetAll();
+  gameState = ST_MENU;
+  menuSubState = "slots";
+}
+
+function getEditorPaletteItem() {
+  var items = editorPalette[editorCategory] || [];
+  return items[editorPaletteSelection] || items[0] || null;
+}
+
+function getEditorPaletteItemById(id) {
+  for (var categoryIndex = 0; categoryIndex < editorPalette.length; categoryIndex++) {
+    for (var itemIndex = 0; itemIndex < editorPalette[categoryIndex].length; itemIndex++) {
+      if (editorPalette[categoryIndex][itemIndex].id === id) return editorPalette[categoryIndex][itemIndex];
+    }
+  }
+  return null;
+}
+
+function handleLevelEditorMouse(event) {
+  var rect = canvas.getBoundingClientRect();
+  var x = (event.clientX - rect.left) * canvas.width / rect.width;
+  var y = (event.clientY - rect.top) * canvas.height / rect.height;
+  if (y >= 60 && y < 82 && x >= 24 && x < 310) {
+    if (x < 105) selectEditorRoom(editorRoomIndex - 1);
+    else if (x < 190) selectEditorRoom(editorRoomIndex + 1);
+    else addEditorRoom();
+    return;
+  }
+  if (x >= EDITOR_PANEL_X && x < canvas.width && y >= EDITOR_GRID_Y && y < EDITOR_GRID_Y + 128) {
+    var category = Math.floor((y - EDITOR_GRID_Y) / 32);
+    if (category >= 0 && category < editorCategories.length) {
+      editorCategory = category;
+      editorPaletteSelection = 0;
+    }
+    return;
+  }
+  if (x >= EDITOR_PANEL_X && x < canvas.width && y >= EDITOR_GRID_Y + 136) {
+    var paletteIndex = Math.floor((y - EDITOR_GRID_Y - 136) / 58);
+    var paletteItems = editorPalette[editorCategory] || [];
+    if (paletteIndex >= 0 && paletteIndex < paletteItems.length) editorPaletteSelection = paletteIndex;
+    return;
+  }
+  if (x < EDITOR_GRID_X || y < EDITOR_GRID_Y ||
+      x >= EDITOR_GRID_X + EDITOR_COLS * EDITOR_CELL ||
+      y >= EDITOR_GRID_Y + EDITOR_ROWS * EDITOR_CELL) return;
+  var col = Math.floor((x - EDITOR_GRID_X) / EDITOR_CELL);
+  var row = Math.floor((y - EDITOR_GRID_Y) / EDITOR_CELL);
+  var index = row * EDITOR_COLS + col;
+  var item = getEditorPaletteItem();
+  if (!editorLevel || !item) return;
+  if (event.button === 2 || item.kind === "erase") editorLevel.cells[index] = null;
+  else editorLevel.cells[index] = item.id;
 }
 
 function saveGame(i) {

@@ -5,6 +5,52 @@ window.addEventListener("keydown", function(e) {
   var down = e.key === "ArrowDown" || e.code === "ArrowDown";
   var confirm = e.key === "Enter" || e.key === "Return" || e.code === "Enter" || e.code === "NumpadEnter" || e.key === " ";
 
+  if (gameState === ST_LEVEL_EDITOR) {
+    if (e.key === "Escape") {
+      gameState = ST_MENU;
+      menuSubState = "slots";
+      menuSelection = 5;
+      editorMessage = "";
+      e.preventDefault();
+      return;
+    }
+    if (k === "s") {
+      saveCustomEditorLevel();
+      e.preventDefault();
+      return;
+    }
+    if (k === "n") {
+      addEditorRoom();
+      e.preventDefault();
+      return;
+    }
+    if (e.key === "[" || e.key === "]") {
+      selectEditorRoom(editorRoomIndex + (e.key === "]" ? 1 : -1));
+      e.preventDefault();
+      return;
+    }
+    if (k === "x" || e.key === "Delete") {
+      editorCategory = 0;
+      editorPaletteSelection = 2;
+      e.preventDefault();
+      return;
+    }
+    if (k === "1" || k === "2" || k === "3" || k === "4") {
+      editorCategory = Number(k) - 1;
+      editorPaletteSelection = 0;
+      e.preventDefault();
+      return;
+    }
+    if (up || down) {
+      var editorItems = editorPalette[editorCategory] || [];
+      if (up) editorPaletteSelection = (editorPaletteSelection - 1 + editorItems.length) % editorItems.length;
+      if (down) editorPaletteSelection = (editorPaletteSelection + 1) % editorItems.length;
+      e.preventDefault();
+      return;
+    }
+    return;
+  }
+
   if (gameState === ST_MENU && menuSubState === "mode") {
     if (up || k === "w") modeSelection = (modeSelection + modeOptions.length - 1) % modeOptions.length;
     else if (down || k === "s") modeSelection = (modeSelection + 1) % modeOptions.length;
@@ -94,6 +140,7 @@ window.addEventListener("keydown", function(e) {
       e.preventDefault();
       return;
     } else if (gameState === ST_PLAYING) {
+      if (customLevelActive) { exitCustomLevel(); e.preventDefault(); return; }
       gameState = ST_PAUSED; pauseSubState = "menu"; pauseSelection = 0; sfxPause();
       e.preventDefault();
       return;
@@ -349,6 +396,25 @@ window.addEventListener("keydown", function(e) {
       }
       return;
     }
+    if (menuSubState === "levels") {
+      if (up || k === "w") { levelsSelection = (levelsSelection - 1 + 2) % 2; e.preventDefault(); return; }
+      if (down || k === "s") { levelsSelection = (levelsSelection + 1) % 2; e.preventDefault(); return; }
+      if (confirm) {
+        if (levelsSelection === 0) {
+          if (startCustomLevel()) menuSubState = "slots";
+        } else {
+          openNewEditorLevel();
+          menuSubState = "slots";
+        }
+        e.preventDefault();
+        return;
+      }
+      if (e.key === "Escape") {
+        menuSubState = "slots";
+        e.preventDefault();
+      }
+      return;
+    }
     if (menuSubState === "difficulty") {
       if (up || k === "w") { difficultySelection = (difficultySelection - 1 + difficultyOptions.length) % difficultyOptions.length; e.preventDefault(); return; }
       if (down || k === "s") { difficultySelection = (difficultySelection + 1) % difficultyOptions.length; e.preventDefault(); return; }
@@ -361,11 +427,12 @@ window.addEventListener("keydown", function(e) {
     }
 
     if (menuSubState === "slots") {
-      if (up || k === "w") { menuSelection = (menuSelection - 1 + 7) % 7; e.preventDefault(); return; }
-      if (down || k === "s") { menuSelection = (menuSelection + 1) % 7; e.preventDefault(); return; }
+      if (up || k === "w") { menuSelection = (menuSelection - 1 + 8) % 8; e.preventDefault(); return; }
+      if (down || k === "s") { menuSelection = (menuSelection + 1) % 8; e.preventDefault(); return; }
       if (confirm) {
-        if (menuSelection === 5) { menuSubState = "settings"; settingsSelection = 0; e.preventDefault(); return; }
-        if (menuSelection === 6) { menuSubState = "admin_password"; adminFromSettings = false; adminPassword = ""; adminMessage = ""; e.preventDefault(); return; }
+        if (menuSelection === 5) { menuSubState = "levels"; levelsSelection = 0; e.preventDefault(); return; }
+        if (menuSelection === 6) { menuSubState = "settings"; settingsSelection = 0; e.preventDefault(); return; }
+        if (menuSelection === 7) { menuSubState = "admin_password"; adminFromSettings = false; adminPassword = ""; adminMessage = ""; e.preventDefault(); return; }
         activeSlot = menuSelection;
         var saves = getSaves();
         if (saves.slots[menuSelection]) {
@@ -688,6 +755,16 @@ function processGamepadInput() {
     }
     return;
   }
+  if (gameState === ST_LEVEL_EDITOR) {
+    if (btn9) {
+      gameState = ST_MENU;
+      menuSubState = "slots";
+      menuSelection = 5;
+    } else if (btn0) {
+      saveCustomEditorLevel();
+    }
+    return;
+  }
   if (gameState === ST_MENU) {
     if (device !== "play") return;
     if (menuSubState === "settings") {
@@ -712,11 +789,40 @@ function processGamepadInput() {
       }
       return;
     }
+    if (menuSubState === "levels") {
+      if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
+      if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { levelsSelection = (levelsSelection - 1 + 2) % 2; gamepadMenuAxisLock = 1; }
+      if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { levelsSelection = (levelsSelection + 1) % 2; gamepadMenuAxisLock = 1; }
+      if (btn0) {
+        if (levelsSelection === 0) {
+          if (startCustomLevel()) menuSubState = "slots";
+        } else {
+          openNewEditorLevel();
+          menuSubState = "slots";
+        }
+      }
+      return;
+    }
     if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
-    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + 7) % 7; gamepadMenuAxisLock = 1; }
-    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % 7; gamepadMenuAxisLock = 1; }
+    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + 8) % 8; gamepadMenuAxisLock = 1; }
+    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % 8; gamepadMenuAxisLock = 1; }
     if (btn0 || (gpButtons[1] && !prevGPButtons[1])) {
       activeSlot = menuSelection;
+      if (menuSelection === 5) {
+        menuSubState = "levels";
+        levelsSelection = 0;
+        return;
+      }
+      if (menuSelection === 6) {
+        menuSubState = "settings";
+        settingsSelection = 0;
+        return;
+      }
+      if (menuSelection === 7) {
+        menuSubState = "admin_password";
+        adminFromSettings = false; adminPassword = ""; adminMessage = "";
+        return;
+      }
       var saves = getSaves();
       if (saves.slots[menuSelection]) {
         if (loadGame(menuSelection)) { gameState = ST_PLAYING; startMusic(); updateUI(); }

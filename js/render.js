@@ -390,6 +390,8 @@ function drawEnemies() {
   var camLeft = cameraX, camRight = cameraX + 800, camTop = cameraY, camBottom = cameraY + 600;
   enemies.forEach(function(e) {
     if (e.dead || (!e.canRoam && e.room !== currentRoom)) return;
+    if (gameMode === "custom" && !e.customEnemy) return;
+    if (gameMode === "infinite" && e.room === 0 && !e.infiniteEnemy && !e.boss) return;
     if (e.x + e.w < camLeft - 50 || e.x > camRight + 50) return;
     if (e.y + e.h < camTop - 50 || e.y > camBottom + 50) return;
     ctx.save();
@@ -802,6 +804,144 @@ function drawInventory() {
   ctx.textAlign = "left";
 }
 
+function drawLevelEditor() {
+  ctx.fillStyle = "#050510";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#ffd700";
+  ctx.font = "bold 22px monospace";
+  ctx.textAlign = "left";
+  ctx.fillText("🎒 EDITOR DE NIVELES", 24, 35);
+  ctx.fillStyle = "#888";
+  ctx.font = "11px monospace";
+  ctx.fillText("Clic: colocar  •  Clic derecho: quitar  •  S: guardar  •  ESC: salir", 24, 58);
+  ctx.fillStyle = "#18243b";
+  ctx.fillRect(24, 62, 286, 20);
+  ctx.fillStyle = "#8cf0ff";
+  ctx.font = "bold 11px monospace";
+  ctx.fillText("< SALA", 30, 76);
+  ctx.fillText("SALA " + (editorRoomIndex + 1) + "/" + (editorLevel && editorLevel.rooms ? editorLevel.rooms.length : 1), 112, 76);
+  ctx.fillStyle = "#7dffad";
+  ctx.fillText("NUEVA SALA [N]", 194, 76);
+
+  ctx.fillStyle = "#0b1020";
+  ctx.fillRect(EDITOR_GRID_X, EDITOR_GRID_Y, EDITOR_COLS * EDITOR_CELL, EDITOR_ROWS * EDITOR_CELL);
+  ctx.strokeStyle = "#6cc";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(EDITOR_GRID_X, EDITOR_GRID_Y, EDITOR_COLS * EDITOR_CELL, EDITOR_ROWS * EDITOR_CELL);
+  ctx.strokeStyle = "rgba(108,204,204,0.2)";
+  ctx.lineWidth = 1;
+  for (var col = 0; col <= EDITOR_COLS; col++) {
+    ctx.beginPath();
+    ctx.moveTo(EDITOR_GRID_X + col * EDITOR_CELL, EDITOR_GRID_Y);
+    ctx.lineTo(EDITOR_GRID_X + col * EDITOR_CELL, EDITOR_GRID_Y + EDITOR_ROWS * EDITOR_CELL);
+    ctx.stroke();
+  }
+  for (var row = 0; row <= EDITOR_ROWS; row++) {
+    ctx.beginPath();
+    ctx.moveTo(EDITOR_GRID_X, EDITOR_GRID_Y + row * EDITOR_CELL);
+    ctx.lineTo(EDITOR_GRID_X + EDITOR_COLS * EDITOR_CELL, EDITOR_GRID_Y + row * EDITOR_CELL);
+    ctx.stroke();
+  }
+
+  if (editorLevel) {
+    editorLevel.cells.forEach(function(id, index) {
+      var item = getEditorPaletteItemById(id);
+      if (!item) return;
+      var cellX = EDITOR_GRID_X + (index % EDITOR_COLS) * EDITOR_CELL;
+      var cellY = EDITOR_GRID_Y + Math.floor(index / EDITOR_COLS) * EDITOR_CELL;
+      ctx.fillStyle = item.color;
+      if (item.kind === "spike") {
+        ctx.beginPath();
+        ctx.moveTo(cellX + 5, cellY + EDITOR_CELL - 5);
+        ctx.lineTo(cellX + EDITOR_CELL / 2, cellY + 5);
+        ctx.lineTo(cellX + EDITOR_CELL - 5, cellY + EDITOR_CELL - 5);
+        ctx.closePath();
+        ctx.fill();
+      } else if (item.kind === "enemy") {
+        ctx.beginPath();
+        ctx.arc(cellX + EDITOR_CELL / 2, cellY + EDITOR_CELL / 2, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(cellX + 11, cellY + 12, 3, 3);
+        ctx.fillRect(cellX + 18, cellY + 12, 3, 3);
+      } else if (item.kind === "start") {
+        ctx.beginPath();
+        ctx.moveTo(cellX + 8, cellY + 26);
+        ctx.lineTo(cellX + 16, cellY + 6);
+        ctx.lineTo(cellX + 24, cellY + 26);
+        ctx.closePath();
+        ctx.fill();
+      } else if (item.kind === "goal") {
+        ctx.beginPath();
+        if (item.id === "door") {
+          ctx.fillRect(cellX + 6, cellY + 4, 20, 28);
+          ctx.fillStyle = "#211";
+          ctx.fillRect(cellX + 21, cellY + 18, 3, 3);
+        } else {
+          ctx.moveTo(cellX + 16, cellY + 5);
+          ctx.lineTo(cellX + 27, cellY + 16);
+          ctx.lineTo(cellX + 16, cellY + 27);
+          ctx.lineTo(cellX + 5, cellY + 16);
+          ctx.closePath();
+          ctx.fill();
+        }
+      } else if (item.id === "platform_small") {
+        ctx.fillRect(cellX + 6, cellY + 9, EDITOR_CELL - 12, 12);
+      } else {
+        ctx.fillRect(cellX + 3, cellY + 5, EDITOR_CELL - 6, EDITOR_CELL - 10);
+      }
+    });
+  }
+
+  ctx.fillStyle = "rgba(7,12,25,0.98)";
+  ctx.fillRect(EDITOR_PANEL_X, 12, canvas.width - EDITOR_PANEL_X - 12, canvas.height - 24);
+  ctx.strokeStyle = "#43516f";
+  ctx.strokeRect(EDITOR_PANEL_X, 12, canvas.width - EDITOR_PANEL_X - 12, canvas.height - 24);
+  ctx.fillStyle = "#ffd700";
+  ctx.font = "bold 13px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("🎒 MOCHILA", EDITOR_PANEL_X + 82, 35);
+  editorCategories.forEach(function(category, index) {
+    var tabX = EDITOR_PANEL_X + 6, tabY = EDITOR_GRID_Y + index * 32;
+    var selected = editorCategory === index;
+    ctx.fillStyle = selected ? "rgba(108,204,204,0.22)" : "rgba(255,255,255,0.03)";
+    ctx.fillRect(tabX, tabY, 157, 28);
+    ctx.strokeStyle = selected ? "#6cc" : "#333";
+    ctx.strokeRect(tabX, tabY, 157, 28);
+    ctx.fillStyle = selected ? "#6cc" : "#888";
+    ctx.font = "bold 10px monospace";
+    ctx.fillText(category, EDITOR_PANEL_X + 82, tabY + 19);
+  });
+  var paletteItems = editorPalette[editorCategory] || [];
+  paletteItems.forEach(function(item, index) {
+    var itemY = EDITOR_GRID_Y + 136 + index * 58;
+    var selected = editorPaletteSelection === index;
+    ctx.fillStyle = selected ? "rgba(255,215,0,0.16)" : "rgba(255,255,255,0.03)";
+    ctx.fillRect(EDITOR_PANEL_X + 6, itemY, 157, 50);
+    ctx.strokeStyle = selected ? "#ffd700" : "#333";
+    ctx.lineWidth = selected ? 2 : 1;
+    ctx.strokeRect(EDITOR_PANEL_X + 6, itemY, 157, 50);
+    ctx.fillStyle = item.color;
+    ctx.fillRect(EDITOR_PANEL_X + 16, itemY + 13, 22, 22);
+    ctx.fillStyle = selected ? "#fff" : "#aaa";
+    ctx.font = "10px monospace";
+    ctx.textAlign = "left";
+    ctx.fillText(item.label, EDITOR_PANEL_X + 46, itemY + 29);
+  });
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#888";
+  ctx.font = "10px monospace";
+  ctx.fillText("BORRAR: X / clic derecho", EDITOR_PANEL_X + 82, 420);
+  ctx.fillText("GUARDAR: S", EDITOR_PANEL_X + 82, 437);
+  ctx.fillStyle = editorMessage ? "#8f8" : "#555";
+  ctx.fillText(editorMessage || "Nivel vacío listo", EDITOR_PANEL_X + 82, 470);
+  ctx.fillStyle = "#aaa";
+  ctx.font = "11px monospace";
+  ctx.fillText("Celdas: " + (editorLevel ? editorLevel.cells.filter(function(cell) { return !!cell; }).length : 0), 310, 495);
+  ctx.fillText("PUERTA conecta con la siguiente sala", 310, 515);
+  ctx.textAlign = "left";
+}
+
 function drawGameWorld() {
   ctx.fillStyle = "#050510"; ctx.fillRect(0, 0, canvas.width, canvas.height);
   if (flash > 0) { ctx.fillStyle = "rgba(255,255,255," + (flash*0.3) + ")"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
@@ -973,6 +1113,16 @@ function drawGameWorld() {
   });
   drawPlayerEntity(player);
   if (twoPlayerMode) drawPlayerEntity(player2);
+  if (customLevelActive && customLevelGoal) {
+    ctx.fillStyle = customLevelGoal.type === "door" ? "#23834b" : "#ffd700";
+    ctx.strokeStyle = "#fff2a3";
+    ctx.lineWidth = 2;
+    ctx.fillRect(customLevelGoal.x + 4, customLevelGoal.y + 4, customLevelGoal.w - 8, customLevelGoal.h - 4);
+    ctx.strokeRect(customLevelGoal.x + 4, customLevelGoal.y + 4, customLevelGoal.w - 8, customLevelGoal.h - 4);
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 11px monospace";
+    ctx.fillText(customLevelGoal.type === "door" ? "PUERTA" : "META", customLevelGoal.x - 2, customLevelGoal.y - 6);
+  }
 
   deathParticles.forEach(function(p) {
     ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
@@ -1066,7 +1216,7 @@ function drawGame() {
   ctx.fillText(hasSword ? "⚔️ " + translateText("Espada") : "🛡️ " + translateText("Sin arma"), 12, 22);
   if (gameMode === "infinite") {
     ctx.fillStyle = "#ff9b3d"; ctx.font = "bold 13px monospace";
-    ctx.fillText("MODO INFINITO  •  OLEADA " + infiniteWave, 12, canvas.height - 18);
+    ctx.fillText("COLISEO INFINITO  •  RONDA " + infiniteWave + "  •  PODER " + (swordLevel + (hasDash ? 1 : 0) + (hasDoubleJump ? 1 : 0) + (hasBow ? 1 : 0)), 12, canvas.height - 18);
   }
   if (hasSword) { ctx.fillStyle = player.swordCooldown <= 0 ? "#ffd700" : "#444"; ctx.fillText("⚔️ J1: " + (player.swordCooldown <= 0 ? (player.swordSheathed ? "🔒" : "⚔️") : "···"), 12, 42); }
   else { ctx.fillStyle = "#555"; ctx.fillText(translateText("Encuentra la espada..."), 12, 42); }
@@ -1280,11 +1430,11 @@ function drawMenu() {
 
   var saves = getSaves();
   for (var i = 0; i < 5; i++) {
-    var y = 180 + i * 72, isSel = (i === menuSelection), slot = saves.slots[i];
+    var y = 155 + i * 63, isSel = (i === menuSelection), slot = saves.slots[i];
     ctx.fillStyle = isSel ? "rgba(100, 200, 255, 0.12)" : "rgba(255,255,255,0.02)";
-    ctx.fillRect(180, y, 440, 62);
+    ctx.fillRect(180, y, 440, 54);
     ctx.strokeStyle = isSel ? "#6cc" : "#2a2a3a"; ctx.lineWidth = isSel ? 2 : 1;
-    ctx.strokeRect(180, y, 440, 62);
+    ctx.strokeRect(180, y, 440, 54);
     ctx.textAlign = "left"; ctx.font = "bold 16px monospace"; ctx.fillStyle = isSel ? "#6cc" : "#888";
     ctx.fillText(translateText("RANURA") + " " + (i+1), 200, y+22);
     ctx.font = "12px monospace";
@@ -1299,7 +1449,16 @@ function drawMenu() {
     }
     if (isSel) { ctx.fillStyle = "#6cc"; ctx.fillText("▶", 165, y+30); }
   }
-  var settingsY = 530, settingsSelected = menuSelection === 5;
+  var levelsY = 490, levelsSelected = menuSelection === 5;
+  ctx.fillStyle = levelsSelected ? "rgba(100,200,255,0.15)" : "rgba(255,255,255,0.02)";
+  ctx.fillRect(180, levelsY - 20, 440, 30);
+  ctx.strokeStyle = levelsSelected ? "#6cc" : "#333"; ctx.lineWidth = levelsSelected ? 2 : 1;
+  ctx.strokeRect(180, levelsY - 20, 440, 30);
+  ctx.fillStyle = levelsSelected ? "#6cc" : "#888"; ctx.font = "bold 14px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText((levelsSelected ? "▶  " : "    ") + "NIVELES", canvas.width/2, levelsY);
+
+  var settingsY = 530, settingsSelected = menuSelection === 6;
   ctx.fillStyle = settingsSelected ? "rgba(100,200,255,0.15)" : "rgba(255,255,255,0.02)";
   ctx.fillRect(180, settingsY - 20, 440, 32);
   ctx.strokeStyle = settingsSelected ? "#6cc" : "#333"; ctx.lineWidth = settingsSelected ? 2 : 1;
@@ -1308,7 +1467,7 @@ function drawMenu() {
   ctx.textAlign = "center";
   ctx.fillText((settingsSelected ? "▶  " : "    ") + translateText("⚙️ Configuración"), canvas.width/2, settingsY);
 
-  var adminY = 570, adminSelected = menuSelection === 6;
+  var adminY = 570, adminSelected = menuSelection === 7;
   ctx.fillStyle = adminSelected ? "rgba(255,80,80,0.18)" : "rgba(255,255,255,0.02)";
   ctx.fillRect(180, adminY - 20, 440, 32);
   ctx.strokeStyle = adminSelected ? "#f66" : "#333"; ctx.lineWidth = adminSelected ? 2 : 1;
@@ -1327,6 +1486,27 @@ function drawMenu() {
     ctx.fillText(translateText("Esta acción no se puede deshacer"), canvas.width/2, 285);
     ctx.fillStyle = "#0f0"; ctx.fillText("[Y / S] " + translateText("Confirmar"), canvas.width/2, 330);
     ctx.fillStyle = "#f44"; ctx.fillText("[N / ESC] " + translateText("Cancelar"), canvas.width/2, 360);
+  }
+  if (menuSubState === "levels") {
+    ctx.fillStyle = "rgba(0,0,0,0.94)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#ffd700"; ctx.font = "bold 26px monospace";
+    ctx.fillText("NIVELES", canvas.width/2, 170);
+    var customLevels = getCustomLevels();
+    var levelOptions = ["CARGAR NIVEL", "CREAR NIVEL"];
+    levelOptions.forEach(function(option, index) {
+      var optionY = 250 + index * 75, selected = levelsSelection === index;
+      ctx.fillStyle = selected ? "rgba(100,200,255,0.16)" : "rgba(255,255,255,0.03)";
+      ctx.fillRect(180, optionY - 27, 440, 54);
+      ctx.strokeStyle = selected ? "#6cc" : "#333"; ctx.lineWidth = selected ? 2 : 1;
+      ctx.strokeRect(180, optionY - 27, 440, 54);
+      ctx.fillStyle = selected ? "#6cc" : "#aaa"; ctx.font = "bold 17px monospace";
+      ctx.fillText((selected ? "▶  " : "    ") + option, canvas.width/2, optionY);
+    });
+    ctx.fillStyle = customLevels.length ? "#8f8" : "#666";
+    ctx.font = "12px monospace";
+    ctx.fillText(customLevels.length ? "NIVEL PERSONALIZADO GUARDADO" : "NO HAY NIVELES GUARDADOS", canvas.width/2, 410);
+    ctx.fillStyle = "#666";
+    ctx.fillText("↑/↓ Navegar  •  ENTER Confirmar  •  ESC Volver", canvas.width/2, 500);
   }
   if (menuSubState === "admin_password") {
     ctx.fillStyle = "rgba(0,0,0,0.94)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
