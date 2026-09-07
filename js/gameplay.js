@@ -418,11 +418,22 @@ function updateBoss(e, room) {
   if (phase > (e.phase || 1)) announceBossPhase(e, phase);
   if (e.phaseNotice > 0) e.phaseNotice--;
   if (e.type === "guardian") {
-    if (e.actionTimer > 0) {
+    if (e.action === "jump") {
+      // El salto debe continuar hasta tocar el suelo, aunque termine el
+      // temporizador de la animación; de lo contrario puede encadenar saltos
+      // desde el aire y subir indefinidamente.
+      e.vy += GRAVITY;
+      e.y += e.vy;
+      if (e.y >= floorY) {
+        e.y = floorY;
+        e.vy = 0;
+        e.action = "";
+        e.actionTimer = 0;
+        e.attackHit = false;
+      }
+    } else if (e.actionTimer > 0) {
       e.actionTimer--;
       if (e.action === "melee" && e.actionTimer === 8) bossMeleeHit(e, e.enraged ? 8 : 5, 30);
-      if (e.action === "jump") { e.vy += GRAVITY; e.y += e.vy; }
-      if (e.y >= floorY) { e.y = floorY; e.vy = 0; e.action = ""; e.attackHit = false; }
     } else if (e.attackTimer <= 0) {
       e.attackTimer = e.phase === 3 ? 30 : (e.phase === 2 ? 46 : 70);
       var choice = Math.random();
@@ -485,6 +496,10 @@ function updateBoss(e, room) {
     if (e.x < arenaLeft) e.x = arenaLeft;
     if (e.x > arenaRight) e.x = arenaRight;
   } else if (e.type === "abyssal_knight") {
+    // El Caballero Abismal es un jefe terrestre: no debe conservar una
+    // coordenada vertical alterada por una transición o una acción anterior.
+    e.y = floorY;
+    e.vy = 0;
     var healthPhase = e.hp <= e.maxHp / 3 ? 3 : (e.hp <= e.maxHp * 2 / 3 ? 2 : 1);
     if (healthPhase > e.phase) { e.phase = healthPhase; e.attackTimer = 1; }
     if (e.actionTimer > 0) {
@@ -518,6 +533,8 @@ function updateBoss(e, room) {
     if (!e.action || e.action === "sword") e.x += (target.player.x < e.x ? -1 : 1) * (e.phase === 3 ? 2.2 : 1.2);
     if (e.x < arenaLeft) e.x = arenaLeft;
     if (e.x > arenaRight) e.x = arenaRight;
+    e.y = floorY;
+    e.vy = 0;
   }
   if (e.y > floorY && e.type !== "queen_larva") { e.y = floorY; e.vy = 0; }
 }
