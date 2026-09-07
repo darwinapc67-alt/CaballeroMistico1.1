@@ -840,8 +840,8 @@ function drawGameWorld() {
 
   var camLeft = cameraX, camRight = cameraX + 800, camTop = cameraY, camBottom = cameraY + 600;
   for (var r = 0; r < rooms.length; r++) {
-    if (currentRoom === 34 && r !== 34) continue;
-    if (r === 34 && currentRoom !== 34) continue;
+    if (currentRoom === 37 && r !== 37) continue;
+    if (r === 37 && currentRoom !== 37) continue;
     var rx = rooms[r].worldX !== undefined ? rooms[r].worldX : r * ROOM_W;
     var roomWidth = rooms[r].roomWidth || ROOM_W;
     if (rx + roomWidth < camLeft - 100 || rx > camRight + 100) continue;
@@ -869,7 +869,7 @@ function drawGameWorld() {
     if (room.city) drawCityHouses(room, r);
     if (r === 1) drawPedestal();
     if (room.transitionZone && !room.noDoor) drawTransitionZone(room.transitionZone);
-    if (r === 34 && room.lockedDoor) {
+    if (r === 37 && room.lockedDoor) {
       var door = room.lockedDoor;
       ctx.fillStyle = doorUnlocked ? "#23834b" : "#a83232";
       ctx.fillRect(door.x, door.y, door.w, door.h);
@@ -882,7 +882,7 @@ function drawGameWorld() {
       ctx.font = "bold 12px monospace";
       ctx.fillText(doorUnlocked ? "ABIERTA" : "CERRADA", door.x - 5, door.y - 10);
     }
-    if (r === 34 && room.openDoor) {
+    if (r === 37 && room.openDoor) {
       var openDoor = room.openDoor;
       ctx.fillStyle = "#111321";
       ctx.fillRect(openDoor.x, openDoor.y, openDoor.w, openDoor.h);
@@ -893,7 +893,7 @@ function drawGameWorld() {
       ctx.font = "bold 12px monospace";
       ctx.fillText("SALIDA", openDoor.x - 2, openDoor.y - 10);
     }
-    if (r === 36 && room.rewardPile && !rewardAzariCollected) {
+    if (r === 39 && room.rewardPile && !rewardAzariCollected) {
       var pileX = room.rewardPile.x;
       var pileY = room.rewardPile.y + 48;
       var pileGlow = ctx.createRadialGradient(pileX, pileY - 24, 10, pileX, pileY - 24, 115);
@@ -1064,6 +1064,10 @@ function drawGame() {
   }
   ctx.fillStyle = "#fff"; ctx.font = "13px monospace";
   ctx.fillText(hasSword ? "⚔️ " + translateText("Espada") : "🛡️ " + translateText("Sin arma"), 12, 22);
+  if (gameMode === "infinite") {
+    ctx.fillStyle = "#ff9b3d"; ctx.font = "bold 13px monospace";
+    ctx.fillText("MODO INFINITO  •  OLEADA " + infiniteWave, 12, canvas.height - 18);
+  }
   if (hasSword) { ctx.fillStyle = player.swordCooldown <= 0 ? "#ffd700" : "#444"; ctx.fillText("⚔️ J1: " + (player.swordCooldown <= 0 ? (player.swordSheathed ? "🔒" : "⚔️") : "···"), 12, 42); }
   else { ctx.fillStyle = "#555"; ctx.fillText(translateText("Encuentra la espada..."), 12, 42); }
   if (hasBow) { ctx.fillStyle = player.bowCooldown <= 0 ? "#ffd700" : "#444"; ctx.fillText("🏹 " + translateText("Arco") + ": " + (player.bowCooldown <= 0 ? translateText("Listo") : "···"), 12, 62); }
@@ -1331,6 +1335,22 @@ function drawMenu() {
     ctx.fillText("*".repeat(adminPassword.length), canvas.width/2, 315);
     ctx.fillStyle = adminMessage ? "#f66" : "#666"; ctx.font = "12px monospace";
     ctx.fillText(adminMessage || translateText("ENTER confirmar  •  ESC cancelar"), canvas.width/2, 370);
+  }
+  if (menuSubState === "mode") {
+    ctx.fillStyle = "#050510"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#ffd700"; ctx.font = "bold 25px monospace";
+    ctx.fillText("ELIGE EL MODO DE JUEGO", canvas.width / 2, 150);
+    modeOptions.forEach(function(option, index) {
+      var y = 250 + index * 85, selected = modeSelection === index;
+      ctx.fillStyle = selected ? "rgba(100,200,255,0.16)" : "rgba(255,255,255,0.03)";
+      ctx.fillRect(150, y - 28, 500, 58);
+      ctx.strokeStyle = selected ? "#6cc" : "#333"; ctx.strokeRect(150, y - 28, 500, 58);
+      ctx.fillStyle = selected ? "#6cc" : "#aaa"; ctx.font = "bold 17px monospace";
+      ctx.fillText((selected ? "▶  " : "    ") + option.name, canvas.width / 2, y);
+      ctx.fillStyle = "#888"; ctx.font = "11px monospace"; ctx.fillText(option.desc, canvas.width / 2, y + 21);
+    });
+    ctx.fillStyle = "#666"; ctx.font = "12px monospace";
+    ctx.fillText("↑/↓ Navegar  •  ENTER Confirmar  •  ESC Volver", canvas.width / 2, 480);
   }
   if (menuSubState === "difficulty") {
     ctx.fillStyle = "#050510";

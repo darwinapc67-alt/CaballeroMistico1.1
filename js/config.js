@@ -3,7 +3,7 @@ var ROOM_W = 800, ROOM_H = 600, GRAVITY = 0.6;
 var DASH_SPEED = 12, DASH_DURATION = 10, DASH_COOLDOWN = 45, DASH_INV_FRAMES = 12;
 /* Rooms 0-9 are the original route, room 10 is the final descent, and
    rooms 11-13 are the Guardian, Queen Larva, and Abyssal Knight arenas. */
-var WORLD_W = 37 * ROOM_W;
+var WORLD_W = 40 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
 var VERSION = "v1.65";
 
@@ -141,6 +141,12 @@ var menuSelection = 0, menuSubState = "slots", slotToDelete = -1, activeSlot = -
 var settingsSelection = 0, settingsReturn = false, adminFromSettings = false;
 var brightnessBoost = 0;
 var difficultySelection = 1, difficulty = "normal";
+var gameMode = "normal", modeSelection = 0;
+var infiniteWave = 0, infiniteSpawnTimer = 0;
+var modeOptions = [
+  { id: "normal", name: "MODO NORMAL", desc: "Recorre la historia y derrota a los jefes." },
+  { id: "infinite", name: "MODO INFINITO", desc: "Sobrevive a oleadas interminables de enemigos." }
+];
 var difficultyOptions = [
   { id: "easy", name: "FÁCIL", desc: "Recibes menos daño de los enemigos.", damage: 0.7 },
   { id: "normal", name: "NORMAL", desc: "La experiencia equilibrada.", damage: 1 },
@@ -318,7 +324,7 @@ function saveGame(i) {
     },
     bestiary: JSON.parse(JSON.stringify(bestiary)),
     achievements: JSON.parse(JSON.stringify(achievements)),
-    difficulty: difficulty,
+    difficulty: difficulty, gameMode: gameMode,
     stats: { playTime: stats.playTime || 0, enemiesKilled: stats.enemiesKilled || 0,
              roomsVisited: stats.roomsVisited || 1, jumps: stats.jumps || 0,
              attacks: stats.attacks || 0, deaths: stats.deaths || 0 },
@@ -338,7 +344,7 @@ function loadGame(i) {
     enemies100: !!(s.achievements && s.achievements.enemies100)
   };
   bossDeathEffects = [];
-  difficulty = s.difficulty || "normal";
+  difficulty = s.difficulty || "normal"; gameMode = s.gameMode || "normal";
   currentRoom = Math.max(0, Math.min(rooms.length - 1, s.room || 0));
   highestRoomReached = Math.max(currentRoom, s.highestRoomReached || 0);
   checkpointState = s.checkpointState || checkpointState;
@@ -648,7 +654,7 @@ function createInterludeRoom(index, name, variant) {
   platforms.push({x: off + 610, y: 400 - (variant % 2) * 80, w: 120, h: 16});
   return {height: 600, platforms: platforms, spikes: variant === 3 ? [{x: off + 300, y: 540, w: 180, h: 20}] : [],
     walls: [], transitionZone: {x: off + 750, y: 460, w: 40, h: 100, to: index + 1},
-    decor: genDecor(off, 7, 5, 600), zoneTitle: name};
+    decor: genDecor(off, 7, 5, 600), zoneTitle: name || "PASO DE LAS PROFUNDIDADES"};
 }
 
 var interludeRooms = [
@@ -722,8 +728,42 @@ var cityRooms = [
   createCityRoom(29, "", {roofs: false, towers: true, bridge: true})
 ];
 
+function createBossApproachRoom(index, variant) {
+  var off = index * ROOM_W;
+  var platforms = [{x: off, y: 560, w: ROOM_W, h: 40}];
+  platforms.push({x: off + 55, y: 430, w: 150, h: 16});
+  platforms.push({x: off + 285, y: 335 - variant * 25, w: 180, h: 16});
+  platforms.push({x: off + 555, y: 440, w: 165, h: 16});
+  if (variant === 2) platforms.push({x: off + 390, y: 205, w: 145, h: 16});
+  return {
+    height: 600,
+    platforms: platforms,
+    spikes: variant > 0 ? [{x: off + 220, y: 540, w: 70, h: 20}] : [],
+    walls: [],
+    transitionZone: {x: off + 750, y: 460, w: 40, h: 100, to: index + 1},
+    decor: genDecor(off, 9 + variant, 5, 600),
+    zoneTitle: "SENDERO DEL ABISMO"
+  };
+}
+var bossApproachRooms = [
+  createBossApproachRoom(20, 0),
+  createBossApproachRoom(21, 1),
+  createBossApproachRoom(22, 2)
+];
+
 cityRooms[cityRooms.length - 1].transitionZone = {x: 29 * ROOM_W + 750, y: 460, w: 40, h: 100, to: 30};
 cityRooms[cityRooms.length - 1].platforms = [{x: 29 * ROOM_W, y: 560, w: ROOM_W, h: 40}];
+
+function shiftRoomGeometry(room, delta) {
+  room.platforms.forEach(function(item) { item.x += delta; });
+  room.spikes.forEach(function(item) { item.x += delta; });
+  room.walls.forEach(function(item) { item.x += delta; });
+  if (room.transitionZone) { room.transitionZone.x += delta; if (room.transitionZone.to >= 20) room.transitionZone.to += 3; }
+  ["lockedDoor", "openDoor", "rewardPile"].forEach(function(key) {
+    if (room[key]) room[key].x += delta;
+  });
+  if (room.decor) room.decor.forEach(function(item) { if (item.x !== undefined) item.x += delta; });
+}
 
 var room30 = {
   height: 900,
@@ -819,9 +859,18 @@ var room36 = {
   rewardPile: {x: 36 * ROOM_W + 350, y: 500, amount: 230},
   decor: genDecor(36 * ROOM_W, 16, 5, 600)
 };
+shiftRoomGeometry(room13, 3 * ROOM_W);
+cityRooms.forEach(function(room) { shiftRoomGeometry(room, 3 * ROOM_W); });
+shiftRoomGeometry(room30, 3 * ROOM_W);
+shiftRoomGeometry(room31, 3 * ROOM_W);
+shiftRoomGeometry(room32, 3 * ROOM_W);
+shiftRoomGeometry(room33, 3 * ROOM_W);
+shiftRoomGeometry(room34, 3 * ROOM_W);
+shiftRoomGeometry(room35, 3 * ROOM_W);
+shiftRoomGeometry(room36, 3 * ROOM_W);
 
 var rooms = [room0, room1, room2, room3, room4, room5, room6, room7, room8, room9,
-  room10, room11].concat(interludeRooms, [room12, room13], cityRooms, [room30, room31, room32, room33, room34, room35, room36]);
+  room10, room11].concat(interludeRooms, [room12], bossApproachRooms, [room13], cityRooms, [room30, room31, room32, room33, room34, room35, room36]);
 
 var enemies = [
   {x: 9630, y: 520, w: 24, h: 20, vx: 1.2, vy: 0, baseY: 520, range: 180, speed: 1.2, dead: false, room: 12, type: 'cazador_paramo', terrestrial: true},
@@ -886,6 +935,27 @@ var enemies = [
   {x: 24280, y: 1550, w: 32, h: 28, vx: 0, vy: 0, dead: false, room: 34, type: 'blue_sentry', shootTimer: 115, staysRoom: true},
   {x: 24680, y: 700, w: 32, h: 28, vx: 0, vy: 0, dead: false, room: 34, type: 'blue_sentry', shootTimer: 150, staysRoom: true}
 ];
+for (var challengeRoom = 12; challengeRoom <= 18; challengeRoom++) {
+  var challengeOrigin = challengeRoom * ROOM_W;
+  enemies.push(
+    {x: challengeOrigin + 260, y: 230, w: 24, h: 20, vx: challengeRoom % 2 ? 1.3 : -1.3, vy: 0,
+      baseY: 230, range: 90, speed: 1.3, dead: false, room: challengeRoom, type: "bat"},
+    {x: challengeOrigin + 540, y: 500, w: 28, h: 22, vx: challengeRoom % 2 ? -1 : 1, vy: 0,
+      speed: 1.6, visionRadius: 210, dead: false, room: challengeRoom, type: "larva_mosca"}
+  );
+}
+for (var approachRoom = 20; approachRoom <= 22; approachRoom++) {
+  var approachOrigin = approachRoom * ROOM_W;
+  enemies.push(
+    {x: approachOrigin + 245, y: 280, w: 24, h: 20, vx: 1.2, vy: 0, baseY: 280, range: 75,
+      speed: 1.2, dead: false, room: approachRoom, type: "bat", preserveRoom: true},
+    {x: approachOrigin + 520, y: 500, w: 28, h: 22, vx: approachRoom % 2 ? -1 : 1, vy: 0,
+      speed: 1.7, visionRadius: 210, dead: false, room: approachRoom, type: "larva_mosca", preserveRoom: true}
+  );
+}
+enemies.forEach(function(enemy) {
+  if (enemy.room >= 20 && !enemy.preserveRoom) { enemy.room += 3; enemy.x += 3 * ROOM_W; }
+});
 enemies.forEach(function(e) { e.canRoam = !e.boss; });
 
 var midScene = null;

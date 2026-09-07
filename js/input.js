@@ -5,6 +5,14 @@ window.addEventListener("keydown", function(e) {
   var down = e.key === "ArrowDown" || e.code === "ArrowDown";
   var confirm = e.key === "Enter" || e.key === "Return" || e.code === "Enter" || e.code === "NumpadEnter" || e.key === " ";
 
+  if (gameState === ST_MENU && menuSubState === "mode") {
+    if (up || k === "w") modeSelection = (modeSelection + modeOptions.length - 1) % modeOptions.length;
+    else if (down || k === "s") modeSelection = (modeSelection + 1) % modeOptions.length;
+    else if (confirm) { gameMode = modeOptions[modeSelection].id; menuSubState = "difficulty"; }
+    else if (e.key === "Escape") menuSubState = "slots";
+    else return;
+    e.preventDefault(); return;
+  }
   if (gameState === ST_MENU && menuSubState === "difficulty") {
     var keyCode = e.which || e.keyCode;
     var difficultyUp = up || keyCode === 38 || k === "w";
@@ -310,6 +318,11 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (menuSubState === "difficulty" && e.key === "Escape") {
+      menuSubState = "mode";
+      e.preventDefault();
+      return;
+    }
+    if (menuSubState === "mode" && e.key === "Escape") {
       menuSubState = "slots";
       e.preventDefault();
       return;
@@ -351,8 +364,8 @@ window.addEventListener("keydown", function(e) {
         if (saves.slots[menuSelection]) {
           if (loadGame(menuSelection)) { gameState = ST_PLAYING; startMusic(); updateUI(); }
         } else {
-          difficultySelection = 1;
-          beginNewGameFromDifficulty();
+          modeSelection = 0;
+          menuSubState = "mode";
         }
         e.preventDefault();
         return;

@@ -570,6 +570,21 @@ function updateBossProjectiles() {
   }
 }
 
+function updateInfiniteMode() {
+  if (gameMode !== "infinite" || gameState !== ST_PLAYING) return;
+  infiniteSpawnTimer--;
+  var living = enemies.filter(function(e) { return e.room === 0 && !e.dead; }).length;
+  if (infiniteSpawnTimer <= 0 && living < 4) {
+    infiniteWave++;
+    enemies.push({
+      x: 180 + Math.random() * 420, y: 500, w: 28, h: 22,
+      vx: infiniteWave % 2 ? 1.2 : -1.2, vy: 0, speed: 1.2 + Math.min(1.5, infiniteWave * 0.03),
+      visionRadius: 260, dead: false, room: 0, type: infiniteWave % 4 === 0 ? "dark_knight" : "larva_mosca"
+    });
+    infiniteSpawnTimer = Math.max(100, 360 - infiniteWave * 4);
+  }
+}
+
 function updateEnemies() {
   if (gameState !== ST_PLAYING) return;
   enemies.forEach(function(e) {
@@ -997,6 +1012,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   }
 
   var newRoom = Math.floor(p.x / ROOM_W);
+  if (gameMode === "infinite") newRoom = 0;
   if (newRoom >= rooms.length) newRoom = rooms.length - 1;
   if (rooms[currentRoom].verticalRoom) newRoom = currentRoom;
   if (newRoom !== currentRoom) {
@@ -1015,7 +1031,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   }
 
   var room = rooms[currentRoom];
-  if (rooms[currentRoom].verticalRoom && p.y < -20 && currentRoom === 34) {
+  if (rooms[currentRoom].verticalRoom && p.y < -20 && currentRoom === 37) {
     startRiseThroughTransition(30);
     return;
   }
@@ -1030,6 +1046,10 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     }
   }
   if (p.y > room.height + 80) {
+    if (gameMode === "infinite") {
+      p.x = 390; p.y = room.height - p.h - 10; p.vx = 0; p.vy = 0; p.jumpsLeft = p.maxJumps;
+      return;
+    }
     if (getActiveBoss(currentRoom) && room.bossName) {
       p.x = Math.max(currentRoom * ROOM_W + 20, Math.min((currentRoom + 1) * ROOM_W - p.w - 20, p.x));
       p.y = room.height - p.h - 10;
@@ -1110,14 +1130,14 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   } else { p.inv--; }
 
   if (p === player && transitionCooldown <= 0) {
-    if (currentRoom === 34 && room.openDoor && interactPressed && rectHit(p, {
+    if (currentRoom === 37 && room.openDoor && interactPressed && rectHit(p, {
       x: room.openDoor.x - 18, y: room.openDoor.y - 25,
       w: room.openDoor.w + 36, h: room.openDoor.h + 50
     })) {
       startTransition(35, "forward");
       return;
     }
-    if (currentRoom === 34 && room.lockedDoor && rectHit(p, {
+    if (currentRoom === 37 && room.lockedDoor && rectHit(p, {
       x: room.lockedDoor.x - 42, y: room.lockedDoor.y - 35,
       w: room.lockedDoor.w + 84, h: room.lockedDoor.h + 70
     })) {
@@ -1188,7 +1208,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   }
 
   if (interactPressed) tryInteractFor(p);
-  if (p === player && currentRoom === 36 && room.rewardPile && !rewardAzariCollected &&
+  if (p === player && currentRoom === 39 && room.rewardPile && !rewardAzariCollected &&
       rectHit(p, { x: room.rewardPile.x - 45, y: room.rewardPile.y - 45, w: 90, h: 55 })) {
     collectAzari(room.rewardPile.amount);
     rewardAzariCollected = true;
@@ -1539,6 +1559,7 @@ function startBossDialogue(roomIndex) {
       ["", "⚔️ ¡EL GUARDIÁN DE LA CUEVA HA DESPERTADO!"]
     ]
   };
+  if (!dialogues[23]) dialogues[23] = dialogues[13];
   bossDialogueLines = dialogues[roomIndex] || [];
   if (!bossDialogueLines.length) return false;
   bossDialogueSeen[roomIndex] = true;
