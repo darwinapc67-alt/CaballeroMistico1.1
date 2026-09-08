@@ -76,7 +76,8 @@ function resetPlayer() {
   player.dashTimer = 0; player.dashCooldown = 0; player.dashDir = 1; player.dashing = false; player.recoilTimer = 0;
   playerDead = false;
   deathTimer = 0;
-  particles = []; floatTexts = []; arrowsInFlight = []; healingHearts = []; azariDrops = []; flash = 0;
+  particles = []; floatTexts = []; arrowsInFlight = []; impactBursts = []; healingHearts = []; azariDrops = []; flash = 0;
+  combatShake = 0; combatHitStop = 0;
   healing = false; healTimer = 0; healingStoneCooldown = 0;
   hitFlash = 0; needsRespawn = false;
   if (twoPlayerMode) {
@@ -427,6 +428,7 @@ function updateBoss(e, room) {
       if (e.y >= floorY) {
         e.y = floorY;
         e.vy = 0;
+        e.hitFlash = 0;
         e.action = "";
         e.actionTimer = 0;
         e.attackHit = false;
@@ -1362,6 +1364,19 @@ function updatePlayer2() {
   }
 }
 
+function registerCombatImpact(enemy, damage, critical) {
+  var impactX = enemy.x + enemy.w / 2;
+  var impactY = enemy.y + enemy.h / 2;
+  enemy.hitFlash = critical ? 10 : 6;
+  combatShake = Math.max(combatShake, critical ? 8 : 4);
+  combatHitStop = Math.max(combatHitStop, critical ? 5 : 3);
+  impactBursts.push({ x: impactX, y: impactY, life: critical ? 16 : 10, maxLife: critical ? 16 : 10, critical: critical });
+  spawnFloatText(impactX - 8, enemy.y - 10, (critical ? "¡CRÍTICO! " : "") + "-" + damage, critical ? "#fff36b" : "#ffd700");
+  spawnParticles(impactX, impactY, critical ? "#fff36b" : "#7af", critical ? 18 : 10, critical ? 6 : 4);
+  if (critical) sfxCriticalHit();
+  else sfxHit();
+}
+
 function checkSwordHitEnemiesFor(p) {
   if (p.swordSwing <= 0) return;
 
@@ -1394,27 +1409,33 @@ function checkSwordHitEnemiesFor(p) {
       if (rectHit(swingBoxes[i], e)) { hit = true; break; }
     }
     if (hit) {
+      var impactRegistered = false;
       p.recoilTimer = 10;
       p.vx = -p.facing * 8;
       p.vy = -5;
       if (e.boss) {
         if (e.lastSwordHit === frameCounter) return;
         e.lastSwordHit = frameCounter;
+        var criticalHit = p.attackType === "charged" || Math.random() < 0.15;
         var swordDamage = (bossAbilities.abyssal_knight ? 16 : 12) + swordLevel * 3 + permanentUpgrades.strength;
         if (equippedBlessings.indexOf("abyss") >= 0 && p.attackType === "charged") swordDamage += 4;
         if (p.attackType === "charged") swordDamage *= 2;
         if (p.attackType === "down") swordDamage = Math.round(swordDamage * 1.25);
         if (combatSkills.combo && p.attackType === "normal") swordDamage += 1;
+        if (criticalHit && p.attackType !== "charged") swordDamage = Math.round(swordDamage * 1.75);
         e.hp -= swordDamage;
-        spawnFloatText(e.x, e.y - 10, "-" + swordDamage, "#ffd700");
-        spawnParticles(e.x + e.w/2, e.y + e.h/2, "#7af", 10, 4);
+        registerCombatImpact(e, swordDamage, criticalHit);
         if (e.hp <= 0) defeatBoss(e);
         return;
       }
       if (e.type === "bat") {
         if (e.hp === undefined) e.hp = 3;
-        e.hp -= Math.max(1, 1 + swordLevel);
-        spawnFloatText(e.x, e.y - 10, e.hp > 0 ? "-" + Math.max(1, 1 + swordLevel) : "¡Muerto!", "#f88");
+        var batDamage = Math.max(1, 1 + swordLevel);
+        var batCritical = Math.random() < 0.15;
+        if (batCritical) batDamage *= 2;
+        e.hp -= batDamage;
+        registerCombatImpact(e, batDamage, batCritical);
+        impactRegistered = true;
         spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#a0a", 6, 3);
         if (e.hp > 0) return;
       }
@@ -1424,11 +1445,15 @@ function checkSwordHitEnemiesFor(p) {
         return;
       }
       if (e.type === "dark_knight") {
+        var knightCritical = Math.random() < 0.15;
         var knightDamage = Math.max(1, 6 + swordLevel * 2);
+        if (knightCritical) knightDamage *= 2;
         e.hp -= knightDamage;
-        spawnFloatText(e.x, e.y - 10, e.hp > 0 ? "-" + knightDamage : "¡Muerto!", "#c8d8ff");
+        registerCombatImpact(e, knightDamage, knightCritical);
+        impactRegistered = true;
         if (e.hp > 0) return;
       }
+      if (!impactRegistered) registerCombatImpact(e, Math.max(1, 1 + swordLevel), false);
       e.dead = true;
       stats.enemiesKilled++;
       checkAchievementProgress(false);

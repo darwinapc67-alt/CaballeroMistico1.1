@@ -99,6 +99,16 @@ function update() {
   if (adMessageTimer > 0) adMessageTimer--;
   if (adAzariBonusTimer > 0) adAzariBonusTimer--;
   if (shopExitCooldown > 0) shopExitCooldown--;
+  if (combatShake > 0) combatShake *= 0.82;
+  if (combatShake < 0.1) combatShake = 0;
+  for (var impactIndex = impactBursts.length - 1; impactIndex >= 0; impactIndex--) {
+    impactBursts[impactIndex].life--;
+    if (impactBursts[impactIndex].life <= 0) impactBursts.splice(impactIndex, 1);
+  }
+  if (combatHitStop > 0) {
+    combatHitStop--;
+    return;
+  }
   if (bossVictory.active) {
     bossVictory.timer--;
     if (bossVictory.timer <= 0) bossVictory.active = false;
@@ -194,9 +204,9 @@ function update() {
   if (!(gameState === ST_TRANSITION && transIsFall)) {
     if (twoPlayerMode) {
       var midX = (player.x + player.w/2 + player2.x + player2.w/2) / 2;
-      targetCamX = midX - canvas.width/2;
+      targetCamX = midX - canvas.width/2 + (player.facing || 1) * 42;
     } else {
-      targetCamX = player.x + player.w/2 - canvas.width/2;
+      targetCamX = player.x + player.w/2 - canvas.width/2 + (player.facing || 1) * 70 + player.vx * 8;
     }
     if (room.verticalRoom && room.worldX !== undefined) {
       var roomWidth = room.roomWidth || ROOM_W;
@@ -205,7 +215,7 @@ function update() {
       targetCamX = Math.max(0, Math.min(targetCamX, WORLD_W - canvas.width));
     }
     var diff = targetCamX - cameraX;
-    cameraX += diff * 0.08;
+    cameraX += diff * 0.14;
     if (Math.abs(diff) < 0.5) cameraX = targetCamX;
   }
 
@@ -221,7 +231,7 @@ function update() {
     targetCamY = 0;
   }
   var diffY = targetCamY - cameraY;
-  cameraY += diffY * 0.08;
+  cameraY += diffY * 0.12;
   if (Math.abs(diffY) < 0.5) cameraY = targetCamY;
 }
 

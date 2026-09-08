@@ -396,6 +396,10 @@ function drawEnemies() {
     if (e.x + e.w < camLeft - 50 || e.x > camRight + 50) return;
     if (e.y + e.h < camTop - 50 || e.y > camBottom + 50) return;
     ctx.save();
+    if (e.hitFlash > 0) {
+      e.hitFlash--;
+      ctx.globalAlpha = 0.45 + (e.hitFlash % 2) * 0.25;
+    }
     if (e.boss) {
       var bossColor = e.type === "guardian" ? "#b77b45" : (e.type === "queen_larva" ? "#9b4c9b" : "#415f98");
       var attackPulse = e.actionTimer > 0 ? Math.sin(e.actionTimer * 0.7) * 4 : 0;
@@ -528,6 +532,11 @@ function drawEnemies() {
       ctx.fillStyle = "#ff2244";
       ctx.fillRect(e.x + 5, e.y + 6, 4, 4);
       ctx.fillRect(e.x + 14, e.y + 6, 4, 4);
+    }
+    if (e.hitFlash > 0) {
+      ctx.fillStyle = "#fff";
+      ctx.globalAlpha = 0.75;
+      ctx.fillRect(e.x - 3, e.y - 3, e.w + 6, e.h + 6);
     }
     ctx.restore();
   });
@@ -946,7 +955,9 @@ function drawLevelEditor() {
 function drawGameWorld() {
   ctx.fillStyle = "#050510"; ctx.fillRect(0, 0, canvas.width, canvas.height);
   if (flash > 0) { ctx.fillStyle = "rgba(255,255,255," + (flash*0.3) + ")"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
-  ctx.save(); ctx.translate(-Math.floor(cameraX), -Math.floor(cameraY));
+  var shakeX = combatShake ? (Math.random() - 0.5) * combatShake : 0;
+  var shakeY = combatShake ? (Math.random() - 0.5) * combatShake : 0;
+  ctx.save(); ctx.translate(shakeX - Math.floor(cameraX), shakeY - Math.floor(cameraY));
 
   ctx.fillStyle = "#0a0a1a";
   for (var i = 0; i < 30; i++) {
@@ -1133,6 +1144,21 @@ function drawGameWorld() {
   ctx.globalAlpha = 1;
 
   particles.forEach(function(p) { ctx.globalAlpha = Math.max(0, p.life/p.maxLife); ctx.fillStyle = p.color; ctx.fillRect(p.x-p.size/2, p.y-p.size/2, p.size, p.size); });
+  impactBursts.forEach(function(b) {
+    var progress = 1 - b.life / b.maxLife;
+    ctx.globalAlpha = Math.max(0, b.life / b.maxLife);
+    ctx.strokeStyle = b.critical ? "#fff36b" : "#9de8ff";
+    ctx.lineWidth = b.critical ? 4 : 2;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, 8 + progress * (b.critical ? 34 : 22), 0, Math.PI * 2);
+    ctx.stroke();
+    if (b.critical) {
+      ctx.beginPath();
+      ctx.moveTo(b.x - 24, b.y); ctx.lineTo(b.x + 24, b.y);
+      ctx.moveTo(b.x, b.y - 24); ctx.lineTo(b.x, b.y + 24);
+      ctx.stroke();
+    }
+  });
   ctx.globalAlpha = 1;
   floatTexts.forEach(function(t) { ctx.globalAlpha = Math.max(0, t.life/70); ctx.fillStyle = t.color; ctx.font = "bold 13px monospace"; ctx.fillText(t.text, t.x, t.y); });
   ctx.globalAlpha = 1;
