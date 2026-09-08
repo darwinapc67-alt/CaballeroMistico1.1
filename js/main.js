@@ -104,6 +104,11 @@ function update() {
     if (bossVictory.timer <= 0) bossVictory.active = false;
   }
   if (bossIntroTimer > 0 && gameState === ST_PLAYING) bossIntroTimer--;
+  if (gameState === ST_INTRO) {
+    introTimer++;
+    if (introTimer >= 900) finishIntro();
+    return;
+  }
   if (achievementNotify.active) {
     achievementNotify.timer--;
     if (achievementNotify.timer <= 0) achievementNotify.active = false;
@@ -248,6 +253,7 @@ function loop() {
   else if (gameState === ST_HOUSE) drawHouseInterior();
   else if (gameState === ST_DEATH) drawDeathScreen();
   else if (gameState === ST_LEVEL_EDITOR) drawLevelEditor();
+  else if (gameState === ST_INTRO) drawIntro();
   else {
     drawGame();
     if (shopOpen) drawShop();

@@ -1201,6 +1201,79 @@ function drawGame() {
     ctx.fillStyle = "rgba(0, 0, 0, " + alpha + ")";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
+
+  function drawIntro() {
+    var t = introTimer / 60;
+    var phase = t < 3 ? 0 : (t < 7 ? 1 : (t < 12 ? 2 : 3));
+    var fade = Math.min(1, introTimer / 45, Math.max(0, (900 - introTimer) / 45));
+    ctx.fillStyle = "#020208";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.globalAlpha = fade;
+    if (phase >= 1) {
+      var sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      sky.addColorStop(0, "#090d24");
+      sky.addColorStop(1, "#27151b");
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "rgba(255,90,35,0.25)";
+      ctx.beginPath();
+      ctx.arc(130, 390, 85 + Math.sin(introTimer / 12) * 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#0b0b16";
+      ctx.beginPath();
+      ctx.moveTo(0, 470); ctx.lineTo(150, 315); ctx.lineTo(260, 470);
+      ctx.lineTo(410, 290); ctx.lineTo(610, 470); ctx.lineTo(800, 330); ctx.lineTo(800, 600); ctx.lineTo(0, 600);
+      ctx.closePath(); ctx.fill();
+      for (var fire = 0; fire < 6; fire++) {
+        ctx.fillStyle = "#ff7038";
+        ctx.fillRect(90 + fire * 118, 430 - (fire % 2) * 18, 5, 18 + (fire % 3) * 7);
+      }
+    }
+    if (phase >= 2) {
+      var zoom = 1 + Math.max(0, Math.min(1, (t - 7) / 5)) * 0.12;
+      ctx.translate(400, 420);
+      ctx.scale(zoom, zoom);
+      ctx.fillStyle = "#090b16";
+      ctx.fillRect(-30, -125, 60, 125);
+      ctx.beginPath();
+      ctx.arc(0, -145, 28, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#6cc";
+      ctx.fillRect(-18, -154, 8, 4); ctx.fillRect(10, -154, 8, 4);
+      ctx.strokeStyle = "#d5b66a";
+      ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.moveTo(24, -105); ctx.lineTo(92, -205); ctx.stroke();
+      ctx.fillStyle = "rgba(108,204,204,0.15)";
+      ctx.beginPath(); ctx.arc(0, -90, 115, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    } else {
+      ctx.restore();
+    }
+    if (phase === 3 && introTimer % 90 < 18) {
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#f2ead7";
+    ctx.font = "bold 22px monospace";
+    if (phase === 0) ctx.fillText("Durante siglos, el reino permaneció en paz…", 400, 310);
+    else if (phase === 1) ctx.fillText("Hasta que algo despertó.", 400, 310);
+    else if (phase === 2) ctx.fillText("Y ahora… te toca enfrentarlo.", 400, 250);
+    else {
+      ctx.fillStyle = "#ffd36a";
+      ctx.font = "bold 30px monospace";
+      ctx.fillText("⚔ CABALLERO", 400, 250);
+      ctx.fillText("MÍSTICO", 400, 292);
+      ctx.fillStyle = "#fff";
+      ctx.font = "16px monospace";
+      ctx.fillText("El destino comienza aquí.", 400, 340);
+    }
+    ctx.fillStyle = "rgba(255,255,255,0.55)";
+    ctx.font = "11px monospace";
+    ctx.fillText("ENTER / ESPACIO para omitir", 400, 560);
+    ctx.textAlign = "left";
+  }
   var barX = canvas.width - 20 - (player.maxHp * 15);
   if (barX < 200) barX = 200;
   drawHpBar(player, barX, 14);
@@ -1316,6 +1389,38 @@ function drawGame() {
   }
   if (adminConsoleOpen) drawAdminConsole();
   drawTutorial();
+}
+
+function drawIntro() {
+ var t = introTimer / 60;
+ var phase = t < 3 ? 0 : (t < 7 ? 1 : (t < 12 ? 2 : 3));
+ ctx.fillStyle = phase === 0 ? "#020208" : "#0b1024";
+ ctx.fillRect(0, 0, canvas.width, canvas.height);
+ if (phase >= 1) {
+   ctx.fillStyle = "rgba(255,80,30,0.25)";
+   ctx.beginPath(); ctx.arc(130, 400, 95 + Math.sin(introTimer / 12) * 8, 0, Math.PI * 2); ctx.fill();
+   ctx.fillStyle = "#070914";
+   ctx.beginPath(); ctx.moveTo(0, 470); ctx.lineTo(180, 300); ctx.lineTo(320, 470); ctx.lineTo(500, 280); ctx.lineTo(800, 460); ctx.lineTo(800, 600); ctx.lineTo(0, 600); ctx.closePath(); ctx.fill();
+   ctx.fillStyle = "#ff7138";
+   for (var i = 0; i < 6; i++) ctx.fillRect(90 + i * 120, 430 - (i % 2) * 18, 5, 24);
+ }
+ if (phase >= 2) {
+   ctx.save();
+   ctx.translate(400, 430);
+   ctx.fillStyle = "#080b16"; ctx.fillRect(-30, -125, 60, 125);
+   ctx.beginPath(); ctx.arc(0, -145, 28, 0, Math.PI * 2); ctx.fill();
+   ctx.fillStyle = "#6cc"; ctx.fillRect(-18, -154, 8, 4); ctx.fillRect(10, -154, 8, 4);
+   ctx.strokeStyle = "#d5b66a"; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(24, -105); ctx.lineTo(92, -205); ctx.stroke();
+   ctx.restore();
+ }
+ if (phase === 3 && introTimer % 90 < 18) { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+ ctx.textAlign = "center"; ctx.fillStyle = "#f2ead7"; ctx.font = "bold 22px monospace";
+ if (phase === 0) ctx.fillText("Durante siglos, el reino permaneció en paz…", 400, 310);
+ else if (phase === 1) ctx.fillText("Hasta que algo despertó.", 400, 310);
+ else if (phase === 2) ctx.fillText("Y ahora… te toca enfrentarlo.", 400, 250);
+ else { ctx.fillStyle = "#ffd36a"; ctx.font = "bold 34px monospace"; ctx.fillText("⚔ CABALLERO MÍSTICO", 400, 270); ctx.fillStyle = "#fff"; ctx.font = "16px monospace"; ctx.fillText("El destino comienza aquí.", 400, 315); }
+ ctx.fillStyle = "rgba(255,255,255,0.55)"; ctx.font = "11px monospace"; ctx.fillText("ENTER / ESPACIO para omitir", 400, 560);
+ ctx.textAlign = "left";
 }
 
 function drawDeathScreen() {

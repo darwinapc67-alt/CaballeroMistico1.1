@@ -5,6 +5,14 @@ window.addEventListener("keydown", function(e) {
   var down = e.key === "ArrowDown" || e.code === "ArrowDown";
   var confirm = e.key === "Enter" || e.key === "Return" || e.code === "Enter" || e.code === "NumpadEnter" || e.key === " ";
 
+  if (gameState === ST_INTRO) {
+    if (confirm || e.key === "Escape") {
+      finishIntro();
+      e.preventDefault();
+    }
+    return;
+  }
+
   if (gameState === ST_LEVEL_EDITOR) {
     if (e.key === "Escape") {
       gameState = ST_MENU;
@@ -922,9 +930,16 @@ function beginNewGameFromDifficulty() {
   applyDifficultyToNewGame();
   resetAll();
   menuSubState = "slots";
-  gameState = ST_PLAYING;
+  introTimer = 0;
+  gameState = ST_INTRO;
   updateUI();
+}
+
+function finishIntro() {
+  if (gameState !== ST_INTRO) return;
+  gameState = ST_PLAYING;
   startMusic();
+  updateUI();
 }
 
 function setupTouchControls() {
