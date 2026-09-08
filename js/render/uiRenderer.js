@@ -11,6 +11,94 @@ function drawInventory() {
   ctx.fillStyle = "#446";
   ctx.font = "12px monospace";
   ctx.fillText(translateText("Presiona ` o SHARE para cerrar"), canvas.width/2, 60);
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#c9a94e";
+  ctx.font = "bold 13px monospace";
+  ctx.fillText("OBJETOS", 34, 92);
+  ctx.fillStyle = "#687080";
+  ctx.fillText("EQUIPO", 208, 92);
+
+  var inventorySlots = [
+    { name: "Corazón", owned: false, color: "#e66b78" },
+    { name: "Arco", owned: hasBow, color: "#b98b58" },
+    { name: "Llave vieja", owned: hasOldKey, color: "#d4af37" },
+    { name: "Amuleto", owned: hasAzariCharm, color: "#73d4cc" },
+    { name: "Linterna", owned: hasLantern, color: "#f2c45c" },
+    { name: "Mapa", owned: hasMap, color: "#8bb7d9" },
+    { name: "Fragmento", owned: heartFragments1 > 0 || heartFragments2 > 0, color: "#a88be8" },
+    { name: "Botella", owned: false, color: "#80c990" },
+    { name: "Objeto vacío", owned: false, color: "#647080" }
+  ];
+  var slotX = 28, slotY = 112, slotW = 150, slotH = 72, slotGap = 8;
+  inventorySlots.forEach(function(slot, index) {
+    var col = index % 3, row = Math.floor(index / 3);
+    var x = slotX + col * (slotW + slotGap);
+    var y = slotY + row * (slotH + slotGap);
+    var selected = inventorySelection === index || inventoryHover === index;
+    ctx.fillStyle = selected ? "rgba(201,169,78,0.22)" : "rgba(255,255,255,0.035)";
+    ctx.fillRect(x, y, slotW, slotH);
+    ctx.strokeStyle = selected ? "#f3d36a" : "#394354";
+    ctx.lineWidth = selected ? 2 : 1;
+    ctx.strokeRect(x, y, slotW, slotH);
+    ctx.fillStyle = slot.owned ? slot.color : "#303846";
+    ctx.fillRect(x + 10, y + 13, 42, 42);
+    ctx.strokeStyle = slot.owned ? slot.color : "#485363";
+    ctx.strokeRect(x + 10, y + 13, 42, 42);
+    ctx.fillStyle = slot.owned ? "#eee8d0" : "#657080";
+    ctx.font = "bold 11px monospace";
+    ctx.fillText(slot.owned ? slot.name : "—", x + 60, y + 31);
+    ctx.fillStyle = slot.owned ? "#9fb39b" : "#596272";
+    ctx.font = "10px monospace";
+    ctx.fillText(slot.owned ? "disponible" : "vacío", x + 60, y + 48);
+  });
+
+  var selectedSlot = inventorySlots[inventorySelection] || inventorySlots[0];
+  ctx.fillStyle = "#151d2b";
+  ctx.fillRect(28, 360, 470, 100);
+  ctx.strokeStyle = "#4b596f";
+  ctx.strokeRect(28, 360, 470, 100);
+  ctx.fillStyle = "#f3d36a";
+  ctx.font = "bold 14px monospace";
+  ctx.fillText(selectedSlot.owned ? selectedSlot.name.toUpperCase() : "SIN OBJETO SELECCIONADO", 46, 388);
+  ctx.fillStyle = "#aeb8c8";
+  ctx.font = "11px monospace";
+  ctx.fillText(selectedSlot.owned ? "Objeto disponible para usar." : "Explora el reino para encontrar objetos.", 46, 414);
+  ctx.fillStyle = "#6f7c90";
+  ctx.fillText("ENTER: usar/equipar   FLECHAS: mover   ` : cerrar", 46, 440);
+
+  ctx.fillStyle = "#172131";
+  ctx.fillRect(528, 92, 242, 368);
+  ctx.strokeStyle = "#52627b";
+  ctx.strokeRect(528, 92, 242, 368);
+  ctx.fillStyle = "#c9a94e";
+  ctx.font = "bold 13px monospace";
+  ctx.fillText("EQUIPAMIENTO", 548, 120);
+  ctx.fillStyle = "#9da9bb";
+  ctx.font = "11px monospace";
+  ctx.fillText("ESPADA", 548, 154);
+  ctx.fillText(swordLevel > 0 ? "Nivel +" + swordLevel : "Sin mejorar", 650, 154);
+  ctx.fillText("ARCO", 548, 184);
+  ctx.fillText(hasBow ? "Disponible" : "Sin obtener", 650, 184);
+  ctx.fillText("ARMADURA", 548, 214);
+  ctx.fillText(armorId === "vacío" ? "Ninguna" : armorId, 650, 214);
+  ctx.fillText("VIDA", 548, 244);
+  ctx.fillText(player.hp + " / " + player.maxHp, 650, 244);
+  ctx.strokeStyle = "#344154";
+  ctx.beginPath();
+  ctx.moveTo(548, 268); ctx.lineTo(750, 268); ctx.stroke();
+  ctx.fillStyle = "#78879d";
+  ctx.fillText("COLECCIONABLES", 548, 296);
+  ctx.fillText("Fragmentos", 548, 324);
+  ctx.fillText(heartFragments1 + heartFragments2 + " / 6", 700, 324);
+  ctx.fillText("Secretos", 548, 354);
+  ctx.fillText(Object.keys(hiddenCollectibles).filter(function(key) { return hiddenCollectibles[key]; }).length + " / 3", 700, 354);
+  ctx.fillText("Azari", 548, 384);
+  ctx.fillText(String(azari), 700, 384);
+  ctx.fillStyle = "#59677d";
+  ctx.fillText("Las casillas vacías se llenarán", 548, 420);
+  ctx.fillText("cuando encuentres nuevos objetos.", 548, 438);
+  ctx.textAlign = "left";
+  return;
   if (hasMap) {
     ctx.textAlign = "center";
     ctx.fillStyle = "#6cc";
@@ -1085,59 +1173,22 @@ function drawShop() {
     ctx.beginPath(); ctx.arc(rx, ry, 18 + (rock % 3) * 5, 0, Math.PI * 2); ctx.fill();
   }
   var vendorX = 680, vendorY = 445;
-  ctx.fillStyle = "#30466f";
-  ctx.fillRect(330, 500, 180, 32);
-  ctx.fillStyle = "#496fa8";
-  ctx.fillRect(330, 500, 180, 6);
+  ctx.fillStyle = "#8b4513"; ctx.fillRect(vendorX - 12, vendorY + 28, 24, 55);
+  ctx.fillStyle = "#a0522d"; ctx.fillRect(vendorX - 12, vendorY + 28, 24, 6);
+  ctx.fillStyle = "#ffd700"; ctx.fillRect(vendorX - 7, vendorY + 42, 4, 4); ctx.fillRect(vendorX + 3, vendorY + 42, 4, 4);
+  ctx.fillStyle = "#d19a72"; ctx.beginPath(); ctx.arc(vendorX, vendorY + 15, 14, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#332211"; ctx.fillRect(vendorX - 15, vendorY + 2, 30, 7);
+  ctx.fillStyle = "#6c8fc7";
+  ctx.font = "bold 10px monospace";
+  ctx.textAlign = "center";
   ctx.fillStyle = "#d4af37";
-  ctx.fillRect(365, 510, 12, 8); ctx.fillRect(405, 510, 12, 8); ctx.fillRect(455, 510, 12, 8);
+  ctx.textAlign = "left";
   ctx.fillStyle = "#5a351d";
   ctx.fillRect(590, 500, 180, 32);
   ctx.fillStyle = "#8b542b";
   ctx.fillRect(590, 500, 180, 6);
   ctx.fillStyle = "#d4af37";
   ctx.fillRect(620, 510, 12, 8); ctx.fillRect(655, 510, 12, 8); ctx.fillRect(705, 510, 12, 8);
-  ctx.fillStyle = "#8b4513"; ctx.fillRect(vendorX - 12, vendorY + 28, 24, 55);
-  ctx.fillStyle = "#a0522d"; ctx.fillRect(vendorX - 12, vendorY + 28, 24, 6);
-  ctx.fillStyle = "#ffd700"; ctx.fillRect(vendorX - 7, vendorY + 42, 4, 4); ctx.fillRect(vendorX + 3, vendorY + 42, 4, 4);
-  ctx.fillStyle = "#d19a72"; ctx.beginPath(); ctx.arc(vendorX, vendorY + 15, 14, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "#332211"; ctx.fillRect(vendorX - 15, vendorY + 2, 30, 7);
-  var combatVendorX = 430, combatVendorY = 445;
-  // El comerciante de combate lleva una armadura reconocible, no solo una túnica.
-  ctx.fillStyle = "#273b62";
-  ctx.fillRect(combatVendorX - 13, combatVendorY + 28, 26, 55);
-  ctx.fillStyle = "#496fa8";
-  ctx.fillRect(combatVendorX - 13, combatVendorY + 28, 26, 7);
-  ctx.fillStyle = "#7f9dcc";
-  ctx.fillRect(combatVendorX - 20, combatVendorY + 32, 7, 14);
-  ctx.fillRect(combatVendorX + 13, combatVendorY + 32, 7, 14);
-  ctx.fillStyle = "#d4af37";
-  ctx.fillRect(combatVendorX - 13, combatVendorY + 58, 26, 5);
-  ctx.fillStyle = "#17233a";
-  ctx.fillRect(combatVendorX - 11, combatVendorY + 83, 8, 8);
-  ctx.fillRect(combatVendorX + 3, combatVendorY + 83, 8, 8);
-  ctx.fillStyle = "#9de8ff";
-  ctx.fillRect(combatVendorX - 7, combatVendorY + 42, 4, 4);
-  ctx.fillRect(combatVendorX + 3, combatVendorY + 42, 4, 4);
-  ctx.fillStyle = "#d19a72";
-  ctx.beginPath(); ctx.arc(combatVendorX, combatVendorY + 15, 14, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "#18243b";
-  ctx.fillRect(combatVendorX - 16, combatVendorY + 1, 32, 9);
-  ctx.fillStyle = "#7f9dcc";
-  ctx.fillRect(combatVendorX - 4, combatVendorY - 6, 8, 7);
-  ctx.fillStyle = "#d4af37";
-  ctx.fillRect(combatVendorX + 15, combatVendorY + 35, 3, 32);
-  ctx.fillStyle = "#6c8fc7";
-  ctx.font = "bold 10px monospace";
-  ctx.textAlign = "center";
-  ctx.fillText("COMBATE", combatVendorX, combatVendorY - 18);
-  ctx.fillStyle = "#d4af37";
-  ctx.fillText("AVENTURAS", vendorX, vendorY - 18);
-  ctx.textAlign = "left";
-  ctx.fillStyle = "#5a351d";
-  ctx.fillRect(590, 500, 180, 22);
-  ctx.fillStyle = "#8b542b";
-  ctx.fillRect(590, 500, 180, 5);
   drawPlayerEntity(player);
   ctx.fillStyle = "#ffd700"; ctx.font = "bold 18px monospace"; ctx.textAlign = "center";
   ctx.fillText("TIENDA UNIFICADA", canvas.width/2, 85);
@@ -1169,77 +1220,11 @@ function drawShop() {
     ctx.textAlign = "left";
     return;
   }
-  if (shopId === 0) {
-    var lanternPrice = !hasLantern ? 70 : (lanternLevel === 1 ? 110 : 180);
-    var lanternLabel = !hasLantern ? "🏮 Linterna I - 70 Azari" : (lanternLevel < 3 ? "🏮 Mejorar linterna " + (lanternLevel + 1) + " - " + lanternPrice + " Azari" : "🏮 Linterna III - MAX");
-    var bagPrices = [80, 120, 180, 260, 350];
-    var bagLabel = azariBagLevel >= 5 ? "🎒 Bolsa de Azari V - MAX" : "🎒 Bolsa de Azari " + (azariBagLevel + 1) + " - " + bagPrices[azariBagLevel] + " Azari";
-    var shopItems = ["🗺️ Mapa - 45 Azari", "🏹 Arco - 35 Azari", "🏹 20 flechas - 5 Azari", "❤️ Fragmento J1 - 25 Azari", "💗 Fragmento J2 - 25 Azari", "💎 Amuleto de Azari - 45 Azari", "🧲 Imán de Azari - 60 Azari", bagLabel, lanternLabel, "🗝️ Llave vieja - 40 Azari", "⚔️ Mejorar espada - 30 Azari", "🏹 Mejorar arco - 30 Azari", "🔥 Flechas pesadas - 20 Azari", "⚡ Ataque cargado - 35 Azari", "⬇️ Ataque aéreo - 35 Azari", "🌀 Combo de combate - 50 Azari", "💎 Amuleto de combate - 45 Azari"];
-    if (hasAzariMagnet) shopItems[6] += "  ✓";
-    if (azariBagLevel > 0) shopItems[7] += "  (nivel " + azariBagLevel + "/5)";
-    if (hasLantern && lanternLevel >= 3) shopItems[8] += "  ✓";
-    if (hasOldKey) shopItems[9] += "  ✓";
-    if (swordLevel >= 3) shopItems[10] += "  ✓";
-    if (bowLevel >= 3) shopItems[11] += "  ✓";
-    if (arrowType === "heavy") shopItems[12] += "  ✓";
-    if (combatSkills.charged) shopItems[13] += "  ✓";
-    if (combatSkills.aerial) shopItems[14] += "  ✓";
-    if (combatSkills.combo) shopItems[15] += "  ✓";
-    var firstVisible = Math.max(0, Math.min(menuSelection - 7, shopItems.length - 10));
-    for (var i = firstVisible; i < Math.min(shopItems.length, firstVisible + 10); i++) {
-      var itemY = 185 + (i - firstVisible) * 31;
-      var selected = menuSelection === i;
-      ctx.fillStyle = selected ? "rgba(100,200,255,0.18)" : "transparent";
-      ctx.fillRect(180, itemY - 23, 440, 34);
-      ctx.strokeStyle = selected ? "#6cc" : "#333"; ctx.lineWidth = selected ? 2 : 1;
-      ctx.strokeRect(180, itemY - 23, 440, 34);
-      ctx.fillStyle = selected ? "#6cc" : "#aaa"; ctx.font = "bold 16px monospace";
-      ctx.font = "bold 14px monospace";
-      ctx.fillText((selected ? "▶  " : "    ") + shopItems[i], canvas.width/2, itemY);
-    }
-    ctx.fillStyle = "#666"; ctx.font = "13px monospace";
-    ctx.fillText(shopConfirm >= 0 ? "ENTER confirmar compra  •  ESC cancelar" : "↑/↓ Elegir  •  ENTER Comprar", canvas.width/2, 525);
-  } else if (shopId === 1) {
-    var combatItems = [
-      "⚔️ Mejorar espada (" + swordLevel + "/3) - 30",
-      "🏹 Mejorar arco (" + bowLevel + "/3) - 30",
-      "🔥 Flechas pesadas - 20",
-      "⚡ Ataque cargado - 35",
-      "⬇️ Ataque aéreo - 35",
-      "🌀 Combo de combate - 50",
-      "💎 Árbol: Amuleto - 45"
-    ];
-    ctx.fillStyle = "#6cc"; ctx.font = "18px monospace";
-    ctx.fillText("⚔️ CASA DE COMBATE", canvas.width/2, 200);
-    for (var combatIndex = 0; combatIndex < combatItems.length; combatIndex++) {
-      var combatY = 225 + combatIndex * 38;
-      var combatSelected = menuSelection === combatIndex;
-      ctx.fillStyle = combatSelected ? "rgba(100,200,255,0.18)" : "transparent";
-      ctx.fillRect(120, combatY - 23, 560, 32);
-      ctx.strokeStyle = combatSelected ? "#6cc" : "#333";
-      ctx.strokeRect(120, combatY - 23, 560, 32);
-      ctx.fillStyle = combatSelected ? "#6cc" : "#aaa";
-      ctx.font = "bold 13px monospace";
-      ctx.fillText((combatSelected ? "▶ " : "  ") + combatItems[combatIndex], canvas.width / 2, combatY);
-    }
-    ctx.fillStyle = "#666"; ctx.font = "12px monospace";
-    ctx.fillText("↑/↓ Elegir  •  ENTER Comprar", canvas.width / 2, 510);
-    ctx.textAlign = "left";
-    return;
-    var heartItems = ["❤️ Fragmento J1 - 25 Azari", "💗 Fragmento J2 - 25 Azari", "💎 Bendición codiciosa - 45 Azari"];
-    for (var i = 0; i < heartItems.length; i++) {
-      var heartY = 240 + i * 38, heartSelected = menuSelection === i;
-      ctx.fillStyle = heartSelected ? "rgba(100,200,255,0.18)" : "transparent";
-      ctx.fillRect(150, heartY - 20, 500, 32);
-      ctx.strokeStyle = heartSelected ? "#6cc" : "#333"; ctx.lineWidth = heartSelected ? 2 : 1;
-      ctx.strokeRect(150, heartY - 20, 500, 32);
-      ctx.fillStyle = heartSelected ? "#6cc" : "#aaa"; ctx.font = "bold 15px monospace";
-      ctx.fillText((heartSelected ? "▶  " : "    ") + heartItems[i], canvas.width/2, heartY);
-    }
-    ctx.fillStyle = "#666"; ctx.font = "13px monospace";
-    ctx.fillText("J1: " + heartFragments1 + "/3  •  J2: " + heartFragments2 + "/3", canvas.width/2, 370);
-    ctx.fillText(shopConfirm >= 0 ? "ENTER confirmar compra  •  ESC cancelar" : "↑/↓ Elegir  •  ENTER Comprar", canvas.width/2, 395);
-  }
+  ctx.fillStyle = "#aaa"; ctx.font = "bold 18px monospace";
+  ctx.fillText("INVENTARIO VACÍO", canvas.width / 2, 275);
+  ctx.fillStyle = "#666"; ctx.font = "13px monospace";
+  ctx.fillText("Próximamente habrá artículos disponibles.", canvas.width / 2, 310);
+  ctx.fillText("ESC: pausa", canvas.width / 2, 525);
   ctx.fillStyle = "#777"; ctx.font = "12px monospace";
   ctx.fillText("ESC: pausa", canvas.width/2, 575);
 }

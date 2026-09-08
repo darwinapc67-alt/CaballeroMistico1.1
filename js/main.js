@@ -333,10 +333,10 @@ canvas.addEventListener("mousemove", function(event) {
   var rect = canvas.getBoundingClientRect();
   var x = (event.clientX - rect.left) * canvas.width / rect.width;
   var y = (event.clientY - rect.top) * canvas.height / rect.height;
-  var col = x >= 25 && x < 375 ? Math.floor((x - 25) / 175) : -1;
-  var row = Math.floor((y - 115) / 55);
-  inventoryHover = col >= 0 && row >= 0 ? row * 2 + col : -1;
-  if (inventoryHover < 0 || inventoryHover >= 8) inventoryHover = -1;
+  var col = x >= 28 && x < 502 ? Math.floor((x - 28) / 158) : -1;
+  var row = Math.floor((y - 112) / 80);
+  inventoryHover = col >= 0 && row >= 0 ? row * 3 + col : -1;
+  if (inventoryHover < 0 || inventoryHover >= 9) inventoryHover = -1;
 });
 ctx = canvas.getContext("2d");
 var originalFillText = ctx.fillText.bind(ctx);

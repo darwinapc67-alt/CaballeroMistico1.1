@@ -3,6 +3,8 @@ window.addEventListener("keydown", function(e) {
   var k = e.key.toLowerCase();
   var up = e.key === "ArrowUp" || e.code === "ArrowUp";
   var down = e.key === "ArrowDown" || e.code === "ArrowDown";
+  var left = e.key === "ArrowLeft" || e.code === "ArrowLeft";
+  var right = e.key === "ArrowRight" || e.code === "ArrowRight";
   var confirm = e.key === "Enter" || e.key === "Return" || e.code === "Enter" || e.code === "NumpadEnter" || e.key === " ";
 
   if (gameState === ST_INTRO) {
@@ -116,8 +118,10 @@ window.addEventListener("keydown", function(e) {
   }
   if (gameState === ST_INVENTORY && !mapOpen) {
     var inventoryItems = 9;
-    if (up) { inventorySelection = (inventorySelection - 1 + inventoryItems) % inventoryItems; e.preventDefault(); return; }
-    if (down) { inventorySelection = (inventorySelection + 1) % inventoryItems; e.preventDefault(); return; }
+    if (left) { inventorySelection = inventorySelection % 3 === 0 ? inventorySelection + 2 : inventorySelection - 1; e.preventDefault(); return; }
+    if (right) { inventorySelection = inventorySelection % 3 === 2 ? inventorySelection - 2 : inventorySelection + 1; e.preventDefault(); return; }
+    if (up) { inventorySelection = inventorySelection < 3 ? inventorySelection + 6 : inventorySelection - 3; e.preventDefault(); return; }
+    if (down) { inventorySelection = inventorySelection >= 6 ? inventorySelection - 6 : inventorySelection + 3; e.preventDefault(); return; }
     if (k === "e" && inventorySelection === 8 && hasOldKey) {
       keyReady = true;
       inventoryOpen = false;
@@ -564,11 +568,12 @@ window.addEventListener("keydown", function(e) {
     if (shopAnim > 0) return;
     if (!shopMenuOpen) {
       if (e.key === "e" || e.key === "E") {
-        var adventureDistance = Math.abs(player.x - 680) + Math.abs(player.y - 445);
-        var combatDistance = Math.abs(player.x - 430) + Math.abs(player.y - 445);
-        if (adventureDistance < 150 || combatDistance < 150) {
+        var vendorDistanceX = player.x - shopVendorX;
+        var vendorDistanceY = player.y - shopVendorY;
+        var vendorDistance = Math.sqrt(vendorDistanceX * vendorDistanceX + vendorDistanceY * vendorDistanceY);
+        if (vendorDistance < 150) {
           shopMenuOpen = true; menuSelection = 0; sfxNpc();
-          shopGreeting = shopId === 0 ? "Forastero... acércate. Tengo cosas que podrían ayudarte." : "El corazón de la cueva aún guarda poder para ti.";
+          shopGreeting = "Forastero... acércate. Tengo cosas que podrían ayudarte.";
           shopGreetingTimer = 240;
           speakShopGreeting(shopGreeting);
         }
@@ -580,38 +585,7 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (shopId === 0) {
-      if (up || k === "w") { menuSelection = (menuSelection - 1 + 17) % 17; e.preventDefault(); return; }
-      if (down || k === "s") { menuSelection = (menuSelection + 1) % 17; e.preventDefault(); return; }
-      if (confirm) {
-        if (shopConfirm === menuSelection) {
-          if (menuSelection === 0 && !hasMap && azari >= 45) { azari -= 45; hasMap = true; sfxBuy(); }
-          if (menuSelection === 1 && !hasBow && azari >= 35) { azari -= 35; hasBow = true; sfxBuy(); }
-          if (menuSelection === 2 && azari >= 5) { azari -= 5; arrows += 20; sfxBuy(); }
-          if (menuSelection === 3 && heartFragmentsBought1 < 2 && azari >= 25) { azari -= 25; heartFragments1++; heartFragmentsBought1++; sfxBuy(); if (heartFragments1 >= 3) { heartFragments1 -= 3; player.maxHp++; player.hp = player.maxHp; } }
-          if (menuSelection === 4 && heartFragmentsBought2 < 2 && azari >= 25) { azari -= 25; heartFragments2++; heartFragmentsBought2++; sfxBuy(); if (heartFragments2 >= 3) { heartFragments2 -= 3; player2.maxHp++; player2.hp = player2.maxHp; } }
-          if (menuSelection === 5 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; sfxBuy(); }
-          if (menuSelection === 6 && !hasAzariMagnet && azari >= 60) { azari -= 60; hasAzariMagnet = true; sfxBuy(); }
-          if (menuSelection === 7 && azariBagLevel < 5) {
-            var bagPrices = [80, 120, 180, 260, 350];
-            var bagPrice = bagPrices[azariBagLevel];
-            if (azari >= bagPrice) { azari -= bagPrice; azariBagLevel++; hasAzariBag = true; sfxBuy(); }
-          }
-          if (menuSelection === 8 && ((!hasLantern && azari >= 70) || (hasLantern && lanternLevel < 3 && azari >= (lanternLevel === 1 ? 110 : 180)))) {
-            azari -= hasLantern ? (lanternLevel === 1 ? 110 : 180) : 70;
-            hasLantern = true; lanternLevel = Math.min(3, lanternLevel + 1); sfxBuy();
-          }
-          if (menuSelection === 9 && !hasOldKey && azari >= 40) { azari -= 40; hasOldKey = true; sfxBuy(); }
-          if (menuSelection === 10 && swordLevel < 3 && hasSword && azari >= 30) { azari -= 30; swordLevel++; sfxBuy(); }
-          if (menuSelection === 11 && bowLevel < 3 && hasBow && azari >= 30) { azari -= 30; bowLevel++; sfxBuy(); }
-          if (menuSelection === 12 && hasBow && arrowType === "normal" && azari >= 20) { azari -= 20; arrowType = "heavy"; sfxBuy(); }
-          if (menuSelection === 13 && !combatSkills.charged && hasSword && azari >= 35) { azari -= 35; combatSkills.charged = true; sfxBuy(); }
-          if (menuSelection === 14 && !combatSkills.aerial && hasSword && azari >= 35) { azari -= 35; combatSkills.aerial = true; sfxBuy(); }
-          if (menuSelection === 15 && !combatSkills.combo && hasSword && azari >= 50) { azari -= 50; combatSkills.combo = true; sfxBuy(); }
-          if (menuSelection === 16 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; sfxBuy(); }
-          shopConfirm = -1;
-        } else shopConfirm = menuSelection;
-        e.preventDefault(); return;
-      }
+      e.preventDefault(); return;
     }
     if (shopId === 1) {
       if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 7) % 7; e.preventDefault(); return; }
@@ -721,6 +695,13 @@ function processGamepadInput() {
   var btn13 = gpButtons[13] && !prevGPButtons[13];
   var btn14 = gpButtons[14] && !prevGPButtons[14];
   var btn15 = gpButtons[15] && !prevGPButtons[15];
+  if (shopOpen && shopId === 0) {
+    if (btn9) {
+      shopOpen = false; shopMenuOpen = false; shopConfirm = -1; shopExitCooldown = 30;
+      player.x = shopPreviousX; player.y = shopPreviousY;
+    }
+    return;
+  }
   if (shopOpen && (shopId === 0 || shopId === 1)) {
     var shopOptions = shopId === 0 ? 17 : 7;
     if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;

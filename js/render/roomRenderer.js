@@ -188,6 +188,13 @@ function drawShopNPC() {
   ctx.fillStyle = "#111122";
   ctx.fillRect(houseX + 30, houseY + 62, 34, 28);
   ctx.fillRect(houseX + houseW - 64, houseY + 62, 34, 28);
+  var door = room.shopDoor;
+  ctx.fillStyle = "#5a351d";
+  ctx.fillRect(door.x, door.y, door.w, door.h);
+  ctx.fillStyle = "#8b542b";
+  ctx.fillRect(door.x + 5, door.y + 5, door.w - 10, 5);
+  ctx.fillStyle = "#d4af37";
+  ctx.fillRect(door.x + door.w - 13, door.y + door.h / 2, 5, 5);
   ctx.fillStyle = "#d4af37";
   ctx.font = "bold 13px monospace";
   ctx.textAlign = "center";

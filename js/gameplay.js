@@ -1534,14 +1534,12 @@ function tryInteractFor(p) {
   if (room.shops) {
     for (var i = 0; i < room.shops.length; i++) {
       var s = room.shops[i];
-      var npc = s.npc;
-      var dx = (p.x + p.w/2) - (npc.x + npc.w/2);
-      var dy = (p.y + p.h/2) - (npc.y + npc.h/2);
-      if (Math.sqrt(dx*dx + dy*dy) < 130 && !shopOpen && shopExitCooldown <= 0) {
+      var door = room.shopDoor;
+      if (door && rectHit(p, {x: door.x - 28, y: door.y - 24, w: door.w + 56, h: door.h + 24}) && !shopOpen && shopExitCooldown <= 0) {
         sfxNpc();
         shopPreviousX = player.x; shopPreviousY = player.y;
-        shopOpen = true; shopMenuOpen = false; shopId = 0; menuSelection = 0; shopConfirm = -1; shopAnim = 180;
-        player.x = 550; player.y = 530; player.vx = 0; player.vy = 0;
+        shopOpen = true; shopMenuOpen = false; shopId = 0; shopVendorX = 680; shopVendorY = 445; menuSelection = 0; shopConfirm = -1; shopAnim = 180;
+        player.x = shopVendorX; player.y = 530; player.vx = 0; player.vy = 0;
         return;
       }
     }
