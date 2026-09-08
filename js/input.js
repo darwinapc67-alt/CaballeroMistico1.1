@@ -933,8 +933,54 @@ function setupTouchControls() {
   if (device !== "touch") return;
   var controls = document.createElement("div");
   controls.id = "touchControls";
-  controls.innerHTML = '<div class="touchPad"><button class="touchMove" data-key="a" aria-label="Mover a la izquierda">◀</button><button class="touchMove" data-key="d" aria-label="Mover a la derecha">▶</button></div>' +
+  controls.innerHTML = '<div class="touchPad" aria-label="Joystick de movimiento"><div class="touchJoystick"><div class="touchKnob">●</div></div></div>' +
     '<div class="touchActions"><button class="touchJump" data-key=" " aria-label="Saltar">⬆</button><button data-key="x" aria-label="Atacar">⚔</button><button data-key="c" aria-label="Usar escudo">🛡</button><button data-key="shift" aria-label="Dash">↯</button><button data-key="e" aria-label="Interactuar">✦</button><button data-key="escape" aria-label="Pausa">Ⅱ</button></div>';
+  var joystick = controls.querySelector(".touchJoystick");
+  var knob = controls.querySelector(".touchKnob");
+  var joystickPointer = null;
+  var lastMenuDirection = "";
+  function resetJoystick() {
+    joystickPointer = null;
+    knob.style.transform = "translate(-50%, -50%)";
+    keys.a = false;
+    keys.d = false;
+  }
+  function moveJoystick(event) {
+    if (joystickPointer !== event.pointerId) return;
+    var rect = joystick.getBoundingClientRect();
+    var dx = event.clientX - (rect.left + rect.width / 2);
+    var dy = event.clientY - (rect.top + rect.height / 2);
+    var radius = rect.width * 0.34;
+    var distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance > radius) {
+      dx *= radius / distance;
+      dy *= radius / distance;
+    }
+    knob.style.transform = "translate(calc(-50% + " + dx + "px), calc(-50% + " + dy + "px))";
+    var deadZone = rect.width * 0.2;
+    keys.a = dx < -deadZone;
+    keys.d = dx > deadZone;
+    if (gameState !== ST_PLAYING && gameState !== ST_INVENTORY) {
+      var direction = Math.abs(dy) > deadZone ? (dy < 0 ? "ArrowUp" : "ArrowDown") : "";
+      if (direction && direction !== lastMenuDirection) {
+        window.dispatchEvent(new KeyboardEvent("keydown", {key: direction, code: direction}));
+      }
+      lastMenuDirection = direction;
+    }
+  }
+  joystick.addEventListener("pointerdown", function(event) {
+    event.preventDefault();
+    joystickPointer = event.pointerId;
+    joystick.setPointerCapture(event.pointerId);
+    moveJoystick(event);
+  });
+  joystick.addEventListener("pointermove", function(event) {
+    event.preventDefault();
+    moveJoystick(event);
+  });
+  joystick.addEventListener("pointerup", resetJoystick);
+  joystick.addEventListener("pointercancel", resetJoystick);
+  joystick.addEventListener("lostpointercapture", resetJoystick);
   controls.querySelectorAll("button").forEach(function(button) {
     var key = button.getAttribute("data-key");
     var getVirtualKey = function() {
@@ -973,6 +1019,7 @@ function setupTouchControls() {
       if (key !== "escape") keys[key] = false;
       button.classList.remove("pressed");
     });
+    resetJoystick();
   });
   document.body.appendChild(controls);
 }

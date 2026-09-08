@@ -67,10 +67,40 @@
       gap: 10px;
       align-items: center;
     }
-    .touchPad .touchMove {
-      width: 64px;
-      height: 64px;
-      font-size: 28px;
+    .touchJoystick {
+      position: relative;
+      width: 118px;
+      height: 118px;
+      border: 2px solid rgba(108,204,204,.75);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(108,204,204,.18), rgba(16,28,43,.9));
+      pointer-events: auto;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .touchJoystick::before, .touchJoystick::after {
+      content: "";
+      position: absolute;
+      background: rgba(108,204,204,.25);
+    }
+    .touchJoystick::before { width: 2px; height: 72%; left: 50%; top: 14%; }
+    .touchJoystick::after { height: 2px; width: 72%; left: 14%; top: 50%; }
+    .touchKnob {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 52px;
+      height: 52px;
+      transform: translate(-50%, -50%);
+      border: 2px solid #9de8ff;
+      border-radius: 50%;
+      background: rgba(108,204,204,.72);
+      color: #fff;
+      text-align: center;
+      line-height: 48px;
+      font-size: 18px;
+      z-index: 1;
     }
     .touchActions button[data-key="c"] {
       border-color: rgba(157,232,255,.8);
@@ -93,7 +123,8 @@
     }
     @media (max-width: 520px) {
       #touchControls button { width: 50px; height: 50px; font-size: 19px; }
-      .touchPad .touchMove { width: 56px; height: 56px; font-size: 24px; }
+      .touchJoystick { width: 96px; height: 96px; }
+      .touchKnob { width: 44px; height: 44px; line-height: 40px; }
       .touchPad, .touchActions { gap: 6px; }
       .touchActions button[data-key="escape"] { width: 36px; height: 36px; }
     }
