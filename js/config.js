@@ -841,10 +841,10 @@ var room9 = {
   spikes: [], walls: [{x:7980, y:0, w:20, h:600}],
   transitionZone: {x:7960, y:460, w:40, h:100, to:10},
   shops: [
-    { id: 0, npc: {x:7380, y:525, w:20, h:35}, label: "" },
-    { id: 1, npc: {x:7780, y:525, w:20, h:35}, label: "" }
+    { id: 0, npc: {x:7400, y:525, w:20, h:35}, label: "" },
+    { id: 1, npc: {x:7600, y:525, w:20, h:35}, label: "" }
   ],
-  healingStone: {x: 7500, y: 520, w: 50, h: 40, active: true},
+  healingStone: {x: 7250, y: 520, w: 50, h: 40, active: true},
   decor: genDecor(7200, 10, 8, 600)
 };
 

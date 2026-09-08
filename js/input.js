@@ -564,8 +564,9 @@ window.addEventListener("keydown", function(e) {
     if (shopAnim > 0) return;
     if (!shopMenuOpen) {
       if (e.key === "e" || e.key === "E") {
-        var vendorDistance = Math.abs(player.x - 680) + Math.abs(player.y - 445);
-        if (vendorDistance < 115) {
+        var adventureDistance = Math.abs(player.x - 680) + Math.abs(player.y - 445);
+        var combatDistance = Math.abs(player.x - 430) + Math.abs(player.y - 445);
+        if (adventureDistance < 150 || combatDistance < 150) {
           shopMenuOpen = true; menuSelection = 0; sfxNpc();
           shopGreeting = shopId === 0 ? "Forastero... acércate. Tengo cosas que podrían ayudarte." : "El corazón de la cueva aún guarda poder para ti.";
           shopGreetingTimer = 240;
@@ -579,8 +580,8 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (shopId === 0) {
-      if (up || k === "w") { menuSelection = (menuSelection - 1 + 10) % 10; e.preventDefault(); return; }
-      if (down || k === "s") { menuSelection = (menuSelection + 1) % 10; e.preventDefault(); return; }
+      if (up || k === "w") { menuSelection = (menuSelection - 1 + 17) % 17; e.preventDefault(); return; }
+      if (down || k === "s") { menuSelection = (menuSelection + 1) % 17; e.preventDefault(); return; }
       if (confirm) {
         if (shopConfirm === menuSelection) {
           if (menuSelection === 0 && !hasMap && azari >= 45) { azari -= 45; hasMap = true; sfxBuy(); }
@@ -600,6 +601,13 @@ window.addEventListener("keydown", function(e) {
             hasLantern = true; lanternLevel = Math.min(3, lanternLevel + 1); sfxBuy();
           }
           if (menuSelection === 9 && !hasOldKey && azari >= 40) { azari -= 40; hasOldKey = true; sfxBuy(); }
+          if (menuSelection === 10 && swordLevel < 3 && hasSword && azari >= 30) { azari -= 30; swordLevel++; sfxBuy(); }
+          if (menuSelection === 11 && bowLevel < 3 && hasBow && azari >= 30) { azari -= 30; bowLevel++; sfxBuy(); }
+          if (menuSelection === 12 && hasBow && arrowType === "normal" && azari >= 20) { azari -= 20; arrowType = "heavy"; sfxBuy(); }
+          if (menuSelection === 13 && !combatSkills.charged && hasSword && azari >= 35) { azari -= 35; combatSkills.charged = true; sfxBuy(); }
+          if (menuSelection === 14 && !combatSkills.aerial && hasSword && azari >= 35) { azari -= 35; combatSkills.aerial = true; sfxBuy(); }
+          if (menuSelection === 15 && !combatSkills.combo && hasSword && azari >= 50) { azari -= 50; combatSkills.combo = true; sfxBuy(); }
+          if (menuSelection === 16 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; sfxBuy(); }
           shopConfirm = -1;
         } else shopConfirm = menuSelection;
         e.preventDefault(); return;
@@ -714,7 +722,7 @@ function processGamepadInput() {
   var btn14 = gpButtons[14] && !prevGPButtons[14];
   var btn15 = gpButtons[15] && !prevGPButtons[15];
   if (shopOpen && (shopId === 0 || shopId === 1)) {
-    var shopOptions = shopId === 0 ? 10 : 7;
+    var shopOptions = shopId === 0 ? 17 : 7;
     if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
     if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + shopOptions) % shopOptions; gamepadMenuAxisLock = 1; }
     if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % shopOptions; gamepadMenuAxisLock = 1; }
@@ -736,6 +744,14 @@ function processGamepadInput() {
           azari -= hasLantern ? (lanternLevel === 1 ? 110 : 180) : 70;
           hasLantern = true; lanternLevel = Math.min(3, lanternLevel + 1); sfxBuy();
         }
+        if (menuSelection === 9 && !hasOldKey && azari >= 40) { azari -= 40; hasOldKey = true; sfxBuy(); }
+        if (menuSelection === 10 && swordLevel < 3 && hasSword && azari >= 30) { azari -= 30; swordLevel++; sfxBuy(); }
+        if (menuSelection === 11 && bowLevel < 3 && hasBow && azari >= 30) { azari -= 30; bowLevel++; sfxBuy(); }
+        if (menuSelection === 12 && hasBow && arrowType === "normal" && azari >= 20) { azari -= 20; arrowType = "heavy"; sfxBuy(); }
+        if (menuSelection === 13 && !combatSkills.charged && hasSword && azari >= 35) { azari -= 35; combatSkills.charged = true; sfxBuy(); }
+        if (menuSelection === 14 && !combatSkills.aerial && hasSword && azari >= 35) { azari -= 35; combatSkills.aerial = true; sfxBuy(); }
+        if (menuSelection === 15 && !combatSkills.combo && hasSword && azari >= 50) { azari -= 50; combatSkills.combo = true; sfxBuy(); }
+        if (menuSelection === 16 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; sfxBuy(); }
       } else {
         if (menuSelection === 0 && swordLevel < 3 && hasSword && azari >= 30) { azari -= 30; swordLevel++; sfxBuy(); }
         if (menuSelection === 1 && bowLevel < 3 && hasBow && azari >= 30) { azari -= 30; bowLevel++; sfxBuy(); }
