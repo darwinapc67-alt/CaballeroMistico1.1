@@ -988,17 +988,17 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   p.maxJumps = hasDoubleJump ? 2 : 1;
   var hasStoneGuard = p.id === 1 && bossAbilities.guardian;
   if (hasStoneGuard) {
-    if (p.guardCooldown > 0) p.guardCooldown--;
+    if (p.guardCooldown > 0) p.guardCooldown = Math.max(0, p.guardCooldown - 1);
     if (p.guardTimer > 0) {
       p.guardTimer--;
       p.blocking = true;
       if (p.guardTimer === 0) {
         p.blocking = false;
-        p.guardCooldown = 600;
+        p.guardCooldown = GUARD_COOLDOWN;
         spawnFloatText(p.x, p.y - 22, translateText("Guardia agotada"), "#9de8ff");
       }
-    } else if (blockPressed && p.guardCooldown <= 0 && !p.frozen) {
-      p.guardTimer = 600;
+    } else if (blockPressed && p.guardCooldown === 0 && !p.frozen) {
+      p.guardTimer = GUARD_DURATION;
       p.blocking = true;
       p.swordSheathed = true;
       p.swordSheathTimer = 0;

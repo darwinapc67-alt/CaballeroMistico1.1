@@ -298,8 +298,15 @@ window.addEventListener("keydown", function(e) {
         gameState = ST_MENU;
         menuSubState = "settings";
       } else {
-        gameState = ST_DEVICE;
-        deviceSelection = 0;
+        if (isMobileBrowser) {
+          device = "touch";
+          setupTouchControls();
+          gameState = ST_MENU;
+          menuSubState = "slots";
+        } else {
+          gameState = ST_DEVICE;
+          deviceSelection = 0;
+        }
       }
       e.preventDefault();
       return;
@@ -926,15 +933,46 @@ function setupTouchControls() {
   if (device !== "touch") return;
   var controls = document.createElement("div");
   controls.id = "touchControls";
-  controls.innerHTML = '<button data-key="a">◀</button><button data-key="d">▶</button><button data-key=" ">⬆</button><button data-key="shift">↯</button><button data-key="x">⚔</button><button data-key="e">✦</button>';
+  controls.innerHTML = '<div class="touchPad"><button class="touchMove" data-key="a" aria-label="Mover a la izquierda">◀</button><button class="touchMove" data-key="d" aria-label="Mover a la derecha">▶</button></div>' +
+    '<div class="touchActions"><button class="touchJump" data-key=" " aria-label="Saltar">⬆</button><button data-key="x" aria-label="Atacar">⚔</button><button data-key="c" aria-label="Usar escudo">🛡</button><button data-key="shift" aria-label="Dash">↯</button><button data-key="e" aria-label="Interactuar">✦</button><button data-key="escape" aria-label="Pausa">Ⅱ</button></div>';
   controls.querySelectorAll("button").forEach(function(button) {
     var key = button.getAttribute("data-key");
-    var press = function(event) { event.preventDefault(); keys[key] = true; };
-    var release = function(event) { event.preventDefault(); keys[key] = false; };
+    var getVirtualKey = function() {
+      if (gameState === ST_MENU || gameState === ST_LEVEL_EDITOR) {
+        if (key === "a") return "ArrowUp";
+        if (key === "d") return "ArrowDown";
+        if (key === " ") return "Enter";
+      }
+      return key === " " ? " " : key;
+    };
+    var press = function(event) {
+      event.preventDefault();
+      button.setPointerCapture(event.pointerId);
+      button.classList.add("pressed");
+      if (key === "escape") {
+        window.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape", code: "Escape"}));
+        return;
+      }
+      window.dispatchEvent(new KeyboardEvent("keydown", {key: getVirtualKey(), code: getVirtualKey() === " " ? "Space" : getVirtualKey()}));
+      keys[key] = true;
+    };
+    var release = function(event) {
+      event.preventDefault();
+      button.classList.remove("pressed");
+      window.dispatchEvent(new KeyboardEvent("keyup", {key: getVirtualKey(), code: getVirtualKey() === " " ? "Space" : getVirtualKey()}));
+      if (key !== "escape") keys[key] = false;
+    };
     button.addEventListener("pointerdown", press);
     button.addEventListener("pointerup", release);
     button.addEventListener("pointercancel", release);
-    button.addEventListener("pointerleave", release);
+    button.addEventListener("lostpointercapture", release);
+  });
+  window.addEventListener("pointerup", function() {
+    controls.querySelectorAll("button").forEach(function(button) {
+      var key = button.getAttribute("data-key");
+      if (key !== "escape") keys[key] = false;
+      button.classList.remove("pressed");
+    });
   });
   document.body.appendChild(controls);
 }
