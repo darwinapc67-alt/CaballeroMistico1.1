@@ -1014,6 +1014,7 @@ function setupTouchControls() {
   joystick.addEventListener("lostpointercapture", resetJoystick);
   controls.querySelectorAll("button").forEach(function(button) {
     var key = button.getAttribute("data-key");
+    var buttonPointer = null;
     var getVirtualKey = function() {
       if (gameState === ST_MENU || gameState === ST_LEVEL_EDITOR) {
         if (key === "a") return "ArrowUp";
@@ -1024,6 +1025,8 @@ function setupTouchControls() {
     };
     var press = function(event) {
       event.preventDefault();
+      if (buttonPointer !== null) return;
+      buttonPointer = event.pointerId;
       button.setPointerCapture(event.pointerId);
       button.classList.add("pressed");
       if (key === "escape") {
@@ -1034,7 +1037,9 @@ function setupTouchControls() {
       keys[key] = true;
     };
     var release = function(event) {
+      if (buttonPointer !== event.pointerId) return;
       event.preventDefault();
+      buttonPointer = null;
       button.classList.remove("pressed");
       window.dispatchEvent(new KeyboardEvent("keyup", {key: getVirtualKey(), code: getVirtualKey() === " " ? "Space" : getVirtualKey()}));
       if (key !== "escape") keys[key] = false;
@@ -1043,14 +1048,6 @@ function setupTouchControls() {
     button.addEventListener("pointerup", release);
     button.addEventListener("pointercancel", release);
     button.addEventListener("lostpointercapture", release);
-  });
-  window.addEventListener("pointerup", function() {
-    controls.querySelectorAll("button").forEach(function(button) {
-      var key = button.getAttribute("data-key");
-      if (key !== "escape") keys[key] = false;
-      button.classList.remove("pressed");
-    });
-    resetJoystick();
   });
   document.body.appendChild(controls);
 }
