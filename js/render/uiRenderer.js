@@ -556,14 +556,14 @@ function drawGame() {
     ctx.textAlign = "center";
     var displayName = bossDiaryInfo[activeBoss.type] ? bossDiaryInfo[activeBoss.type].name : activeBoss.bossName;
     ctx.fillStyle = activeBoss.phase === 3 ? "#ff315a" : "#ffd36a";
-    ctx.font = "bold 17px monospace";
-    ctx.fillText(translateText(displayName) + "  " + activeBoss.hp + "/" + activeBoss.maxHp, canvas.width / 2, canvas.height - 55);
-    ctx.fillStyle = "#180d16"; ctx.fillRect(120, canvas.height - 46, canvas.width - 240, 22);
-    ctx.strokeStyle = "#ffd36a"; ctx.lineWidth = 2; ctx.strokeRect(120, canvas.height - 46, canvas.width - 240, 22);
+    ctx.font = "bold 15px monospace";
+    ctx.fillText(translateText(displayName) + "  " + activeBoss.hp + "/" + activeBoss.maxHp, canvas.width / 2, 116);
+    ctx.fillStyle = "#180d16"; ctx.fillRect(120, 124, canvas.width - 240, 22);
+    ctx.strokeStyle = "#ffd36a"; ctx.lineWidth = 2; ctx.strokeRect(120, 124, canvas.width - 240, 22);
     ctx.fillStyle = activeBoss.phase === 3 ? "#ff315a" : (activeBoss.phase === 2 ? "#ff9b3d" : "#d66");
-    ctx.fillRect(124, canvas.height - 42, (canvas.width - 248) * Math.max(0, activeBoss.hp / activeBoss.maxHp), 14);
+    ctx.fillRect(124, 128, (canvas.width - 248) * Math.max(0, activeBoss.hp / activeBoss.maxHp), 14);
     ctx.fillStyle = "#fff"; ctx.font = "bold 11px monospace";
-    ctx.fillText(translateText("FASE") + " " + (activeBoss.phase || 1), canvas.width / 2, canvas.height - 28);
+    ctx.fillText(translateText("FASE") + " " + (activeBoss.phase || 1), canvas.width / 2, 162);
     ctx.textAlign = "left";
   }
   if (bossVictory.active) drawBossVictory();
@@ -681,12 +681,12 @@ function drawTutorial() {
     "C: usar tus habilidades"
   ];
   ctx.fillStyle = "rgba(4, 8, 20, 0.82)";
-  ctx.fillRect(18, canvas.height - 68, 330, 42);
+  ctx.fillRect(18, 78, 330, 42);
   ctx.strokeStyle = "#6cc";
-  ctx.strokeRect(18, canvas.height - 68, 330, 42);
+  ctx.strokeRect(18, 78, 330, 42);
   ctx.fillStyle = "#d5def5";
   ctx.font = "bold 13px monospace";
-  ctx.fillText("TUTORIAL  •  " + messages[tutorialStep], 30, canvas.height - 43);
+  ctx.fillText("TUTORIAL  •  " + messages[tutorialStep], 30, 103);
 }
 function drawAdminConsole() {
   ctx.fillStyle = "rgba(3, 5, 12, 0.94)";
