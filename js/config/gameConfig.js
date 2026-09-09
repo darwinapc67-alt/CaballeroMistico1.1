@@ -1,7 +1,7 @@
 var canvas, ctx;
 var ROOM_W = 800, ROOM_H = 600, GRAVITY = 0.6;
 var DASH_SPEED = 12, DASH_DURATION = 10, DASH_COOLDOWN = 45, DASH_INV_FRAMES = 12;
-var GUARD_DURATION = 600, GUARD_COOLDOWN = 600;
+var GUARD_DURATION = 120, GUARD_COOLDOWN = 240;
 /* Rooms 0-9 are the original route, room 10 is the final descent, and
    rooms 11-13 are the Guardian, Queen Larva, and Abyssal Knight arenas. */
 var WORLD_W = 40 * ROOM_W;
