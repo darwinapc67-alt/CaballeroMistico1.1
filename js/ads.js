@@ -1,10 +1,15 @@
 var adRequestInProgress = false;
 
-function requestRewardedAd(rewardType) {
+function requestRewardedAd(rewardType, onComplete) {
   if (adRequestInProgress) return;
   if (!window.googletag || !GAM_AD_UNIT_PATH) {
-    if (GAM_ENABLE_TEST_REWARDS) applyAdReward(rewardType);
-    else showAdMessage("Anuncios no configurados todavía.");
+    if (GAM_ENABLE_TEST_REWARDS) {
+      applyAdReward(rewardType);
+      if (onComplete) onComplete(true);
+    } else {
+      showAdMessage("Anuncio no disponible todavía.");
+      if (onComplete) onComplete(false);
+    }
     return;
   }
   adRequestInProgress = true;
@@ -26,6 +31,7 @@ function requestRewardedAd(rewardType) {
       if (event.slot !== slot || granted) return;
       granted = true;
       applyAdReward(rewardType);
+      if (onComplete) onComplete(true);
     };
     var cleanup = function(event) {
       if (event.slot !== slot) return;
@@ -40,6 +46,52 @@ function requestRewardedAd(rewardType) {
     googletag.pubads().addEventListener("rewardedSlotClosed", cleanup);
     googletag.enableServices();
     googletag.display(slot);
+  });
+}
+
+function requestInterstitialAd(reason, onComplete) {
+  var now = Date.now();
+  if (adRequestInProgress || now - adLastInterstitialAt < adInterstitialCooldown) {
+    if (onComplete) onComplete(false);
+    return;
+  }
+  if (!window.googletag || !GAM_AD_UNIT_PATH) {
+    showAdMessage("Anuncio intersticial no disponible todavía.");
+    if (onComplete) onComplete(false);
+    return;
+  }
+  adRequestInProgress = true;
+  googletag.cmd.push(function() {
+    var slot = googletag.defineOutOfPageSlot(GAM_AD_UNIT_PATH, googletag.enums.OutOfPageFormat.INTERSTITIAL);
+    if (!slot) {
+      adRequestInProgress = false;
+      if (onComplete) onComplete(false);
+      return;
+    }
+    slot.addService(googletag.pubads());
+    var shown = false;
+    var finished = false;
+    var onReady = function(event) {
+      if (event.slot !== slot) return;
+      shown = true;
+      adLastInterstitialAt = Date.now();
+    };
+    var cleanup = function(event) {
+      if (event.slot !== slot || finished) return;
+      finished = true;
+      googletag.pubads().removeEventListener("slotOnload", onReady);
+      googletag.pubads().removeEventListener("slotVisibilityChanged", cleanup);
+      googletag.destroySlots([slot]);
+      adRequestInProgress = false;
+      if (onComplete) onComplete(shown);
+    };
+    googletag.pubads().addEventListener("slotOnload", onReady);
+    googletag.pubads().addEventListener("slotVisibilityChanged", cleanup);
+    googletag.enableServices();
+    googletag.display(slot);
+    window.setTimeout(function() {
+      if (adRequestInProgress && !finished) cleanup({ slot: slot });
+    }, 8000);
   });
 }
 

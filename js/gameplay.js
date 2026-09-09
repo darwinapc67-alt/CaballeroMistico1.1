@@ -1622,6 +1622,7 @@ function startTransition(toRoom, direction) {
   if (twoPlayerMode) player2.autoWalk = 50;
   if (direction === "back") { player.vx = -2; if (twoPlayerMode) player2.vx = -2; }
   else { player.vx = 2; if (twoPlayerMode) player2.vx = 2; }
+  requestInterstitialAd("zone");
 }
 
 function startBossDialogue(roomIndex) {

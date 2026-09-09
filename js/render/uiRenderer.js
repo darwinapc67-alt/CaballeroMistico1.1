@@ -645,19 +645,6 @@ function drawIntro() {
 }
 function drawDeathScreen() {
   drawGameWorld();
-  if (consecutiveDeaths < 3) {
-    ctx.fillStyle = "rgba(2, 2, 10, 0.72)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#ff526f";
-    ctx.font = "bold 30px monospace";
-    ctx.fillText("HAS MUERTO", canvas.width / 2, 220);
-    ctx.fillStyle = "#aaa";
-    ctx.font = "13px monospace";
-    ctx.fillText("Regresando al combate...", canvas.width / 2, 260);
-    ctx.textAlign = "left";
-    return;
-  }
   ctx.fillStyle = "rgba(2, 2, 10, 0.86)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.textAlign = "center";
@@ -667,9 +654,7 @@ function drawDeathScreen() {
   ctx.fillStyle = "#ddd";
   ctx.font = "14px monospace";
   ctx.fillText("Tres derrotas: elige cómo continuar.", canvas.width / 2, 215);
-  var deathOptions = adRewardedRevive
-    ? ["Volver al último punto de guardado", "💀 Revivir con anuncio", "Ir al menú principal"]
-    : ["Volver al último punto de guardado", "Ir al menú principal"];
+  var deathOptions = ["Volver al último punto de guardado", "💀 " + (adRewardedRevive ? "Revivir ahora" : "Ver anuncio para revivir"), "Ir al menú principal"];
   deathOptions.forEach(function(option, index) {
     var y = 300 + index * 54;
     ctx.fillStyle = deathChoice === index ? "rgba(100, 220, 200, 0.2)" : "rgba(0,0,0,0.25)";
@@ -1005,6 +990,7 @@ function drawPause() {
     twoPlayerMode ? "👤  " + translateText("Quitar J2") : "👥  " + translateText("Agregar J2"),
     "🎮  " + translateText("Controles"), "🔊  " + translateText("MÚSICA Y SONIDO"), "⚙️  " + translateText("⚙️ Configuración"), "🚪  " + translateText("Salir al Menú")
   ];
+  opts.push("💰  Ver anuncio • recompensa");
   for (var i = 0; i < opts.length; i++) {
     var y = 200 + i * 40;
     var isSel = (i === pauseSelection);

@@ -135,7 +135,6 @@ function update() {
       deathParticle.x += deathParticle.vx; deathParticle.y += deathParticle.vy; deathParticle.vy += 0.1; deathParticle.life--;
       if (deathParticle.life <= 0) deathParticles.splice(deathIndex, 1);
     }
-    if (consecutiveDeaths < 3 && deathAnimTimer >= 60) retryCurrentRoom();
     return;
   }
   if (gameState === ST_DIALOGUE) return;

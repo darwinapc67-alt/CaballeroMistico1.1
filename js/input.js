@@ -272,24 +272,28 @@ window.addEventListener("keydown", function(e) {
 
   if (bossVictory.active && (confirm || e.key === " " || k === "x" || k === "e")) {
     bossVictory.active = false;
+    requestInterstitialAd("boss");
     e.preventDefault();
     return;
   }
 
   if (gameState === ST_DEATH) {
-    if (consecutiveDeaths < 3) return;
-    var deathOptions = adRewardedRevive ? 3 : 2;
+    var deathOptions = 3;
     if (up || k === "w") deathChoice = (deathChoice - 1 + deathOptions) % deathOptions;
     if (down || k === "s") deathChoice = (deathChoice + 1) % deathOptions;
     if (confirm) {
       if (deathChoice === 0) {
         restoreCheckpoint();
-      } else if (deathChoice === 1 && adRewardedRevive) {
-        adRewardedRevive = false;
-        player.hp = Math.max(1, Math.ceil(player.maxHp / 2));
-        player.frozen = false; playerDead = false; player.inv = 90;
-        gameState = ST_PLAYING;
-        showAdMessage("¡Has vuelto al combate!");
+      } else if (deathChoice === 1) {
+        if (adRewardedRevive) {
+          adRewardedRevive = false;
+          player.hp = Math.max(1, Math.ceil(player.maxHp / 2));
+          player.frozen = false; playerDead = false; player.inv = 90;
+          gameState = ST_PLAYING;
+          showAdMessage("¡Has vuelto al combate!");
+        } else {
+          requestRewardedAd("revive");
+        }
       } else { resetAll(); gameState = ST_MENU; menuSubState = "slots"; }
       e.preventDefault();
     }
@@ -508,8 +512,8 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (pauseSubState === "controls") { if (e.key === "Escape") { pauseSubState = "menu"; e.preventDefault(); } return; }
-    if (up || k === "w") { pauseSelection = (pauseSelection - 1 + 7) % 7; e.preventDefault(); return; }
-    if (down || k === "s") { pauseSelection = (pauseSelection + 1) % 7; e.preventDefault(); return; }
+    if (up || k === "w") { pauseSelection = (pauseSelection - 1 + 8) % 8; e.preventDefault(); return; }
+    if (down || k === "s") { pauseSelection = (pauseSelection + 1) % 8; e.preventDefault(); return; }
     if (confirm) {
       if (pauseSelection === 0) gameState = ST_PLAYING;
       if (pauseSelection === 1) pauseSubState = "diary";
@@ -518,6 +522,7 @@ window.addEventListener("keydown", function(e) {
       if (pauseSelection === 4) pauseSubState = "audio";
       if (pauseSelection === 5) pauseSubState = "settings";
       if (pauseSelection === 6) { if (activeSlot >= 0) saveGame(activeSlot); gameState = ST_MENU; menuSubState = "slots"; }
+      if (pauseSelection === 7) requestRewardedAd("random");
       e.preventDefault();
       return;
     }
@@ -917,7 +922,7 @@ function processGamepadInput() {
       return;
     }
     if (shopOpen) { shopOpen = false; shopMenuOpen = false; shopConfirm = -1; shopExitCooldown = 30; keys["e"] = false; player.x = shopPreviousX; player.y = shopPreviousY; return; }
-    if (gameState === ST_PLAYING) { gameState = ST_PAUSED; pauseSubState = "menu"; pauseSelection = 0; sfxPause(); return; }
+    if (gameState === ST_PLAYING) { gameState = ST_PAUSED; pauseSubState = "menu"; pauseSelection = 0; sfxPause(); requestInterstitialAd("pause"); return; }
     else if (gameState === ST_PAUSED) { if (pauseSubState === "diary" || pauseSubState === "controls" || pauseSubState === "audio") pauseSubState = "menu"; else gameState = ST_PLAYING; return; }
     else if (gameState === ST_INVENTORY) { inventoryOpen = false; mapOpen = false; gameState = ST_PLAYING; return; }
   }
