@@ -202,7 +202,7 @@ var touchButtonKeys = [" ", "x", "c", "shift", "e", "escape", "b", "delete"];
 function resetTouchButtonPositions() {
   var positions = [
     { x: 57, y: 58 }, { x: 69, y: 58 }, { x: 81, y: 58 },
-    { x: 57, y: 73 }, { x: 69, y: 73 }, { x: 81, y: 73 },
+    { x: 57, y: 78 }, { x: 69, y: 73 }, { x: 81, y: 73 },
     { x: 57, y: 77 }, { x: 69, y: 77 }
   ];
   touchLayout.buttons = {};
@@ -263,6 +263,10 @@ function loadTouchLayout() {
     console.warn("No se pudo cargar la disposición táctil", error);
   }
   var validPositions = touchButtonKeys.map(function(key) { return touchLayout.buttons[key]; });
+  if (touchLayout.buttons.shift && touchLayout.buttons.shift.y === 73) {
+    touchLayout.buttons.shift.y = 78;
+    saveTouchLayout();
+  }
   var hasOverlap = validPositions.some(function(position, index) {
     if (!position) return true;
     return validPositions.some(function(other, otherIndex) {
@@ -299,7 +303,7 @@ function applyTouchLayout() {
       var key = button.getAttribute("data-key");
       var position = touchLayout.buttons[key] || {
         x: 57 + (index % 3) * 12,
-        y: 58 + Math.floor(index / 3) * 15
+        y: key === "shift" ? 78 : 58 + Math.floor(index / 3) * 15
       };
       position.x = Math.max(2, Math.min(84, Number(position.x) || 2));
       position.y = Math.max(4, Math.min(78, Number(position.y) || 4));
