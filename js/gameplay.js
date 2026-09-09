@@ -153,20 +153,22 @@ function restoreCheckpoint() {
     armorId = cp.armorId || "vacío"; permanentUpgrades = cp.permanentUpgrades || { vitality: 0, strength: 0 };
     bossUniqueItems = cp.bossUniqueItems || { guardian: false, queen_larva: false, abyssal_knight: false };
     hiddenCollectibles = cp.hiddenCollectibles || { eclipse: false, root: false, crown: false };
-    if (gameMode === "infinite") {
-      infiniteState = {
-        hasSword: cp.hasSword,
-        swordEquipped: cp.swordEquipped,
-        hasBow: cp.hasBow,
-        arrows: cp.arrows,
-        hasDash: cp.hasDash,
-        hasDoubleJump: cp.hasDoubleJump,
-        swordLevel: cp.swordLevel || 0,
-        bowLevel: cp.bowLevel || 0,
-        combatSkills: cp.combatSkills || { charged: false, aerial: false, combo: false },
-        infiniteWave: cp.infiniteWave !== undefined ? cp.infiniteWave : infiniteState.infiniteWave
-      };
-    }
+    if (gameMode === "infinite" && infiniteState) {
+  // En modo infinito, el equipo se conserva al morir.
+  // Nunca usar el checkpoint normal para quitar armas o habilidades.
+  infiniteState = {
+    hasSword: infiniteState.hasSword,
+    swordEquipped: infiniteState.swordEquipped,
+    hasBow: infiniteState.hasBow,
+    arrows: infiniteState.arrows,
+    hasDash: infiniteState.hasDash,
+    hasDoubleJump: infiniteState.hasDoubleJump,
+    swordLevel: infiniteState.swordLevel,
+    bowLevel: infiniteState.bowLevel,
+    combatSkills: JSON.parse(JSON.stringify(infiniteState.combatSkills)),
+    infiniteWave: infiniteState.infiniteWave
+  };
+}
     if (infiniteState) {
       currentRoom = 0;
       hasSword = infiniteState.hasSword;
