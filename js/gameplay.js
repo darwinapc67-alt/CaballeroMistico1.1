@@ -1381,30 +1381,36 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
 function updatePlayer() {
   if (gameState !== ST_PLAYING) return;
   if (transitionCooldown > 0) transitionCooldown--;
-  var moveLeft = keys["a"] || keys["arrowleft"];
-  var moveRight = keys["d"] || keys["arrowright"];
-  var jump = keys[" "] || keys["arrowup"];
-  var attack = (keys["x"] || keys["j"]) && hasSword;
+  var moveLeft = keys[getControlBinding("moveLeft").key];
+  var moveRight = keys[getControlBinding("moveRight").key];
+  var jump = keys[getControlBinding("jump").key];
+  var attack = keys[getControlBinding("attack").key] && hasSword;
   if (attack && !swordEquipped) {
     swordEquipped = true;
     player.swordEquipped = true;
     player.swordSheathed = false;
   }
   var down = keys["arrowdown"] || keys["s"];
-  var shoot = keys["z"];
-  var interact = keys["e"];
-  var block = keys["c"];
-  var dash = keys["shift"];
+  var shoot = keys[getControlBinding("shoot").key];
+  var interact = keys[getControlBinding("interact").key];
+  var block = keys[getControlBinding("block").key];
+  var dash = keys[getControlBinding("dash").key];
   if (gamepadConnected) {
     if (gpAxes.x < -0.25) moveLeft = true;
     if (gpAxes.x > 0.25) moveRight = true;
-    if (gpButtons[0] && !prevGPButtons[0]) jump = true;
-    attack = !!gpButtons[2];
+    var jumpPad = getControlBinding("jump").pad;
+    var attackPad = getControlBinding("attack").pad;
+    if (gpButtons[jumpPad] && !prevGPButtons[jumpPad]) jump = true;
+    attack = !!gpButtons[attackPad];
     down = down || gpAxes.y > 0.5;
-    if (gpButtons[1] && !prevGPButtons[1]) shoot = true;
-    if (gpButtons[3] && !prevGPButtons[3]) interact = true;
-    if (gpButtons[6]) block = true;
-    if (gpButtons[5] && !prevGPButtons[5]) dash = true;
+    var shootPad = getControlBinding("shoot").pad;
+    var interactPad = getControlBinding("interact").pad;
+    var blockPad = getControlBinding("block").pad;
+    var dashPad = getControlBinding("dash").pad;
+    if (gpButtons[shootPad] && !prevGPButtons[shootPad]) shoot = true;
+    if (gpButtons[interactPad] && !prevGPButtons[interactPad]) interact = true;
+    if (gpButtons[blockPad]) block = true;
+    if (gpButtons[dashPad] && !prevGPButtons[dashPad]) dash = true;
   }
   updateGenericPlayer(player, moveLeft, moveRight, jump, attack, interact, shoot, block, dash, down);
 }

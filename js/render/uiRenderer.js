@@ -994,6 +994,7 @@ function drawMenu() {
       "🌐 " + translateText("Idioma") + ": " + languages[languageSelection].label,
       "🎮 " + translateText("Dispositivo") + ": " + translateText(devices[deviceSelection].label),
       "☀️ Brillo: " + Math.round(brightnessBoost * 100) + "%",
+      "🎮 Cambiar controles",
       "🔐 " + translateText(adminMode ? "Admin activado" : "Activar modo admin")
     ];
     settings.forEach(function(option, index) {
@@ -1006,7 +1007,28 @@ function drawMenu() {
       ctx.fillText((selected ? "▶  " : "    ") + option, canvas.width / 2, y + 5);
     });
     ctx.fillStyle = "#666"; ctx.font = "12px monospace";
-    ctx.fillText("↑/↓ Navegar  •  ←/→ Ajustar brillo  •  ENTER Seleccionar  •  ESC Volver", canvas.width / 2, 470);
+    ctx.fillText("↑/↓ Navegar  •  ←/→ Ajustar brillo  •  ENTER Seleccionar  •  ESC Volver", canvas.width / 2, 505);
+  }
+  if (menuSubState === "controls_config") {
+    ctx.fillStyle = "rgba(0,0,0,0.94)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#ffd700"; ctx.font = "bold 25px monospace";
+    ctx.fillText("🎮 CAMBIAR CONTROLES", canvas.width / 2, 85);
+    ctx.fillStyle = "#888"; ctx.font = "12px monospace";
+    ctx.fillText("Selecciona una acción y pulsa ENTER; después presiona la nueva tecla", canvas.width / 2, 115);
+    controlActions.forEach(function(action, index) {
+      var y = 155 + index * 40, selected = controlsConfigSelection === index;
+      ctx.fillStyle = selected ? "rgba(100,200,255,0.18)" : "rgba(255,255,255,0.03)";
+      ctx.fillRect(135, y - 22, 530, 32);
+      ctx.strokeStyle = selected ? "#6cc" : "#333"; ctx.strokeRect(135, y - 22, 530, 32);
+      ctx.fillStyle = selected ? "#6cc" : "#aaa"; ctx.font = "bold 13px monospace";
+      ctx.fillText((selected ? "▶ " : "  ") + action.label, 155, y);
+      ctx.fillStyle = "#f3d36a";
+      ctx.fillText(action.key === " " ? "ESPACIO" : action.key.toUpperCase(), 500, y);
+      ctx.fillStyle = "#8bd";
+      ctx.fillText("PSP: botón " + action.pad, 590, y);
+    });
+    ctx.fillStyle = controlsConfigListening ? "#ffd700" : "#666"; ctx.font = "12px monospace";
+    ctx.fillText(controlsConfigListening ? "PULSA LA NUEVA TECLA..." : "↑/↓ Elegir  •  ENTER Cambiar  •  ESC Volver", canvas.width / 2, 510);
   }
   ctx.textAlign = "left";
 }
@@ -1066,6 +1088,18 @@ function drawPause() {
     drawDiary();
     return;
   }
+  if (pauseSubState === "controls") {
+    drawControls();
+    return;
+  }
+  if (pauseSubState === "controls_keys") {
+    drawControlBindings();
+    return;
+  }
+  if (pauseSubState === "controls_touch") {
+    drawTouchControlsEditor();
+    return;
+  }
   if (pauseSubState === "audio") {
     drawAudioMenu();
     return;
@@ -1078,6 +1112,7 @@ function drawPause() {
       "🌐 Idioma: " + languages[languageSelection].label,
       "🎮 Dispositivo: " + devices[deviceSelection].label,
       "☀️ Brillo: " + Math.round(brightnessBoost * 100) + "%",
+      "🎮 Cambiar controles",
       "🔐 " + (adminMode ? "Admin activado" : "Activar modo admin")
     ];
     pauseSettings.forEach(function(option, index) {
@@ -1090,7 +1125,7 @@ function drawPause() {
       ctx.fillText((selected ? "▶  " : "    ") + option, canvas.width / 2, y + 5);
     });
     ctx.fillStyle = "#666"; ctx.font = "12px monospace";
-    ctx.fillText("↑/↓ Navegar  •  ←/→ Ajustar brillo  •  ESC Volver", canvas.width / 2, 430);
+    ctx.fillText("↑/↓ Navegar  •  ←/→ Ajustar brillo  •  ESC Volver", canvas.width / 2, 530);
     ctx.textAlign = "left";
     return;
   }
@@ -1203,21 +1238,89 @@ function drawControls() {
   ctx.fillStyle = "rgba(0,0,0,0.92)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.textAlign = "center";
   ctx.fillStyle = "#6cc"; ctx.font = "bold 28px monospace";
+  ctx.fillText("🎮 CONTROLES", canvas.width / 2, 100);
+  var options = ["CAMBIAR BOTONES", "MOVER BOTONES"];
+  options.forEach(function(option, index) {
+    var selected = controlsConfigSelection === index, y = 230 + index * 90;
+    ctx.fillStyle = selected ? "rgba(100,200,255,0.18)" : "rgba(255,255,255,0.03)";
+    ctx.fillRect(200, y - 30, 400, 58);
+    ctx.strokeStyle = selected ? "#6cc" : "#333";
+    ctx.strokeRect(200, y - 30, 400, 58);
+    ctx.fillStyle = selected ? "#6cc" : "#aaa"; ctx.font = "bold 17px monospace";
+    ctx.fillText((selected ? "▶ " : "  ") + option, canvas.width / 2, y + 6);
+  });
+  ctx.fillStyle = "#666"; ctx.font = "12px monospace";
+  ctx.fillText("↑/↓ Elegir  •  ENTER Seleccionar  •  ESC Volver", canvas.width / 2, 475);
+  ctx.textAlign = "left";
+}
+
+function drawControlBindings() {
+  ctx.fillStyle = "rgba(0,0,0,0.92)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#6cc"; ctx.font = "bold 28px monospace";
   ctx.fillText("🎮  CONTROLES", canvas.width/2, 50);
   ctx.fillStyle = "#446"; ctx.font = "14px monospace";
-  ctx.fillText("Teclas del juego", canvas.width/2, 95);
-  var controls = [
-    "A / ← → Mover", "ESPACIO / ↑ → Saltar",
-    "SHIFT / R1 → Dash", "C / L2 → Bloquear",
-    "X / J → Atacar (mantener: cargado)", "↓ + X / J en el aire → Golpe descendente", "E → Interactuar",
-    "` → Inventario", "ESC → Menú"
+  ctx.fillText("Selecciona una acción para cambiarla", canvas.width/2, 82);
+  ctx.fillStyle = "#6cc"; ctx.font = "bold 17px monospace";
+  ctx.fillText("PC", 220, 125);
+  ctx.fillStyle = "#8bd"; ctx.fillText("PSP", 500, 125);
+  ctx.fillStyle = "#8f8"; ctx.fillText("CELULAR / TABLET", 700, 125);
+  ctx.strokeStyle = "#334"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(400, 105); ctx.lineTo(400, 430); ctx.moveTo(635, 105); ctx.lineTo(635, 430); ctx.stroke();
+  var touchBindings = {
+    moveLeft: "Joystick ←",
+    moveRight: "Joystick →",
+    jump: "⬆",
+    attack: "⚔",
+    shoot: "—",
+    interact: "✦",
+    block: "🛡",
+    dash: "↯"
+  };
+  controlActions.forEach(function(action, index) {
+    var y = 155 + index * 35, selected = index === controlsConfigSelection;
+    ctx.fillStyle = selected ? "rgba(100,200,255,0.18)" : "rgba(255,255,255,0.03)";
+    ctx.fillRect(35, y - 21, 730, 29);
+    ctx.strokeStyle = selected ? "#6cc" : "#333";
+    ctx.strokeRect(35, y - 21, 730, 29);
+    ctx.textAlign = "left";
+    ctx.fillStyle = selected ? "#6cc" : "#aaa"; ctx.font = "bold 12px monospace";
+    ctx.fillText((selected ? "▶ " : "  ") + action.label, 50, y);
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#f3d36a";
+    ctx.fillText(action.key === " " ? "ESPACIO" : action.key.toUpperCase(), 220, y);
+    ctx.fillStyle = "#8bd";
+    ctx.fillText("Botón " + action.pad, 500, y);
+    ctx.fillStyle = "#8f8";
+    ctx.fillText(touchBindings[action.id], 700, y);
+  });
+  ctx.fillStyle = controlsConfigListening ? "#ffd700" : "#8bd"; ctx.font = "12px monospace";
+  ctx.fillText(controlsConfigListening ? "PULSA LA NUEVA TECLA O BOTÓN..." : "↑/↓ Elegir  •  ENTER Cambiar  •  ESC Volver", canvas.width/2, 475);
+  ctx.textAlign = "left";
+}
+
+function drawTouchControlsEditor() {
+  ctx.fillStyle = "rgba(0,0,0,0.92)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#8f8"; ctx.font = "bold 25px monospace";
+  ctx.fillText("MOVER BOTONES CELULAR / TABLET", canvas.width / 2, 65);
+  var labels = ["Joystick", "Botones de acción", "Opacidad"];
+  var values = [
+    Math.round(touchLayout.joystick.x) + "% / " + Math.round(touchLayout.joystick.y) + "%",
+    Math.round(touchLayout.actions.x) + "% / " + Math.round(touchLayout.actions.y) + "%",
+    Math.round(touchLayout.opacity * 100) + "%"
   ];
-  for (var i = 0; i < controls.length; i++) {
-    ctx.fillStyle = "#aaa"; ctx.font = "bold 14px monospace";
-    ctx.fillText(controls[i], canvas.width/2, 140 + i * 35);
-  }
-  ctx.fillStyle = "#444"; ctx.font = "12px monospace";
-  ctx.fillText("Presiona ESC para volver", canvas.width/2, 470);
+  labels.forEach(function(label, index) {
+    var y = 150 + index * 70, selected = touchEditSelection === index;
+    ctx.fillStyle = selected ? "rgba(143,255,143,0.16)" : "rgba(255,255,255,0.03)";
+    ctx.fillRect(150, y - 28, 500, 52);
+    ctx.strokeStyle = selected ? "#8f8" : "#333"; ctx.strokeRect(150, y - 28, 500, 52);
+    ctx.fillStyle = selected ? "#8f8" : "#aaa"; ctx.font = "bold 15px monospace";
+    ctx.fillText((selected ? "▶ " : "  ") + label + ": " + values[index], canvas.width / 2, y + 5);
+  });
+  ctx.fillStyle = "#8bd"; ctx.font = "12px monospace";
+  ctx.fillText("W/S: seleccionar  A/D: mover horizontal  Q/E: mover vertical", canvas.width / 2, 390);
+  ctx.fillText("+/-: opacidad  •  ESC: guardar y volver", canvas.width / 2, 415);
   ctx.textAlign = "left";
 }
 function drawTransition() {

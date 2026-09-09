@@ -176,6 +176,97 @@ var ambientTimer = 0;
 var gamepadConnected = false, gamepadIndex = -1;
 var gpButtons = {}, prevGPButtons = {}, gpAxes = { x: 0, y: 0 };
 var gamepadMenuAxisLock = 0;
+var controlActions = [
+  { id: "moveLeft", label: "Mover izquierda", key: "a", pad: 14 },
+  { id: "moveRight", label: "Mover derecha", key: "d", pad: 15 },
+  { id: "jump", label: "Saltar", key: " ", pad: 0 },
+  { id: "attack", label: "Atacar", key: "x", pad: 2 },
+  { id: "shoot", label: "Disparar", key: "z", pad: 1 },
+  { id: "interact", label: "Interactuar", key: "e", pad: 3 },
+  { id: "block", label: "Bloquear", key: "c", pad: 6 },
+  { id: "dash", label: "Dash", key: "shift", pad: 5 }
+];
+var controlsConfigSelection = 0, controlsConfigDevice = "pc", controlsConfigListening = false;
+var CONTROLS_KEY = "caballero_mistico_controls_v1";
+var touchLayout = {
+  opacity: 0.86,
+  joystick: { x: 8, y: 68 },
+  actions: { x: 66, y: 66 }
+};
+var touchEditSelection = 0;
+var TOUCH_LAYOUT_KEY = "caballero_mistico_touch_layout_v1";
+
+function loadControlBindings() {
+  try {
+    var saved = JSON.parse(localStorage.getItem(CONTROLS_KEY) || "{}");
+    controlActions.forEach(function(action) {
+      if (saved[action.id]) {
+        if (saved[action.id].key !== undefined) action.key = saved[action.id].key;
+        if (saved[action.id].pad !== undefined) action.pad = saved[action.id].pad;
+      }
+    });
+  } catch (error) {
+    console.warn("No se pudieron cargar los controles personalizados", error);
+  }
+}
+
+function saveControlBindings() {
+  var saved = {};
+  controlActions.forEach(function(action) {
+    saved[action.id] = { key: action.key, pad: action.pad };
+  });
+  localStorage.setItem(CONTROLS_KEY, JSON.stringify(saved));
+}
+
+function loadTouchLayout() {
+  try {
+    var saved = JSON.parse(localStorage.getItem(TOUCH_LAYOUT_KEY) || "null");
+    if (!saved) return;
+    if (typeof saved.opacity === "number") touchLayout.opacity = Math.max(0.2, Math.min(1, saved.opacity));
+    if (saved.joystick) {
+      touchLayout.joystick.x = Number(saved.joystick.x) || touchLayout.joystick.x;
+      touchLayout.joystick.y = Number(saved.joystick.y) || touchLayout.joystick.y;
+    }
+    if (saved.actions) {
+      touchLayout.actions.x = Number(saved.actions.x) || touchLayout.actions.x;
+      touchLayout.actions.y = Number(saved.actions.y) || touchLayout.actions.y;
+    }
+  } catch (error) {
+    console.warn("No se pudo cargar la disposición táctil", error);
+  }
+}
+
+function saveTouchLayout() {
+  localStorage.setItem(TOUCH_LAYOUT_KEY, JSON.stringify(touchLayout));
+}
+
+function applyTouchLayout() {
+  var controls = document.getElementById("touchControls");
+  if (!controls) return;
+  controls.style.opacity = touchLayout.opacity;
+  var pad = controls.querySelector(".touchPad");
+  var actions = controls.querySelector(".touchActions");
+  if (pad) {
+    pad.style.position = "fixed";
+    pad.style.left = touchLayout.joystick.x + "vw";
+    pad.style.top = touchLayout.joystick.y + "vh";
+  }
+  if (actions) {
+    actions.style.position = "fixed";
+    actions.style.left = touchLayout.actions.x + "vw";
+    actions.style.top = touchLayout.actions.y + "vh";
+  }
+}
+
+function getControlBinding(id) {
+  for (var i = 0; i < controlActions.length; i++) {
+    if (controlActions[i].id === id) return controlActions[i];
+  }
+  return null;
+}
+
+loadControlBindings();
+loadTouchLayout();
 
 var zoneName = "", zoneNameTimer = 0;
 
