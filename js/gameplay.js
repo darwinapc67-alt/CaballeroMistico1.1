@@ -142,6 +142,11 @@ function saveHealingStoneCheckpoint() {
 }
 
 function restoreCheckpoint() {
+    var currentSwordState = {
+      hasSword: hasSword,
+      swordEquipped: swordEquipped,
+      swordLevel: swordLevel
+    };
     var infiniteState = gameMode === "infinite" ? {
       hasSword: hasSword, swordEquipped: swordEquipped, hasBow: hasBow, arrows: arrows,
       hasDash: hasDash, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel,
@@ -151,10 +156,13 @@ function restoreCheckpoint() {
     var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasAzariMagnet: false, hasAzariBag: false, azariBagLevel: 0, hasOldKey: false, doorUnlocked: false, rewardAzariCollected: false, hasLantern: false, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, blessingSlots: 2, equippedBlessings: [], armorId: "vacío", permanentUpgrades: { vitality: 0, strength: 0 }, bossUniqueItems: { guardian: false, queen_larva: false, abyssal_knight: false }, hiddenCollectibles: { eclipse: false, root: false, crown: false } };
     currentRoom = cp.room; player.x = cp.px; player.y = cp.py;
     player.hp = cp.hp; player.maxHp = cp.maxHp;
-    azari = cp.azari; hasSword = cp.hasSword; swordEquipped = cp.swordEquipped;
+    azari = cp.azari;
+    hasSword = !!cp.hasSword || currentSwordState.hasSword;
+    swordEquipped = hasSword && (!!cp.swordEquipped || currentSwordState.swordEquipped);
     hasBow = cp.hasBow; arrows = cp.arrows; hasMap = cp.hasMap;
     hasAzariCharm = cp.hasAzariCharm; hasAzariMagnet = cp.hasAzariMagnet || false; azariBagLevel = Math.max(0, Math.min(5, Number(cp.azariBagLevel) || (cp.hasAzariBag ? 1 : 0))); hasAzariBag = azariBagLevel > 0; hasOldKey = cp.hasOldKey || false; doorUnlocked = cp.doorUnlocked || false; rewardAzariCollected = cp.rewardAzariCollected || false; hasLantern = cp.hasLantern || false; lanternLevel = Math.max(0, Math.min(3, cp.lanternLevel || (hasLantern ? 1 : 0))); hasDash = cp.hasDash || false; hasDoubleJump = cp.hasDoubleJump;
-    swordLevel = cp.swordLevel || 0; bowLevel = cp.bowLevel || 0;
+    swordLevel = Math.max(cp.swordLevel || 0, currentSwordState.swordLevel || 0);
+    bowLevel = cp.bowLevel || 0;
     arrowType = cp.arrowType || "normal";
     combatSkills = cp.combatSkills || { charged: false, aerial: false, combo: false };
     blessingSlots = cp.blessingSlots || 2; equippedBlessings = cp.equippedBlessings || [];

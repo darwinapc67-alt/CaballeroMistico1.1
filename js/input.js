@@ -1100,7 +1100,14 @@ function setupTouchControls() {
   var controls = document.createElement("div");
   controls.id = "touchControls";
   controls.innerHTML = '<div class="touchPad" aria-label="Joystick de movimiento"><div class="touchJoystick"><div class="touchKnob">●</div></div></div>' +
-    '<div class="touchActions"><button class="touchJump" data-key=" " aria-label="Saltar">⬆</button><button data-key="x" aria-label="Atacar">⚔</button><button data-key="c" aria-label="Usar escudo">🛡</button><button data-key="shift" aria-label="Dash">↯</button><button data-key="e" aria-label="Interactuar">✦</button><button data-key="escape" aria-label="Pausa">Ⅱ</button></div>';
+    '<div class="touchActions">' +
+    '<button class="touchJump" data-key=" " aria-label="Saltar">⬆</button>' +
+    '<button data-key="x" aria-label="Atacar">⚔</button>' +
+    '<button data-key="c" aria-label="Usar escudo">🛡</button>' +
+    '<button data-key="shift" aria-label="Dash">↯</button>' +
+    '<button data-key="e" aria-label="Interactuar">✦</button>' +
+    '<button data-key="escape" aria-label="Pausa">Ⅱ</button>' +
+    '</div>';
   var joystick = controls.querySelector(".touchJoystick");
   var knob = controls.querySelector(".touchKnob");
   var joystickPointer = null;

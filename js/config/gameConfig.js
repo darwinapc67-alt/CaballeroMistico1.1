@@ -232,7 +232,19 @@ function loadTouchLayout() {
       touchLayout.actions.x = Number(saved.actions.x) || touchLayout.actions.x;
       touchLayout.actions.y = Number(saved.actions.y) || touchLayout.actions.y;
     }
-    if (saved.buttons) touchLayout.buttons = saved.buttons;
+    if (saved.buttons) {
+      Object.keys(saved.buttons).forEach(function(key) {
+        var position = saved.buttons[key];
+        if (!position) return;
+        var x = Number(position.x), y = Number(position.y);
+        if (isFinite(x) && isFinite(y)) {
+          touchLayout.buttons[key] = {
+            x: Math.max(0, Math.min(92, x)),
+            y: Math.max(4, Math.min(92, y))
+          };
+        }
+      });
+    }
   } catch (error) {
     console.warn("No se pudo cargar la disposición táctil", error);
   }
@@ -263,7 +275,12 @@ function applyTouchLayout() {
         x: touchLayout.actions.x + (index % 3) * 9,
         y: touchLayout.actions.y + Math.floor(index / 3) * 9
       };
+      position.x = Math.max(0, Math.min(92, Number(position.x) || 0));
+      position.y = Math.max(4, Math.min(92, Number(position.y) || 4));
+      touchLayout.buttons[key] = position;
       button.style.position = "fixed";
+      button.style.display = "block";
+      button.style.visibility = "visible";
       button.style.left = position.x + "vw";
       button.style.top = position.y + "vh";
     });
