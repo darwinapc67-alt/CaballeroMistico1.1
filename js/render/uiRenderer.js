@@ -1304,10 +1304,10 @@ function drawTouchControlsEditor() {
   ctx.textAlign = "center";
   ctx.fillStyle = "#8f8"; ctx.font = "bold 25px monospace";
   ctx.fillText("MOVER BOTONES CELULAR / TABLET", canvas.width / 2, 65);
-  var labels = ["Joystick", "Botones de acción", "Opacidad"];
+  var labels = ["Joystick", "Cada botón táctil (arrástralo)", "Opacidad"];
   var values = [
     Math.round(touchLayout.joystick.x) + "% / " + Math.round(touchLayout.joystick.y) + "%",
-    Math.round(touchLayout.actions.x) + "% / " + Math.round(touchLayout.actions.y) + "%",
+    "incluye pausa",
     Math.round(touchLayout.opacity * 100) + "%"
   ];
   labels.forEach(function(label, index) {
@@ -1319,7 +1319,7 @@ function drawTouchControlsEditor() {
     ctx.fillText((selected ? "▶ " : "  ") + label + ": " + values[index], canvas.width / 2, y + 5);
   });
   ctx.fillStyle = "#8bd"; ctx.font = "12px monospace";
-  ctx.fillText("W/S: seleccionar  A/D: mover horizontal  Q/E: mover vertical", canvas.width / 2, 390);
+  ctx.fillText("Arrastra cada botón por separado; la pausa no cierra el editor", canvas.width / 2, 390);
   ctx.fillText("+/-: opacidad  •  ESC: guardar y volver", canvas.width / 2, 415);
   ctx.textAlign = "left";
 }

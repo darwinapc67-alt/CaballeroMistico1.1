@@ -191,7 +191,8 @@ var CONTROLS_KEY = "caballero_mistico_controls_v1";
 var touchLayout = {
   opacity: 0.86,
   joystick: { x: 8, y: 68 },
-  actions: { x: 66, y: 66 }
+  actions: { x: 66, y: 66 },
+  buttons: {}
 };
 var touchEditSelection = 0;
 var TOUCH_LAYOUT_KEY = "caballero_mistico_touch_layout_v1";
@@ -231,6 +232,7 @@ function loadTouchLayout() {
       touchLayout.actions.x = Number(saved.actions.x) || touchLayout.actions.x;
       touchLayout.actions.y = Number(saved.actions.y) || touchLayout.actions.y;
     }
+    if (saved.buttons) touchLayout.buttons = saved.buttons;
   } catch (error) {
     console.warn("No se pudo cargar la disposición táctil", error);
   }
@@ -252,9 +254,19 @@ function applyTouchLayout() {
     pad.style.top = touchLayout.joystick.y + "vh";
   }
   if (actions) {
-    actions.style.position = "fixed";
-    actions.style.left = touchLayout.actions.x + "vw";
-    actions.style.top = touchLayout.actions.y + "vh";
+    actions.style.position = "static";
+    actions.style.left = "";
+    actions.style.top = "";
+    controls.querySelectorAll(".touchActions button").forEach(function(button, index) {
+      var key = button.getAttribute("data-key");
+      var position = touchLayout.buttons[key] || {
+        x: touchLayout.actions.x + (index % 3) * 9,
+        y: touchLayout.actions.y + Math.floor(index / 3) * 9
+      };
+      button.style.position = "fixed";
+      button.style.left = position.x + "vw";
+      button.style.top = position.y + "vh";
+    });
   }
 }
 

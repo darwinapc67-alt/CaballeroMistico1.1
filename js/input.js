@@ -1160,6 +1160,7 @@ function setupTouchControls() {
     };
     var press = function(event) {
       event.preventDefault();
+      if (gameState === ST_PAUSED && pauseSubState === "controls_touch") return;
       if (buttonPointer !== null) return;
       buttonPointer = event.pointerId;
       button.setPointerCapture(event.pointerId);
@@ -1172,6 +1173,7 @@ function setupTouchControls() {
       keys[key] = true;
     };
     var release = function(event) {
+      if (gameState === ST_PAUSED && pauseSubState === "controls_touch") return;
       if (buttonPointer !== event.pointerId) return;
       event.preventDefault();
       buttonPointer = null;
@@ -1189,20 +1191,34 @@ function setupTouchControls() {
   var touchDrag = null;
   controls.addEventListener("pointerdown", function(event) {
     if (gameState !== ST_PAUSED || pauseSubState !== "controls_touch") return;
-    var target = event.target.closest(".touchPad, .touchActions");
+    var target = event.target.closest(".touchPad, .touchActions button");
     if (!target) return;
     event.preventDefault();
     event.stopPropagation();
-    touchDrag = { pointerId: event.pointerId, group: target.classList.contains("touchPad") ? "joystick" : "actions" };
+    if (target.getAttribute("data-key") === "escape") {
+      saveTouchLayout();
+      pauseSubState = "controls";
+      return;
+    }
+    touchDrag = {
+      pointerId: event.pointerId,
+      group: target.classList.contains("touchPad") ? "joystick" : "button",
+      key: target.getAttribute("data-key"),
+      element: target
+    };
     controls.setPointerCapture(event.pointerId);
   }, true);
   controls.addEventListener("pointermove", function(event) {
     if (!touchDrag || touchDrag.pointerId !== event.pointerId) return;
     event.preventDefault();
-    var x = Math.max(0, Math.min(82, event.clientX / window.innerWidth * 100 - 7));
-    var y = Math.max(4, Math.min(90, event.clientY / window.innerHeight * 100 - 5));
-    touchLayout[touchDrag.group].x = x;
-    touchLayout[touchDrag.group].y = y;
+    var x = Math.max(0, Math.min(92, event.clientX / window.innerWidth * 100 - 4));
+    var y = Math.max(4, Math.min(92, event.clientY / window.innerHeight * 100 - 4));
+    if (touchDrag.group === "button") {
+      touchLayout.buttons[touchDrag.key] = { x: x, y: y };
+    } else {
+      touchLayout.joystick.x = x;
+      touchLayout.joystick.y = y;
+    }
     applyTouchLayout();
   }, true);
   controls.addEventListener("pointerup", function(event) {
