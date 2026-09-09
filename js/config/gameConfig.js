@@ -272,11 +272,11 @@ function applyTouchLayout() {
     controls.querySelectorAll(".touchActions button").forEach(function(button, index) {
       var key = button.getAttribute("data-key");
       var position = touchLayout.buttons[key] || {
-        x: touchLayout.actions.x + (index % 3) * 9,
-        y: touchLayout.actions.y + Math.floor(index / 3) * 9
+        x: Math.min(84, touchLayout.actions.x + (index % 3) * 9),
+        y: Math.min(78, touchLayout.actions.y + Math.floor(index / 3) * 11)
       };
-      position.x = Math.max(0, Math.min(92, Number(position.x) || 0));
-      position.y = Math.max(4, Math.min(92, Number(position.y) || 4));
+      position.x = Math.max(2, Math.min(84, Number(position.x) || 2));
+      position.y = Math.max(4, Math.min(78, Number(position.y) || 4));
       touchLayout.buttons[key] = position;
       button.style.position = "fixed";
       button.style.display = "block";
