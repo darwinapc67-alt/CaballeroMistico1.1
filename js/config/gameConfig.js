@@ -196,12 +196,13 @@ var touchLayout = {
 };
 var touchEditSelection = 0;
 var TOUCH_LAYOUT_KEY = "caballero_mistico_touch_layout_v2";
-var touchButtonKeys = [" ", "x", "c", "shift", "e", "escape"];
+var touchButtonKeys = [" ", "x", "c", "shift", "e", "escape", "b"];
 
 function resetTouchButtonPositions() {
   var positions = [
     { x: 57, y: 58 }, { x: 69, y: 58 }, { x: 81, y: 58 },
-    { x: 57, y: 73 }, { x: 69, y: 73 }, { x: 81, y: 73 }
+    { x: 57, y: 73 }, { x: 69, y: 73 }, { x: 81, y: 73 },
+    { x: 88, y: 58 }
   ];
   touchLayout.buttons = {};
   touchButtonKeys.forEach(function(key, index) {
@@ -610,7 +611,7 @@ function saveGame(i) {
   var s = getSaves();
   s.slots[i] = {
     room: currentRoom, px: player.x, py: player.y,
-    twoPlayer: twoPlayerMode, hasSword: hasSword, swordEquipped: swordEquipped, hasBow: hasBow, arrows: arrows,
+    twoPlayer: twoPlayerMode, hasSword: hasSword, swordEquipped: swordEquipped, hasBow: hasBow, arrows: arrows, bombs: bombs,
     enemiesKilled: enemies.map(function(e){ return e.dead; }),
     azari: azari, hasMap: hasMap, hp: player.hp, maxHp: player.maxHp,
     highestRoomReached: highestRoomReached,
@@ -666,7 +667,7 @@ function loadGame(i) {
   player.x = s.px; player.y = s.py; player.vx = 0; player.vy = 0;
   hasSword = s.hasSword || false; swordEquipped = s.swordEquipped || false;
   player.hasSword = hasSword; player.swordEquipped = swordEquipped;
-  hasBow = s.hasBow || false; arrows = s.arrows || 0;
+  hasBow = s.hasBow || false; arrows = s.arrows || 0; bombs = Math.max(0, Number(s.bombs) || 0);
   azari = s.azari || 0; hasMap = s.hasMap || false;
   player.hp = s.hp !== undefined ? s.hp : 10;
   player.maxHp = s.maxHp !== undefined ? s.maxHp : 10;

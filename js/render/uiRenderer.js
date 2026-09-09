@@ -630,6 +630,7 @@ function drawGame() {
   if (hasSword) { ctx.fillStyle = player.swordCooldown <= 0 ? "#ffd700" : "#444"; ctx.fillText("⚔️ J1: " + (player.swordCooldown <= 0 ? (player.swordSheathed ? "🔒" : "⚔️") : "···"), 12, 42); }
   else { ctx.fillStyle = "#555"; ctx.fillText(translateText("Encuentra la espada..."), 12, 42); }
   if (hasBow) { ctx.fillStyle = player.bowCooldown <= 0 ? "#ffd700" : "#444"; ctx.fillText("🏹 " + translateText("Arco") + ": " + (player.bowCooldown <= 0 ? translateText("Listo") : "···"), 12, 62); }
+  if (bombs > 0) { ctx.fillStyle = "#ff7138"; ctx.fillText("💣 Bombas: " + bombs + " (B)", 12, hasBow ? 82 : 62); }
   if (hasDash) {
     ctx.fillStyle = player.dashCooldown <= 0 ? "#7af" : "#446";
     ctx.fillText("↯ " + translateText("Dash") + ": " + (player.dashCooldown <= 0 ? translateText("Listo") : "···"), 12, twoPlayerMode ? 76 : (hasBow ? 82 : 62));
@@ -1436,11 +1437,28 @@ function drawShop() {
     ctx.textAlign = "left";
     return;
   }
-  ctx.fillStyle = "#aaa"; ctx.font = "bold 18px monospace";
-  ctx.fillText("INVENTARIO VACÍO", canvas.width / 2, 275);
-  ctx.fillStyle = "#666"; ctx.font = "13px monospace";
-  ctx.fillText("Próximamente habrá artículos disponibles.", canvas.width / 2, 310);
-  ctx.fillText("ESC: pausa", canvas.width / 2, 525);
-  ctx.fillStyle = "#777"; ctx.font = "12px monospace";
-  ctx.fillText("ESC: pausa", canvas.width/2, 575);
+  var shopItems = [
+    "Mapa", "Arco", "Flechas x20", "Fragmento de vida J1", "Fragmento de vida J2",
+    "Amuleto", "Imán de Azari", "Bolsa de Azari", "Linterna", "Llave vieja",
+    "Mejora de espada", "Mejora de arco", "Flecha pesada", "Golpe cargado",
+    "Ataque aéreo", "Combo", "Bendición codiciosa", "Bombas x5"
+  ];
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#ffd700"; ctx.font = "bold 15px monospace";
+  ctx.fillText("ARTÍCULOS", 110, 285);
+  ctx.font = "12px monospace";
+  for (var itemIndex = 0; itemIndex < shopItems.length; itemIndex++) {
+    var itemY = 312 + itemIndex * 15;
+    if (itemIndex === menuSelection) {
+      ctx.fillStyle = "rgba(108,204,204,.25)";
+      ctx.fillRect(100, itemY - 12, 360, 16);
+    }
+    ctx.fillStyle = itemIndex === menuSelection ? "#9de8ff" : "#aaa";
+    ctx.fillText((itemIndex === menuSelection ? "▶ " : "  ") + shopItems[itemIndex], 110, itemY);
+  }
+  ctx.textAlign = "right";
+  ctx.fillStyle = "#6cc"; ctx.fillText("Bombas: " + bombs, 730, 285);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#777"; ctx.fillText("↑/↓ elegir • ENTER comprar • ESC salir", canvas.width / 2, 575);
+  ctx.textAlign = "left";
 }

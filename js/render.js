@@ -154,6 +154,17 @@ function drawGameWorld() {
     ctx.fillStyle = "#eee";
     ctx.fillRect(arrow.x + (arrow.vx > 0 ? arrow.w : -4), arrow.y - 2, 4, arrow.h + 4);
   });
+  bombsInFlight.forEach(function(bomb) {
+    ctx.fillStyle = "#202020";
+    ctx.beginPath();
+    ctx.arc(bomb.x + bomb.w / 2, bomb.y + bomb.h / 2, bomb.w / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#ff7138";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = "#ffd36a";
+    ctx.fillRect(bomb.x + bomb.w / 2 - 2, bomb.y - 3, 4, 4);
+  });
   azariDrops.forEach(function(drop) {
     var pulse = 1 + Math.sin(Date.now() / 140 + drop.x) * 0.15;
     var crystalColor = drop.type === "large" ? "#ffd447" : (drop.type === "small" ? "#9eeaff" : "#42d9ff");

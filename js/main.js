@@ -17,7 +17,7 @@ function resetAll() {
   hasSword = false; swordEquipped = false;
   player.hasSword = false; player.swordEquipped = false;
   if (twoPlayerMode) { player2.hasSword = false; player2.swordEquipped = false; }
-  azari = 0; hasMap = false; hasBow = false; arrows = 0; shopOpen = false; shopId = 0; shopGreeting = ""; shopGreetingTimer = 0;
+  azari = 0; hasMap = false; hasBow = false; arrows = 0; bombs = 0; shopOpen = false; shopId = 0; shopGreeting = ""; shopGreetingTimer = 0;
   heartFragments1 = 0; heartFragments2 = 0;
   heartFragmentsBought1 = 0; heartFragmentsBought2 = 0;
   hasAzariCharm = false; hasDoubleJump = false;
@@ -45,7 +45,7 @@ function resetAll() {
   infiniteWave = 0; infiniteSpawnTimer = 60;
   highestRoomReached = 0;
   tutorialStep = 0; tutorialTimer = 240;
-  checkpointState = { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasLantern: false, lanternLevel: 0, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false } };
+  checkpointState = { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, bombs: 0, hasMap: false, hasAzariCharm: false, hasLantern: false, lanternLevel: 0, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false } };
   room0.transitionZone = null; room1.transitionZone = null; room2.transitionZone = null;
   room3.transitionZone = null; room4.transitionZone = null;
   room5.transitionZone = {x:4750, y:460, w:50, h:100, to:6};
@@ -176,6 +176,7 @@ function update() {
     updateInfiniteMode();
     updateCustomLevel();
     updateArrows();
+    updateBombs();
     updateAzariDrops();
     updateHealingHearts();
     if (healingStoneCooldown > 0) healingStoneCooldown--;

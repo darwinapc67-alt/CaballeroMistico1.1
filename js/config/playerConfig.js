@@ -18,7 +18,7 @@ var player2 = {
 
 var hasSword = false, swordEquipped = false;
 var currentRoom = 0, cameraX = 0, targetCamX = 0, cameraY = 0, targetCamY = 0;
-var particles = [], floatTexts = [], arrowsInFlight = [], impactBursts = [], flash = 0;
+var particles = [], floatTexts = [], arrowsInFlight = [], bombsInFlight = [], impactBursts = [], flash = 0;
 var combatShake = 0, combatHitStop = 0;
 var healingHearts = [];
 var keys = {};
