@@ -19,6 +19,14 @@ function playerTakeDamage(p, dmg, isBossDamage) {
   if (p.hp <= 0) {
     stats.deaths++;
     consecutiveDeaths++;
+    if (gameMode === "infinite" && consecutiveDeaths >= 3) {
+      var totalDeaths = stats.deaths;
+      resetAll();
+      stats.deaths = totalDeaths;
+      gameState = ST_PLAYING;
+      spawnFloatText(player.x, player.y - 32, "¡Tres derrotas! Regresas al inicio", "#ffd700");
+      return;
+    }
     playerDead = true;
     deathTimer = 0;
     deathAnimTimer = 0;
@@ -188,7 +196,7 @@ function restoreCheckpoint() {
     player.hasSword = hasSword; player.swordEquipped = swordEquipped;
     player.maxJumps = hasDoubleJump ? 2 : 1; player.jumpsLeft = player.maxJumps;
     player.frozen = false; player.vx = 0; player.vy = 0; playerDead = false;
-    consecutiveDeaths = 0;
+    if (gameMode !== "infinite") consecutiveDeaths = 0;
     cameraX = currentRoom * ROOM_W; targetCamX = cameraX; cameraY = 0; targetCamY = 0;
     resetDeathState();
   }
