@@ -606,13 +606,14 @@ function updateInfiniteMode() {
       var enemyType = (infiniteWave % 4 === 0 || (infiniteWave >= 7 && i === count - 1)) ? "dark_knight" : "larva_mosca";
       var scale = 1 + infiniteWave * 0.18;
       enemies.push({
-        x: 90 + Math.random() * 620, y: 520, baseY: 520, range: 0,
+        x: 90 + Math.random() * 620, y: 512, baseY: 512, range: 0,
         w: enemyType === "dark_knight" ? 34 : 28, h: enemyType === "dark_knight" ? 48 : 22,
         vx: (i % 2 ? 1 : -1) * (1.2 + Math.min(3, infiniteWave * 0.08)), vy: 0,
         speed: 1.2 + Math.min(3, infiniteWave * 0.08), visionRadius: 260,
         dead: false, room: 0, type: enemyType, hp: Math.round((enemyType === "dark_knight" ? 48 : 20) * scale),
         maxHp: Math.round((enemyType === "dark_knight" ? 48 : 20) * scale),
         blockTimer: 80 + infiniteWave * 3, dashCooldown: Math.max(45, 140 - infiniteWave * 3), dashTimer: 0,
+        blocking: false, canRoam: false, staysRoom: true, lastSwordHit: -1,
         infiniteDamage: 1 + Math.floor(infiniteWave / 3), infiniteEnemy: true
       });
     }
