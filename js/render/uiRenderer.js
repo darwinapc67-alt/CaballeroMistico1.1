@@ -17,20 +17,33 @@ function drawInventory() {
   ctx.fillText("OBJETOS", 34, 92);
   ctx.fillStyle = "#687080";
   ctx.fillText("EQUIPO", 208, 92);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#f3d36a";
+  ctx.fillText("HABITACIÓN " + (inventoryPage + 1) + " / 2", 380, 92);
+  ctx.fillStyle = inventoryPage > 0 ? "#f3d36a" : "#485363";
+  ctx.fillText("◀", 525, 92);
+  ctx.fillStyle = inventoryPage < 1 ? "#f3d36a" : "#485363";
+  ctx.fillText("▶", 550, 92);
+  ctx.textAlign = "left";
 
   var inventorySlots = [
-    { name: "Corazón", owned: false, color: "#e66b78" },
-    { name: "Arco", owned: hasBow, color: "#b98b58" },
-    { name: "Llave vieja", owned: hasOldKey, color: "#d4af37" },
-    { name: "Amuleto", owned: hasAzariCharm, color: "#73d4cc" },
-    { name: "Linterna", owned: hasLantern, color: "#f2c45c" },
-    { name: "Mapa", owned: hasMap, color: "#8bb7d9" },
-    { name: "Fragmento", owned: heartFragments1 > 0 || heartFragments2 > 0, color: "#a88be8" },
-    { name: "Botella", owned: false, color: "#80c990" },
-    { name: "Objeto vacío", owned: false, color: "#647080" }
+    { name: "Espada", owned: hasSword, detail: hasSword ? "nivel +" + swordLevel : "sin obtener", color: "#e4e9f0" },
+    { name: "Arco", owned: hasBow, detail: hasBow ? arrows + " flechas" : "sin obtener", color: "#b98b58" },
+    { name: "Llave vieja", owned: hasOldKey, detail: hasOldKey ? "puerta antigua" : "sin obtener", color: "#d4af37" },
+    { name: "Amuleto", owned: hasAzariCharm, detail: "bendición", color: "#73d4cc" },
+    { name: "Linterna", owned: hasLantern, detail: hasLantern ? "nivel " + lanternLevel : "sin obtener", color: "#f2c45c" },
+    { name: "Mapa", owned: hasMap, detail: "zonas descubiertas", color: "#8bb7d9" },
+    { name: "Fragmento", owned: heartFragments1 > 0 || heartFragments2 > 0, detail: (heartFragments1 + heartFragments2) + " / 6", color: "#a88be8" },
+    { name: "Doble salto", owned: hasDoubleJump, detail: "habilidad", color: "#8ad6ff" },
+    { name: "Dash", owned: hasDash, detail: "habilidad", color: "#c58cff" },
+    { name: "Corazón pétreo", owned: bossUniqueItems.guardian, detail: "reliquia de jefe", color: "#9ca8b2" },
+    { name: "Núcleo colonia", owned: bossUniqueItems.queen_larva, detail: "reliquia de jefe", color: "#d68aab" },
+    { name: "Fragmento abisal", owned: bossUniqueItems.abyssal_knight, detail: "reliquia de jefe", color: "#8368c9" }
   ];
-  var slotX = 28, slotY = 112, slotW = 150, slotH = 72, slotGap = 8;
-  inventorySlots.forEach(function(slot, index) {
+  var pageSlots = inventorySlots.slice(inventoryPage * 9, inventoryPage * 9 + 9);
+  while (pageSlots.length < 9) pageSlots.push({ name: "", owned: false, detail: "", color: "#647080" });
+  var slotX = 28, slotY = 112, slotW = 150, slotH = 60, slotGap = 6;
+  pageSlots.forEach(function(slot, index) {
     var col = index % 3, row = Math.floor(index / 3);
     var x = slotX + col * (slotW + slotGap);
     var y = slotY + row * (slotH + slotGap);
@@ -49,22 +62,22 @@ function drawInventory() {
     ctx.fillText(slot.owned ? slot.name : "—", x + 60, y + 31);
     ctx.fillStyle = slot.owned ? "#9fb39b" : "#596272";
     ctx.font = "10px monospace";
-    ctx.fillText(slot.owned ? "disponible" : "vacío", x + 60, y + 48);
+    ctx.fillText(slot.owned ? slot.detail : "vacío", x + 60, y + 48);
   });
 
-  var selectedSlot = inventorySlots[inventorySelection] || inventorySlots[0];
+  var selectedSlot = pageSlots[inventorySelection] || pageSlots[0];
   ctx.fillStyle = "#151d2b";
-  ctx.fillRect(28, 360, 470, 100);
+  ctx.fillRect(28, 386, 470, 100);
   ctx.strokeStyle = "#4b596f";
-  ctx.strokeRect(28, 360, 470, 100);
+  ctx.strokeRect(28, 386, 470, 100);
   ctx.fillStyle = "#f3d36a";
   ctx.font = "bold 14px monospace";
-  ctx.fillText(selectedSlot.owned ? selectedSlot.name.toUpperCase() : "SIN OBJETO SELECCIONADO", 46, 388);
+  ctx.fillText(selectedSlot.owned ? selectedSlot.name.toUpperCase() : "SIN OBJETO SELECCIONADO", 46, 414);
   ctx.fillStyle = "#aeb8c8";
   ctx.font = "11px monospace";
-  ctx.fillText(selectedSlot.owned ? "Objeto disponible para usar." : "Explora el reino para encontrar objetos.", 46, 414);
+  ctx.fillText(selectedSlot.owned ? selectedSlot.detail : "Explora el reino para encontrar objetos.", 46, 440);
   ctx.fillStyle = "#6f7c90";
-  ctx.fillText("ENTER: usar/equipar   FLECHAS: mover   ` : cerrar", 46, 440);
+  ctx.fillText("ENTER: usar/equipar   FLECHAS: mover   ` : cerrar", 46, 466);
 
   ctx.fillStyle = "#172131";
   ctx.fillRect(528, 92, 242, 368);
@@ -76,7 +89,7 @@ function drawInventory() {
   ctx.fillStyle = "#9da9bb";
   ctx.font = "11px monospace";
   ctx.fillText("ESPADA", 548, 154);
-  ctx.fillText(swordLevel > 0 ? "Nivel +" + swordLevel : "Sin mejorar", 650, 154);
+  ctx.fillText(hasSword ? "Nivel +" + swordLevel : "Sin obtener", 650, 154);
   ctx.fillText("ARCO", 548, 184);
   ctx.fillText(hasBow ? "Disponible" : "Sin obtener", 650, 184);
   ctx.fillText("ARMADURA", 548, 214);

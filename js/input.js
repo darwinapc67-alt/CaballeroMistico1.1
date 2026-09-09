@@ -118,11 +118,11 @@ window.addEventListener("keydown", function(e) {
   }
   if (gameState === ST_INVENTORY && !mapOpen) {
     var inventoryItems = 9;
-    if (left) { inventorySelection = inventorySelection % 3 === 0 ? inventorySelection + 2 : inventorySelection - 1; e.preventDefault(); return; }
-    if (right) { inventorySelection = inventorySelection % 3 === 2 ? inventorySelection - 2 : inventorySelection + 1; e.preventDefault(); return; }
+    if (left) { inventoryPage = inventoryPage > 0 ? inventoryPage - 1 : 1; inventorySelection = 0; e.preventDefault(); return; }
+    if (right) { inventoryPage = inventoryPage < 1 ? inventoryPage + 1 : 0; inventorySelection = 0; e.preventDefault(); return; }
     if (up) { inventorySelection = inventorySelection < 3 ? inventorySelection + 6 : inventorySelection - 3; e.preventDefault(); return; }
     if (down) { inventorySelection = inventorySelection >= 6 ? inventorySelection - 6 : inventorySelection + 3; e.preventDefault(); return; }
-    if (k === "e" && inventorySelection === 8 && hasOldKey) {
+    if (k === "e" && inventoryPage === 0 && inventorySelection === 2 && hasOldKey) {
       keyReady = true;
       inventoryOpen = false;
       gameState = ST_PLAYING;
@@ -130,11 +130,11 @@ window.addEventListener("keydown", function(e) {
       e.preventDefault(); return;
     }
     if (confirm) {
-      if (inventorySelection === 0 && hasAzariCharm) toggleBlessing("greedy");
-      if (inventorySelection === 1 && bossUniqueItems.guardian) toggleBlessing("stone");
-      if (inventorySelection === 2 && bossUniqueItems.queen_larva) toggleBlessing("brood");
-      if (inventorySelection === 3 && bossUniqueItems.abyssal_knight) toggleBlessing("abyss");
-      if (inventorySelection === 4 && armorId !== "void") armorId = armorId === "cave" ? "void" : "cave";
+      var selectedInventoryItem = inventoryPage * 9 + inventorySelection;
+      if (selectedInventoryItem === 3 && hasAzariCharm) toggleBlessing("greedy");
+      if (selectedInventoryItem === 9 && bossUniqueItems.guardian) toggleBlessing("stone");
+      if (selectedInventoryItem === 10 && bossUniqueItems.queen_larva) toggleBlessing("brood");
+      if (selectedInventoryItem === 11 && bossUniqueItems.abyssal_knight) toggleBlessing("abyss");
       e.preventDefault(); return;
     }
   }

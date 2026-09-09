@@ -181,7 +181,7 @@ var lastSafeX = 100, lastSafeY = 400;
 var healing = false, healTimer = 0, healingStoneCooldown = 0, hitFlash = 0, needsRespawn = false;
 
 var twoPlayerMode = false;
-var inventoryOpen = false, mapOpen = false, inventorySelection = 0, inventoryHover = -1;
+var inventoryOpen = false, mapOpen = false, inventoryPage = 0, inventorySelection = 0, inventoryHover = -1;
 
 var CUSTOM_LEVELS_KEY = "caballero_mistico_custom_levels_v1";
 var EDITOR_COLS = 18, EDITOR_ROWS = 12, EDITOR_CELL = 32;

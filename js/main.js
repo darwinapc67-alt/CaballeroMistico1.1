@@ -6,6 +6,7 @@ function resetAll() {
   gpButtons = {}; prevGPButtons = {}; gpAxes = {x:0,y:0}; gamepadMenuAxisLock = 0;
   inventoryOpen = false;
   mapOpen = false;
+  inventoryPage = 0;
   inventorySelection = 0;
   inventoryHover = -1;
   resetPlayer();
@@ -325,6 +326,22 @@ canvas.addEventListener("click", function(event) {
     adminMessage = "";
   }
 });
+canvas.addEventListener("click", function(event) {
+  if (gameState !== ST_INVENTORY || mapOpen) return;
+  var rect = canvas.getBoundingClientRect();
+  var x = (event.clientX - rect.left) * canvas.width / rect.width;
+  var y = (event.clientY - rect.top) * canvas.height / rect.height;
+  if (y >= 78 && y <= 104 && x >= 505 && x <= 570) {
+    if (x < 538) inventoryPage = inventoryPage > 0 ? inventoryPage - 1 : 1;
+    else inventoryPage = inventoryPage < 1 ? inventoryPage + 1 : 0;
+    inventorySelection = 0;
+    inventoryHover = -1;
+    return;
+  }
+  var col = x >= 28 && x < 502 ? Math.floor((x - 28) / 158) : -1;
+  var row = y >= 112 && y < 310 ? Math.floor((y - 112) / 66) : -1;
+  if (col >= 0 && row >= 0 && row < 3) inventorySelection = row * 3 + col;
+});
 canvas.addEventListener("mousemove", function(event) {
   if (gameState !== ST_INVENTORY || mapOpen) {
     inventoryHover = -1;
@@ -334,7 +351,7 @@ canvas.addEventListener("mousemove", function(event) {
   var x = (event.clientX - rect.left) * canvas.width / rect.width;
   var y = (event.clientY - rect.top) * canvas.height / rect.height;
   var col = x >= 28 && x < 502 ? Math.floor((x - 28) / 158) : -1;
-  var row = Math.floor((y - 112) / 80);
+  var row = Math.floor((y - 112) / 66);
   inventoryHover = col >= 0 && row >= 0 ? row * 3 + col : -1;
   if (inventoryHover < 0 || inventoryHover >= 9) inventoryHover = -1;
 });
