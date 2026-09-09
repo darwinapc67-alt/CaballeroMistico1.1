@@ -1,3 +1,116 @@
+function drawInventoryIcon(iconX, iconY, kind, owned, color) {
+  if (!owned) return;
+  ctx.save();
+  ctx.translate(iconX, iconY);
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  if (kind === "sword") {
+    ctx.rotate(-Math.PI / 4);
+    ctx.fillRect(-2, -17, 5, 25);
+    ctx.fillStyle = "#d4af37";
+    ctx.fillRect(-8, 7, 17, 4);
+    ctx.fillStyle = "#704321";
+    ctx.fillRect(-2, 11, 5, 9);
+  } else if (kind === "bow") {
+    ctx.beginPath();
+    ctx.arc(-2, 0, 16, -Math.PI / 2, Math.PI / 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-2, -16);
+    ctx.lineTo(13, 0);
+    ctx.lineTo(-2, 16);
+    ctx.stroke();
+  } else if (kind === "key") {
+    ctx.beginPath();
+    ctx.arc(-7, -5, 6, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillRect(-1, -3, 17, 4);
+    ctx.fillRect(9, 1, 4, 7);
+  } else if (kind === "amulet") {
+    ctx.beginPath();
+    ctx.moveTo(0, -16);
+    ctx.lineTo(12, -3);
+    ctx.lineTo(0, 15);
+    ctx.lineTo(-12, -3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#173647";
+    ctx.beginPath();
+    ctx.arc(0, -2, 4, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (kind === "lantern") {
+    ctx.fillRect(-8, -7, 16, 17);
+    ctx.strokeRect(-6, -14, 12, 8);
+    ctx.fillStyle = "#fff2a8";
+    ctx.beginPath();
+    ctx.arc(0, 1, 4, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (kind === "map") {
+    ctx.beginPath();
+    ctx.moveTo(-15, -11);
+    ctx.lineTo(-5, -15);
+    ctx.lineTo(5, -11);
+    ctx.lineTo(15, -15);
+    ctx.lineTo(15, 11);
+    ctx.lineTo(5, 15);
+    ctx.lineTo(-5, 11);
+    ctx.lineTo(-15, 15);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-5, -15);
+    ctx.lineTo(-5, 11);
+    ctx.moveTo(5, -11);
+    ctx.lineTo(5, 15);
+    ctx.stroke();
+  } else if (kind === "fragment") {
+    ctx.beginPath();
+    ctx.moveTo(0, -17);
+    ctx.lineTo(12, -4);
+    ctx.lineTo(7, 13);
+    ctx.lineTo(-9, 13);
+    ctx.lineTo(-14, -4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#e9dcff";
+    ctx.fillRect(-2, -10, 4, 16);
+  } else if (kind === "doubleJump") {
+    ctx.beginPath();
+    ctx.moveTo(-14, 6);
+    ctx.lineTo(0, -10);
+    ctx.lineTo(14, 6);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-14, 14);
+    ctx.lineTo(0, -2);
+    ctx.lineTo(14, 14);
+    ctx.stroke();
+  } else if (kind === "dash") {
+    ctx.beginPath();
+    ctx.moveTo(-15, 5);
+    ctx.lineTo(0, -14);
+    ctx.lineTo(-2, -2);
+    ctx.lineTo(15, -2);
+    ctx.lineTo(0, 15);
+    ctx.lineTo(2, 4);
+    ctx.closePath();
+    ctx.fill();
+  } else if (kind === "relic") {
+    ctx.beginPath();
+    ctx.arc(0, 0, 13, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#1b2234";
+    ctx.beginPath();
+    ctx.arc(0, 0, 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 function drawInventory() {
   ctx.fillStyle = "rgba(0,0,0,0.88)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -27,18 +140,18 @@ function drawInventory() {
   ctx.textAlign = "left";
 
   var inventorySlots = [
-    { name: "Espada", owned: hasSword, detail: hasSword ? "nivel +" + swordLevel : "sin obtener", color: "#e4e9f0" },
-    { name: "Arco", owned: hasBow, detail: hasBow ? arrows + " flechas" : "sin obtener", color: "#b98b58" },
-    { name: "Llave vieja", owned: hasOldKey, detail: hasOldKey ? "puerta antigua" : "sin obtener", color: "#d4af37" },
-    { name: "Amuleto", owned: hasAzariCharm, detail: "bendición", color: "#73d4cc" },
-    { name: "Linterna", owned: hasLantern, detail: hasLantern ? "nivel " + lanternLevel : "sin obtener", color: "#f2c45c" },
-    { name: "Mapa", owned: hasMap, detail: "zonas descubiertas", color: "#8bb7d9" },
-    { name: "Fragmento", owned: heartFragments1 > 0 || heartFragments2 > 0, detail: (heartFragments1 + heartFragments2) + " / 6", color: "#a88be8" },
-    { name: "Doble salto", owned: hasDoubleJump, detail: "habilidad", color: "#8ad6ff" },
-    { name: "Dash", owned: hasDash, detail: "habilidad", color: "#c58cff" },
-    { name: "Corazón pétreo", owned: bossUniqueItems.guardian, detail: "reliquia de jefe", color: "#9ca8b2" },
-    { name: "Núcleo colonia", owned: bossUniqueItems.queen_larva, detail: "reliquia de jefe", color: "#d68aab" },
-    { name: "Fragmento abisal", owned: bossUniqueItems.abyssal_knight, detail: "reliquia de jefe", color: "#8368c9" }
+    { name: "Espada", kind: "sword", owned: hasSword, detail: hasSword ? "nivel +" + swordLevel : "sin obtener", color: "#e4e9f0" },
+    { name: "Arco", kind: "bow", owned: hasBow, detail: hasBow ? arrows + " flechas" : "sin obtener", color: "#b98b58" },
+    { name: "Llave vieja", kind: "key", owned: hasOldKey, detail: hasOldKey ? "puerta antigua" : "sin obtener", color: "#d4af37" },
+    { name: "Amuleto", kind: "amulet", owned: hasAzariCharm, detail: "bendición", color: "#73d4cc" },
+    { name: "Linterna", kind: "lantern", owned: hasLantern, detail: hasLantern ? "nivel " + lanternLevel : "sin obtener", color: "#f2c45c" },
+    { name: "Mapa", kind: "map", owned: hasMap, detail: "zonas descubiertas", color: "#8bb7d9" },
+    { name: "Fragmento", kind: "fragment", owned: heartFragments1 > 0 || heartFragments2 > 0, detail: (heartFragments1 + heartFragments2) + " / 6", color: "#a88be8" },
+    { name: "Doble salto", kind: "doubleJump", owned: hasDoubleJump, detail: "habilidad", color: "#8ad6ff" },
+    { name: "Dash", kind: "dash", owned: hasDash, detail: "habilidad", color: "#c58cff" },
+    { name: "Corazón pétreo", kind: "relic", owned: bossUniqueItems.guardian, detail: "reliquia de jefe", color: "#9ca8b2" },
+    { name: "Núcleo colonia", kind: "relic", owned: bossUniqueItems.queen_larva, detail: "reliquia de jefe", color: "#d68aab" },
+    { name: "Fragmento abisal", kind: "relic", owned: bossUniqueItems.abyssal_knight, detail: "reliquia de jefe", color: "#8368c9" }
   ];
   var pageSlots = inventorySlots.slice(inventoryPage * 9, inventoryPage * 9 + 9);
   while (pageSlots.length < 9) pageSlots.push({ name: "", owned: false, detail: "", color: "#647080" });
@@ -53,10 +166,11 @@ function drawInventory() {
     ctx.strokeStyle = selected ? "#f3d36a" : "#394354";
     ctx.lineWidth = selected ? 2 : 1;
     ctx.strokeRect(x, y, slotW, slotH);
-    ctx.fillStyle = slot.owned ? slot.color : "#303846";
+    ctx.fillStyle = slot.owned ? "rgba(255,255,255,0.06)" : "#303846";
     ctx.fillRect(x + 10, y + 13, 42, 42);
     ctx.strokeStyle = slot.owned ? slot.color : "#485363";
     ctx.strokeRect(x + 10, y + 13, 42, 42);
+    drawInventoryIcon(x + 31, y + 34, slot.kind, slot.owned, slot.color);
     ctx.fillStyle = slot.owned ? "#eee8d0" : "#657080";
     ctx.font = "bold 11px monospace";
     ctx.fillText(slot.owned ? slot.name : "—", x + 60, y + 31);

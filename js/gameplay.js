@@ -653,7 +653,7 @@ function updateInfiniteMode() {
         maxHp: Math.round((enemyType === "dark_knight" ? 48 : 20) * scale),
         blockTimer: 80 + infiniteWave * 3, dashCooldown: Math.max(45, 140 - infiniteWave * 3), dashTimer: 0,
         blocking: false, canRoam: false, staysRoom: true, lastSwordHit: -1,
-        infiniteDamage: 1 + Math.floor(infiniteWave / 3), infiniteEnemy: true
+        infiniteDamage: Math.min(4, 1 + Math.floor(infiniteWave / 5)), infiniteEnemy: true
       });
     }
 
@@ -696,11 +696,6 @@ function updateEnemies() {
     if (gameMode === "infinite" && e.room === 0 && !e.infiniteEnemy && !e.boss) return;
     if (e.boss && e.room !== currentRoom) return;
     if (e.type === "blue_sentry") {
-      if (e.room === currentRoom && bestiary[e.type] && !bestiary[e.type].discovered) {
-        bestiary[e.type].discovered = true;
-        discoveryNotify = { active: true, timer: 200, name: bestiaryInfo[e.type].name };
-        sfxDiscovery();
-      }
       if (e.room === currentRoom && !player.frozen) {
         e.shootTimer--;
         if (e.shootTimer <= 0) {
@@ -713,10 +708,6 @@ function updateEnemies() {
         }
       }
       return;
-    }
-    if (e.room === currentRoom && bestiary[e.type] && !bestiary[e.type].discovered) {
-      bestiary[e.type].discovered = true;
-      discoveryNotify = { active: true, timer: 200, name: bestiaryInfo[e.type].name };
     }
     var room = rooms[e.room];
     var left = e.room * ROOM_W, right = left + ROOM_W;
@@ -1068,7 +1059,27 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     if (p.vy > 12) p.vy = 12;
     p.x += p.vx;
     p.y += p.vy;
-    p.x = Math.max(5, Math.min(WORLD_W - p.w - 5, p.x));
+    var recoilRoom = rooms[currentRoom];
+    var recoilLeft = currentRoom * ROOM_W;
+    var recoilRight = recoilLeft + (recoilRoom.roomWidth || ROOM_W);
+    if (gameMode === "infinite" && currentRoom === 0) {
+      recoilLeft = 20;
+      recoilRight = 780;
+    }
+    if (p.x < recoilLeft) { p.x = recoilLeft; p.vx = 0; }
+    if (p.x + p.w > recoilRight) { p.x = recoilRight - p.w; p.vx = 0; }
+    if (p.y < 20) { p.y = 20; p.vy = 0; }
+    if (gameMode === "infinite" && currentRoom === 0 && p.y + p.h > 580) {
+      p.y = 580 - p.h;
+      p.vy = 0;
+      p.onGround = true;
+      p.jumpsLeft = p.maxJumps;
+    }
+    recoilRoom.walls.forEach(function(wall) {
+      if (!rectHit(p, wall)) return;
+      if (p.vx > 0) { p.x = wall.x - p.w; p.vx = 0; }
+      else if (p.vx < 0) { p.x = wall.x + wall.w; p.vx = 0; }
+    });
     return;
   }
   if (p.dashCooldown > 0) p.dashCooldown--;

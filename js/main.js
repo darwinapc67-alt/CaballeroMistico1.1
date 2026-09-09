@@ -1,4 +1,7 @@
 function resetAll() {
+  enemies = enemies.filter(function(enemy) {
+    return !enemy.infiniteEnemy && !enemy.customEnemy;
+  });
   brightnessBoost = 1;
   transIsFall = false; transitionCooldown = 0;
   if (musicInterval) { clearInterval(musicInterval); musicInterval = null; }

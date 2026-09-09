@@ -503,6 +503,9 @@ function saveGame(i) {
 function loadGame(i) {
   var s = getSaves().slots[i];
   if (!s) return false;
+  enemies = enemies.filter(function(enemy) {
+    return !enemy.infiniteEnemy && !enemy.customEnemy;
+  });
   bossVictory.active = false;
   achievements = {
     firstEnemy: !!(s.achievements && s.achievements.firstEnemy),
