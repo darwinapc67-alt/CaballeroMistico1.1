@@ -36,6 +36,24 @@
       font-family: monospace;
     }
     body.touch-device #ui { display: none; }
+    #fullscreenButton {
+      display: none;
+      position: fixed;
+      left: 50%;
+      bottom: max(24px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      z-index: 20;
+      padding: 12px 18px;
+      border: 2px solid #6cc;
+      border-radius: 4px;
+      background: rgba(16, 28, 43, .94);
+      color: #9de8ff;
+      font: bold 13px monospace;
+      touch-action: manipulation;
+    }
+    #fullscreenButton:active {
+      background: rgba(108, 204, 204, .35);
+    }
     kbd {
       background: #101020;
       border: 1px solid #333;

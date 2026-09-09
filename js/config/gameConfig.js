@@ -195,13 +195,13 @@ var touchLayout = {
   buttons: {}
 };
 var touchEditSelection = 0;
-var TOUCH_LAYOUT_KEY = "caballero_mistico_touch_layout_v1";
+var TOUCH_LAYOUT_KEY = "caballero_mistico_touch_layout_v2";
 var touchButtonKeys = [" ", "x", "c", "shift", "e", "escape"];
 
 function resetTouchButtonPositions() {
   var positions = [
-    { x: 58, y: 58 }, { x: 69, y: 58 }, { x: 80, y: 58 },
-    { x: 58, y: 72 }, { x: 69, y: 72 }, { x: 80, y: 72 }
+    { x: 57, y: 58 }, { x: 69, y: 58 }, { x: 81, y: 58 },
+    { x: 57, y: 73 }, { x: 69, y: 73 }, { x: 81, y: 73 }
   ];
   touchLayout.buttons = {};
   touchButtonKeys.forEach(function(key, index) {
@@ -296,8 +296,8 @@ function applyTouchLayout() {
     controls.querySelectorAll(".touchActions button").forEach(function(button, index) {
       var key = button.getAttribute("data-key");
       var position = touchLayout.buttons[key] || {
-        x: 58 + (index % 3) * 11,
-        y: 58 + Math.floor(index / 3) * 14
+        x: 57 + (index % 3) * 12,
+        y: 58 + Math.floor(index / 3) * 15
       };
       position.x = Math.max(2, Math.min(84, Number(position.x) || 2));
       position.y = Math.max(4, Math.min(78, Number(position.y) || 4));

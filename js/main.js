@@ -256,6 +256,7 @@ function loop() {
   pollGamepad();
   processGamepadInput();
   update();
+  updateFullscreenButton();
   if (gameState === ST_LANGUAGE) drawLanguageSelect();
   else if (gameState === ST_DEVICE) drawDeviceSelect();
   else if (gameState === ST_MENU) drawMenu();
@@ -366,4 +367,5 @@ ctx.fillText = function(text, x, y, maxWidth) {
 };
 resetAll();
 setupTouchControls();
+setupFullscreenButton();
 loop();

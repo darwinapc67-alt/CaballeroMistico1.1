@@ -740,6 +740,32 @@ document.addEventListener("keyup", function(e) {
   if (e.key === "Shift") keys["shift"] = false;
 });
 
+function setupFullscreenButton() {
+  if (document.getElementById("fullscreenButton")) return;
+  var button = document.createElement("button");
+  button.id = "fullscreenButton";
+  button.type = "button";
+  button.addEventListener("click", function() {
+    var root = document.documentElement;
+    if (document.fullscreenElement) {
+      var exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (exit) exit.call(document);
+      return;
+    }
+    var request = root.requestFullscreen || root.webkitRequestFullscreen;
+    if (request) request.call(root);
+  });
+  document.body.appendChild(button);
+}
+
+function updateFullscreenButton() {
+  var button = document.getElementById("fullscreenButton");
+  if (!button) return;
+  var visible = isMobileBrowser && gameState === ST_LANGUAGE;
+  button.style.display = visible ? "block" : "none";
+  button.textContent = document.fullscreenElement ? "↙ SALIR DE PANTALLA COMPLETA" : "⛶ PANTALLA COMPLETA";
+}
+
 function scanGamepads() {
   try {
     var pads = navigator.getGamepads ? navigator.getGamepads() : [];
@@ -1203,22 +1229,29 @@ function setupTouchControls() {
     if (!target) return;
     event.preventDefault();
     event.stopPropagation();
-    if (target.getAttribute("data-key") === "escape") {
-      saveTouchLayout();
-      pauseSubState = "controls";
-      return;
-    }
+    event.stopImmediatePropagation();
+    if (target.classList.contains("touchActions")) return;
+    var targetKey = target.getAttribute("data-key");
+    if (targetKey && targetKey !== "escape") keys[targetKey] = false;
+    target.classList.remove("pressed");
     touchDrag = {
       pointerId: event.pointerId,
       group: target.classList.contains("touchPad") ? "joystick" : "button",
-      key: target.getAttribute("data-key"),
-      element: target
+      key: targetKey,
+      element: target,
+      startX: event.clientX,
+      startY: event.clientY,
+      moved: false
     };
     controls.setPointerCapture(event.pointerId);
   }, true);
   controls.addEventListener("pointermove", function(event) {
     if (!touchDrag || touchDrag.pointerId !== event.pointerId) return;
     event.preventDefault();
+    if (Math.abs(event.clientX - touchDrag.startX) > 8 ||
+        Math.abs(event.clientY - touchDrag.startY) > 8) {
+      touchDrag.moved = true;
+    }
     var x = Math.max(0, Math.min(92, event.clientX / window.innerWidth * 100 - 4));
     var y = Math.max(4, Math.min(92, event.clientY / window.innerHeight * 100 - 4));
     if (touchDrag.group === "button") {
@@ -1231,7 +1264,16 @@ function setupTouchControls() {
   }, true);
   controls.addEventListener("pointerup", function(event) {
     if (!touchDrag || touchDrag.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    if (touchDrag.key === "escape" && !touchDrag.moved) {
+      saveTouchLayout();
+      pauseSubState = "controls";
+    }
     touchDrag = null;
     saveTouchLayout();
+  }, true);
+  controls.addEventListener("pointercancel", function(event) {
+    if (!touchDrag || touchDrag.pointerId !== event.pointerId) return;
+    touchDrag = null;
   }, true);
 }
