@@ -133,6 +133,12 @@ function saveHealingStoneCheckpoint() {
 }
 
 function restoreCheckpoint() {
+    var infiniteState = gameMode === "infinite" ? {
+      hasSword: hasSword, swordEquipped: swordEquipped, hasBow: hasBow, arrows: arrows,
+      hasDash: hasDash, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel,
+      bowLevel: bowLevel, combatSkills: JSON.parse(JSON.stringify(combatSkills)),
+      infiniteWave: infiniteWave
+    } : null;
     var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasAzariMagnet: false, hasAzariBag: false, azariBagLevel: 0, hasOldKey: false, doorUnlocked: false, rewardAzariCollected: false, hasLantern: false, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, blessingSlots: 2, equippedBlessings: [], armorId: "vacío", permanentUpgrades: { vitality: 0, strength: 0 }, bossUniqueItems: { guardian: false, queen_larva: false, abyssal_knight: false }, hiddenCollectibles: { eclipse: false, root: false, crown: false } };
     currentRoom = cp.room; player.x = cp.px; player.y = cp.py;
     player.hp = cp.hp; player.maxHp = cp.maxHp;
@@ -146,6 +152,22 @@ function restoreCheckpoint() {
     armorId = cp.armorId || "vacío"; permanentUpgrades = cp.permanentUpgrades || { vitality: 0, strength: 0 };
     bossUniqueItems = cp.bossUniqueItems || { guardian: false, queen_larva: false, abyssal_knight: false };
     hiddenCollectibles = cp.hiddenCollectibles || { eclipse: false, root: false, crown: false };
+    if (infiniteState) {
+      currentRoom = 0;
+      hasSword = infiniteState.hasSword;
+      swordEquipped = infiniteState.swordEquipped;
+      hasBow = infiniteState.hasBow;
+      arrows = infiniteState.arrows;
+      hasDash = infiniteState.hasDash;
+      hasDoubleJump = infiniteState.hasDoubleJump;
+      swordLevel = infiniteState.swordLevel;
+      bowLevel = infiniteState.bowLevel;
+      combatSkills = infiniteState.combatSkills;
+      infiniteWave = infiniteState.infiniteWave;
+      player.x = 100;
+      player.y = 400;
+      player.hp = player.maxHp;
+    }
     player.hasSword = hasSword; player.swordEquipped = swordEquipped;
     player.maxJumps = hasDoubleJump ? 2 : 1; player.jumpsLeft = player.maxJumps;
     player.frozen = false; player.vx = 0; player.vy = 0; playerDead = false;
