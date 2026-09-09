@@ -1096,6 +1096,7 @@ function finishIntro() {
 function setupTouchControls() {
   var existing = document.getElementById("touchControls");
   if (existing) existing.remove();
+  document.body.classList.toggle("touch-device", device === "touch");
   if (device !== "touch") return;
   var controls = document.createElement("div");
   controls.id = "touchControls";

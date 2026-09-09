@@ -35,6 +35,7 @@
       font-size: 13px;
       font-family: monospace;
     }
+    body.touch-device #ui { display: none; }
     kbd {
       background: #101020;
       border: 1px solid #333;
