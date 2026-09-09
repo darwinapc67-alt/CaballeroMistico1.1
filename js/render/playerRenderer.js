@@ -26,8 +26,13 @@ function drawPlayerEntity(p) {
     ctx.lineWidth = 2;
     ctx.globalAlpha = 0.85;
     ctx.beginPath();
-    ctx.arc(p.x + p.w/2 + p.facing * 12, p.y + p.h/2, 15, -Math.PI/2, Math.PI/2);
+    var shieldX = p.x + p.w / 2 + p.facing * 12;
+    var shieldStart = p.facing > 0 ? -Math.PI / 2 : Math.PI / 2;
+    var shieldEnd = p.facing > 0 ? Math.PI / 2 : Math.PI * 1.5;
+    ctx.arc(shieldX, p.y + p.h/2, 15, shieldStart, shieldEnd);
     ctx.stroke();
+    ctx.fillStyle = "rgba(157, 232, 255, 0.18)";
+    ctx.fill();
     ctx.globalAlpha = 1;
   }
 
