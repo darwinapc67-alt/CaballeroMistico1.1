@@ -1,5 +1,17 @@
 var adRequestInProgress = false;
 
+function initializeDisplayAd() {
+  if (!window.adsbygoogle) {
+    window.setTimeout(initializeDisplayAd, 1000);
+    return;
+  }
+  try {
+    (window.adsbygoogle = window.adsbygoogle || []).push({});
+  } catch (error) {
+    showAdMessage("No se pudo cargar el anuncio.");
+  }
+}
+
 function requestRewardedAd(rewardType, onComplete) {
   if (adRequestInProgress) return;
   if (!window.googletag || !GAM_AD_UNIT_PATH) {
@@ -117,4 +129,10 @@ function applyAdReward(rewardType) {
 function showAdMessage(message) {
   adMessage = message;
   adMessageTimer = 180;
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initializeDisplayAd);
+} else {
+  initializeDisplayAd();
 }
