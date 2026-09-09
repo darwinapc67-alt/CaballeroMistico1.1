@@ -258,6 +258,8 @@ function loop() {
   processGamepadInput();
   update();
   updateFullscreenButton();
+  if (device === "touch" && touchControlsSignature !== getTouchControlsSignature()) setupTouchControls();
+  updateTouchMenuButton();
   if (gameState === ST_LANGUAGE) drawLanguageSelect();
   else if (gameState === ST_DEVICE) drawDeviceSelect();
   else if (gameState === ST_MENU) drawMenu();

@@ -651,6 +651,7 @@ window.addEventListener("keydown", function(e) {
     if (e.key === "z" || e.key === "Z") { keys["z"] = true; e.preventDefault(); }
     if (e.key === "e" || e.key === "E") { keys["e"] = true; e.preventDefault(); }
     if (e.key === "c" || e.key === "C") { keys["c"] = true; e.preventDefault(); }
+    if (e.key === "b" || e.key === "B" || e.code === "KeyB") { keys["b"] = true; e.preventDefault(); }
     if (e.key === "Shift" || e.key === "ShiftLeft" || e.key === "ShiftRight") { keys["shift"] = true; e.preventDefault(); }
     if (e.key === "m" || e.key === "M") { initAudio(); toggleMusic(); e.preventDefault(); }
     if (e.key === "n" || e.key === "N") { initAudio(); toggleSfx(); e.preventDefault(); }
@@ -743,6 +744,7 @@ document.addEventListener("keyup", function(e) {
   if (e.key === "z" || e.key === "Z") keys["z"] = false;
   if (e.key === "e" || e.key === "E") keys["e"] = false;
   if (e.key === "c" || e.key === "C") keys["c"] = false;
+  if (e.key === "b" || e.key === "B" || e.code === "KeyB") keys["b"] = false;
   if (e.key === "Shift") keys["shift"] = false;
 });
 
@@ -1131,17 +1133,19 @@ function setupTouchControls() {
   if (existing) existing.remove();
   document.body.classList.toggle("touch-device", device === "touch");
   if (device !== "touch") return;
+  touchControlsSignature = getTouchControlsSignature();
   var controls = document.createElement("div");
   controls.id = "touchControls";
   controls.innerHTML = '<div class="touchPad" aria-label="Joystick de movimiento"><div class="touchJoystick"><div class="touchKnob">●</div></div></div>' +
     '<div class="touchActions">' +
     '<button class="touchJump" data-key=" " aria-label="Saltar">⬆</button>' +
-    '<button data-key="x" aria-label="Atacar">⚔</button>' +
-    '<button data-key="c" aria-label="Usar escudo">🛡</button>' +
-    '<button data-key="shift" aria-label="Dash">↯</button>' +
+    (hasSword ? '<button data-key="x" aria-label="Atacar">⚔</button>' : '') +
     '<button data-key="e" aria-label="Interactuar">✦</button>' +
     '<button data-key="escape" aria-label="Pausa">Ⅱ</button>' +
-    '<button data-key="b" aria-label="Lanzar bomba">💣</button>' +
+    (bossAbilities.guardian ? '<button data-key="c" aria-label="Usar escudo">🛡</button>' : '') +
+    (hasDash ? '<button data-key="shift" aria-label="Dash">↯</button>' : '') +
+    (bombs > 0 ? '<button data-key="b" aria-label="Lanzar bomba">💣</button>' : '') +
+    '<button class="touchDelete" data-key="delete" aria-label="Borrar partida">🗑</button>' +
     '</div>';
   var joystick = controls.querySelector(".touchJoystick");
   var knob = controls.querySelector(".touchKnob");
@@ -1207,6 +1211,10 @@ function setupTouchControls() {
       buttonPointer = event.pointerId;
       button.setPointerCapture(event.pointerId);
       button.classList.add("pressed");
+      if (key === "delete") {
+        window.dispatchEvent(new KeyboardEvent("keydown", {key: "Delete", code: "Delete"}));
+        return;
+      }
       if (key === "escape") {
         window.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape", code: "Escape"}));
         return;
@@ -1230,6 +1238,7 @@ function setupTouchControls() {
   });
   document.body.appendChild(controls);
   applyTouchLayout();
+  updateTouchMenuButton();
   var touchDrag = null;
   controls.addEventListener("pointerdown", function(event) {
     if (gameState !== ST_PAUSED || pauseSubState !== "controls_touch") return;
@@ -1260,6 +1269,7 @@ function setupTouchControls() {
         Math.abs(event.clientY - touchDrag.startY) > 8) {
       touchDrag.moved = true;
     }
+
     var x = Math.max(0, Math.min(92, event.clientX / window.innerWidth * 100 - 4));
     var y = Math.max(4, Math.min(92, event.clientY / window.innerHeight * 100 - 4));
     if (touchDrag.group === "button") {
@@ -1284,4 +1294,14 @@ function setupTouchControls() {
     if (!touchDrag || touchDrag.pointerId !== event.pointerId) return;
     touchDrag = null;
   }, true);
+}
+
+function getTouchControlsSignature() {
+  return [hasSword, hasDash, !!bossAbilities.guardian, bombs > 0].join("|");
+}
+
+function updateTouchMenuButton() {
+  var button = document.querySelector("#touchControls .touchDelete");
+  if (!button) return;
+  button.style.display = gameState === ST_MENU && menuSubState === "slots" ? "block" : "none";
 }
