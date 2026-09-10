@@ -8,7 +8,7 @@ var hasAzariMagnet = false, hasAzariBag = false, azariBagLevel = 0, hasOldKey = 
 var hasDash = false;
 var swordLevel = 0, bowLevel = 0, arrowType = "normal";
 
-var armorId = "vacío";
+var armorId = "vacío", armorLevel = 0;
 var permanentUpgrades = { vitality: 0, strength: 0 };
 
 var hiddenCollectibles = { eclipse: false, root: false, crown: false };

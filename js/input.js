@@ -682,7 +682,7 @@ window.addEventListener("keydown", function(e) {
       if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % 19; e.preventDefault(); return; }
       if (e.key === "Enter") {
         if (menuSelection === 17 && azari >= 1) { azari -= 1; bombs += 5; sfxBuy(); }
-        if (menuSelection === 18 && armorId !== "plate" && azari >= 50) { azari -= 50; armorId = "plate"; sfxBuy(); }
+        if (menuSelection === 18) buyArmorUpgrade();
         e.preventDefault(); return;
       }
       e.preventDefault(); return;
@@ -863,7 +863,7 @@ function processGamepadInput() {
         if (menuSelection === 15 && !combatSkills.combo && hasSword && azari >= 50) { azari -= 50; combatSkills.combo = true; sfxBuy(); }
         if (menuSelection === 16 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; sfxBuy(); }
         if (menuSelection === 17 && azari >= 1) { azari -= 1; bombs += 5; sfxBuy(); }
-        if (menuSelection === 18 && armorId !== "plate" && azari >= 50) { azari -= 50; armorId = "plate"; sfxBuy(); }
+        if (menuSelection === 18) buyArmorUpgrade();
       } else {
         if (menuSelection === 0 && swordLevel < 3 && hasSword && azari >= 30) { azari -= 30; swordLevel++; sfxBuy(); }
         if (menuSelection === 1 && bowLevel < 3 && hasBow && azari >= 30) { azari -= 30; bowLevel++; sfxBuy(); }
@@ -1306,4 +1306,15 @@ function updateTouchMenuButton() {
   var button = document.querySelector("#touchControls .touchDelete");
   if (!button) return;
   button.style.display = gameState === ST_MENU && menuSubState === "slots" ? "block" : "none";
+}
+function buyArmorUpgrade() {
+  var armorPrices = [50, 80, 120];
+  if (armorLevel >= 3) return false;
+  var price = armorPrices[armorLevel];
+  if (azari < price) return false;
+  azari -= price;
+  armorLevel++;
+  armorId = "plate";
+  sfxBuy();
+  return true;
 }

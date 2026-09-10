@@ -12,7 +12,8 @@ function playerTakeDamage(p, dmg, isBossDamage) {
   var armorGuard = armorId === "cave" ? 0.85 : 1;
   var blessingGuard = equippedBlessings.indexOf("stone") >= 0 ? 0.85 : 1;
   var incomingDamage = isBossDamage ? 1 : Math.max(1, Math.ceil(dmg * difficultyData.damage * guardianGuard * armorGuard * blessingGuard));
-  if (armorId === "plate" && Math.random() < 0.5) incomingDamage *= 0.5;
+  var armorHalfDamageChance = [0, 0.25, 0.4, 0.55][armorLevel] || 0;
+  if (armorHalfDamageChance > 0 && Math.random() < armorHalfDamageChance) incomingDamage *= 0.5;
   p.hp -= incomingDamage;
   p.inv = 40;
   spawnParticles(p.x + p.w/2, p.y + p.h/2, "#f44", 10);
@@ -136,6 +137,7 @@ function saveHealingStoneCheckpoint() {
     blessingSlots: blessingSlots,
     equippedBlessings: equippedBlessings.slice(),
     armorId: armorId,
+    armorLevel: armorLevel,
     permanentUpgrades: JSON.parse(JSON.stringify(permanentUpgrades)),
     bossUniqueItems: JSON.parse(JSON.stringify(bossUniqueItems)),
     hiddenCollectibles: JSON.parse(JSON.stringify(hiddenCollectibles))
@@ -156,7 +158,7 @@ function restoreCheckpoint() {
       bowLevel: bowLevel, combatSkills: JSON.parse(JSON.stringify(combatSkills)),
       infiniteWave: infiniteWave
     } : null;
-    var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasAzariMagnet: false, hasAzariBag: false, azariBagLevel: 0, hasOldKey: false, doorUnlocked: false, rewardAzariCollected: false, hasLantern: false, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, blessingSlots: 2, equippedBlessings: [], armorId: "vacío", permanentUpgrades: { vitality: 0, strength: 0 }, bossUniqueItems: { guardian: false, queen_larva: false, abyssal_knight: false }, hiddenCollectibles: { eclipse: false, root: false, crown: false } };
+    var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasAzariMagnet: false, hasAzariBag: false, azariBagLevel: 0, hasOldKey: false, doorUnlocked: false, rewardAzariCollected: false, hasLantern: false, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, blessingSlots: 2, equippedBlessings: [], armorId: "vacío", armorLevel: 0, permanentUpgrades: { vitality: 0, strength: 0 }, bossUniqueItems: { guardian: false, queen_larva: false, abyssal_knight: false }, hiddenCollectibles: { eclipse: false, root: false, crown: false } };
     currentRoom = cp.room; player.x = cp.px; player.y = cp.py;
     player.hp = cp.hp; player.maxHp = cp.maxHp;
     azari = cp.azari;
@@ -169,7 +171,7 @@ function restoreCheckpoint() {
     arrowType = cp.arrowType || "normal";
     combatSkills = cp.combatSkills || { charged: false, aerial: false, combo: false };
     blessingSlots = cp.blessingSlots || 2; equippedBlessings = cp.equippedBlessings || [];
-    armorId = cp.armorId || "vacío"; permanentUpgrades = cp.permanentUpgrades || { vitality: 0, strength: 0 };
+    armorId = cp.armorId || "vacío"; armorLevel = Math.max(0, Math.min(3, Number(cp.armorLevel) || (armorId === "plate" ? 1 : 0))); permanentUpgrades = cp.permanentUpgrades || { vitality: 0, strength: 0 };
     bossUniqueItems = cp.bossUniqueItems || { guardian: false, queen_larva: false, abyssal_knight: false };
     hiddenCollectibles = cp.hiddenCollectibles || { eclipse: false, root: false, crown: false };
     if (gameMode === "infinite" && infiniteState) {
@@ -1871,7 +1873,7 @@ function updateTransition() {
       cameraX = Math.max(0, Math.min(transitionRoomOrigin, WORLD_W - canvas.width));
       targetCamX = cameraX;
       if (currentRoom % 5 === 0) {
-        checkpointState = { room: currentRoom, px: currentRoom * ROOM_W + 100, py: room.height - 120, hp: player.hp, maxHp: player.maxHp, azari: azari, hasSword: hasSword, swordEquipped: swordEquipped, hasBow: hasBow, arrows: arrows, bombs: bombs, hasMap: hasMap, hasAzariCharm: hasAzariCharm, hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, azariBagLevel: azariBagLevel, hasOldKey: hasOldKey, doorUnlocked: doorUnlocked, rewardAzariCollected: rewardAzariCollected, hasLantern: hasLantern, lanternLevel: lanternLevel, hasDash: hasDash, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: JSON.parse(JSON.stringify(combatSkills)), blessingSlots: blessingSlots, equippedBlessings: equippedBlessings.slice(), armorId: armorId, permanentUpgrades: JSON.parse(JSON.stringify(permanentUpgrades)), bossUniqueItems: JSON.parse(JSON.stringify(bossUniqueItems)), hiddenCollectibles: JSON.parse(JSON.stringify(hiddenCollectibles)) };
+        checkpointState = { room: currentRoom, px: currentRoom * ROOM_W + 100, py: room.height - 120, hp: player.hp, maxHp: player.maxHp, azari: azari, hasSword: hasSword, swordEquipped: swordEquipped, hasBow: hasBow, arrows: arrows, bombs: bombs, hasMap: hasMap, hasAzariCharm: hasAzariCharm, hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, azariBagLevel: azariBagLevel, hasOldKey: hasOldKey, doorUnlocked: doorUnlocked, rewardAzariCollected: rewardAzariCollected, hasLantern: hasLantern, lanternLevel: lanternLevel, hasDash: hasDash, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: JSON.parse(JSON.stringify(combatSkills)), blessingSlots: blessingSlots, equippedBlessings: equippedBlessings.slice(), armorId: armorId, armorLevel: armorLevel, permanentUpgrades: JSON.parse(JSON.stringify(permanentUpgrades)), bossUniqueItems: JSON.parse(JSON.stringify(bossUniqueItems)), hiddenCollectibles: JSON.parse(JSON.stringify(hiddenCollectibles)) };
         if (activeSlot >= 0) saveGame(activeSlot);
         spawnFloatText(player.x, player.y - 35, "PUNTO DE GUARDADO", "#64e6ae");
       }

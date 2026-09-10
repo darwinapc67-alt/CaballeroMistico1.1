@@ -161,7 +161,7 @@ function drawInventory() {
     { name: "Fragmento", kind: "fragment", owned: heartFragments1 > 0 || heartFragments2 > 0, detail: (heartFragments1 + heartFragments2) + " / 6", color: "#a88be8" },
     { name: "Doble salto", kind: "doubleJump", owned: hasDoubleJump, detail: "habilidad", color: "#8ad6ff" },
     { name: "Dash", kind: "dash", owned: hasDash, detail: "habilidad", color: "#c58cff" },
-    { name: "Armadura", kind: "armor", owned: armorId === "plate", detail: armorId === "plate" ? "50% de probabilidad de medio daño" : "sin obtener", color: "#d8a85f" },
+    { name: "Armadura", kind: "armor", owned: armorLevel > 0, detail: armorLevel > 0 ? "nivel " + armorLevel + " • " + [0, 25, 40, 55][armorLevel] + "% medio daño" : "sin obtener", color: "#d8a85f" },
     { name: "Corazón pétreo", kind: "relic", owned: bossUniqueItems.guardian, detail: "reliquia de jefe", color: "#9ca8b2" },
     { name: "Núcleo colonia", kind: "relic", owned: bossUniqueItems.queen_larva, detail: "reliquia de jefe", color: "#d68aab" },
     { name: "Fragmento abisal", kind: "relic", owned: bossUniqueItems.abyssal_knight, detail: "reliquia de jefe", color: "#8368c9" }
@@ -1450,11 +1450,12 @@ function drawShop() {
     ctx.textAlign = "left";
     return;
   }
+  var armorShopText = armorLevel >= 3 ? "Armadura al máximo" : (armorLevel === 0 ? "Armadura nivel 1 (50 Azari)" : "Mejorar armadura a nivel " + (armorLevel + 1) + " (" + [0, 50, 80, 120][armorLevel] + " Azari)");
   var shopItems = [
     "Mapa", "Arco", "Flechas x20", "Fragmento de vida J1", "Fragmento de vida J2",
     "Amuleto", "Imán de Azari", "Bolsa de Azari", "Linterna", "Llave vieja",
     "Mejora de espada", "Mejora de arco", "Flecha pesada", "Golpe cargado",
-    "Ataque aéreo", "Combo", "Bendición codiciosa", "Bombas x5", "Armadura (50 Azari)"
+    "Ataque aéreo", "Combo", "Bendición codiciosa", "Bombas x5", armorShopText
   ];
   ctx.textAlign = "left";
   ctx.fillStyle = "#ffd700"; ctx.font = "bold 15px monospace";
@@ -1471,7 +1472,7 @@ function drawShop() {
   }
   ctx.textAlign = "right";
   ctx.fillStyle = "#6cc"; ctx.fillText("Bombas: " + bombs, 730, 275);
-  ctx.fillText("Armadura: " + (armorId === "plate" ? "comprada" : "no"), 730, 292);
+  ctx.fillText("Armadura: " + (armorLevel > 0 ? "nivel " + armorLevel : "no"), 730, 292);
   ctx.textAlign = "center";
   ctx.fillStyle = "#777"; ctx.fillText("↑/↓ elegir • ENTER comprar • ESC salir", canvas.width / 2, 575);
   ctx.textAlign = "left";

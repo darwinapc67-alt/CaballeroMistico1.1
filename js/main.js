@@ -26,7 +26,7 @@ function resetAll() {
   hasDash = false;
   swordLevel = 0; bowLevel = 0; arrowType = "normal";
   combatSkills = { charged: false, aerial: false, combo: false };
-  blessingSlots = 2; equippedBlessings = []; armorId = "vacío";
+  blessingSlots = 2; equippedBlessings = []; armorId = "vacío"; armorLevel = 0;
   permanentUpgrades = { vitality: 0, strength: 0 };
   bossUniqueItems = { guardian: false, queen_larva: false, abyssal_knight: false };
   hiddenCollectibles = { eclipse: false, root: false, crown: false };

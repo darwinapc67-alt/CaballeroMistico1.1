@@ -627,7 +627,7 @@ function saveGame(i) {
     hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, azariBagLevel: azariBagLevel, hasOldKey: hasOldKey, doorUnlocked: doorUnlocked, rewardAzariCollected: rewardAzariCollected, hasLantern: hasLantern, lanternLevel: lanternLevel, hasDash: hasDash,
     brightnessBoost: brightnessBoost,
     swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: combatSkills,
-    blessingSlots: blessingSlots, equippedBlessings: equippedBlessings, armorId: armorId,
+    blessingSlots: blessingSlots, equippedBlessings: equippedBlessings, armorId: armorId, armorLevel: armorLevel,
     permanentUpgrades: permanentUpgrades, bossUniqueItems: bossUniqueItems, hiddenCollectibles: hiddenCollectibles,
     bossesDefeated: {
       guardian: !!bossArenaState.guardian,
@@ -698,7 +698,7 @@ function loadGame(i) {
   combatSkills = s.combatSkills || { charged: false, aerial: false, combo: false };
   blessingSlots = s.blessingSlots || 2;
   equippedBlessings = s.equippedBlessings || [];
-  armorId = s.armorId || "vacío";
+  armorId = s.armorId || "vacío"; armorLevel = Math.max(0, Math.min(3, Number(s.armorLevel) || (armorId === "plate" ? 1 : 0)));
   permanentUpgrades = s.permanentUpgrades || { vitality: 0, strength: 0 };
   bossUniqueItems = s.bossUniqueItems || { guardian: false, queen_larva: false, abyssal_knight: false };
   hiddenCollectibles = s.hiddenCollectibles || { eclipse: false, root: false, crown: false };
