@@ -904,16 +904,8 @@ function drawMenu() {
   ctx.textAlign = "center";
   ctx.fillText((settingsSelected ? "▶  " : "    ") + translateText("⚙️ Configuración"), canvas.width/2, settingsY);
 
-  var adminY = 570, adminSelected = menuSelection === 7;
-  ctx.fillStyle = adminSelected ? "rgba(255,80,80,0.18)" : "rgba(255,255,255,0.02)";
-  ctx.fillRect(180, adminY - 20, 440, 32);
-  ctx.strokeStyle = adminSelected ? "#f66" : "#333"; ctx.lineWidth = adminSelected ? 2 : 1;
-  ctx.strokeRect(180, adminY - 20, 440, 32);
-  ctx.fillStyle = adminSelected ? "#f66" : "#888"; ctx.font = "bold 14px monospace";
-  ctx.textAlign = "center";
-  ctx.fillText((adminSelected ? "▶  " : "    ") + translateText("Panel del admin"), canvas.width/2, adminY);
   ctx.textAlign = "center"; ctx.fillStyle = "#333"; ctx.font = "12px monospace";
-  ctx.fillText(gamepadConnected ? "⬆️⬇️ Navegar  •  ❌ Seleccionar  •  ⬜ Borrar" : "↑/↓ Navegar  •  ENTER Seleccionar  •  DEL/X Borrar", canvas.width/2, 598);
+  ctx.fillText(gamepadConnected ? "⬆️⬇️ Navegar  •  ❌ Seleccionar  •  ⬜ Borrar" : "↑/↓ Navegar  •  ENTER Seleccionar  •  DEL/X Borrar", canvas.width/2, 570);
 
   if (menuSubState === "confirm_delete") {
     ctx.fillStyle = "rgba(0,0,0,0.92)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1008,8 +1000,7 @@ function drawMenu() {
       "🌐 " + translateText("Idioma") + ": " + languages[languageSelection].label,
       "🎮 " + translateText("Dispositivo") + ": " + translateText(devices[deviceSelection].label),
       "☀️ Brillo: " + Math.round(brightnessBoost * 100) + "%",
-      "🎮 Cambiar controles",
-      "🔐 " + translateText(adminMode ? "Admin activado" : "Activar modo admin")
+      "🎮 Cambiar controles"
     ];
     settings.forEach(function(option, index) {
       var y = 230 + index * 65, selected = settingsSelection === index;
@@ -1126,8 +1117,7 @@ function drawPause() {
       "🌐 Idioma: " + languages[languageSelection].label,
       "🎮 Dispositivo: " + devices[deviceSelection].label,
       "☀️ Brillo: " + Math.round(brightnessBoost * 100) + "%",
-      "🎮 Cambiar controles",
-      "🔐 " + (adminMode ? "Admin activado" : "Activar modo admin")
+      "🎮 Cambiar controles"
     ];
     pauseSettings.forEach(function(option, index) {
       var y = 210 + index * 60, selected = settingsSelection === index;

@@ -324,12 +324,6 @@ canvas.addEventListener("click", function(event) {
   } else if (y >= 510 && y < 550) {
     menuSelection = 6;
     menuSubState = "settings";
-  } else if (y >= 550 && y < 590) {
-    menuSelection = 7;
-    menuSubState = "admin_password";
-    adminFromSettings = false;
-    adminPassword = "";
-    adminMessage = "";
   }
 });
 canvas.addEventListener("click", function(event) {
@@ -371,4 +365,10 @@ ctx.fillText = function(text, x, y, maxWidth) {
 resetAll();
 setupTouchControls();
 setupFullscreenButton();
+if (window.location.pathname.replace(/\/+$/, "") === "/admin") {
+  menuSubState = "admin_password";
+  adminFromSettings = false;
+  adminPassword = "";
+  adminMessage = "";
+}
 loop();
