@@ -64,8 +64,11 @@ function drawHpBar(p, barX, barY) {
     var x = barX + i * (heartW + gap), color = p.id === 2 ? "#ff33ff" : "#ff3344";
     ctx.save();
     ctx.translate(x, barY);
-    ctx.fillStyle = i < p.hp ? color : (p.id === 2 ? "#331133" : "#331111");
-    ctx.strokeStyle = i < p.hp ? (p.id === 2 ? "#ff99ff" : "#ff8899") : "#552233";
+    var heartValue = Math.max(0, Math.min(1, p.hp - i));
+    var emptyColor = p.id === 2 ? "#331133" : "#331111";
+    var outlineColor = p.id === 2 ? "#ff99ff" : "#ff8899";
+    ctx.fillStyle = emptyColor;
+    ctx.strokeStyle = "#552233";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(5, 5, 4.5, Math.PI, 0);
@@ -74,6 +77,22 @@ function drawHpBar(p, barX, barY) {
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
+    if (heartValue > 0) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, heartValue === 0.5 ? 8 : 16, 15);
+      ctx.clip();
+      ctx.fillStyle = color;
+      ctx.strokeStyle = outlineColor;
+      ctx.beginPath();
+      ctx.arc(5, 5, 4.5, Math.PI, 0);
+      ctx.arc(10, 5, 4.5, Math.PI, 0);
+      ctx.lineTo(7.5, 14);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
     ctx.restore();
   }
 }

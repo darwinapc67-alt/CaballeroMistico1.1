@@ -99,6 +99,18 @@ function drawInventoryIcon(iconX, iconY, kind, owned, color) {
     ctx.lineTo(2, 4);
     ctx.closePath();
     ctx.fill();
+  } else if (kind === "armor") {
+    ctx.beginPath();
+    ctx.moveTo(0, -17);
+    ctx.lineTo(12, -10);
+    ctx.lineTo(10, 10);
+    ctx.lineTo(0, 17);
+    ctx.lineTo(-10, 10);
+    ctx.lineTo(-12, -10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#222b3b";
+    ctx.fillRect(-3, -11, 6, 22);
   } else if (kind === "relic") {
     ctx.beginPath();
     ctx.arc(0, 0, 13, 0, Math.PI * 2);
@@ -149,6 +161,7 @@ function drawInventory() {
     { name: "Fragmento", kind: "fragment", owned: heartFragments1 > 0 || heartFragments2 > 0, detail: (heartFragments1 + heartFragments2) + " / 6", color: "#a88be8" },
     { name: "Doble salto", kind: "doubleJump", owned: hasDoubleJump, detail: "habilidad", color: "#8ad6ff" },
     { name: "Dash", kind: "dash", owned: hasDash, detail: "habilidad", color: "#c58cff" },
+    { name: "Armadura", kind: "armor", owned: armorId === "plate", detail: armorId === "plate" ? "50% de probabilidad de medio daño" : "sin obtener", color: "#d8a85f" },
     { name: "Corazón pétreo", kind: "relic", owned: bossUniqueItems.guardian, detail: "reliquia de jefe", color: "#9ca8b2" },
     { name: "Núcleo colonia", kind: "relic", owned: bossUniqueItems.queen_larva, detail: "reliquia de jefe", color: "#d68aab" },
     { name: "Fragmento abisal", kind: "relic", owned: bossUniqueItems.abyssal_knight, detail: "reliquia de jefe", color: "#8368c9" }
@@ -1441,14 +1454,14 @@ function drawShop() {
     "Mapa", "Arco", "Flechas x20", "Fragmento de vida J1", "Fragmento de vida J2",
     "Amuleto", "Imán de Azari", "Bolsa de Azari", "Linterna", "Llave vieja",
     "Mejora de espada", "Mejora de arco", "Flecha pesada", "Golpe cargado",
-    "Ataque aéreo", "Combo", "Bendición codiciosa", "Bombas x5"
+    "Ataque aéreo", "Combo", "Bendición codiciosa", "Bombas x5", "Armadura (50 Azari)"
   ];
   ctx.textAlign = "left";
   ctx.fillStyle = "#ffd700"; ctx.font = "bold 15px monospace";
-  ctx.fillText("ARTÍCULOS", 110, 285);
-  ctx.font = "12px monospace";
+  ctx.fillText("ARTÍCULOS", 110, 275);
+  ctx.font = "11px monospace";
   for (var itemIndex = 0; itemIndex < shopItems.length; itemIndex++) {
-    var itemY = 312 + itemIndex * 15;
+    var itemY = 298 + itemIndex * 13;
     if (itemIndex === menuSelection) {
       ctx.fillStyle = "rgba(108,204,204,.25)";
       ctx.fillRect(100, itemY - 12, 360, 16);
@@ -1457,7 +1470,8 @@ function drawShop() {
     ctx.fillText((itemIndex === menuSelection ? "▶ " : "  ") + shopItems[itemIndex], 110, itemY);
   }
   ctx.textAlign = "right";
-  ctx.fillStyle = "#6cc"; ctx.fillText("Bombas: " + bombs, 730, 285);
+  ctx.fillStyle = "#6cc"; ctx.fillText("Bombas: " + bombs, 730, 275);
+  ctx.fillText("Armadura: " + (armorId === "plate" ? "comprada" : "no"), 730, 292);
   ctx.textAlign = "center";
   ctx.fillStyle = "#777"; ctx.fillText("↑/↓ elegir • ENTER comprar • ESC salir", canvas.width / 2, 575);
   ctx.textAlign = "left";

@@ -678,10 +678,11 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (shopId === 0) {
-      if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 18) % 18; e.preventDefault(); return; }
-      if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % 18; e.preventDefault(); return; }
+      if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 19) % 19; e.preventDefault(); return; }
+      if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % 19; e.preventDefault(); return; }
       if (e.key === "Enter") {
         if (menuSelection === 17 && azari >= 1) { azari -= 1; bombs += 5; sfxBuy(); }
+        if (menuSelection === 18 && armorId !== "plate" && azari >= 50) { azari -= 50; armorId = "plate"; sfxBuy(); }
         e.preventDefault(); return;
       }
       e.preventDefault(); return;
@@ -831,7 +832,7 @@ function processGamepadInput() {
     return;
   }
   if (shopOpen && (shopId === 0 || shopId === 1)) {
-    var shopOptions = shopId === 0 ? 18 : 7;
+    var shopOptions = shopId === 0 ? 19 : 7;
     if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
     if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + shopOptions) % shopOptions; gamepadMenuAxisLock = 1; }
     if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % shopOptions; gamepadMenuAxisLock = 1; }
@@ -862,6 +863,7 @@ function processGamepadInput() {
         if (menuSelection === 15 && !combatSkills.combo && hasSword && azari >= 50) { azari -= 50; combatSkills.combo = true; sfxBuy(); }
         if (menuSelection === 16 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; sfxBuy(); }
         if (menuSelection === 17 && azari >= 1) { azari -= 1; bombs += 5; sfxBuy(); }
+        if (menuSelection === 18 && armorId !== "plate" && azari >= 50) { azari -= 50; armorId = "plate"; sfxBuy(); }
       } else {
         if (menuSelection === 0 && swordLevel < 3 && hasSword && azari >= 30) { azari -= 30; swordLevel++; sfxBuy(); }
         if (menuSelection === 1 && bowLevel < 3 && hasBow && azari >= 30) { azari -= 30; bowLevel++; sfxBuy(); }

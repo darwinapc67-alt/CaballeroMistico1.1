@@ -11,7 +11,9 @@ function playerTakeDamage(p, dmg, isBossDamage) {
   var guardianGuard = bossAbilities.guardian ? 0.8 : 1;
   var armorGuard = armorId === "cave" ? 0.85 : 1;
   var blessingGuard = equippedBlessings.indexOf("stone") >= 0 ? 0.85 : 1;
-  p.hp -= isBossDamage ? 1 : Math.max(1, Math.ceil(dmg * difficultyData.damage * guardianGuard * armorGuard * blessingGuard));
+  var incomingDamage = isBossDamage ? 1 : Math.max(1, Math.ceil(dmg * difficultyData.damage * guardianGuard * armorGuard * blessingGuard));
+  if (armorId === "plate" && Math.random() < 0.5) incomingDamage *= 0.5;
+  p.hp -= incomingDamage;
   p.inv = 40;
   spawnParticles(p.x + p.w/2, p.y + p.h/2, "#f44", 10);
   flash = 0.4;
@@ -1074,7 +1076,7 @@ function defeatBoss(e) {
   var result = rewards[e.type] || rewards.guardian;
   bossVictory = { active: true, timer: 260, type: e.type, reward: result.reward, ability: result.ability, zone: result.zone };
   bossUniqueItems[e.type] = true;
-  if (e.type === "guardian") armorId = "cave";
+  if (e.type === "guardian" && armorId === "vacío") armorId = "cave";
   spawnFloatText(e.x - 20, e.y - 22, translateText("JEFE DERROTADO"), "#ffd700");
   speakBossDialogue("JEFE DERROTADO");
   startMusic();
