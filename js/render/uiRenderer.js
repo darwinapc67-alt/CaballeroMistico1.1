@@ -144,15 +144,27 @@ function drawInventory() {
   ctx.fillText("EQUIPO", 208, 92);
   ctx.textAlign = "center";
   ctx.fillStyle = "#f3d36a";
-  ctx.fillText("HABITACIÓN " + (inventoryPage + 1) + " / 2", 380, 92);
+  var inventoryPageCount = getInventoryPageCount();
+  ctx.fillText("HABITACIÓN " + (inventoryPage + 1) + " / " + inventoryPageCount, 380, 92);
   ctx.fillStyle = inventoryPage > 0 ? "#f3d36a" : "#485363";
   ctx.fillText("◀", 525, 92);
-  ctx.fillStyle = inventoryPage < 1 ? "#f3d36a" : "#485363";
+  ctx.fillStyle = inventoryPage < inventoryPageCount - 1 ? "#f3d36a" : "#485363";
   ctx.fillText("▶", 550, 92);
   ctx.textAlign = "left";
 
-  var inventorySlots = [
-    { name: hasSword ? getWeaponConfig(weaponId).name : "Arma", kind: "sword", owned: hasSword, detail: hasSword ? "equipada • " + unlockedWeapons.length + "/" + WEAPON_PROGRESSION.length : "sin obtener", color: hasSword ? getWeaponConfig(weaponId).color : "#e4e9f0" },
+  var inventorySlots = [];
+  unlockedWeapons.forEach(function(unlockedWeaponId) {
+    var unlockedWeapon = getWeaponConfig(unlockedWeaponId);
+    inventorySlots.push({
+      name: unlockedWeapon.name,
+      kind: "sword",
+      owned: hasSword,
+      detail: unlockedWeapon.id === weaponId ? "equipada • nivel " + getWeaponLevel(unlockedWeapon.id) : "nivel " + getWeaponLevel(unlockedWeapon.id),
+      color: unlockedWeapon.color,
+      weaponId: unlockedWeapon.id
+    });
+  });
+  inventorySlots = inventorySlots.concat([
     { name: "Arco", kind: "bow", owned: hasBow, detail: hasBow ? arrows + " flechas" : "sin obtener", color: "#b98b58" },
     { name: "Llave vieja", kind: "key", owned: hasOldKey, detail: hasOldKey ? "puerta antigua" : "sin obtener", color: "#d4af37" },
     { name: "Amuleto", kind: "amulet", owned: hasAzariCharm, detail: "bendición", color: "#73d4cc" },
@@ -166,7 +178,7 @@ function drawInventory() {
     { name: "Núcleo colonia", kind: "relic", owned: bossUniqueItems.queen_larva, detail: "reliquia de jefe", color: "#d68aab" },
     { name: "Fragmento abisal", kind: "relic", owned: bossUniqueItems.abyssal_knight, detail: "reliquia de jefe", color: "#8368c9" },
     { name: "Espada larva rota", kind: "sword", owned: hasBrokenLarvaSword, detail: "pendiente de reparación", color: "#d68aab" }
-  ];
+  ]);
   var pageSlots = inventorySlots.slice(inventoryPage * 9, inventoryPage * 9 + 9);
   while (pageSlots.length < 9) pageSlots.push({ name: "", owned: false, detail: "", color: "#647080" });
   var slotX = 28, slotY = 112, slotW = 150, slotH = 60, slotGap = 6;
@@ -236,18 +248,10 @@ function drawInventory() {
   ctx.fillText("Azari", 548, 384);
   ctx.fillText(String(azari), 700, 384);
   ctx.fillText("ARMAS DESBLOQUEADAS", 548, 410);
-  ctx.fillText(unlockedWeapons.length + " / " + WEAPON_PROGRESSION.length, 700, 410);
+  ctx.fillText(unlockedWeapons.length + " obtenidas", 700, 410);
   ctx.fillStyle = "#59677d";
-  ctx.fillText("PROGRESIÓN DE ARMAS", 548, 438);
-  for (var weaponProgressIndex = 0; weaponProgressIndex < WEAPON_PROGRESSION.length; weaponProgressIndex++) {
-    var weaponProgressId = WEAPON_PROGRESSION[weaponProgressIndex];
-    var weaponProgressConfig = getWeaponConfig(weaponProgressId);
-    var weaponProgressUnlocked = isWeaponUnlocked(weaponProgressId);
-    ctx.fillStyle = weaponProgressUnlocked ? weaponProgressConfig.color : "#596272";
-    ctx.fillText((weaponProgressUnlocked ? "✓ " : "🔒 ") + (weaponProgressIndex + 1) + ". " + weaponProgressConfig.shortName, 548, 458 + weaponProgressIndex * 18);
-  }
-  ctx.fillStyle = "#59677d";
-  ctx.fillText("ENTER sobre el arma: equipar", 548, 574);
+  ctx.fillText("Cada arma ocupa su propio espacio.", 548, 438);
+  ctx.fillText("Selecciona un arma y pulsa ENTER", 548, 456);
   ctx.textAlign = "left";
   return;
   if (hasMap) {
@@ -792,7 +796,8 @@ function drawDeathScreen() {
   ctx.fillText("HAS MUERTO", canvas.width / 2, 170);
   ctx.fillStyle = "#ddd";
   ctx.font = "14px monospace";
-  ctx.fillText("Tres derrotas: elige cómo continuar.", canvas.width / 2, 215);
+  var deathProgress = gameMode === "infinite" ? "Derrota " + consecutiveDeaths + " / 3" : "Derrota";
+  ctx.fillText(deathProgress + ": elige cómo continuar.", canvas.width / 2, 215);
   var deathOptions = ["Volver al último punto de guardado", "💀 " + (adRewardedRevive ? "Revivir ahora" : "Ver anuncio para revivir"), "Ir al menú principal"];
   deathOptions.forEach(function(option, index) {
     var y = 300 + index * 54;

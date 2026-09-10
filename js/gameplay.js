@@ -1,5 +1,5 @@
 function playerTakeDamage(p, dmg, isBossDamage) {
-  if (p.inv > 0 || p.frozen) return;
+  if (gameState !== ST_PLAYING || playerDead || p.inv > 0 || p.frozen) return;
   if (p.blocking) {
     p.inv = 8;
     spawnParticles(p.x + p.w/2, p.y + p.h/2, "#9de8ff", 8, 2);
@@ -26,13 +26,14 @@ function playerTakeDamage(p, dmg, isBossDamage) {
       var totalDeaths = stats.deaths;
       trackGameEvent("player_death", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
       trackGameEvent("game_over", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
-      resetAll();
+      restoreCheckpoint(false);
       stats.deaths = totalDeaths;
-      gameState = ST_PLAYING;
-      spawnFloatText(player.x, player.y - 32, "¡Tres derrotas! Regresas al inicio", "#ffd700");
+      consecutiveDeaths = 0;
+      spawnFloatText(player.x, player.y - 32, "¡Tres derrotas! Último punto de guardado", "#ffd700");
       return;
     }
     playerDead = true;
+    spawnFloatText(p.x, p.y - 34, "DERROTA " + consecutiveDeaths + " / 3", "#ff7777");
     trackGameEvent("player_death", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
     deathTimer = 0;
     deathAnimTimer = 0;
@@ -155,7 +156,8 @@ function saveHealingStoneCheckpoint() {
   spawnFloatText(player.x, player.y - 48, "JUEGO GUARDADO", "#64e6ae");
 }
 
-function restoreCheckpoint() {
+function restoreCheckpoint(preserveInfiniteProgress) {
+    if (preserveInfiniteProgress === undefined) preserveInfiniteProgress = true;
     var currentSwordState = {
       hasSword: hasSword,
       swordEquipped: swordEquipped,
@@ -163,16 +165,16 @@ function restoreCheckpoint() {
       unlockedWeapons: unlockedWeapons.slice(),
       swordLevel: swordLevel
     };
-    var infiniteState = gameMode === "infinite" ? {
+    var infiniteState = gameMode === "infinite" && preserveInfiniteProgress ? {
       hasSword: hasSword, swordEquipped: swordEquipped, weaponId: weaponId, unlockedWeapons: unlockedWeapons.slice(), hasBow: hasBow, arrows: arrows, bombs: bombs,
-      hasDash: hasDash, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel,
+      hasDash: hasDash, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel, weaponLevels: JSON.parse(JSON.stringify(weaponLevels)),
       bowLevel: bowLevel, combatSkills: JSON.parse(JSON.stringify(combatSkills)),
       infiniteWave: infiniteWave
     } : null;
     var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, weaponId: DEFAULT_WEAPON_ID, unlockedWeapons: [DEFAULT_WEAPON_ID], hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasAzariMagnet: false, hasAzariBag: false, azariBagLevel: 0, hasOldKey: false, doorUnlocked: false, rewardAzariCollected: false, hasLantern: false, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, blessingSlots: 2, equippedBlessings: [], armorId: "vacío", armorLevel: 0, permanentUpgrades: { vitality: 0, strength: 0 }, bossUniqueItems: { guardian: false, queen_larva: false, abyssal_knight: false }, hiddenCollectibles: { eclipse: false, root: false, crown: false } };
     currentRoom = cp.room; player.x = cp.px; player.y = cp.py;
     player.hp = cp.hp; player.maxHp = cp.maxHp;
-    azari = cp.azari;
+    azari = gameMode === "infinite" && preserveInfiniteProgress ? azari : cp.azari;
     hasSword = !!cp.hasSword || currentSwordState.hasSword;
     swordEquipped = hasSword && (!!cp.swordEquipped || currentSwordState.swordEquipped);
     weaponId = normalizeWeaponId(cp.weaponId || currentSwordState.weaponId);
@@ -204,6 +206,7 @@ function restoreCheckpoint() {
     hasDash: infiniteState.hasDash,
     hasDoubleJump: infiniteState.hasDoubleJump,
     swordLevel: infiniteState.swordLevel,
+    weaponLevels: infiniteState.weaponLevels,
     bowLevel: infiniteState.bowLevel,
     combatSkills: JSON.parse(JSON.stringify(infiniteState.combatSkills)),
     infiniteWave: infiniteState.infiniteWave
@@ -236,7 +239,7 @@ function restoreCheckpoint() {
     player2.weaponId = weaponId;
     player.maxJumps = hasDoubleJump ? 2 : 1; player.jumpsLeft = player.maxJumps;
     player.frozen = false; player.vx = 0; player.vy = 0; playerDead = false;
-    if (gameMode !== "infinite") consecutiveDeaths = 0;
+    if (gameMode !== "infinite" || !preserveInfiniteProgress) consecutiveDeaths = 0;
     cameraX = currentRoom * ROOM_W; targetCamX = cameraX; cameraY = 0; targetCamY = 0;
     resetDeathState();
   }

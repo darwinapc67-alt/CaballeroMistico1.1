@@ -51,3 +51,6 @@ function unlockWeaponsForInfiniteWave(wave) {
   }
   return index >= 0 ? unlockWeaponAt(index) : false;
 }
+function getInventoryPageCount() {
+  return Math.max(2, Math.ceil((unlockedWeapons.length + 13) / 9));
+}

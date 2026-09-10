@@ -143,11 +143,13 @@ window.addEventListener("keydown", function(e) {
   }
   if (gameState === ST_INVENTORY && !mapOpen) {
     var inventoryItems = 9;
-    if (left) { inventoryPage = inventoryPage > 0 ? inventoryPage - 1 : 1; inventorySelection = 0; e.preventDefault(); return; }
-    if (right) { inventoryPage = inventoryPage < 1 ? inventoryPage + 1 : 0; inventorySelection = 0; e.preventDefault(); return; }
+    var inventoryPageCount = getInventoryPageCount();
+    if (left) { inventoryPage = inventoryPage > 0 ? inventoryPage - 1 : inventoryPageCount - 1; inventorySelection = 0; e.preventDefault(); return; }
+    if (right) { inventoryPage = inventoryPage < inventoryPageCount - 1 ? inventoryPage + 1 : 0; inventorySelection = 0; e.preventDefault(); return; }
     if (up) { inventorySelection = inventorySelection < 3 ? inventorySelection + 6 : inventorySelection - 3; e.preventDefault(); return; }
     if (down) { inventorySelection = inventorySelection >= 6 ? inventorySelection - 6 : inventorySelection + 3; e.preventDefault(); return; }
-    if (k === "e" && inventoryPage === 0 && inventorySelection === 2 && hasOldKey) {
+    var inventoryWeaponCount = unlockedWeapons.length;
+    if (k === "e" && inventoryPage === 0 && inventorySelection === inventoryWeaponCount + 1 && hasOldKey) {
       keyReady = true;
       inventoryOpen = false;
       gameState = ST_PLAYING;
@@ -156,18 +158,16 @@ window.addEventListener("keydown", function(e) {
     }
     if (confirm) {
       var selectedInventoryItem = inventoryPage * 9 + inventorySelection;
-      if (selectedInventoryItem === 0 && hasSword && unlockedWeapons.length > 0) {
-        var equippedWeaponIndex = unlockedWeapons.indexOf(weaponId);
-        var nextWeaponIndex = (equippedWeaponIndex + 1) % unlockedWeapons.length;
-        weaponId = normalizeWeaponId(unlockedWeapons[nextWeaponIndex]);
+      if (selectedInventoryItem >= 0 && selectedInventoryItem < inventoryWeaponCount && hasSword) {
+        weaponId = normalizeWeaponId(unlockedWeapons[selectedInventoryItem]);
         player.weaponId = weaponId;
         player2.weaponId = weaponId;
         spawnFloatText(player.x, player.y - 28, getWeaponConfig(weaponId).name, getWeaponConfig(weaponId).color);
       }
-      if (selectedInventoryItem === 3 && hasAzariCharm) toggleBlessing("greedy");
-      if (selectedInventoryItem === 9 && bossUniqueItems.guardian) toggleBlessing("stone");
-      if (selectedInventoryItem === 10 && bossUniqueItems.queen_larva) toggleBlessing("brood");
-      if (selectedInventoryItem === 11 && bossUniqueItems.abyssal_knight) toggleBlessing("abyss");
+      if (selectedInventoryItem === inventoryWeaponCount + 2 && hasAzariCharm) toggleBlessing("greedy");
+      if (selectedInventoryItem === inventoryWeaponCount + 9 && bossUniqueItems.guardian) toggleBlessing("stone");
+      if (selectedInventoryItem === inventoryWeaponCount + 10 && bossUniqueItems.queen_larva) toggleBlessing("brood");
+      if (selectedInventoryItem === inventoryWeaponCount + 11 && bossUniqueItems.abyssal_knight) toggleBlessing("abyss");
       e.preventDefault(); return;
     }
   }
@@ -331,7 +331,7 @@ window.addEventListener("keydown", function(e) {
     if (down || k === "s") deathChoice = (deathChoice + 1) % deathOptions;
     if (confirm) {
       if (deathChoice === 0) {
-        restoreCheckpoint();
+        restoreCheckpoint(true);
       } else if (deathChoice === 1) {
         if (adRewardedRevive) {
           adRewardedRevive = false;

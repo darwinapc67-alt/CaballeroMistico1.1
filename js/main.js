@@ -338,8 +338,9 @@ canvas.addEventListener("click", function(event) {
   var x = (event.clientX - rect.left) * canvas.width / rect.width;
   var y = (event.clientY - rect.top) * canvas.height / rect.height;
   if (y >= 78 && y <= 104 && x >= 505 && x <= 570) {
-    if (x < 538) inventoryPage = inventoryPage > 0 ? inventoryPage - 1 : 1;
-    else inventoryPage = inventoryPage < 1 ? inventoryPage + 1 : 0;
+    var inventoryPageCount = getInventoryPageCount();
+    if (x < 538) inventoryPage = inventoryPage > 0 ? inventoryPage - 1 : inventoryPageCount - 1;
+    else inventoryPage = inventoryPage < inventoryPageCount - 1 ? inventoryPage + 1 : 0;
     inventorySelection = 0;
     inventoryHover = -1;
     return;
