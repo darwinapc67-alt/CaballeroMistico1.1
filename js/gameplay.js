@@ -24,6 +24,7 @@ function playerTakeDamage(p, dmg, isBossDamage) {
     consecutiveDeaths++;
     if (gameMode === "infinite" && consecutiveDeaths >= 3) {
       var totalDeaths = stats.deaths;
+      trackGameEvent("player_death", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
       trackGameEvent("game_over", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
       resetAll();
       stats.deaths = totalDeaths;
@@ -32,7 +33,7 @@ function playerTakeDamage(p, dmg, isBossDamage) {
       return;
     }
     playerDead = true;
-    trackGameEvent("game_over", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
+    trackGameEvent("player_death", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
     deathTimer = 0;
     deathAnimTimer = 0;
     deathChoice = 0;
@@ -72,6 +73,9 @@ function checkAchievementProgress(isBoss) {
     unlocked.push("100 enemigos");
   }
   if (unlocked.length) {
+    unlocked.forEach(function(title) {
+      trackGameEvent("unlock_achievement", { achievement_name: title });
+    });
     achievementNotify = { active: true, timer: 240, title: unlocked[unlocked.length - 1] };
     sfxDiscovery();
   }
@@ -1232,7 +1236,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   if (newRoom >= rooms.length) newRoom = rooms.length - 1;
   if (rooms[currentRoom].verticalRoom) newRoom = currentRoom;
   if (newRoom !== currentRoom) {
-    trackGameEvent("level_end", { level: currentRoom + 1, room: currentRoom, next_level: newRoom + 1 });
+    trackLevelChange(currentRoom, newRoom);
     currentRoom = newRoom;
     stats.roomsVisited++;
     var names = ["", "CUEVA OLVIDADA", "", "", "", "", "", "", "", "TIENDA", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""];
@@ -1874,9 +1878,8 @@ function updateTransition() {
   } else if (transPhase === "load") {
     transFade = 1;
     if (transTimer === 25) {
-      trackGameEvent("level_end", { level: currentRoom + 1, room: currentRoom, next_level: transTargetRoom + 1 });
+      trackLevelChange(currentRoom, transTargetRoom);
       currentRoom = transTargetRoom;
-      trackGameEvent("level_start", { level: currentRoom + 1, room: currentRoom });
       if (currentRoom > highestRoomReached) highestRoomReached = currentRoom;
       var room = rooms[currentRoom];
       var transitionRoomOrigin = room.worldX !== undefined ? room.worldX : currentRoom * ROOM_W;

@@ -722,6 +722,7 @@ function toggleBlessing(id) {
   if (index >= 0) { equippedBlessings.splice(index, 1); return; }
   if (equippedBlessings.length >= blessingSlots) equippedBlessings.shift();
   equippedBlessings.push(id);
+  trackGameEvent("blessing_selected", { blessing_name: id });
 }
 
 document.addEventListener("keyup", function(e) {

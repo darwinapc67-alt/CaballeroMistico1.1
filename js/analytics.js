@@ -22,3 +22,16 @@ function spendAzari(amount, item) {
   });
   return true;
 }
+
+function trackLevelChange(previousRoom, nextRoom) {
+  if (previousRoom === nextRoom) return;
+  trackGameEvent("level_end", {
+    level: previousRoom + 1,
+    room: previousRoom,
+    next_level: nextRoom + 1
+  });
+  trackGameEvent("level_start", {
+    level: nextRoom + 1,
+    room: nextRoom
+  });
+}
