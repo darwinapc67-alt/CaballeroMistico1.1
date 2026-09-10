@@ -368,7 +368,9 @@ ctx.fillText = function(text, x, y, maxWidth) {
 resetAll();
 setupTouchControls();
 setupFullscreenButton();
-if (window.location.pathname.replace(/\/+$/, "") === "/admin") {
+var adminPath = window.location.pathname.replace(/\/+$/, "") === "/admin";
+var adminQuery = new URLSearchParams(window.location.search).get("admin") === "1";
+if (adminPath || adminQuery) {
   menuSubState = "admin_password";
   adminFromSettings = false;
   adminPassword = "";
