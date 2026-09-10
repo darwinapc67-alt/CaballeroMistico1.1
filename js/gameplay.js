@@ -1524,37 +1524,34 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
 function updatePlayer() {
   if (gameState !== ST_PLAYING) return;
   if (transitionCooldown > 0) transitionCooldown--;
-  var moveLeft = keys[getControlBinding("moveLeft").key];
-  var moveRight = keys[getControlBinding("moveRight").key];
-  var jump = keys[getControlBinding("jump").key];
-  var attack = keys[getControlBinding("attack").key] && hasSword;
+  var moveLeft = isControlPressed("moveLeft");
+  var moveRight = isControlPressed("moveRight");
+  var jump = isControlPressed("jump");
+  var attack = isControlPressed("attack") && hasSword;
   if (attack && !swordEquipped) {
     swordEquipped = true;
     player.swordEquipped = true;
     player.swordSheathed = false;
   }
   var down = keys["arrowdown"] || keys["s"];
-  var shoot = keys[getControlBinding("shoot").key];
-  var interact = keys[getControlBinding("interact").key];
-  var block = keys[getControlBinding("block").key];
-  var dash = keys[getControlBinding("dash").key];
+  var shoot = isControlPressed("shoot");
+  var interact = isControlPressed("interact");
+  var block = isControlPressed("block");
+  var dash = isControlPressed("dash");
   var bomb = keys["b"];
   if (gamepadConnected) {
     if (gpAxes.x < -0.25) moveLeft = true;
     if (gpAxes.x > 0.25) moveRight = true;
-    var jumpPad = getControlBinding("jump").pad;
-    var attackPad = getControlBinding("attack").pad;
-    if (gpButtons[jumpPad] && !prevGPButtons[jumpPad]) jump = true;
-    attack = !!gpButtons[attackPad];
+    var jumpPads = getControlPads("jump");
+    if (jumpPads.some(function(pad) { return gpButtons[pad] && !prevGPButtons[pad]; })) jump = true;
+    attack = isControlPadPressed("attack", gpButtons);
     down = down || gpAxes.y > 0.5;
-    var shootPad = getControlBinding("shoot").pad;
-    var interactPad = getControlBinding("interact").pad;
-    var blockPad = getControlBinding("block").pad;
-    var dashPad = getControlBinding("dash").pad;
-    if (gpButtons[shootPad] && !prevGPButtons[shootPad]) shoot = true;
-    if (gpButtons[interactPad] && !prevGPButtons[interactPad]) interact = true;
-    if (gpButtons[blockPad]) block = true;
-    if (gpButtons[dashPad] && !prevGPButtons[dashPad]) dash = true;
+    var shootPads = getControlPads("shoot");
+    var interactPads = getControlPads("interact");
+    if (shootPads.some(function(pad) { return gpButtons[pad] && !prevGPButtons[pad]; })) shoot = true;
+    if (interactPads.some(function(pad) { return gpButtons[pad] && !prevGPButtons[pad]; })) interact = true;
+    if (isControlPadPressed("block", gpButtons)) block = true;
+    if (getControlPads("dash").some(function(pad) { return gpButtons[pad] && !prevGPButtons[pad]; })) dash = true;
   }
   updateGenericPlayer(player, moveLeft, moveRight, jump, attack, interact, shoot, block, dash, down, bomb);
 }
@@ -1613,13 +1610,13 @@ function checkSwordHitEnemiesFor(p) {
   if (p.swordSwing <= 0) return;
 
   var weapon = getWeaponConfig(p.weaponId || weaponId);
-  var reach = p.attackType === "charged" ? weapon.range + 24 : (p.attackType === "down" ? weapon.range + 10 : weapon.range);
+  var reach = p.attackType === "charged" ? weapon.range + 30 : (p.attackType === "down" ? weapon.range + 28 : weapon.range + 18);
   var swingBoxes = p.attackType === "down" ? [
-    { x: p.x - 10, y: p.y + p.h - 2, w: p.w + 20, h: reach }
+    { x: p.x - 18, y: p.y + p.h - 2, w: p.w + 36, h: reach }
   ] : [
-    { x: p.x + (p.facing > 0 ? p.w : -reach), y: p.y + 1, w: reach, h: 28 },
-    { x: p.x - 10, y: p.y - reach + 4, w: p.w + 20, h: reach },
-    { x: p.x - 10, y: p.y + p.h - 4, w: p.w + 20, h: reach }
+    { x: p.x + (p.facing > 0 ? p.w : -reach), y: p.y - 3, w: reach, h: p.h + 6 },
+    { x: p.x - 18, y: p.y - reach + 4, w: p.w + 36, h: reach },
+    { x: p.x - 18, y: p.y + p.h - 4, w: p.w + 36, h: reach }
   ];
   var room = rooms[currentRoom];
   bossProjectiles.forEach(function(projectile) {

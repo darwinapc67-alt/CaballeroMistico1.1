@@ -177,16 +177,16 @@ var gamepadConnected = false, gamepadIndex = -1;
 var gpButtons = {}, prevGPButtons = {}, gpAxes = { x: 0, y: 0 };
 var gamepadMenuAxisLock = 0;
 var controlActions = [
-  { id: "moveLeft", label: "Mover izquierda", key: "a", pad: 14 },
-  { id: "moveRight", label: "Mover derecha", key: "d", pad: 15 },
-  { id: "jump", label: "Saltar", key: " ", pad: 0 },
-  { id: "attack", label: "Atacar", key: "x", pad: 2 },
-  { id: "shoot", label: "Disparar", key: "z", pad: 1 },
-  { id: "interact", label: "Interactuar", key: "e", pad: 3 },
-  { id: "block", label: "Bloquear", key: "c", pad: 6 },
-  { id: "dash", label: "Dash", key: "shift", pad: 5 }
+  { id: "moveLeft", label: "Mover izquierda", key: ["a"], pad: [14] },
+  { id: "moveRight", label: "Mover derecha", key: ["d"], pad: [15] },
+  { id: "jump", label: "Saltar", key: [" "], pad: [0] },
+  { id: "attack", label: "Atacar", key: ["x"], pad: [2] },
+  { id: "shoot", label: "Disparar", key: ["z"], pad: [1] },
+  { id: "interact", label: "Interactuar", key: ["e"], pad: [3] },
+  { id: "block", label: "Bloquear", key: ["c"], pad: [6] },
+  { id: "dash", label: "Dash", key: ["shift"], pad: [5] }
 ];
-var controlsConfigSelection = 0, controlsConfigDevice = "pc", controlsConfigListening = false;
+var controlsConfigSelection = 0, controlsConfigActionSelection = 0, controlsConfigDevice = "pc", controlsConfigListening = false, controlsConfigSlot = 0;
 var CONTROLS_KEY = "caballero_mistico_controls_v1";
 var touchLayout = {
   opacity: 0.86,
@@ -216,8 +216,8 @@ function loadControlBindings() {
     var saved = JSON.parse(localStorage.getItem(CONTROLS_KEY) || "{}");
     controlActions.forEach(function(action) {
       if (saved[action.id]) {
-        if (saved[action.id].key !== undefined) action.key = saved[action.id].key;
-        if (saved[action.id].pad !== undefined) action.pad = saved[action.id].pad;
+        if (saved[action.id].key !== undefined) action.key = Array.isArray(saved[action.id].key) ? saved[action.id].key.slice(0, 4) : [saved[action.id].key];
+        if (saved[action.id].pad !== undefined) action.pad = Array.isArray(saved[action.id].pad) ? saved[action.id].pad.slice(0, 4) : [saved[action.id].pad];
       }
     });
   } catch (error) {
@@ -228,9 +228,23 @@ function loadControlBindings() {
 function saveControlBindings() {
   var saved = {};
   controlActions.forEach(function(action) {
-    saved[action.id] = { key: action.key, pad: action.pad };
+    saved[action.id] = { key: action.key.slice(0, 4), pad: action.pad.slice(0, 4) };
   });
   localStorage.setItem(CONTROLS_KEY, JSON.stringify(saved));
+}
+function getControlKeys(id) {
+  var binding = getControlBinding(id);
+  return binding ? (Array.isArray(binding.key) ? binding.key : [binding.key]) : [];
+}
+function isControlPressed(id) {
+  return getControlKeys(id).some(function(key) { return !!keys[key]; });
+}
+function getControlPads(id) {
+  var binding = getControlBinding(id);
+  return binding ? (Array.isArray(binding.pad) ? binding.pad : [binding.pad]) : [];
+}
+function isControlPadPressed(id, buttons) {
+  return getControlPads(id).some(function(pad) { return !!buttons[pad]; });
 }
 
 function loadTouchLayout() {
