@@ -371,6 +371,7 @@ setupFullscreenButton();
 var adminPath = window.location.pathname.replace(/\/+$/, "") === "/admin";
 var adminQuery = new URLSearchParams(window.location.search).get("admin") === "1";
 if (adminPath || adminQuery) {
+  gameState = ST_MENU;
   menuSubState = "admin_password";
   adminFromSettings = false;
   adminPassword = "";
