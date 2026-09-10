@@ -24,6 +24,7 @@ function playerTakeDamage(p, dmg, isBossDamage) {
     consecutiveDeaths++;
     if (gameMode === "infinite" && consecutiveDeaths >= 3) {
       var totalDeaths = stats.deaths;
+      trackGameEvent("game_over", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
       resetAll();
       stats.deaths = totalDeaths;
       gameState = ST_PLAYING;
@@ -31,6 +32,7 @@ function playerTakeDamage(p, dmg, isBossDamage) {
       return;
     }
     playerDead = true;
+    trackGameEvent("game_over", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
     deathTimer = 0;
     deathAnimTimer = 0;
     deathChoice = 0;
@@ -408,9 +410,11 @@ function executeAdminCommand(rawCommand) {
 }
 
 function collectAzari(amount) {
+  var previousAzari = azari;
   var maxAzari = azariBagLevel === 0 ? 999 : [999, 1999, 2999, 4999, 7499, 9999][azariBagLevel];
   var rewardAmount = adAzariBonusTimer > 0 ? amount * 2 : amount;
   azari = Math.min(maxAzari, azari + Math.max(0, rewardAmount));
+  trackEarnVirtualCurrency(azari - previousAzari, "pickup");
 }
 
 function bossTarget(e) {
@@ -658,6 +662,7 @@ function updateInfiniteMode() {
   var living = enemies.filter(function(e) { return e.room === 0 && e.infiniteEnemy && !e.dead; }).length;
   if (infiniteSpawnTimer <= 0 && living === 0) {
     infiniteWave++;
+    trackGameEvent("infinite_wave", { wave: infiniteWave });
     swordLevel = Math.max(swordLevel, Math.min(3, infiniteWave - 1));
     if (infiniteWave >= 3) hasDash = true;
     if (infiniteWave >= 4) { hasDoubleJump = true; player.maxJumps = 2; player.jumpsLeft = 2; }
@@ -1058,6 +1063,7 @@ function updateBombs() {
 function defeatBoss(e) {
   if (e.dead) return;
   e.dead = true; e.hp = 0; stats.enemiesKilled++; checkAchievementProgress(true);
+  trackGameEvent("boss_defeated", { boss_name: e.type, room: e.room });
   bossArenaState[e.type] = true;
   bossAbilities[e.type] = true;
   bossZonesUnlocked[e.type] = true;
@@ -1226,6 +1232,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   if (newRoom >= rooms.length) newRoom = rooms.length - 1;
   if (rooms[currentRoom].verticalRoom) newRoom = currentRoom;
   if (newRoom !== currentRoom) {
+    trackGameEvent("level_end", { level: currentRoom + 1, room: currentRoom, next_level: newRoom + 1 });
     currentRoom = newRoom;
     stats.roomsVisited++;
     var names = ["", "CUEVA OLVIDADA", "", "", "", "", "", "", "", "TIENDA", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""];
@@ -1832,6 +1839,7 @@ function startBossDialogue(roomIndex) {
   bossDialogueLines = dialogues[roomIndex] || [];
   if (!bossDialogueLines.length) return false;
   bossDialogueSeen[roomIndex] = true;
+  trackGameEvent("boss_start", { boss_name: rooms[roomIndex].bossName, room: roomIndex });
   bossDialogueIndex = 0;
   dialogueMode = "boss";
   bossIntroTimer = 110;
@@ -1866,7 +1874,9 @@ function updateTransition() {
   } else if (transPhase === "load") {
     transFade = 1;
     if (transTimer === 25) {
+      trackGameEvent("level_end", { level: currentRoom + 1, room: currentRoom, next_level: transTargetRoom + 1 });
       currentRoom = transTargetRoom;
+      trackGameEvent("level_start", { level: currentRoom + 1, room: currentRoom });
       if (currentRoom > highestRoomReached) highestRoomReached = currentRoom;
       var room = rooms[currentRoom];
       var transitionRoomOrigin = room.worldX !== undefined ? room.worldX : currentRoom * ROOM_W;

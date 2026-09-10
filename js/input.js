@@ -678,7 +678,7 @@ window.addEventListener("keydown", function(e) {
       if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 19) % 19; e.preventDefault(); return; }
       if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % 19; e.preventDefault(); return; }
       if (e.key === "Enter") {
-        if (menuSelection === 17 && azari >= 1) { azari -= 1; bombs += 5; sfxBuy(); }
+        if (menuSelection === 17 && azari >= 1) { spendAzari(1, "bombs"); bombs += 5; sfxBuy(); }
         if (menuSelection === 18) buyArmorUpgrade();
         e.preventDefault(); return;
       }
@@ -688,13 +688,13 @@ window.addEventListener("keydown", function(e) {
       if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 7) % 7; e.preventDefault(); return; }
       if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % 7; e.preventDefault(); return; }
       if (e.key === "Enter") {
-        if (menuSelection === 0 && swordLevel < 3 && hasSword && azari >= 30) { azari -= 30; swordLevel++; sfxBuy(); }
-        if (menuSelection === 1 && bowLevel < 3 && hasBow && azari >= 30) { azari -= 30; bowLevel++; sfxBuy(); }
-        if (menuSelection === 2 && hasBow && arrowType === "normal" && azari >= 20) { azari -= 20; arrowType = "heavy"; sfxBuy(); }
-        if (menuSelection === 3 && !combatSkills.charged && hasSword && azari >= 35) { azari -= 35; combatSkills.charged = true; sfxBuy(); }
-        if (menuSelection === 4 && !combatSkills.aerial && hasSword && azari >= 35) { azari -= 35; combatSkills.aerial = true; sfxBuy(); }
-        if (menuSelection === 5 && !combatSkills.combo && hasSword && azari >= 50) { azari -= 50; combatSkills.combo = true; sfxBuy(); }
-        if (menuSelection === 6 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; sfxBuy(); }
+        if (menuSelection === 0 && swordLevel < 3 && hasSword && azari >= 30) { spendAzari(30, "sword_upgrade"); swordLevel++; sfxBuy(); }
+        if (menuSelection === 1 && bowLevel < 3 && hasBow && azari >= 30) { spendAzari(30, "bow_upgrade"); bowLevel++; sfxBuy(); }
+        if (menuSelection === 2 && hasBow && arrowType === "normal" && azari >= 20) { spendAzari(20, "heavy_arrows"); arrowType = "heavy"; sfxBuy(); }
+        if (menuSelection === 3 && !combatSkills.charged && hasSword && azari >= 35) { spendAzari(35, "charged_attack"); combatSkills.charged = true; sfxBuy(); }
+        if (menuSelection === 4 && !combatSkills.aerial && hasSword && azari >= 35) { spendAzari(35, "aerial_attack"); combatSkills.aerial = true; sfxBuy(); }
+        if (menuSelection === 5 && !combatSkills.combo && hasSword && azari >= 50) { spendAzari(50, "combo"); combatSkills.combo = true; sfxBuy(); }
+        if (menuSelection === 6 && !hasAzariCharm && azari >= 45) { spendAzari(45, "azari_charm"); hasAzariCharm = true; sfxBuy(); }
         shopConfirm = -1;
         e.preventDefault(); return;
       }
@@ -704,12 +704,12 @@ window.addEventListener("keydown", function(e) {
       if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % 2; e.preventDefault(); return; }
       if (e.key === "Enter") {
         if (menuSelection === 0 && heartFragmentsBought2 < 2 && azari >= 25) {
-          azari -= 25; heartFragments2++; heartFragmentsBought2++;
+          spendAzari(25, "heart_fragment_2"); heartFragments2++; heartFragmentsBought2++;
           spawnFloatText(player2.x, player2.y - 30, "¡Fragmento J2!", "#f4f");
           sfxBuy();
           if (heartFragments2 >= 3) { heartFragments2 -= 3; player2.maxHp++; player2.hp = player2.maxHp; spawnFloatText(player2.x, player2.y - 50, "¡Vida +1!", "#f4f"); spawnParticles(player2.x + player2.w/2, player2.y + player2.h/2, "#f4f", 20, 5); }
         }
-        if (menuSelection === 1 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; spawnFloatText(player.x, player.y - 30, "¡Amuleto!", "#0ff"); sfxBuy(); }
+        if (menuSelection === 1 && !hasAzariCharm && azari >= 45) { spendAzari(45, "azari_charm"); hasAzariCharm = true; spawnFloatText(player.x, player.y - 30, "¡Amuleto!", "#0ff"); sfxBuy(); }
         e.preventDefault(); return;
       }
     }
@@ -835,40 +835,40 @@ function processGamepadInput() {
     if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % shopOptions; gamepadMenuAxisLock = 1; }
     if (btn0) {
       if (shopId === 0) {
-        if (menuSelection === 0 && !hasMap && azari >= 45) { azari -= 45; hasMap = true; sfxBuy(); }
-        if (menuSelection === 1 && !hasBow && azari >= 35) { azari -= 35; hasBow = true; sfxBuy(); }
-        if (menuSelection === 2 && azari >= 5) { azari -= 5; arrows += 20; sfxBuy(); }
-        if (menuSelection === 3 && heartFragmentsBought1 < 2 && azari >= 25) { azari -= 25; heartFragments1++; heartFragmentsBought1++; sfxBuy(); if (heartFragments1 >= 3) { heartFragments1 -= 3; player.maxHp++; player.hp = player.maxHp; } }
-        if (menuSelection === 4 && heartFragmentsBought2 < 2 && azari >= 25) { azari -= 25; heartFragments2++; heartFragmentsBought2++; sfxBuy(); if (heartFragments2 >= 3) { heartFragments2 -= 3; player2.maxHp++; player2.hp = player2.maxHp; } }
-        if (menuSelection === 5 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; sfxBuy(); }
-        if (menuSelection === 6 && !hasAzariMagnet && azari >= 60) { azari -= 60; hasAzariMagnet = true; sfxBuy(); }
+        if (menuSelection === 0 && !hasMap && azari >= 45) { spendAzari(45, "map"); hasMap = true; sfxBuy(); }
+        if (menuSelection === 1 && !hasBow && azari >= 35) { spendAzari(35, "bow"); hasBow = true; sfxBuy(); }
+        if (menuSelection === 2 && azari >= 5) { spendAzari(5, "arrows"); arrows += 20; sfxBuy(); }
+        if (menuSelection === 3 && heartFragmentsBought1 < 2 && azari >= 25) { spendAzari(25, "heart_fragment_1"); heartFragments1++; heartFragmentsBought1++; sfxBuy(); if (heartFragments1 >= 3) { heartFragments1 -= 3; player.maxHp++; player.hp = player.maxHp; } }
+        if (menuSelection === 4 && heartFragmentsBought2 < 2 && azari >= 25) { spendAzari(25, "heart_fragment_2"); heartFragments2++; heartFragmentsBought2++; sfxBuy(); if (heartFragments2 >= 3) { heartFragments2 -= 3; player2.maxHp++; player2.hp = player2.maxHp; } }
+        if (menuSelection === 5 && !hasAzariCharm && azari >= 45) { spendAzari(45, "azari_charm"); hasAzariCharm = true; sfxBuy(); }
+        if (menuSelection === 6 && !hasAzariMagnet && azari >= 60) { spendAzari(60, "azari_magnet"); hasAzariMagnet = true; sfxBuy(); }
         if (menuSelection === 7 && azariBagLevel < 5) {
           var bagPrices2 = [80, 120, 180, 260, 350];
           var bagPrice2 = bagPrices2[azariBagLevel];
-          if (azari >= bagPrice2) { azari -= bagPrice2; azariBagLevel++; hasAzariBag = true; sfxBuy(); }
+          if (azari >= bagPrice2) { spendAzari(bagPrice2, "azari_bag"); azariBagLevel++; hasAzariBag = true; sfxBuy(); }
         }
         if (menuSelection === 8 && ((!hasLantern && azari >= 70) || (hasLantern && lanternLevel < 3 && azari >= (lanternLevel === 1 ? 110 : 180)))) {
-          azari -= hasLantern ? (lanternLevel === 1 ? 110 : 180) : 70;
+          spendAzari(hasLantern ? (lanternLevel === 1 ? 110 : 180) : 70, "lantern");
           hasLantern = true; lanternLevel = Math.min(3, lanternLevel + 1); sfxBuy();
         }
-        if (menuSelection === 9 && !hasOldKey && azari >= 40) { azari -= 40; hasOldKey = true; sfxBuy(); }
-        if (menuSelection === 10 && swordLevel < 3 && hasSword && azari >= 30) { azari -= 30; swordLevel++; sfxBuy(); }
-        if (menuSelection === 11 && bowLevel < 3 && hasBow && azari >= 30) { azari -= 30; bowLevel++; sfxBuy(); }
-        if (menuSelection === 12 && hasBow && arrowType === "normal" && azari >= 20) { azari -= 20; arrowType = "heavy"; sfxBuy(); }
-        if (menuSelection === 13 && !combatSkills.charged && hasSword && azari >= 35) { azari -= 35; combatSkills.charged = true; sfxBuy(); }
-        if (menuSelection === 14 && !combatSkills.aerial && hasSword && azari >= 35) { azari -= 35; combatSkills.aerial = true; sfxBuy(); }
-        if (menuSelection === 15 && !combatSkills.combo && hasSword && azari >= 50) { azari -= 50; combatSkills.combo = true; sfxBuy(); }
-        if (menuSelection === 16 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; sfxBuy(); }
-        if (menuSelection === 17 && azari >= 1) { azari -= 1; bombs += 5; sfxBuy(); }
+        if (menuSelection === 9 && !hasOldKey && azari >= 40) { spendAzari(40, "old_key"); hasOldKey = true; sfxBuy(); }
+        if (menuSelection === 10 && swordLevel < 3 && hasSword && azari >= 30) { spendAzari(30, "sword_upgrade"); swordLevel++; sfxBuy(); }
+        if (menuSelection === 11 && bowLevel < 3 && hasBow && azari >= 30) { spendAzari(30, "bow_upgrade"); bowLevel++; sfxBuy(); }
+        if (menuSelection === 12 && hasBow && arrowType === "normal" && azari >= 20) { spendAzari(20, "heavy_arrows"); arrowType = "heavy"; sfxBuy(); }
+        if (menuSelection === 13 && !combatSkills.charged && hasSword && azari >= 35) { spendAzari(35, "charged_attack"); combatSkills.charged = true; sfxBuy(); }
+        if (menuSelection === 14 && !combatSkills.aerial && hasSword && azari >= 35) { spendAzari(35, "aerial_attack"); combatSkills.aerial = true; sfxBuy(); }
+        if (menuSelection === 15 && !combatSkills.combo && hasSword && azari >= 50) { spendAzari(50, "combo"); combatSkills.combo = true; sfxBuy(); }
+        if (menuSelection === 16 && !hasAzariCharm && azari >= 45) { spendAzari(45, "azari_charm"); hasAzariCharm = true; sfxBuy(); }
+        if (menuSelection === 17 && azari >= 1) { spendAzari(1, "bombs"); bombs += 5; sfxBuy(); }
         if (menuSelection === 18) buyArmorUpgrade();
       } else {
-        if (menuSelection === 0 && swordLevel < 3 && hasSword && azari >= 30) { azari -= 30; swordLevel++; sfxBuy(); }
-        if (menuSelection === 1 && bowLevel < 3 && hasBow && azari >= 30) { azari -= 30; bowLevel++; sfxBuy(); }
-        if (menuSelection === 2 && hasBow && arrowType === "normal" && azari >= 20) { azari -= 20; arrowType = "heavy"; sfxBuy(); }
-        if (menuSelection === 3 && !combatSkills.charged && hasSword && azari >= 35) { azari -= 35; combatSkills.charged = true; sfxBuy(); }
-        if (menuSelection === 4 && !combatSkills.aerial && hasSword && azari >= 35) { azari -= 35; combatSkills.aerial = true; sfxBuy(); }
-        if (menuSelection === 5 && !combatSkills.combo && hasSword && azari >= 50) { azari -= 50; combatSkills.combo = true; sfxBuy(); }
-        if (menuSelection === 6 && !hasAzariCharm && azari >= 45) { azari -= 45; hasAzariCharm = true; sfxBuy(); }
+        if (menuSelection === 0 && swordLevel < 3 && hasSword && azari >= 30) { spendAzari(30, "sword_upgrade"); swordLevel++; sfxBuy(); }
+        if (menuSelection === 1 && bowLevel < 3 && hasBow && azari >= 30) { spendAzari(30, "bow_upgrade"); bowLevel++; sfxBuy(); }
+        if (menuSelection === 2 && hasBow && arrowType === "normal" && azari >= 20) { spendAzari(20, "heavy_arrows"); arrowType = "heavy"; sfxBuy(); }
+        if (menuSelection === 3 && !combatSkills.charged && hasSword && azari >= 35) { spendAzari(35, "charged_attack"); combatSkills.charged = true; sfxBuy(); }
+        if (menuSelection === 4 && !combatSkills.aerial && hasSword && azari >= 35) { spendAzari(35, "aerial_attack"); combatSkills.aerial = true; sfxBuy(); }
+        if (menuSelection === 5 && !combatSkills.combo && hasSword && azari >= 50) { spendAzari(50, "combo"); combatSkills.combo = true; sfxBuy(); }
+        if (menuSelection === 6 && !hasAzariCharm && azari >= 45) { spendAzari(45, "azari_charm"); hasAzariCharm = true; sfxBuy(); }
       }
     }
     return;
@@ -1110,6 +1110,9 @@ function beginNewGameFromDifficulty() {
   menuSubState = "slots";
   introTimer = 0;
   gameState = ST_INTRO;
+  trackGameEvent("game_start", { game_mode: gameMode, difficulty: difficulty });
+  trackGameEvent("level_start", { level: 1, room: 0 });
+  if (gameMode === "infinite") trackGameEvent("infinite_mode_start", { difficulty: difficulty });
   updateUI();
 }
 
@@ -1303,7 +1306,7 @@ function buyArmorUpgrade() {
   if (armorLevel >= 3) return false;
   var price = armorPrices[armorLevel];
   if (azari < price) return false;
-  azari -= price;
+  if (!spendAzari(price, "armor_upgrade")) return false;
   armorLevel++;
   armorId = "plate";
   sfxBuy();
