@@ -479,6 +479,21 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (menuSubState === "guide") {
+      if (up || k === "w") {
+        guideSelection = (guideSelection - 1 + guidePages.length) % guidePages.length;
+        e.preventDefault();
+        return;
+      }
+      if (down || k === "s") {
+        guideSelection = (guideSelection + 1) % guidePages.length;
+        e.preventDefault();
+        return;
+      }
+      if (confirm) {
+        window.location.href = guidePages[guideSelection].path;
+        e.preventDefault();
+        return;
+      }
       if (e.key === "Escape") {
         menuSubState = "slots";
         e.preventDefault();
@@ -540,7 +555,7 @@ window.addEventListener("keydown", function(e) {
       if (confirm) {
         if (menuSelection === 5) { menuSubState = "levels"; levelsSelection = 0; e.preventDefault(); return; }
         if (menuSelection === 6) { menuSubState = "settings"; settingsSelection = 0; e.preventDefault(); return; }
-        if (menuSelection === 7) { menuSubState = "guide"; e.preventDefault(); return; }
+        if (menuSelection === 7) { guideSelection = 0; menuSubState = "guide"; e.preventDefault(); return; }
         activeSlot = menuSelection;
         var saves = getSaves();
         if (saves.slots[menuSelection]) {
@@ -1107,6 +1122,7 @@ function processGamepadInput() {
         return;
       }
       if (menuSelection === 7) {
+        guideSelection = 0;
         menuSubState = "guide";
         return;
       }

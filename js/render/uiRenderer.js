@@ -966,27 +966,21 @@ function drawMenu() {
     ctx.fillStyle = "#ffd15c"; ctx.font = "bold 28px monospace";
     ctx.fillText("📖 GUÍA DE CABALLERO MÍSTICO", canvas.width / 2, 75);
     ctx.fillStyle = "#8bd"; ctx.font = "bold 16px monospace";
-    ctx.fillText("CÓMO JUGAR", canvas.width / 2, 125);
-    ctx.fillStyle = "#ddd"; ctx.font = "13px monospace";
-    [
-      "A/D o ←/→  Moverse",
-      "ESPACIO     Saltar",
-      "X           Atacar",
-      "Z           Disparar",
-      "C           Bloquear",
-      "SHIFT       Dash",
-      "E           Interactuar",
-      "",
-      "Derrota enemigos, consigue Azari y mejora tu equipo.",
-      "Explora las habitaciones, activa los puntos de guardado",
-      "y derrota a los jefes para desbloquear nuevas armas.",
-      "",
-      "La guía completa está disponible en la sección web del juego."
-    ].forEach(function(line, index) {
-      ctx.fillText(line, canvas.width / 2, 160 + index * 25);
+    ctx.fillText("SELECCIONA UNA GUÍA", canvas.width / 2, 125);
+    guidePages.forEach(function(page, index) {
+      var y = 170 + index * 58;
+      var selected = guideSelection === index;
+      ctx.fillStyle = selected ? "rgba(100,200,255,0.18)" : "rgba(255,255,255,0.03)";
+      ctx.fillRect(180, y - 24, 440, 45);
+      ctx.strokeStyle = selected ? "#6cc" : "#333";
+      ctx.lineWidth = selected ? 2 : 1;
+      ctx.strokeRect(180, y - 24, 440, 45);
+      ctx.fillStyle = selected ? "#6cc" : "#aaa";
+      ctx.font = "bold 16px monospace";
+      ctx.fillText((selected ? "▶  " : "    ") + page.label, canvas.width / 2, y + 5);
     });
     ctx.fillStyle = "#666"; ctx.font = "12px monospace";
-    ctx.fillText("ESC Volver al menú", canvas.width / 2, 565);
+    ctx.fillText("↑/↓ Elegir  •  ENTER Abrir página  •  ESC Volver al menú", canvas.width / 2, 535);
   }
   if (menuSubState === "admin_password") {
     ctx.fillStyle = "rgba(0,0,0,0.94)"; ctx.fillRect(0, 0, canvas.width, canvas.height);

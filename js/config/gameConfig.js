@@ -145,6 +145,14 @@ var menuSelection = 0, menuSubState = "slots", slotToDelete = -1, activeSlot = -
 var levelsSelection = 0;
 var settingsSelection = 0, settingsReturn = false, adminFromSettings = false;
 var guideReturnState = "menu";
+var guideSelection = 0;
+var guidePages = [
+  { label: "Cómo jugar", path: "como-jugar/" },
+  { label: "Enemigos", path: "enemigos/" },
+  { label: "Jefes", path: "jefes/" },
+  { label: "Bendiciones y mejoras", path: "bendiciones/" },
+  { label: "Modo infinito", path: "modo-infinito/" }
+];
 var brightnessBoost = 1;
 var gameSpeed = 1;
 var gameSpeedAccumulator = 0;
