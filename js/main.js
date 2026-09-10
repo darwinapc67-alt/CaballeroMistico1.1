@@ -262,7 +262,13 @@ function loop() {
   scanGamepads();
   pollGamepad();
   processGamepadInput();
-  update();
+  gameSpeedAccumulator += gameSpeed;
+  var updatesThisFrame = 0;
+  while (gameSpeedAccumulator >= 1 && updatesThisFrame < 4) {
+    update();
+    gameSpeedAccumulator -= 1;
+    updatesThisFrame++;
+  }
   updateFullscreenButton();
   if (device === "touch" && touchControlsSignature !== getTouchControlsSignature()) setupTouchControls();
   updateTouchMenuButton();

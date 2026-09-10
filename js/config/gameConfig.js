@@ -144,7 +144,27 @@ function translateText(text) {
 var menuSelection = 0, menuSubState = "slots", slotToDelete = -1, activeSlot = -1;
 var levelsSelection = 0;
 var settingsSelection = 0, settingsReturn = false, adminFromSettings = false;
+var guideReturnState = "menu";
 var brightnessBoost = 1;
+var gameSpeed = 1;
+var gameSpeedAccumulator = 0;
+var GAME_SPEED_KEY = "caballero_mistico_game_speed_v1";
+var GAME_SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+function loadGameSpeed() {
+  var savedSpeed = Number(localStorage.getItem(GAME_SPEED_KEY));
+  if (GAME_SPEED_OPTIONS.indexOf(savedSpeed) >= 0) gameSpeed = savedSpeed;
+}
+function saveGameSpeed() {
+  localStorage.setItem(GAME_SPEED_KEY, String(gameSpeed));
+}
+function adjustGameSpeed(delta) {
+  var index = GAME_SPEED_OPTIONS.indexOf(gameSpeed);
+  gameSpeed = GAME_SPEED_OPTIONS[Math.max(0, Math.min(GAME_SPEED_OPTIONS.length - 1, index + delta))];
+  saveGameSpeed();
+}
+function getGameSpeedLabel() {
+  return Math.round(gameSpeed * 100) + "%";
+}
 var difficultySelection = 1, difficulty = "normal";
 var gameMode = "normal", modeSelection = 0;
 var infiniteWave = 0, infiniteSpawnTimer = 0;
@@ -340,6 +360,7 @@ function getControlBinding(id) {
 
 loadControlBindings();
 loadTouchLayout();
+loadGameSpeed();
 
 var zoneName = "", zoneNameTimer = 0;
 

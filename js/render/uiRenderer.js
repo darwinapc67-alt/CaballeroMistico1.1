@@ -911,7 +911,7 @@ function drawMenu() {
   ctx.textAlign = "center";
   ctx.fillText((levelsSelected ? "▶  " : "    ") + "NIVELES", canvas.width/2, levelsY);
 
-  var settingsY = 530, settingsSelected = menuSelection === 6;
+  var settingsY = 515, settingsSelected = menuSelection === 6;
   ctx.fillStyle = settingsSelected ? "rgba(100,200,255,0.15)" : "rgba(255,255,255,0.02)";
   ctx.fillRect(180, settingsY - 20, 440, 32);
   ctx.strokeStyle = settingsSelected ? "#6cc" : "#333"; ctx.lineWidth = settingsSelected ? 2 : 1;
@@ -920,8 +920,16 @@ function drawMenu() {
   ctx.textAlign = "center";
   ctx.fillText((settingsSelected ? "▶  " : "    ") + translateText("⚙️ Configuración"), canvas.width/2, settingsY);
 
+  var guideY = 555, guideSelected = menuSelection === 7;
+  ctx.fillStyle = guideSelected ? "rgba(100,200,255,0.15)" : "rgba(255,255,255,0.02)";
+  ctx.fillRect(180, guideY - 20, 440, 32);
+  ctx.strokeStyle = guideSelected ? "#6cc" : "#333"; ctx.lineWidth = guideSelected ? 2 : 1;
+  ctx.strokeRect(180, guideY - 20, 440, 32);
+  ctx.fillStyle = guideSelected ? "#6cc" : "#888"; ctx.font = "bold 14px monospace";
+  ctx.fillText((guideSelected ? "▶  " : "    ") + "📖 GUÍA", canvas.width/2, guideY);
+
   ctx.textAlign = "center"; ctx.fillStyle = "#333"; ctx.font = "12px monospace";
-  ctx.fillText(gamepadConnected ? "⬆️⬇️ Navegar  •  ❌ Seleccionar  •  ⬜ Borrar" : "↑/↓ Navegar  •  ENTER Seleccionar  •  DEL/X Borrar", canvas.width/2, 570);
+  ctx.fillText(gamepadConnected ? "⬆️⬇️ Navegar  •  ❌ Seleccionar  •  ⬜ Borrar" : "↑/↓ Navegar  •  ENTER Seleccionar  •  DEL/X Borrar", canvas.width/2, 590);
 
   if (menuSubState === "confirm_delete") {
     ctx.fillStyle = "rgba(0,0,0,0.92)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -952,6 +960,33 @@ function drawMenu() {
     ctx.fillText(customLevels.length ? "NIVEL PERSONALIZADO GUARDADO" : "NO HAY NIVELES GUARDADOS", canvas.width/2, 410);
     ctx.fillStyle = "#666";
     ctx.fillText("↑/↓ Navegar  •  ENTER Confirmar  •  ESC Volver", canvas.width/2, 500);
+  }
+  if (menuSubState === "guide") {
+    ctx.fillStyle = "rgba(0,0,0,0.96)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#ffd15c"; ctx.font = "bold 28px monospace";
+    ctx.fillText("📖 GUÍA DE CABALLERO MÍSTICO", canvas.width / 2, 75);
+    ctx.fillStyle = "#8bd"; ctx.font = "bold 16px monospace";
+    ctx.fillText("CÓMO JUGAR", canvas.width / 2, 125);
+    ctx.fillStyle = "#ddd"; ctx.font = "13px monospace";
+    [
+      "A/D o ←/→  Moverse",
+      "ESPACIO     Saltar",
+      "X           Atacar",
+      "Z           Disparar",
+      "C           Bloquear",
+      "SHIFT       Dash",
+      "E           Interactuar",
+      "",
+      "Derrota enemigos, consigue Azari y mejora tu equipo.",
+      "Explora las habitaciones, activa los puntos de guardado",
+      "y derrota a los jefes para desbloquear nuevas armas.",
+      "",
+      "La guía completa está disponible en la sección web del juego."
+    ].forEach(function(line, index) {
+      ctx.fillText(line, canvas.width / 2, 160 + index * 25);
+    });
+    ctx.fillStyle = "#666"; ctx.font = "12px monospace";
+    ctx.fillText("ESC Volver al menú", canvas.width / 2, 565);
   }
   if (menuSubState === "admin_password") {
     ctx.fillStyle = "rgba(0,0,0,0.94)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1016,10 +1051,11 @@ function drawMenu() {
       "🌐 " + translateText("Idioma") + ": " + languages[languageSelection].label,
       "🎮 " + translateText("Dispositivo") + ": " + translateText(devices[deviceSelection].label),
       "☀️ Brillo: " + Math.round(brightnessBoost * 100) + "%",
+      "⏱️ Velocidad del juego: " + getGameSpeedLabel(),
       "🎮 Cambiar controles"
     ];
     settings.forEach(function(option, index) {
-      var y = 230 + index * 65, selected = settingsSelection === index;
+      var y = 205 + index * 58, selected = settingsSelection === index;
       ctx.fillStyle = selected ? "rgba(100,200,255,0.16)" : "rgba(255,255,255,0.03)";
       ctx.fillRect(180, y - 25, 440, 48);
       ctx.strokeStyle = selected ? "#6cc" : "#333"; ctx.lineWidth = selected ? 2 : 1;
@@ -1028,7 +1064,7 @@ function drawMenu() {
       ctx.fillText((selected ? "▶  " : "    ") + option, canvas.width / 2, y + 5);
     });
     ctx.fillStyle = "#666"; ctx.font = "12px monospace";
-    ctx.fillText("↑/↓ Navegar  •  ←/→ Ajustar brillo  •  ENTER Seleccionar  •  ESC Volver", canvas.width / 2, 505);
+    ctx.fillText("↑/↓ Navegar  •  ←/→ Ajustar opción  •  ENTER Seleccionar  •  ESC Volver", canvas.width / 2, 535);
   }
   if (menuSubState === "controls_config") {
     ctx.fillStyle = "rgba(0,0,0,0.94)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1162,10 +1198,11 @@ function drawPause() {
       "🌐 Idioma: " + languages[languageSelection].label,
       "🎮 Dispositivo: " + devices[deviceSelection].label,
       "☀️ Brillo: " + Math.round(brightnessBoost * 100) + "%",
+      "⏱️ Velocidad del juego: " + getGameSpeedLabel(),
       "🎮 Cambiar controles"
     ];
     pauseSettings.forEach(function(option, index) {
-      var y = 210 + index * 60, selected = settingsSelection === index;
+      var y = 190 + index * 55, selected = settingsSelection === index;
       ctx.fillStyle = selected ? "rgba(100,200,255,0.16)" : "rgba(255,255,255,0.03)";
       ctx.fillRect(180, y - 23, 440, 46);
       ctx.strokeStyle = selected ? "#6cc" : "#333"; ctx.lineWidth = selected ? 2 : 1;
@@ -1174,7 +1211,7 @@ function drawPause() {
       ctx.fillText((selected ? "▶  " : "    ") + option, canvas.width / 2, y + 5);
     });
     ctx.fillStyle = "#666"; ctx.font = "12px monospace";
-    ctx.fillText("↑/↓ Navegar  •  ←/→ Ajustar brillo  •  ESC Volver", canvas.width / 2, 530);
+    ctx.fillText("↑/↓ Navegar  •  ←/→ Ajustar opción  •  ESC Volver", canvas.width / 2, 530);
     ctx.textAlign = "left";
     return;
   }
