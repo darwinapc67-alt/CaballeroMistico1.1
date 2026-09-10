@@ -3,6 +3,7 @@ window.addEventListener("keydown", function(e) {
   var k = e.key.toLowerCase();
   var normalizedKey = e.key === " " ? " " : (e.key === "Shift" ? "shift" : k);
   keys[normalizedKey] = true;
+  if (e.code) keys[e.code.toLowerCase()] = true;
   var up = e.key === "ArrowUp" || e.code === "ArrowUp";
   var down = e.key === "ArrowDown" || e.code === "ArrowDown";
   var left = e.key === "ArrowLeft" || e.code === "ArrowLeft";
@@ -853,6 +854,7 @@ function toggleBlessing(id) {
 document.addEventListener("keyup", function(e) {
   var normalizedKey = e.key === " " ? " " : (e.key === "Shift" ? "shift" : e.key.toLowerCase());
   keys[normalizedKey] = false;
+  if (e.code) keys[e.code.toLowerCase()] = false;
   if (e.key === "a" || e.key === "A" || e.code === "KeyA" || e.key === "ArrowLeft" || e.code === "ArrowLeft") interiorMoveLeft = false;
   if (e.key === "d" || e.key === "D" || e.code === "KeyD" || e.key === "ArrowRight" || e.code === "ArrowRight") interiorMoveRight = false;
   if (e.key === "a" || e.key === "A") keys["a"] = false;

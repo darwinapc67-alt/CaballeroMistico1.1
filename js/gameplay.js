@@ -734,6 +734,7 @@ function updateInfiniteMode() {
       spawnFloatText(player.x - 20, player.y - 38, "¡Equipada automáticamente!", "#ffd45c");
     }
     swordLevel = Math.max(swordLevel, Math.min(3, infiniteWave - 1));
+    bombs = Math.max(bombs, 10 + infiniteWave * 2);
     if (infiniteWave >= 3) hasDash = true;
     if (infiniteWave >= 4) { hasDoubleJump = true; player.maxJumps = 2; player.jumpsLeft = 2; }
     if (infiniteWave >= 5) { hasBow = true; arrows = Math.max(arrows, 12 + infiniteWave * 2); }

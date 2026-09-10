@@ -265,7 +265,10 @@ function getControlKeys(id) {
   return binding ? (Array.isArray(binding.key) ? binding.key : [binding.key]) : [];
 }
 function isControlPressed(id) {
-  return getControlKeys(id).some(function(key) { return !!keys[key]; });
+  return getControlKeys(id).some(function(key) {
+    if (keys[key]) return true;
+    return typeof key === "string" && key.length === 1 && !!keys["key" + key];
+  });
 }
 function getControlPads(id) {
   var binding = getControlBinding(id);
