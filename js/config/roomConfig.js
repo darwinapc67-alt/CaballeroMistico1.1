@@ -401,6 +401,54 @@ var room36 = {
   rewardPile: {x: 36 * ROOM_W + 350, y: 500, amount: 230},
   decor: genDecor(36 * ROOM_W, 16, 5, 600)
 };
+var room37 = {
+  height: 600,
+  worldX: 40 * ROOM_W,
+  roomWidth: 800,
+  platforms: [
+    {x: 40 * ROOM_W, y: 560, w: 800, h: 40},
+    {x: 40 * ROOM_W + 120, y: 450, w: 150, h: 16},
+    {x: 40 * ROOM_W + 360, y: 360, w: 150, h: 16},
+    {x: 40 * ROOM_W + 600, y: 450, w: 150, h: 16}
+  ],
+  spikes: [{x: 40 * ROOM_W + 270, y: 540, w: 90, h: 20}],
+  walls: [],
+  transitionZone: null,
+  noDoor: false,
+  decor: genDecor(40 * ROOM_W, 14, 5, 600)
+};
+var room38 = {
+  height: 600,
+  worldX: 41 * ROOM_W,
+  roomWidth: 800,
+  platforms: [
+    {x: 41 * ROOM_W, y: 560, w: 800, h: 40},
+    {x: 41 * ROOM_W + 80, y: 450, w: 150, h: 16},
+    {x: 41 * ROOM_W + 300, y: 350, w: 170, h: 16},
+    {x: 41 * ROOM_W + 570, y: 450, w: 150, h: 16}
+  ],
+  spikes: [{x: 41 * ROOM_W + 230, y: 540, w: 70, h: 20}, {x: 41 * ROOM_W + 470, y: 540, w: 70, h: 20}],
+  walls: [],
+  transitionZone: null,
+  noDoor: false,
+  decor: genDecor(41 * ROOM_W, 15, 5, 600)
+};
+var room39 = {
+  height: 700,
+  worldX: 42 * ROOM_W,
+  roomWidth: 800,
+  platforms: [
+    {x: 42 * ROOM_W, y: 660, w: 800, h: 40},
+    {x: 42 * ROOM_W + 90, y: 520, w: 180, h: 18},
+    {x: 42 * ROOM_W + 530, y: 520, w: 180, h: 18}
+  ],
+  spikes: [],
+  walls: [{x: 42 * ROOM_W, y: 0, w: 18, h: 700}, {x: 42 * ROOM_W + 782, y: 0, w: 18, h: 700}],
+  transitionZone: null,
+  noDoor: true,
+  bossName: "DRAGÓN DEL VACÍO",
+  decor: genDecor(42 * ROOM_W, 18, 6, 700)
+};
 shiftRoomGeometry(room13, 3 * ROOM_W);
 cityRooms.forEach(function(room) { shiftRoomGeometry(room, 3 * ROOM_W); });
 shiftRoomGeometry(room30, 3 * ROOM_W);
@@ -412,4 +460,4 @@ shiftRoomGeometry(room35, 3 * ROOM_W);
 shiftRoomGeometry(room36, 3 * ROOM_W);
 
 var rooms = [room0, room1, room2, room3, room4, room5, room6, room7, room8, room9,
-  room10, room11].concat(interludeRooms, [room12], bossApproachRooms, [room13], cityRooms, [room30, room31, room32, room33, room34, room35, room36]);
+  room10, room11].concat(interludeRooms, [room12], bossApproachRooms, [room13], cityRooms, [room30, room31, room32, room33, room34, room35, room36, room37, room38, room39]);

@@ -4,7 +4,7 @@ var DASH_SPEED = 12, DASH_DURATION = 10, DASH_COOLDOWN = 45, DASH_INV_FRAMES = 1
 var GUARD_DURATION = 120, GUARD_COOLDOWN = 240;
 /* Rooms 0-9 are the original route, room 10 is the final descent, and
    rooms 11-13 are the Guardian, Queen Larva, and Abyssal Knight arenas. */
-var WORLD_W = 40 * ROOM_W;
+var WORLD_W = 43 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
 var VERSION = "v2.05 beta";
 
@@ -675,12 +675,14 @@ function saveGame(i) {
     bossesDefeated: {
       guardian: !!bossArenaState.guardian,
       queen_larva: !!bossArenaState.queen_larva,
-      abyssal_knight: !!bossArenaState.abyssal_knight
+      abyssal_knight: !!bossArenaState.abyssal_knight,
+      dragon: !!bossArenaState.dragon
     },
     bossAbilities: {
       guardian: !!bossAbilities.guardian,
       queen_larva: !!bossAbilities.queen_larva,
-      abyssal_knight: !!bossAbilities.abyssal_knight
+      abyssal_knight: !!bossAbilities.abyssal_knight,
+      dragon: !!bossAbilities.dragon
     },
     bestiary: JSON.parse(JSON.stringify(bestiary)),
     achievements: JSON.parse(JSON.stringify(achievements)),
@@ -749,20 +751,26 @@ function loadGame(i) {
   equippedBlessings = s.equippedBlessings || [];
   armorId = s.armorId || "vacío"; armorLevel = Math.max(0, Math.min(3, Number(s.armorLevel) || (armorId === "plate" ? 1 : 0)));
   permanentUpgrades = s.permanentUpgrades || { vitality: 0, strength: 0 };
-  bossUniqueItems = s.bossUniqueItems || { guardian: false, queen_larva: false, abyssal_knight: false };
+  bossUniqueItems = s.bossUniqueItems || { guardian: false, queen_larva: false, abyssal_knight: false, dragon: false };
   hiddenCollectibles = s.hiddenCollectibles || { eclipse: false, root: false, crown: false };
   bossArenaState.guardian = !!(s.bossesDefeated && s.bossesDefeated.guardian);
   bossArenaState.queen_larva = !!(s.bossesDefeated && s.bossesDefeated.queen_larva);
   bossArenaState.abyssal_knight = !!(s.bossesDefeated && s.bossesDefeated.abyssal_knight);
+  bossArenaState.dragon = !!(s.bossesDefeated && s.bossesDefeated.dragon);
   bossAbilities.guardian = !!(s.bossAbilities && s.bossAbilities.guardian) || bossArenaState.guardian;
   bossAbilities.queen_larva = !!(s.bossAbilities && s.bossAbilities.queen_larva) || bossArenaState.queen_larva;
   bossAbilities.abyssal_knight = !!(s.bossAbilities && s.bossAbilities.abyssal_knight) || bossArenaState.abyssal_knight;
+  bossAbilities.dragon = !!(s.bossAbilities && s.bossAbilities.dragon) || bossArenaState.dragon;
   bossZonesUnlocked.guardian = bossArenaState.guardian;
   bossZonesUnlocked.queen_larva = bossArenaState.queen_larva;
   bossZonesUnlocked.abyssal_knight = bossArenaState.abyssal_knight;
+  bossZonesUnlocked.dragon = bossArenaState.dragon;
   rooms[11].transitionZone = bossArenaState.guardian ? {x: 9540, y: 460, w: 40, h: 100, to: 12} : null;
   rooms[19].transitionZone = bossArenaState.queen_larva ? {x: 15940, y: 460, w: 40, h: 100, to: 20} : null;
   rooms[20].transitionZone = bossArenaState.abyssal_knight ? {x: 16730, y: 460, w: 40, h: 100, to: 21} : null;
+  room36.transitionZone = {x: 39 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 37};
+  room37.transitionZone = {x: 40 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 38};
+  room38.transitionZone = {x: 41 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 39};
   if (hasDoubleJump) { player.maxJumps = 2; player2.maxJumps = 2; }
   if (s.bestiary) bestiary = JSON.parse(JSON.stringify(s.bestiary));
   Object.keys(bestiaryInfo).forEach(function(key) {

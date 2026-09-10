@@ -177,6 +177,7 @@ function drawInventory() {
     { name: "Corazón pétreo", kind: "relic", owned: bossUniqueItems.guardian, detail: "reliquia de jefe", color: "#9ca8b2" },
     { name: "Núcleo colonia", kind: "relic", owned: bossUniqueItems.queen_larva, detail: "reliquia de jefe", color: "#d68aab" },
     { name: "Fragmento abisal", kind: "relic", owned: bossUniqueItems.abyssal_knight, detail: "reliquia de jefe", color: "#8368c9" },
+    { name: "Corazón del dragón", kind: "relic", owned: bossUniqueItems.dragon, detail: "reliquia de jefe", color: "#ff7138" },
     { name: "Espada larva rota", kind: "sword", owned: hasBrokenLarvaSword, detail: "pendiente de reparación", color: "#d68aab" }
   ]);
   var pageSlots = inventorySlots.slice(inventoryPage * 9, inventoryPage * 9 + 9);
@@ -1270,7 +1271,7 @@ function drawDiary() {
     ctx.font = "bold 14px monospace";
     ctx.fillText(tab.label, tabX, 120);
   });
-  var entries = diaryCategory === "enemies" ? Object.keys(bestiaryInfo) : ["guardian", "queen_larva", "abyssal_knight"];
+  var entries = diaryCategory === "enemies" ? Object.keys(bestiaryInfo) : ["guardian", "queen_larva", "abyssal_knight", "dragon"];
   var startY = 145;
   ctx.save();
   ctx.beginPath(); ctx.rect(100, 135, 600, 415); ctx.clip();

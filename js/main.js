@@ -34,7 +34,7 @@ function resetAll() {
   combatSkills = { charged: false, aerial: false, combo: false };
   blessingSlots = 2; equippedBlessings = []; armorId = "vacío"; armorLevel = 0;
   permanentUpgrades = { vitality: 0, strength: 0 };
-  bossUniqueItems = { guardian: false, queen_larva: false, abyssal_knight: false };
+  bossUniqueItems = { guardian: false, queen_larva: false, abyssal_knight: false, dragon: false };
   hiddenCollectibles = { eclipse: false, root: false, crown: false };
   hitFlash = 0; needsRespawn = false;
   player.hp = player.maxHp = 10 + permanentUpgrades.vitality;
@@ -61,6 +61,9 @@ function resetAll() {
   room11.transitionZone = {x:9540, y:460, w:40, h:100, to:12};
   rooms[19].transitionZone = {x:15940, y:460, w:40, h:100, to:20};
   rooms[20].transitionZone = null;
+  room36.transitionZone = {x: 39 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 37};
+  room37.transitionZone = {x: 40 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 38};
+  room38.transitionZone = {x: 41 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 39};
   if (gameMode === "infinite") {
     room0.platforms = [{x:20, y:560, w:760, h:40}];
     room0.spikes = [];
@@ -71,9 +74,9 @@ function resetAll() {
     room0.spikes = [{x:220, y:580, w:280, h:20}];
     room0.walls = [];
   }
-  bossArenaState = { guardian: false, queen_larva: false, abyssal_knight: false };
-  bossAbilities = { guardian: false, queen_larva: false, abyssal_knight: false };
-  bossZonesUnlocked = { guardian: false, queen_larva: false, abyssal_knight: false };
+  bossArenaState = { guardian: false, queen_larva: false, abyssal_knight: false, dragon: false };
+  bossAbilities = { guardian: false, queen_larva: false, abyssal_knight: false, dragon: false };
+  bossZonesUnlocked = { guardian: false, queen_larva: false, abyssal_knight: false, dragon: false };
   bossVictory = { active: false, timer: 0, type: "", reward: "", ability: "", zone: "" };
   bossIntroTimer = 0;
   achievements = { firstEnemy: false, firstBoss: false, enemies50: false, enemies100: false };

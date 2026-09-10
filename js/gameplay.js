@@ -308,7 +308,8 @@ function updateHealingHearts() {
     var collected = false;
     [player, player2].forEach(function(p) {
       if (collected || (p === player2 && !twoPlayerMode)) return;
-      if (p.hp < p.maxHp && p.inv <= 0 && heart.room === currentRoom && rectHit(p, heart)) {
+      var autoCollectHeart = gameMode === "infinite" && heart.room === 0 && p.hp < p.maxHp;
+      if (p.hp < p.maxHp && p.inv <= 0 && heart.room === currentRoom && (autoCollectHeart || rectHit(p, heart))) {
         p.hp = Math.min(p.maxHp, p.hp + 1);
         spawnParticles(p.x + p.w / 2, p.y, "#ff6688", 10, 3);
         spawnFloatText(p.x, p.y - 18, "+1 ❤️", "#ff6688");
@@ -629,6 +630,38 @@ function updateBoss(e, room) {
     if (e.x > arenaRight) e.x = arenaRight;
     e.y = floorY;
     e.vy = 0;
+  } else if (e.type === "dragon") {
+    e.y = floorY;
+    e.vy = 0;
+    if (e.hp <= e.maxHp / 3 && e.phase < 3) e.phase = 3;
+    else if (e.hp <= e.maxHp * 2 / 3 && e.phase < 2) e.phase = 2;
+    if (e.actionTimer > 0) {
+      e.actionTimer--;
+      if (e.action === "charge") {
+        e.x += e.vx;
+        bossMeleeHit(e, e.phase === 3 ? 10 : 7, 35);
+      }
+      if (e.actionTimer <= 0) { e.action = ""; e.attackHit = false; }
+    } else if (e.attackTimer <= 0) {
+      e.attackTimer = e.phase === 3 ? 30 : (e.phase === 2 ? 45 : 65);
+      var dragonChoice = Math.random();
+      if (dragonChoice < 0.35) {
+        e.action = "charge";
+        e.actionTimer = e.phase === 3 ? 18 : 12;
+        e.vx = target.player.x < e.x ? -(e.phase === 3 ? 10 : 7) : (e.phase === 3 ? 10 : 7);
+        e.attackHit = false;
+      } else {
+        var fireCount = e.phase === 3 ? 5 : (e.phase === 2 ? 3 : 1);
+        for (var fireIndex = 0; fireIndex < fireCount; fireIndex++) {
+          var fireAngle = Math.atan2(target.dy, target.dx) + (fireIndex - Math.floor(fireCount / 2)) * 0.18;
+          spawnBossProjectile(e, Math.cos(fireAngle) * 5.5, Math.sin(fireAngle) * 5.5,
+            e.phase === 3 ? 7 : 5, "dragon_fire", {w: 18, h: 18, color: "#ff7138", homing: e.phase >= 2});
+        }
+      }
+    }
+    if (!e.action || e.action === "charge") e.x += (target.player.x < e.x ? -1 : 1) * (e.phase === 3 ? 1.8 : 0.8);
+    if (e.x < arenaLeft) e.x = arenaLeft;
+    if (e.x > arenaRight) e.x = arenaRight;
   }
   if (e.y > floorY && e.type !== "queen_larva") { e.y = floorY; e.vy = 0; }
 }
@@ -705,24 +738,63 @@ function updateInfiniteMode() {
     if (infiniteWave >= 4) { hasDoubleJump = true; player.maxJumps = 2; player.jumpsLeft = 2; }
     if (infiniteWave >= 5) { hasBow = true; arrows = Math.max(arrows, 12 + infiniteWave * 2); }
     if (infiniteWave >= 6) combatSkills.charged = true;
-    var count = Math.min(5, 1 + Math.floor((infiniteWave + 1) / 2));
-    for (var i = 0; i < count; i++) {
-      var enemyType = (infiniteWave % 4 === 0 || (infiniteWave >= 7 && i === count - 1)) ? "dark_knight" : "larva_mosca";
-      var scale = 1 + infiniteWave * 0.18;
+    var bossWave = infiniteWave >= 5 && infiniteWave % 5 === 0;
+    if (bossWave) {
+      var infiniteBossTypes = ["guardian", "queen_larva", "abyssal_knight", "dragon"];
+      var infiniteBossType = infiniteBossTypes[(Math.floor(infiniteWave / 5) - 1) % infiniteBossTypes.length];
+      var bossScale = 1 + Math.floor(infiniteWave / 5) * 0.22;
+      var bossSizes = {
+        guardian: { w: 70, h: 90, hp: 100 },
+        queen_larva: { w: 78, h: 90, hp: 140 },
+        abyssal_knight: { w: 60, h: 100, hp: 180 },
+        dragon: { w: 110, h: 120, hp: 260 }
+      };
+      var bossSize = bossSizes[infiniteBossType];
       enemies.push({
-        x: 90 + Math.random() * 620, y: 512, baseY: 512, range: 0,
-        w: enemyType === "dark_knight" ? 34 : 28, h: enemyType === "dark_knight" ? 48 : 22,
+        x: 400, y: 470, w: bossSize.w, h: bossSize.h, vx: 0, vy: 0,
+        dead: false, room: 0, type: infiniteBossType, boss: true,
+        bossName: infiniteBossType === "guardian" ? "GUARDIÁN INFINITO" :
+          (infiniteBossType === "queen_larva" ? "REINA LARVA INFINITA" :
+            (infiniteBossType === "abyssal_knight" ? "CABALLERO ABISMAL INFINITO" : "DRAGÓN DEL VACÍO INFINITO")),
+        hp: Math.round(bossSize.hp * bossScale), maxHp: Math.round(bossSize.hp * bossScale),
+        aiTimer: 70, attackTimer: 45, phase: 1, enraged: false,
+        action: "", actionTimer: 0, attackHit: false, infiniteDamage: Math.min(8, 2 + Math.floor(infiniteWave / 5)),
+        infiniteEnemy: true, staysRoom: true
+      });
+    } else {
+      var count = Math.min(6, 1 + Math.floor((infiniteWave + 1) / 2));
+      var infiniteEnemyTypes = infiniteWave < 3 ? ["larva_mosca", "bat"] :
+        (infiniteWave < 6 ? ["larva_mosca", "bat", "cazador_paramo"] :
+        (infiniteWave < 10 ? ["larva_mosca", "cazador_paramo", "dark_knight", "blue_sentry"] :
+        ["larva_mosca", "bat", "cazador_paramo", "dark_knight", "blue_sentry"]));
+      for (var i = 0; i < count; i++) {
+      var enemyType = infiniteEnemyTypes[(i + infiniteWave) % infiniteEnemyTypes.length];
+      if (infiniteWave % 4 === 0 && i === count - 1) enemyType = "dark_knight";
+      var scale = 1 + Math.min(1, infiniteWave * 0.08);
+      var isKnight = enemyType === "dark_knight";
+      var isSentry = enemyType === "blue_sentry";
+      var isBat = enemyType === "bat";
+      var isHunter = enemyType === "cazador_paramo";
+      var enemyWidth = isKnight ? 34 : (isSentry ? 32 : (isHunter ? 24 : 28));
+      var enemyHeight = isKnight ? 48 : (isSentry ? 28 : (isHunter ? 20 : (isBat ? 20 : 22)));
+      var isFlyLarva = enemyType === "larva_mosca";
+      var enemyHp = isKnight ? 48 : (isSentry ? 30 : (isHunter ? 26 : (isBat ? 3 : (isFlyLarva ? 1 : 12))));
+      var fixedBasicEnemyHp = isBat || isFlyLarva;
+      enemies.push({
+        x: 90 + Math.random() * 620, y: isBat || isSentry ? 260 + (i % 3) * 70 : 512, baseY: isBat || isSentry ? 260 + (i % 3) * 70 : 512, range: isBat ? 80 : 0,
+        w: enemyWidth, h: enemyHeight,
         vx: (i % 2 ? 1 : -1) * (1.2 + Math.min(3, infiniteWave * 0.08)), vy: 0,
         speed: 1.2 + Math.min(3, infiniteWave * 0.08), visionRadius: 260,
-        dead: false, room: 0, type: enemyType, hp: Math.round((enemyType === "dark_knight" ? 48 : 20) * scale),
-        maxHp: Math.round((enemyType === "dark_knight" ? 48 : 20) * scale),
+        shootTimer: 70 + i * 20, dead: false, room: 0, type: enemyType,         hp: fixedBasicEnemyHp ? enemyHp : Math.min(2500, Math.round(enemyHp * scale)),
+        maxHp: fixedBasicEnemyHp ? enemyHp : Math.min(2500, Math.round(enemyHp * scale)), terrestrial: isHunter,
         blockTimer: 80 + infiniteWave * 3, dashCooldown: Math.max(45, 140 - infiniteWave * 3), dashTimer: 0,
         blocking: false, canRoam: false, staysRoom: true, lastSwordHit: -1,
         infiniteDamage: Math.min(4, 1 + Math.floor(infiniteWave / 5)), infiniteEnemy: true
       });
+      }
     }
 
-    spawnFloatText(player.x, player.y - 40, "RONDA " + infiniteWave, "#ffd45c");
+    spawnFloatText(player.x, player.y - 40, bossWave ? "¡JEFE DE RONDA!" : "RONDA " + infiniteWave, bossWave ? "#ff7a9d" : "#ffd45c");
     saveHealingStoneCheckpoint();
     infiniteSpawnTimer = 120;
   }
@@ -965,7 +1037,8 @@ function updateAzariDrops() {
   for (var i = azariDrops.length - 1; i >= 0; i--) {
     var drop = azariDrops[i];
     var target = null;
-    var bestDistance = hasAzariMagnet ? 260 : 34;
+    var autoCollectAzari = gameMode === "infinite" && currentRoom === 0;
+    var bestDistance = autoCollectAzari ? Infinity : (hasAzariMagnet ? 260 : 34);
     [player, twoPlayerMode ? player2 : null].forEach(function(p) {
       if (!p) return;
       var dx = p.x + p.w / 2 - (drop.x + drop.w / 2);
@@ -1101,6 +1174,19 @@ function defeatBoss(e) {
   if (e.dead) return;
   e.dead = true; e.hp = 0; stats.enemiesKilled++; checkAchievementProgress(true);
   trackGameEvent("boss_defeated", { boss_name: e.type, room: e.room });
+  if (e.infiniteEnemy) {
+    e.deathTimer = 90;
+    bossDeathEffects.push({
+      x: e.x + e.w / 2, y: e.y + e.h / 2, w: e.w, h: e.h,
+      room: e.room, type: e.type, color: e.type === "guardian" ? "#d9a35f" :
+        (e.type === "queen_larva" ? "#e36ac0" : (e.type === "dragon" ? "#ff7138" : "#79c")), life: 90, maxLife: 90, radius: 8
+    });
+    spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#ffd700", 45, 8);
+    sfxEnemyDie(); sfxCoin();
+    bossProjectiles = bossProjectiles.filter(function(p) { return p.room !== e.room; });
+    bossVictory = { active: true, timer: 180, type: e.type, reward: "Recompensa de ronda", ability: "Poder aumentado", zone: "Coliseo infinito" };
+    return;
+  }
   bossArenaState[e.type] = true;
   bossAbilities[e.type] = true;
   bossZonesUnlocked[e.type] = true;
@@ -1108,7 +1194,7 @@ function defeatBoss(e) {
   bossDeathEffects.push({
     x: e.x + e.w / 2, y: e.y + e.h / 2, w: e.w, h: e.h,
     room: e.room, type: e.type, color: e.type === "guardian" ? "#d9a35f" :
-      (e.type === "queen_larva" ? "#e36ac0" : "#79c"), life: 90, maxLife: 90, radius: 8
+    (e.type === "queen_larva" ? "#e36ac0" : (e.type === "dragon" ? "#ff7138" : "#79c")), life: 90, maxLife: 90, radius: 8
   });
   spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#ffd700", 35, 8);
   sfxEnemyDie(); sfxCoin();
@@ -1116,7 +1202,8 @@ function defeatBoss(e) {
   var rewards = {
     guardian: { reward: "Corazón de piedra", ability: "Guardia pétrea", zone: "Santuario de la Cueva" },
     queen_larva: { reward: "Núcleo de la colonia", ability: "Llamada de crías", zone: "Nido Carmesí" },
-    abyssal_knight: { reward: "Fragmento del abismo", ability: "Corte abisal", zone: "Trono del Abismo" }
+    abyssal_knight: { reward: "Fragmento del abismo", ability: "Corte abisal", zone: "Trono del Abismo" },
+    dragon: { reward: "Corazón del Dragón", ability: "Aliento del Vacío", zone: "Santuario del Dragón" }
   };
   var result = rewards[e.type] || rewards.guardian;
   bossVictory = { active: true, timer: 260, type: e.type, reward: result.reward, ability: result.ability, zone: result.zone };
@@ -1660,7 +1747,7 @@ function checkSwordHitEnemiesFor(p) {
         return;
       }
       if (e.type === "bat") {
-        if (e.hp === undefined) e.hp = 3;
+        if (!isFinite(e.hp) || e.hp === undefined) e.hp = 3;
         var batDamage = Math.max(1, Math.round((1 + swordLevel + getWeaponLevel(weapon.id)) * weapon.damage));
         var batCritical = Math.random() < 0.15;
         if (batCritical) batDamage *= 2;
@@ -1686,8 +1773,20 @@ function checkSwordHitEnemiesFor(p) {
         impactRegistered = true;
         if (e.hp > 0) return;
       }
+      if (e.infiniteEnemy && !e.boss && e.type !== "bat" && e.type !== "dark_knight" && isFinite(e.hp)) {
+        var infiniteDamage = Math.max(1, Math.round((1 + swordLevel + getWeaponLevel(weapon.id)) * weapon.damage));
+        e.hp -= infiniteDamage;
+        registerCombatImpact(e, infiniteDamage, false);
+        applyWeaponEffect(p, e, weapon);
+        impactRegistered = true;
+        if (e.hp > 0) return;
+      }
       if (!impactRegistered) {
         var weaponDamage = Math.max(1, Math.round((1 + swordLevel + getWeaponLevel(weapon.id)) * weapon.damage));
+        if (e.infiniteEnemy && isFinite(e.hp)) {
+          e.hp -= weaponDamage;
+          if (e.hp > 0) return;
+        }
         registerCombatImpact(e, weaponDamage, false);
         applyWeaponEffect(p, e, weapon);
       }
@@ -1902,12 +2001,12 @@ function startBossDialogue(roomIndex) {
       ["GUARDIÁN", "Entonces tendrás que demostrar tu fuerza."],
       ["", "⚔️ ¡EL GUARDIÁN DE LA CUEVA HA DESPERTADO!"]
     ],
-    38: [
-      ["GUARDIÁN", "¿Quién ha osado cruzar este puente?"],
-      ["CABALLERO", "He venido a recuperar lo que me pertenece."],
-      ["GUARDIÁN", "Entonces tendrás que demostrar tu fuerza."],
-      ["", "⚔️ ¡EL GUARDIÁN DE LA CUEVA HA DESPERTADO!"]
-    ]
+    39: [
+      ["DRAGÓN DEL VACÍO", "Has llegado al último santuario, pequeño caballero."],
+      ["CABALLERO", "Tu fuego no impedirá que termine este viaje."],
+      ["DRAGÓN DEL VACÍO", "Entonces contempla el aliento del vacío."],
+      ["", "🔥 ¡COMIENZA EL COMBATE CONTRA EL DRAGÓN!"]
+    ],
   };
   if (!dialogues[23]) dialogues[23] = dialogues[13];
   bossDialogueLines = dialogues[roomIndex] || [];

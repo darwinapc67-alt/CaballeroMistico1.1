@@ -12,7 +12,7 @@ function drawEnemies() {
       ctx.globalAlpha = 0.45 + (e.hitFlash % 2) * 0.25;
     }
     if (e.boss) {
-      var bossColor = e.type === "guardian" ? "#b77b45" : (e.type === "queen_larva" ? "#9b4c9b" : "#415f98");
+      var bossColor = e.type === "guardian" ? "#b77b45" : (e.type === "queen_larva" ? "#9b4c9b" : (e.type === "dragon" ? "#b94632" : "#415f98"));
       var attackPulse = e.actionTimer > 0 ? Math.sin(e.actionTimer * 0.7) * 4 : 0;
       var bossBob = e.action === "jump" ? Math.sin(e.actionTimer * 0.35) * 5 : attackPulse * 0.35;
       var phaseColor = e.phase === 3 ? "#ff315a" : (e.phase === 2 ? "#ffb347" : "#8cf");
@@ -35,6 +35,22 @@ function drawEnemies() {
       } else if (e.type === "queen_larva") {
         ctx.fillStyle = "#d971bd";
         for (var q = 0; q < 3; q++) ctx.fillRect(e.x + 8 + q * 22, e.y + 40 + (q % 2) * 8, 12, 6);
+      } else if (e.type === "dragon") {
+        ctx.fillStyle = "#6f1f27";
+        ctx.fillRect(e.x - 18, e.y + 22, 20, 34);
+        ctx.fillRect(e.x + e.w - 2, e.y + 22, 20, 34);
+        ctx.fillStyle = "#ff7138";
+        ctx.beginPath();
+        ctx.moveTo(e.x + 20, e.y + 5);
+        ctx.lineTo(e.x - 18, e.y - 22);
+        ctx.lineTo(e.x + 8, e.y + 32);
+        ctx.moveTo(e.x + e.w - 20, e.y + 5);
+        ctx.lineTo(e.x + e.w + 18, e.y - 22);
+        ctx.lineTo(e.x + e.w - 8, e.y + 32);
+        ctx.fill();
+        ctx.fillStyle = "#ffd36a";
+        ctx.fillRect(e.x + 20, e.y + 12, 7, 5);
+        ctx.fillRect(e.x + e.w - 27, e.y + 12, 7, 5);
       } else {
         ctx.fillStyle = "#d9e4ff"; ctx.fillRect(e.x + e.w - 5, e.y + 28 + bossBob, 28, 5);
         ctx.fillStyle = "#26385f"; ctx.fillRect(e.x - 5, e.y + 25, 10, 48);
