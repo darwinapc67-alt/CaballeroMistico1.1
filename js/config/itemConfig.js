@@ -12,6 +12,7 @@ var armorId = "vacío", armorLevel = 0;
 var permanentUpgrades = { vitality: 0, strength: 0 };
 
 var hiddenCollectibles = { eclipse: false, root: false, crown: false };
+var hasBrokenLarvaSword = false;
 var hiddenCollectibleData = [
   { id: "eclipse", room: 2, x: 2360, y: 420 },
   { id: "root", room: 6, x: 5480, y: 620 },

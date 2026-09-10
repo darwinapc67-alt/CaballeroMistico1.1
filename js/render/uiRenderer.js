@@ -164,7 +164,8 @@ function drawInventory() {
     { name: "Armadura", kind: "armor", owned: armorLevel > 0, detail: armorLevel > 0 ? "nivel " + armorLevel + " • " + [0, 25, 40, 55][armorLevel] + "% medio daño" : "sin obtener", color: "#d8a85f" },
     { name: "Corazón pétreo", kind: "relic", owned: bossUniqueItems.guardian, detail: "reliquia de jefe", color: "#9ca8b2" },
     { name: "Núcleo colonia", kind: "relic", owned: bossUniqueItems.queen_larva, detail: "reliquia de jefe", color: "#d68aab" },
-    { name: "Fragmento abisal", kind: "relic", owned: bossUniqueItems.abyssal_knight, detail: "reliquia de jefe", color: "#8368c9" }
+    { name: "Fragmento abisal", kind: "relic", owned: bossUniqueItems.abyssal_knight, detail: "reliquia de jefe", color: "#8368c9" },
+    { name: "Espada larva rota", kind: "sword", owned: hasBrokenLarvaSword, detail: "pendiente de reparación", color: "#d68aab" }
   ];
   var pageSlots = inventorySlots.slice(inventoryPage * 9, inventoryPage * 9 + 9);
   while (pageSlots.length < 9) pageSlots.push({ name: "", owned: false, detail: "", color: "#647080" });
@@ -1457,12 +1458,16 @@ function drawShop() {
     "Mejora de espada", "Mejora de arco", "Flecha pesada", "Golpe cargado",
     "Ataque aéreo", "Combo", "Bendición codiciosa", "Bombas x5", armorShopText
   ];
+  WEAPON_PROGRESSION.forEach(function(id) {
+    var weapon = getWeaponConfig(id);
+    shopItems.push((isWeaponUnlocked(id) ? "Mejorar " : "Comprar ") + weapon.shortName + " (" + (isWeaponUnlocked(id) ? getWeaponLevel(id) + "/3" : "100 Azari") + ")");
+  });
   ctx.textAlign = "left";
   ctx.fillStyle = "#ffd700"; ctx.font = "bold 15px monospace";
   ctx.fillText("ARTÍCULOS", 110, 275);
   ctx.font = "11px monospace";
   for (var itemIndex = 0; itemIndex < shopItems.length; itemIndex++) {
-    var itemY = 298 + itemIndex * 13;
+    var itemY = 298 + itemIndex * 11;
     if (itemIndex === menuSelection) {
       ctx.fillStyle = "rgba(108,204,204,.25)";
       ctx.fillRect(100, itemY - 12, 360, 16);

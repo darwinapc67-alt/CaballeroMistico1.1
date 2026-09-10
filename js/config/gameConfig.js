@@ -626,7 +626,7 @@ function saveGame(i) {
     hasAzariCharm: hasAzariCharm, hasDoubleJump: hasDoubleJump,
     hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, azariBagLevel: azariBagLevel, hasOldKey: hasOldKey, doorUnlocked: doorUnlocked, rewardAzariCollected: rewardAzariCollected, hasLantern: hasLantern, lanternLevel: lanternLevel, hasDash: hasDash,
     brightnessBoost: brightnessBoost,
-    swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: combatSkills,
+    swordLevel: swordLevel, weaponLevels: JSON.parse(JSON.stringify(weaponLevels)), hasBrokenLarvaSword: hasBrokenLarvaSword, bowLevel: bowLevel, arrowType: arrowType, combatSkills: combatSkills,
     blessingSlots: blessingSlots, equippedBlessings: equippedBlessings, armorId: armorId, armorLevel: armorLevel,
     permanentUpgrades: permanentUpgrades, bossUniqueItems: bossUniqueItems, hiddenCollectibles: hiddenCollectibles,
     bossesDefeated: {
@@ -673,6 +673,8 @@ function loadGame(i) {
   hasSword = s.hasSword || false; swordEquipped = s.swordEquipped || false;
   weaponId = normalizeWeaponId(s.weaponId || DEFAULT_WEAPON_ID);
   unlockedWeapons = Array.isArray(s.unlockedWeapons) ? s.unlockedWeapons.filter(function(id) { return WEAPON_CONFIG[id]; }) : [DEFAULT_WEAPON_ID];
+  weaponLevels = s.weaponLevels || weaponLevels;
+  hasBrokenLarvaSword = !!s.hasBrokenLarvaSword;
   if (unlockedWeapons.indexOf(DEFAULT_WEAPON_ID) < 0) unlockedWeapons.unshift(DEFAULT_WEAPON_ID);
   weaponId = isWeaponUnlocked(weaponId) ? weaponId : DEFAULT_WEAPON_ID;
   player.hasSword = hasSword; player.swordEquipped = swordEquipped; player.weaponId = weaponId;

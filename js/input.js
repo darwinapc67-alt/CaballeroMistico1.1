@@ -698,11 +698,21 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (shopId === 0) {
-      if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 19) % 19; e.preventDefault(); return; }
-      if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % 19; e.preventDefault(); return; }
+      if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 25) % 25; e.preventDefault(); return; }
+      if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % 25; e.preventDefault(); return; }
       if (e.key === "Enter") {
         if (menuSelection === 17 && azari >= 1) { spendAzari(1, "bombs"); bombs += 5; sfxBuy(); }
         if (menuSelection === 18) buyArmorUpgrade();
+        if (menuSelection >= 19 && menuSelection <= 24) {
+          var keyboardWeaponId = WEAPON_PROGRESSION[menuSelection - 19];
+          var keyboardWeaponPrice = isWeaponUnlocked(keyboardWeaponId) ? 30 + getWeaponLevel(keyboardWeaponId) * 20 : 100;
+          if (azari >= keyboardWeaponPrice && (isWeaponUnlocked(keyboardWeaponId) || menuSelection === 19 || isWeaponUnlocked(WEAPON_PROGRESSION[menuSelection - 20]))) {
+            if (!isWeaponUnlocked(keyboardWeaponId)) unlockedWeapons.push(keyboardWeaponId);
+            else if (!upgradeWeapon(keyboardWeaponId)) { e.preventDefault(); return; }
+            spendAzari(keyboardWeaponPrice, "weapon_" + keyboardWeaponId);
+            weaponId = keyboardWeaponId; player.weaponId = weaponId; player2.weaponId = weaponId; swordEquipped = true; sfxBuy();
+          }
+        }
         e.preventDefault(); return;
       }
       e.preventDefault(); return;
@@ -853,7 +863,7 @@ function processGamepadInput() {
     return;
   }
   if (shopOpen && (shopId === 0 || shopId === 1)) {
-    var shopOptions = shopId === 0 ? 19 : 7;
+    var shopOptions = shopId === 0 ? 25 : 7;
     if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
     if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + shopOptions) % shopOptions; gamepadMenuAxisLock = 1; }
     if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % shopOptions; gamepadMenuAxisLock = 1; }
@@ -885,6 +895,18 @@ function processGamepadInput() {
         if (menuSelection === 16 && !hasAzariCharm && azari >= 45) { spendAzari(45, "azari_charm"); hasAzariCharm = true; sfxBuy(); }
         if (menuSelection === 17 && azari >= 1) { spendAzari(1, "bombs"); bombs += 5; sfxBuy(); }
         if (menuSelection === 18) buyArmorUpgrade();
+        if (menuSelection >= 19 && menuSelection <= 24) {
+          var weaponShopId = WEAPON_PROGRESSION[menuSelection - 19];
+          var weaponPrice = isWeaponUnlocked(weaponShopId) ? 30 + getWeaponLevel(weaponShopId) * 20 : 100;
+          if (azari >= weaponPrice) {
+            if (!isWeaponUnlocked(weaponShopId)) {
+              if (menuSelection > 19 && unlockedWeapons.indexOf(WEAPON_PROGRESSION[menuSelection - 20]) < 0) return;
+              unlockedWeapons.push(weaponShopId);
+            } else if (!upgradeWeapon(weaponShopId)) return;
+            spendAzari(weaponPrice, "weapon_" + weaponShopId);
+            weaponId = weaponShopId; player.weaponId = weaponId; player2.weaponId = weaponId; swordEquipped = true; sfxBuy();
+          }
+        }
       } else {
         if (menuSelection === 0 && swordLevel < 3 && hasSword && azari >= 30) { spendAzari(30, "sword_upgrade"); swordLevel++; sfxBuy(); }
         if (menuSelection === 1 && bowLevel < 3 && hasBow && azari >= 30) { spendAzari(30, "bow_upgrade"); bowLevel++; sfxBuy(); }

@@ -17,6 +17,9 @@ function resetAll() {
   hasSword = false; swordEquipped = false;
   weaponId = DEFAULT_WEAPON_ID;
   unlockedWeapons = [DEFAULT_WEAPON_ID];
+  weaponLevels = {};
+  WEAPON_PROGRESSION.forEach(function(id) { weaponLevels[id] = 0; });
+  hasBrokenLarvaSword = false;
   player.hasSword = false; player.swordEquipped = false;
   player.weaponId = weaponId;
   if (twoPlayerMode) { player2.hasSword = false; player2.swordEquipped = false; player2.weaponId = weaponId; }

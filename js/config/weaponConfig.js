@@ -2,6 +2,17 @@ var DEFAULT_WEAPON_ID = "mystic_sword";
 var WEAPON_PROGRESSION = ["mystic_sword", "mystic_spear", "shadow_sword", "arcane_hammer", "void_scythe", "time_blade"];
 var INFINITE_WEAPON_WAVES = [1, 3, 6, 10, 15, 21];
 var unlockedWeapons = [DEFAULT_WEAPON_ID];
+var weaponLevels = {};
+WEAPON_PROGRESSION.forEach(function(id) { weaponLevels[id] = 0; });
+function getWeaponLevel(id) {
+  return Math.max(0, Math.min(3, Number(weaponLevels[normalizeWeaponId(id)]) || 0));
+}
+function upgradeWeapon(id) {
+  var weaponIdToUpgrade = normalizeWeaponId(id);
+  if (!isWeaponUnlocked(weaponIdToUpgrade) || getWeaponLevel(weaponIdToUpgrade) >= 3) return false;
+  weaponLevels[weaponIdToUpgrade] = getWeaponLevel(weaponIdToUpgrade) + 1;
+  return true;
+}
 var WEAPON_CONFIG = {
   mystic_sword: { id: "mystic_sword", name: "Espada mística", shortName: "Espada mística", damage: 1, range: 48, cooldown: 22, swing: 12, color: "#e4e9f0", effect: "none" },
   mystic_spear: { id: "mystic_spear", name: "Lanza mística", shortName: "Lanza mística", damage: 0.9, range: 66, cooldown: 26, swing: 14, color: "#73d4cc", effect: "pierce" },

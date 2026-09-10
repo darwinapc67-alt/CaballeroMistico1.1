@@ -138,6 +138,7 @@ function saveHealingStoneCheckpoint() {
     hasDash: hasDash,
     hasDoubleJump: hasDoubleJump,
     swordLevel: swordLevel,
+    weaponLevels: JSON.parse(JSON.stringify(weaponLevels)),
     bowLevel: bowLevel,
     arrowType: arrowType,
     combatSkills: JSON.parse(JSON.stringify(combatSkills)),
@@ -181,6 +182,7 @@ function restoreCheckpoint() {
     hasBow = cp.hasBow; arrows = cp.arrows; bombs = Math.max(0, Number(cp.bombs) || 0); hasMap = cp.hasMap;
     hasAzariCharm = cp.hasAzariCharm; hasAzariMagnet = cp.hasAzariMagnet || false; azariBagLevel = Math.max(0, Math.min(5, Number(cp.azariBagLevel) || (cp.hasAzariBag ? 1 : 0))); hasAzariBag = azariBagLevel > 0; hasOldKey = cp.hasOldKey || false; doorUnlocked = cp.doorUnlocked || false; rewardAzariCollected = cp.rewardAzariCollected || false; hasLantern = cp.hasLantern || false; lanternLevel = Math.max(0, Math.min(3, cp.lanternLevel || (hasLantern ? 1 : 0))); hasDash = cp.hasDash || false; hasDoubleJump = cp.hasDoubleJump;
     swordLevel = Math.max(cp.swordLevel || 0, currentSwordState.swordLevel || 0);
+    weaponLevels = cp.weaponLevels || weaponLevels;
     bowLevel = cp.bowLevel || 0;
     arrowType = cp.arrowType || "normal";
     combatSkills = cp.combatSkills || { charged: false, aerial: false, combo: false };
@@ -1116,6 +1118,10 @@ function defeatBoss(e) {
   var result = rewards[e.type] || rewards.guardian;
   bossVictory = { active: true, timer: 260, type: e.type, reward: result.reward, ability: result.ability, zone: result.zone };
   bossUniqueItems[e.type] = true;
+  if (e.type === "queen_larva") {
+    hasBrokenLarvaSword = true;
+    spawnFloatText(e.x - 30, e.y - 60, "Espada larva rota obtenida", "#d68aab");
+  }
   var bossWeaponIndex = e.type === "guardian" ? 1 : (e.type === "queen_larva" ? 2 : 3);
   if (unlockWeaponAt(bossWeaponIndex)) {
     var unlockedWeapon = getWeaponConfig(WEAPON_PROGRESSION[bossWeaponIndex]);
@@ -1641,7 +1647,7 @@ function checkSwordHitEnemiesFor(p) {
         if (e.lastSwordHit === frameCounter) return;
         e.lastSwordHit = frameCounter;
         var criticalHit = p.attackType === "charged" || Math.random() < 0.15;
-        var swordDamage = Math.round(((bossAbilities.abyssal_knight ? 16 : 12) + swordLevel * 3 + permanentUpgrades.strength) * weapon.damage);
+        var swordDamage = Math.round(((bossAbilities.abyssal_knight ? 16 : 12) + swordLevel * 3 + permanentUpgrades.strength + getWeaponLevel(weapon.id) * 2) * weapon.damage);
         if (equippedBlessings.indexOf("abyss") >= 0 && p.attackType === "charged") swordDamage += 4;
         if (p.attackType === "charged") swordDamage *= 2;
         if (p.attackType === "down") swordDamage = Math.round(swordDamage * 1.25);
@@ -1655,7 +1661,7 @@ function checkSwordHitEnemiesFor(p) {
       }
       if (e.type === "bat") {
         if (e.hp === undefined) e.hp = 3;
-        var batDamage = Math.max(1, Math.round((1 + swordLevel) * weapon.damage));
+        var batDamage = Math.max(1, Math.round((1 + swordLevel + getWeaponLevel(weapon.id)) * weapon.damage));
         var batCritical = Math.random() < 0.15;
         if (batCritical) batDamage *= 2;
         e.hp -= batDamage;
@@ -1672,7 +1678,7 @@ function checkSwordHitEnemiesFor(p) {
       }
       if (e.type === "dark_knight") {
         var knightCritical = Math.random() < 0.15;
-        var knightDamage = Math.max(1, Math.round((6 + swordLevel * 2) * weapon.damage));
+        var knightDamage = Math.max(1, Math.round((6 + swordLevel * 2 + getWeaponLevel(weapon.id) * 2) * weapon.damage));
         if (knightCritical) knightDamage *= 2;
         e.hp -= knightDamage;
         registerCombatImpact(e, knightDamage, knightCritical);
@@ -1681,7 +1687,7 @@ function checkSwordHitEnemiesFor(p) {
         if (e.hp > 0) return;
       }
       if (!impactRegistered) {
-        var weaponDamage = Math.max(1, Math.round((1 + swordLevel) * weapon.damage));
+        var weaponDamage = Math.max(1, Math.round((1 + swordLevel + getWeaponLevel(weapon.id)) * weapon.damage));
         registerCombatImpact(e, weaponDamage, false);
         applyWeaponEffect(p, e, weapon);
       }
