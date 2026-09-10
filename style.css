@@ -20,7 +20,48 @@
       min-height: 100vh;
       font-family: 'Segoe UI', Tahoma, sans-serif;
       color: #666;
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+    .guideContent {
+      width: min(800px, calc(100% - 32px));
+      margin: 18px auto;
+      padding: 20px;
+      border: 1px solid #202044;
+      border-radius: 10px;
+      background: #08081a;
+      color: #aaa;
+      text-align: center;
+    }
+    .guideContent h2 {
+      margin: 0 0 14px;
+      color: #f3d36a;
+      font-size: 22px;
+    }
+    .guideLinks {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+    .guideLinks a {
+      min-width: 190px;
+      padding: 10px 14px;
+      border: 1px solid #31536a;
+      border-radius: 7px;
+      background: #10182b;
+      color: #9de8ff;
+      text-decoration: none;
+      transition: background .2s, border-color .2s;
+    }
+    .guideLinks a:hover,
+    .guideLinks a:focus-visible {
+      background: #172b43;
+      border-color: #6cc;
+      outline: none;
+    }
+    .guideLinks a span {
+      margin-left: 5px;
     }
     canvas {
       background: #050510;
