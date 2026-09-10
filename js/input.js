@@ -609,10 +609,11 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (pauseSubState === "audio") {
-      if (up || k === "w") { audioSelection = (audioSelection + 2) % 3; e.preventDefault(); return; }
-      if (down || k === "s") { audioSelection = (audioSelection + 1) % 3; e.preventDefault(); return; }
-      if (e.key === "ArrowLeft") { adjustAudioVolume(-0.05); e.preventDefault(); return; }
-      if (e.key === "ArrowRight") { adjustAudioVolume(0.05); e.preventDefault(); return; }
+      if (up || k === "w") { audioSelection = (audioSelection + 3) % 4; e.preventDefault(); return; }
+      if (down || k === "s") { audioSelection = (audioSelection + 1) % 4; e.preventDefault(); return; }
+      if (audioSelection < 3 && e.key === "ArrowLeft") { adjustAudioVolume(-0.05); e.preventDefault(); return; }
+      if (audioSelection < 3 && e.key === "ArrowRight") { adjustAudioVolume(0.05); e.preventDefault(); return; }
+      if (audioSelection === 3 && (e.key === "ArrowLeft" || e.key === "ArrowRight" || confirm)) { toggleMusic(); e.preventDefault(); return; }
       return;
     }
     if (pauseSubState === "controls") {
@@ -1193,6 +1194,15 @@ function processGamepadInput() {
       if (settingsSelection === 0) { settingsReturn = "pause"; gameState = ST_LANGUAGE; }
       if (settingsSelection === 1) { settingsReturn = "pause"; gameState = ST_DEVICE; }
     }
+    return;
+  }
+  if (gameState === ST_PAUSED && pauseSubState === "audio") {
+    if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
+    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { audioSelection = (audioSelection + 3) % 4; gamepadMenuAxisLock = 1; }
+    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { audioSelection = (audioSelection + 1) % 4; gamepadMenuAxisLock = 1; }
+    if (audioSelection < 3 && (btn14 || btn15)) adjustAudioVolume(btn15 ? 0.05 : -0.05);
+    if (audioSelection === 3 && btn0) toggleMusic();
+    if (btn9) pauseSubState = "menu";
     return;
   }
   if (gameState === ST_PAUSED && pauseSubState === "diary") {

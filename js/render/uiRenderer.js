@@ -1240,7 +1240,7 @@ function drawAudioMenu() {
   ctx.fillStyle = "#ffd700"; ctx.font = "bold 28px monospace";
   ctx.fillText(translateText("MÚSICA Y SONIDO"), canvas.width/2, 130);
   ctx.fillStyle = "#aaa"; ctx.font = "15px monospace";
-  var audioLabels = ["Volumen general: " + Math.round(masterVolume * 100) + "%", "Música: " + Math.round(musicVolume * 100) + "%", translateText("Efectos") + ": " + Math.round(sfxVolume * 100) + "%"];
+  var audioLabels = ["Volumen general: " + Math.round(masterVolume * 100) + "%", "Música: " + Math.round(musicVolume * 100) + "%", translateText("Efectos") + ": " + Math.round(sfxVolume * 100) + "%", "Música: " + (musicEnabled ? "ACTIVADA" : "DESACTIVADA")];
   audioLabels.forEach(function(label, index) {
     ctx.fillStyle = audioSelection === index ? "#6cc" : "#aaa";
     ctx.fillText((audioSelection === index ? "▶ " : "") + label, canvas.width/2, 200 + index * 45);

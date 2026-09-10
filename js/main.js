@@ -4,8 +4,8 @@ function resetAll() {
   });
   brightnessBoost = 1;
   transIsFall = false; transitionCooldown = 0;
-  if (musicInterval) { clearInterval(musicInterval); musicInterval = null; }
-  musicPlaying = false; gamepadConnected = false; gamepadIndex = -1;
+  stopMusic();
+  gamepadConnected = false; gamepadIndex = -1;
   gpButtons = {}; prevGPButtons = {}; gpAxes = {x:0,y:0}; gamepadMenuAxisLock = 0;
   inventoryOpen = false;
   mapOpen = false;

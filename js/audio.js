@@ -1,4 +1,5 @@
 function initAudio() {
+  musicUserInteracted = true;
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === "suspended") audioCtx.resume();
 }
@@ -12,22 +13,6 @@ function playTone(freq, duration, type, vol, delay) {
     osc.type = type;
     osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
     gain.gain.setValueAtTime(vol * sfxVolume * masterVolume, audioCtx.currentTime + delay);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(audioCtx.currentTime + delay);
-    osc.stop(audioCtx.currentTime + delay + duration);
-  } catch(e) {}
-}
-
-function playMusicTone(freq, duration, type, vol, delay) {
-  initAudio();
-  if (!audioCtx || !musicPlaying) return;
-  try {
-    var osc = audioCtx.createOscillator();
-    var gain = audioCtx.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
-    gain.gain.setValueAtTime(vol * musicVolume * masterVolume, audioCtx.currentTime + delay);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
     osc.connect(gain); gain.connect(audioCtx.destination);
     osc.start(audioCtx.currentTime + delay);
@@ -101,49 +86,102 @@ function sfxBossDoorsOpen() { playTone(180, 0.16, "sine", 0.1, 0); playTone(360,
 function sfxDoorOpen() { playTone(110, 0.25, "square", 0.1, 0); playTone(220, 0.3, "sawtooth", 0.08, 0.2); playNoise(0.28, 0.08, 0.04); }
 function sfxBossPhase() { playTone(70, 0.25, "sawtooth", 0.12, 0); playTone(140, 0.25, "square", 0.08, 0.12); playNoise(0.18, 0.08, 0.04); }
 
-function playAmbientChord(baseFreq, delay) {
-  if (!audioCtx || !musicPlaying) return;
-  playMusicTone(baseFreq, 3.5, "sine", 0.22, delay);
-  playMusicTone(baseFreq * 1.25, 3.2, "triangle", 0.13, delay + 0.1);
-  playMusicTone(baseFreq * 1.5, 2.8, "sine", 0.09, delay + 0.2);
-  playMusicTone(baseFreq * 2, 2.5, "sine", 0.06, delay + 0.3);
-  if (currentMusicTrack === "guardian" || currentMusicTrack === "queen_larva" || currentMusicTrack === "abyssal_knight" || currentMusicTrack === "danger") {
-    playMusicTone(baseFreq * 2, 0.22, "square", 0.16, delay);
-    playMusicTone(baseFreq * 1.5, 0.18, "square", 0.12, delay + 0.28);
-    playMusicTone(baseFreq * 2.5, 0.26, "sawtooth", 0.1, delay + 0.56);
-    playMusicTone(baseFreq * 1.25, 0.2, "square", 0.12, delay + 0.9);
-    playMusicTone(baseFreq * 2, 0.22, "square", 0.14, delay + 1.18);
-    playMusicTone(baseFreq * 3, 0.3, "triangle", 0.1, delay + 1.5);
-  }
-}
+var MUSIC_TRACKS = {
+  menu: "assets/music/menu.mp3",
+  gameplay: "assets/music/gameplay.mp3",
+  boss: "assets/music/boss.mp3",
+  infinite: "assets/music/infinite.mp3"
+};
+var currentMusicTrack = "";
+var musicRequestedTrack = "";
+var musicPlayers = [];
+var activeMusicPlayer = -1;
+var musicFadeTimer = null;
+var musicUserInteracted = false;
 
-var currentMusicTrack = "exploration";
-function zoneMusicTrack() {
-  if (gameState === ST_DIALOGUE) return currentMusicTrack;
-  var activeBoss = enemies.find ? enemies.find(function(enemy) {
+function getMusicTrackForState() {
+  if (gameState === ST_MENU || gameState === ST_LANGUAGE || gameState === ST_DEVICE) return "menu";
+  var activeBoss = enemies && enemies.find ? enemies.find(function(enemy) {
     return enemy.boss && enemy.room === currentRoom && !enemy.dead;
   }) : null;
-  if (activeBoss) return activeBoss.type;
-  // Las dos primeras habitaciones funcionan como introducción y conservan
-  // su música de exploración aunque contengan enemigos de tutorial.
-  var nearbyDanger = false;
-  enemies.forEach(function(enemy) {
-    if (currentRoom > 1 && enemy.room === currentRoom && !enemy.dead && !enemy.boss &&
-        Math.abs(enemy.x - player.x) < 120 &&
-        Math.abs(enemy.y - player.y) < 150) nearbyDanger = true;
+  if (activeBoss || gameState === ST_DIALOGUE) return "boss";
+  if (gameMode === "infinite") return "infinite";
+  return "gameplay";
+}
+function setMusicPlayerVolume(player, volume) {
+  player.volume = Math.max(0, Math.min(1, volume * musicVolume * masterVolume));
+}
+function ensureMusicPlayers() {
+  if (musicPlayers.length) return;
+  for (var i = 0; i < 2; i++) {
+    var player = new Audio();
+    player.preload = "auto";
+    player.loop = true;
+    player.setAttribute("aria-hidden", "true");
+    musicPlayers.push(player);
+  }
+}
+function fadeMusicPlayers(targetPlayer, targetVolume, duration) {
+  if (musicFadeTimer) clearInterval(musicFadeTimer);
+  var startedAt = Date.now();
+  var fromPlayer = activeMusicPlayer >= 0 ? musicPlayers[activeMusicPlayer] : null;
+  musicFadeTimer = setInterval(function() {
+    var progress = Math.min(1, (Date.now() - startedAt) / duration);
+    if (fromPlayer && fromPlayer !== targetPlayer) setMusicPlayerVolume(fromPlayer, 1 - progress);
+    setMusicPlayerVolume(targetPlayer, progress * targetVolume);
+    if (progress >= 1) {
+      if (fromPlayer && fromPlayer !== targetPlayer) {
+        fromPlayer.pause();
+        fromPlayer.currentTime = 0;
+        setMusicPlayerVolume(fromPlayer, 0);
+      }
+      clearInterval(musicFadeTimer);
+      musicFadeTimer = null;
+    }
+  }, 40);
+}
+function startMusic(trackName) {
+  if (!musicEnabled) return;
+  musicUserInteracted = true;
+  initAudio();
+  ensureMusicPlayers();
+  trackName = trackName || getMusicTrackForState();
+  if (musicPlaying && currentMusicTrack === trackName) return;
+  var source = MUSIC_TRACKS[trackName];
+  if (!source) return;
+  var nextIndex = activeMusicPlayer === 0 ? 1 : 0;
+  var nextPlayer = musicPlayers[nextIndex];
+  nextPlayer.src = source;
+  nextPlayer.loop = true;
+  nextPlayer.currentTime = 0;
+  setMusicPlayerVolume(nextPlayer, 0);
+  var playResult = nextPlayer.play();
+  if (playResult && playResult.catch) playResult.catch(function() {});
+  currentMusicTrack = trackName;
+  musicRequestedTrack = trackName;
+  musicPlaying = true;
+  activeMusicPlayer = nextIndex;
+  fadeMusicPlayers(nextPlayer, 1, 700);
+}
+function stopMusic() {
+  musicPlaying = false;
+  currentMusicTrack = "";
+  musicRequestedTrack = "";
+  if (musicFadeTimer) { clearInterval(musicFadeTimer); musicFadeTimer = null; }
+  musicPlayers.forEach(function(player) {
+    player.pause();
+    player.currentTime = 0;
+    setMusicPlayerVolume(player, 0);
   });
-  if (nearbyDanger) return "danger";
-  return "zone_" + Math.min(currentRoom, 9);
+  activeMusicPlayer = -1;
 }
 function updateAudioEnvironment() {
-  if (gameState !== ST_PLAYING || shopOpen) return;
-  if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
-  if (!musicPlaying) {
-    startMusic(zoneMusicTrack());
-    return;
+  if (musicUserInteracted && musicEnabled) {
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    var desiredTrack = getMusicTrackForState();
+    if (!musicPlaying || desiredTrack !== musicRequestedTrack) startMusic(desiredTrack);
   }
-  var track = zoneMusicTrack();
-  if (currentMusicTrack !== track) startMusic(track);
+  if (gameState !== ST_PLAYING || shopOpen) return;
   ambientTimer--;
   if (ambientTimer <= 0) {
     ambientTimer = 180 + Math.floor(Math.random() * 240);
@@ -152,44 +190,18 @@ function updateAudioEnvironment() {
     else sfxWind();
   }
 }
-function startMusic(trackName) {
-  initAudio();
-  trackName = trackName || "exploration";
-  if (musicPlaying && currentMusicTrack === trackName) return;
-  if (musicPlaying) stopMusic();
-  currentMusicTrack = trackName;
-  musicPlaying = true;
-  var chordSets = {
-    exploration: [82.41, 98, 110, 130.81, 110, 98, 82.41, 73.42],
-    zone_0: [82.41, 98, 110, 98, 73.42, 82.41],
-    zone_1: [65.41, 73.42, 87.31, 73.42, 61.74, 65.41],
-    zone_2: [98, 110, 130.81, 146.83, 130.81, 110],
-    zone_3: [73.42, 82.41, 98, 110, 98, 82.41],
-    zone_4: [55, 65.41, 73.42, 82.41, 73.42, 61.74],
-    zone_5: [110, 123.47, 146.83, 164.81, 146.83, 123.47],
-    zone_6: [61.74, 73.42, 82.41, 98, 82.41, 73.42],
-    zone_7: [46.25, 55, 65.41, 73.42, 65.41, 55],
-    zone_8: [82.41, 92.5, 110, 123.47, 110, 92.5],
-    zone_9: [130.81, 146.83, 164.81, 196, 164.81, 146.83],
-    danger: [55, 58.27, 65.41, 77.78, 65.41, 58.27],
-    guardian: [55, 65.41, 73.42, 82.41, 73.42, 65.41],
-    queen_larva: [73.42, 87.31, 98, 110, 98, 87.31],
-    abyssal_knight: [46.25, 55, 61.74, 69.3, 61.74, 55]
-  };
-  var chords = chordSets[trackName] || chordSets.exploration;
-  var chordIdx = 0;
-  playAmbientChord(chords[chordIdx], 0, trackName);
-  musicInterval = setInterval(function() {
-    if (!musicPlaying) return;
-    chordIdx = (chordIdx + 1) % chords.length;
-    playAmbientChord(chords[chordIdx], 0, trackName);
-  }, 3200);
+function startBossMusic() { startMusic("boss"); }
+function toggleMusic() {
+  musicUserInteracted = true;
+  musicEnabled = !musicEnabled;
+  if (!musicEnabled) stopMusic();
+  else startMusic(getMusicTrackForState());
 }
-function stopMusic() { musicPlaying = false; if (musicInterval) { clearInterval(musicInterval); musicInterval = null; } }
-function startBossMusic(type) { startMusic(type || "guardian"); }
-function toggleMusic() { initAudio(); if (musicPlaying) stopMusic(); else startMusic(); }
 function toggleSfx() { sfxEnabled = !sfxEnabled; }
-function adjustMusicVolume(delta) { musicVolume = Math.max(0, Math.min(1, musicVolume + delta)); }
+function adjustMusicVolume(delta) {
+  musicVolume = Math.max(0, Math.min(1, musicVolume + delta));
+  musicPlayers.forEach(function(player) { if (player.paused) return; setMusicPlayerVolume(player, 1); });
+}
 function adjustSfxVolume(delta) { sfxVolume = Math.max(0, Math.min(1, sfxVolume + delta)); }
 function adjustMasterVolume(delta) { masterVolume = Math.max(0, Math.min(1, masterVolume + delta)); }
 function adjustAudioVolume(delta) {

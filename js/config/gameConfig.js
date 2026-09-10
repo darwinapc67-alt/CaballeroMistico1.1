@@ -198,7 +198,7 @@ var pauseSelection = 0, pauseSubState = "menu", diaryCategory = "enemies", diary
 var transTimer = 0, transPhase = "out", transTargetRoom = 0, transFade = 0;
 var transIsFall = false, transIsRise = false, transitionCooldown = 0;
 
-var audioCtx = null, musicPlaying = false, musicInterval = null, sfxEnabled = true;
+var audioCtx = null, musicPlaying = false, musicInterval = null, sfxEnabled = true, musicEnabled = true;
 var masterVolume = 1, musicVolume = 0.75, sfxVolume = 0.7, audioSelection = 0;
 var ambientTimer = 0;
 var gamepadConnected = false, gamepadIndex = -1;
