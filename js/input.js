@@ -156,12 +156,35 @@ window.addEventListener("keydown", function(e) {
     }
     if (confirm) {
       var selectedInventoryItem = inventoryPage * 9 + inventorySelection;
+      if (selectedInventoryItem === 0 && hasSword && unlockedWeapons.length > 0) {
+        var equippedWeaponIndex = unlockedWeapons.indexOf(weaponId);
+        var nextWeaponIndex = (equippedWeaponIndex + 1) % unlockedWeapons.length;
+        weaponId = normalizeWeaponId(unlockedWeapons[nextWeaponIndex]);
+        player.weaponId = weaponId;
+        player2.weaponId = weaponId;
+        spawnFloatText(player.x, player.y - 28, getWeaponConfig(weaponId).name, getWeaponConfig(weaponId).color);
+      }
       if (selectedInventoryItem === 3 && hasAzariCharm) toggleBlessing("greedy");
       if (selectedInventoryItem === 9 && bossUniqueItems.guardian) toggleBlessing("stone");
       if (selectedInventoryItem === 10 && bossUniqueItems.queen_larva) toggleBlessing("brood");
       if (selectedInventoryItem === 11 && bossUniqueItems.abyssal_knight) toggleBlessing("abyss");
       e.preventDefault(); return;
     }
+  }
+
+  if (gameState === ST_PLAYING && hasSword && /^[1-6]$/.test(k)) {
+    var weaponIndex = Number(k) - 1;
+    if (WEAPON_PROGRESSION[weaponIndex] && isWeaponUnlocked(WEAPON_PROGRESSION[weaponIndex])) {
+      weaponId = normalizeWeaponId(WEAPON_PROGRESSION[weaponIndex]);
+      player.weaponId = weaponId;
+      player2.weaponId = weaponId;
+      spawnFloatText(player.x, player.y - 28, getWeaponConfig(weaponId).name, getWeaponConfig(weaponId).color);
+      e.preventDefault();
+      return;
+    }
+    spawnFloatText(player.x, player.y - 28, "Arma bloqueada", "#ff7777");
+    e.preventDefault();
+    return;
   }
 
   if (e.key === "Escape") {

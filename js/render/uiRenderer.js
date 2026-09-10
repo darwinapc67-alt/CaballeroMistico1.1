@@ -152,7 +152,7 @@ function drawInventory() {
   ctx.textAlign = "left";
 
   var inventorySlots = [
-    { name: "Espada", kind: "sword", owned: hasSword, detail: hasSword ? "nivel +" + swordLevel : "sin obtener", color: "#e4e9f0" },
+    { name: hasSword ? getWeaponConfig(weaponId).name : "Arma", kind: "sword", owned: hasSword, detail: hasSword ? "equipada • " + unlockedWeapons.length + "/" + WEAPON_PROGRESSION.length : "sin obtener", color: hasSword ? getWeaponConfig(weaponId).color : "#e4e9f0" },
     { name: "Arco", kind: "bow", owned: hasBow, detail: hasBow ? arrows + " flechas" : "sin obtener", color: "#b98b58" },
     { name: "Llave vieja", kind: "key", owned: hasOldKey, detail: hasOldKey ? "puerta antigua" : "sin obtener", color: "#d4af37" },
     { name: "Amuleto", kind: "amulet", owned: hasAzariCharm, detail: "bendición", color: "#73d4cc" },
@@ -207,15 +207,15 @@ function drawInventory() {
   ctx.fillText("ENTER: usar/equipar   FLECHAS: mover   ` : cerrar", 46, 466);
 
   ctx.fillStyle = "#172131";
-  ctx.fillRect(528, 92, 242, 368);
+  ctx.fillRect(528, 92, 242, 500);
   ctx.strokeStyle = "#52627b";
-  ctx.strokeRect(528, 92, 242, 368);
+  ctx.strokeRect(528, 92, 242, 500);
   ctx.fillStyle = "#c9a94e";
   ctx.font = "bold 13px monospace";
   ctx.fillText("EQUIPAMIENTO", 548, 120);
   ctx.fillStyle = "#9da9bb";
   ctx.font = "11px monospace";
-  ctx.fillText("ESPADA", 548, 154);
+  ctx.fillText(hasSword ? getWeaponConfig(weaponId).shortName.toUpperCase() : "ARMA", 548, 154);
   ctx.fillText(hasSword ? "Nivel +" + swordLevel : "Sin obtener", 650, 154);
   ctx.fillText("ARCO", 548, 184);
   ctx.fillText(hasBow ? "Disponible" : "Sin obtener", 650, 184);
@@ -234,9 +234,19 @@ function drawInventory() {
   ctx.fillText(Object.keys(hiddenCollectibles).filter(function(key) { return hiddenCollectibles[key]; }).length + " / 3", 700, 354);
   ctx.fillText("Azari", 548, 384);
   ctx.fillText(String(azari), 700, 384);
+  ctx.fillText("ARMAS DESBLOQUEADAS", 548, 410);
+  ctx.fillText(unlockedWeapons.length + " / " + WEAPON_PROGRESSION.length, 700, 410);
   ctx.fillStyle = "#59677d";
-  ctx.fillText("Las casillas vacías se llenarán", 548, 420);
-  ctx.fillText("cuando encuentres nuevos objetos.", 548, 438);
+  ctx.fillText("PROGRESIÓN DE ARMAS", 548, 438);
+  for (var weaponProgressIndex = 0; weaponProgressIndex < WEAPON_PROGRESSION.length; weaponProgressIndex++) {
+    var weaponProgressId = WEAPON_PROGRESSION[weaponProgressIndex];
+    var weaponProgressConfig = getWeaponConfig(weaponProgressId);
+    var weaponProgressUnlocked = isWeaponUnlocked(weaponProgressId);
+    ctx.fillStyle = weaponProgressUnlocked ? weaponProgressConfig.color : "#596272";
+    ctx.fillText((weaponProgressUnlocked ? "✓ " : "🔒 ") + (weaponProgressIndex + 1) + ". " + weaponProgressConfig.shortName, 548, 458 + weaponProgressIndex * 18);
+  }
+  ctx.fillStyle = "#59677d";
+  ctx.fillText("ENTER sobre el arma: equipar", 548, 574);
   ctx.textAlign = "left";
   return;
   if (hasMap) {
@@ -635,10 +645,10 @@ function drawGame() {
     ctx.fillText(fragText, barX, twoPlayerMode ? 50 : 28);
   }
   ctx.fillStyle = "#fff"; ctx.font = "13px monospace";
-  ctx.fillText(hasSword ? "⚔️ " + translateText("Espada") : "🛡️ " + translateText("Sin arma"), 12, 22);
+  ctx.fillText(hasSword ? "⚔️ " + getWeaponConfig(weaponId).name : "🛡️ " + translateText("Sin arma"), 12, 22);
   if (gameMode === "infinite") {
     ctx.fillStyle = "#ff9b3d"; ctx.font = "bold 13px monospace";
-    ctx.fillText("COLISEO INFINITO  •  RONDA " + infiniteWave + "  •  PODER " + (swordLevel + (hasDash ? 1 : 0) + (hasDoubleJump ? 1 : 0) + (hasBow ? 1 : 0)), 12, canvas.height - 18);
+    ctx.fillText("COLISEO INFINITO  •  RONDA " + infiniteWave + "  •  ARMAS " + unlockedWeapons.length + "/" + WEAPON_PROGRESSION.length + "  •  PODER " + (swordLevel + (hasDash ? 1 : 0) + (hasDoubleJump ? 1 : 0) + (hasBow ? 1 : 0)), 12, canvas.height - 18);
   }
   if (hasSword) { ctx.fillStyle = player.swordCooldown <= 0 ? "#ffd700" : "#444"; ctx.fillText("⚔️ J1: " + (player.swordCooldown <= 0 ? (player.swordSheathed ? "🔒" : "⚔️") : "···"), 12, 42); }
   else { ctx.fillStyle = "#555"; ctx.fillText(translateText("Encuentra la espada..."), 12, 42); }

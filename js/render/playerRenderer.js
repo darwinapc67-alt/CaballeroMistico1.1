@@ -37,18 +37,21 @@ function drawPlayerEntity(p) {
   }
 
   if (p.hasSword && p.swordEquipped && !p.swordSheathed) {
+    var weapon = getWeaponConfig(p.weaponId || weaponId);
     var sx = p.x+p.w/2, sy = p.y+p.h/2, angle = p.facing > 0 ? 0.3 : 2.8;
     if (p.swordSwing > 0) {
-      var pr = 1-(p.swordSwing/12);
+      var pr = 1-(p.swordSwing/Math.max(1, weapon.swing));
       if (p.vy < -2) angle = -Math.PI / 2;
       else if (p.vy > 2) angle = Math.PI / 2;
       else angle = (p.facing>0?-0.5:-2.5)+pr*(p.facing>0?2.5:2.5);
     }
     ctx.save(); ctx.translate(sx, sy); ctx.rotate(angle);
-    ctx.fillStyle = "#ddd"; ctx.fillRect(0, -2.5, 26, 5);
+    ctx.fillStyle = weapon.color; ctx.fillRect(0, -2.5, weapon.id === "mystic_spear" ? 34 : (weapon.id === "void_scythe" ? 30 : 26), 5);
     ctx.fillStyle = "#fff"; ctx.fillRect(2, -1, 20, 1.5);
-    ctx.fillStyle = "#d4af37"; ctx.fillRect(-2, -5, 5, 10);
-    ctx.fillStyle = "#5a3010"; ctx.fillRect(-7, -2, 7, 3);
+    ctx.fillStyle = weapon.id === "arcane_hammer" ? "#f0a05a" : "#d4af37"; ctx.fillRect(-2, -5, 5, 10);
+    ctx.fillStyle = weapon.id === "void_scythe" ? "#21143d" : "#5a3010"; ctx.fillRect(-7, -2, 7, 3);
+    if (weapon.id === "arcane_hammer") { ctx.fillStyle = weapon.color; ctx.fillRect(20, -7, 9, 14); }
+    if (weapon.id === "void_scythe") { ctx.strokeStyle = weapon.color; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(22, 0, 9, -1.2, 1.2); ctx.stroke(); }
     ctx.restore();
   }
   ctx.restore();

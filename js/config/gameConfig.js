@@ -616,7 +616,7 @@ function saveGame(i) {
   var s = getSaves();
   s.slots[i] = {
     room: currentRoom, px: player.x, py: player.y,
-    twoPlayer: twoPlayerMode, hasSword: hasSword, swordEquipped: swordEquipped, hasBow: hasBow, arrows: arrows, bombs: bombs,
+    twoPlayer: twoPlayerMode, hasSword: hasSword, swordEquipped: swordEquipped, weaponId: weaponId, unlockedWeapons: unlockedWeapons.slice(), hasBow: hasBow, arrows: arrows, bombs: bombs,
     enemiesKilled: enemies.map(function(e){ return e.dead; }),
     azari: azari, hasMap: hasMap, hp: player.hp, maxHp: player.maxHp,
     highestRoomReached: highestRoomReached,
@@ -671,7 +671,11 @@ function loadGame(i) {
   targetCamX = currentRoom * ROOM_W; cameraX = targetCamX;
   player.x = s.px; player.y = s.py; player.vx = 0; player.vy = 0;
   hasSword = s.hasSword || false; swordEquipped = s.swordEquipped || false;
-  player.hasSword = hasSword; player.swordEquipped = swordEquipped;
+  weaponId = normalizeWeaponId(s.weaponId || DEFAULT_WEAPON_ID);
+  unlockedWeapons = Array.isArray(s.unlockedWeapons) ? s.unlockedWeapons.filter(function(id) { return WEAPON_CONFIG[id]; }) : [DEFAULT_WEAPON_ID];
+  if (unlockedWeapons.indexOf(DEFAULT_WEAPON_ID) < 0) unlockedWeapons.unshift(DEFAULT_WEAPON_ID);
+  weaponId = isWeaponUnlocked(weaponId) ? weaponId : DEFAULT_WEAPON_ID;
+  player.hasSword = hasSword; player.swordEquipped = swordEquipped; player.weaponId = weaponId;
   hasBow = s.hasBow || false; arrows = s.arrows || 0; bombs = Math.max(0, Number(s.bombs) || 0);
   azari = s.azari || 0; hasMap = s.hasMap || false;
   player.hp = s.hp !== undefined ? s.hp : 10;
