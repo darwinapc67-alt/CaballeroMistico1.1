@@ -499,7 +499,7 @@ window.addEventListener("keydown", function(e) {
         return;
       }
     } else if (menuSubState === "confirm_delete") {
-      if (k === "y" || k === "s") { deleteSave(slotToDelete); menuSubState = "slots"; slotToDelete = -1; e.preventDefault(); return; }
+      if (confirm || k === "y" || k === "s" || k === "delete") { deleteSave(slotToDelete); menuSubState = "slots"; slotToDelete = -1; e.preventDefault(); return; }
       if (k === "n" || e.key === "Escape") { menuSubState = "slots"; slotToDelete = -1; e.preventDefault(); return; }
     }
     return;
@@ -1214,7 +1214,8 @@ function setupTouchControls() {
       button.setPointerCapture(event.pointerId);
       button.classList.add("pressed");
       if (key === "delete") {
-        window.dispatchEvent(new KeyboardEvent("keydown", {key: "Delete", code: "Delete"}));
+        var deleteKey = gameState === ST_MENU && menuSubState === "confirm_delete" ? "Enter" : "Delete";
+        window.dispatchEvent(new KeyboardEvent("keydown", {key: deleteKey, code: deleteKey}));
         return;
       }
       if (key === "escape") {
