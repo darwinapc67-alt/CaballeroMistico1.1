@@ -311,6 +311,19 @@ canvas.addEventListener("click", function(event) {
 canvas.addEventListener("mousedown", function(event) {
   if (gameState !== ST_LEVEL_EDITOR) return;
   event.preventDefault();
+  editorMouseDown = true;
+  editorMouseButton = event.button;
+  handleLevelEditorMouse(event);
+});
+canvas.addEventListener("mouseup", function() {
+  editorMouseDown = false;
+});
+canvas.addEventListener("mouseleave", function() {
+  editorMouseDown = false;
+});
+canvas.addEventListener("mousemove", function(event) {
+  if (gameState !== ST_LEVEL_EDITOR || !editorMouseDown || event.buttons === 0) return;
+  event.preventDefault();
   handleLevelEditorMouse(event);
 });
 canvas.addEventListener("contextmenu", function(event) {
@@ -320,11 +333,12 @@ canvas.addEventListener("click", function(event) {
   if (gameState !== ST_MENU || menuSubState !== "levels") return;
   var rect = canvas.getBoundingClientRect();
   var y = (event.clientY - rect.top) * canvas.height / rect.height;
-  var selected = Math.floor((y - 223) / 75);
-  if (selected >= 0 && selected < 2) {
+  var selected = Math.floor((y - 188) / 55);
+  var savedLevelCount = getCustomLevels().length;
+  if (selected >= 0 && selected <= savedLevelCount) {
     levelsSelection = selected;
-    if (selected === 1) { openNewEditorLevel(); menuSubState = "slots"; }
-    else if (startCustomLevel()) menuSubState = "slots";
+    if (selected === savedLevelCount) { openNewEditorLevel(); menuSubState = "slots"; }
+    else if (startCustomLevel(selected)) menuSubState = "slots";
   }
 });
 canvas.addEventListener("click", function(event) {

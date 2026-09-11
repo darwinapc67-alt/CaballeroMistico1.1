@@ -2,6 +2,22 @@ window.addEventListener("keydown", function(e) {
   initAudio();
   var k = e.key.toLowerCase();
   var normalizedKey = e.key === " " ? " " : (e.key === "Shift" ? "shift" : k);
+  if (gameState === ST_PLAYING && adminMode && adminConsoleOpen) {
+    if (e.key === "Escape") {
+      adminConsoleOpen = false;
+      adminCommand = "";
+    } else if (e.key === "Enter" || e.code === "Enter" || e.code === "NumpadEnter") {
+      executeAdminCommand(adminCommand);
+      adminCommand = "";
+    } else if (e.key === "Backspace") {
+      adminCommand = adminCommand.slice(0, -1);
+    } else if (e.key.length === 1 && adminCommand.length < 120) {
+      adminCommand += e.key;
+    }
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    return;
+  }
   keys[normalizedKey] = true;
   if (e.code) keys[e.code.toLowerCase()] = true;
   var up = e.key === "ArrowUp" || e.code === "ArrowUp";
@@ -502,8 +518,8 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (menuSubState === "settings") {
-      if (up || k === "w") { settingsSelection = (settingsSelection - 1 + 5) % 5; e.preventDefault(); return; }
-      if (down || k === "s") { settingsSelection = (settingsSelection + 1) % 5; e.preventDefault(); return; }
+      if (up || k === "w") { settingsSelection = (settingsSelection - 1 + 4) % 4; e.preventDefault(); return; }
+      if (down || k === "s") { settingsSelection = (settingsSelection + 1) % 4; e.preventDefault(); return; }
       if (settingsSelection === 2 && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
         brightnessBoost = Math.max(0, Math.min(1, brightnessBoost + (e.key === "ArrowRight" ? 0.1 : -0.1)));
         e.preventDefault(); return;
@@ -515,17 +531,18 @@ window.addEventListener("keydown", function(e) {
       if (confirm) {
         if (settingsSelection === 0) { settingsReturn = true; gameState = ST_LANGUAGE; }
         if (settingsSelection === 1) { settingsReturn = true; gameState = ST_DEVICE; }
-        if (settingsSelection === 4) { controlsConfigSelection = 0; controlsConfigSlot = 0; controlsConfigListening = false; menuSubState = "controls_category"; }
         e.preventDefault(); return;
       }
       return;
     }
     if (menuSubState === "levels") {
-      if (up || k === "w") { levelsSelection = (levelsSelection - 1 + 2) % 2; e.preventDefault(); return; }
-      if (down || k === "s") { levelsSelection = (levelsSelection + 1) % 2; e.preventDefault(); return; }
+      var savedLevelCount = getCustomLevels().length;
+      var levelOptionCount = savedLevelCount + 1;
+      if (up || k === "w") { levelsSelection = (levelsSelection - 1 + levelOptionCount) % levelOptionCount; e.preventDefault(); return; }
+      if (down || k === "s") { levelsSelection = (levelsSelection + 1) % levelOptionCount; e.preventDefault(); return; }
       if (confirm) {
-        if (levelsSelection === 0) {
-          if (startCustomLevel()) menuSubState = "slots";
+        if (levelsSelection < savedLevelCount) {
+          if (startCustomLevel(levelsSelection)) menuSubState = "slots";
         } else {
           openNewEditorLevel();
           menuSubState = "slots";
@@ -582,8 +599,8 @@ window.addEventListener("keydown", function(e) {
 
   if (gameState === ST_PAUSED) {
     if (pauseSubState === "settings") {
-      if (up || k === "w") { settingsSelection = (settingsSelection - 1 + 5) % 5; e.preventDefault(); return; }
-      if (down || k === "s") { settingsSelection = (settingsSelection + 1) % 5; e.preventDefault(); return; }
+      if (up || k === "w") { settingsSelection = (settingsSelection - 1 + 4) % 4; e.preventDefault(); return; }
+      if (down || k === "s") { settingsSelection = (settingsSelection + 1) % 4; e.preventDefault(); return; }
       if (settingsSelection === 2 && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
         brightnessBoost = Math.max(0, Math.min(1, brightnessBoost + (e.key === "ArrowRight" ? 0.1 : -0.1)));
         e.preventDefault(); return;
@@ -595,7 +612,6 @@ window.addEventListener("keydown", function(e) {
       if (confirm) {
         if (settingsSelection === 0) { settingsReturn = "pause"; gameState = ST_LANGUAGE; }
         if (settingsSelection === 1) { settingsReturn = "pause"; gameState = ST_DEVICE; }
-        if (settingsSelection === 4) { controlsConfigDevice = "pc"; controlsConfigSelection = 0; controlsConfigActionSelection = 0; controlsConfigListening = false; menuSubState = "controls_config"; gameState = ST_MENU; }
         e.preventDefault(); return;
       }
       return;
@@ -1070,14 +1086,13 @@ function processGamepadInput() {
     }
     if (menuSubState === "settings") {
       if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
-      if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { settingsSelection = (settingsSelection - 1 + 5) % 5; gamepadMenuAxisLock = 1; }
-      if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { settingsSelection = (settingsSelection + 1) % 5; gamepadMenuAxisLock = 1; }
+      if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { settingsSelection = (settingsSelection - 1 + 4) % 4; gamepadMenuAxisLock = 1; }
+      if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { settingsSelection = (settingsSelection + 1) % 4; gamepadMenuAxisLock = 1; }
       if (settingsSelection === 2 && (btn14 || btn15)) { brightnessBoost = Math.max(0, Math.min(1, brightnessBoost + (btn15 ? 0.1 : -0.1))); }
       if (settingsSelection === 3 && (btn14 || btn15)) adjustGameSpeed(btn15 ? 1 : -1);
       if (btn0) {
         if (settingsSelection === 0) { settingsReturn = true; gameState = ST_LANGUAGE; }
         if (settingsSelection === 1) { settingsReturn = true; gameState = ST_DEVICE; }
-        if (settingsSelection === 4) { controlsConfigDevice = "pc"; controlsConfigSelection = 0; controlsConfigActionSelection = 0; controlsConfigListening = false; menuSubState = "controls_config"; }
       }
       return;
     }
@@ -1092,12 +1107,14 @@ function processGamepadInput() {
       return;
     }
     if (menuSubState === "levels") {
+      var savedLevelCount = getCustomLevels().length;
+      var levelOptionCount = savedLevelCount + 1;
       if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
-      if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { levelsSelection = (levelsSelection - 1 + 2) % 2; gamepadMenuAxisLock = 1; }
-      if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { levelsSelection = (levelsSelection + 1) % 2; gamepadMenuAxisLock = 1; }
+      if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { levelsSelection = (levelsSelection - 1 + levelOptionCount) % levelOptionCount; gamepadMenuAxisLock = 1; }
+      if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { levelsSelection = (levelsSelection + 1) % levelOptionCount; gamepadMenuAxisLock = 1; }
       if (btn0) {
-        if (levelsSelection === 0) {
-          if (startCustomLevel()) menuSubState = "slots";
+        if (levelsSelection < savedLevelCount) {
+          if (startCustomLevel(levelsSelection)) menuSubState = "slots";
         } else {
           openNewEditorLevel();
           menuSubState = "slots";
@@ -1188,8 +1205,8 @@ function processGamepadInput() {
   }
   if (gameState === ST_PAUSED && pauseSubState === "settings") {
     if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
-    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { settingsSelection = (settingsSelection - 1 + 5) % 5; gamepadMenuAxisLock = 1; }
-    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { settingsSelection = (settingsSelection + 1) % 5; gamepadMenuAxisLock = 1; }
+    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { settingsSelection = (settingsSelection - 1 + 4) % 4; gamepadMenuAxisLock = 1; }
+    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { settingsSelection = (settingsSelection + 1) % 4; gamepadMenuAxisLock = 1; }
     if (settingsSelection === 2 && (btn14 || btn15)) { brightnessBoost = Math.max(0, Math.min(1, brightnessBoost + (btn15 ? 0.1 : -0.1))); }
     if (settingsSelection === 3 && (btn14 || btn15)) adjustGameSpeed(btn15 ? 1 : -1);
     if (btn0) {

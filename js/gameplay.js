@@ -814,9 +814,10 @@ function updateCustomLevel() {
         if (enemy.customEnemy) enemy.dead = enemy.customRoom !== customRoomIndex;
       });
       customLevelGoal = nextRoom.goal;
-      player.x = nextRoom.start ? nextRoom.start.x : 32;
-      player.y = nextRoom.start ? nextRoom.start.y : 400;
-      player.vx = 0; player.vy = 0; player.inv = 30;
+      var nextRoomStart = getCustomRoomStart(nextRoom, true);
+      player.x = nextRoomStart.x;
+      player.y = nextRoomStart.y;
+      player.vx = 0; player.vy = 0; player.onGround = false; player.jumpsLeft = player.maxJumps; player.inv = 30;
       cameraX = 0; targetCamX = 0; cameraY = 0; targetCamY = 0;
       spawnFloatText(player.x, player.y - 30, "HABITACION " + (customRoomIndex + 1), "#7dffad");
       return;
@@ -1411,8 +1412,9 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   }
   if (p.y > room.height + 80) {
     if (gameMode === "custom") {
-      p.x = customRooms[customRoomIndex] && customRooms[customRoomIndex].start ? customRooms[customRoomIndex].start.x : 32;
-      p.y = 400; p.vx = 0; p.vy = 0; p.inv = 45;
+      var customRoomStart = getCustomRoomStart(customRooms[customRoomIndex], customRoomIndex > 0);
+      p.x = customRoomStart.x; p.y = customRoomStart.y;
+      p.vx = 0; p.vy = 0; p.onGround = false; p.inv = 45;
       spawnFloatText(p.x, p.y - 20, "REGRESAS AL INICIO", "#f4a");
       return;
     }

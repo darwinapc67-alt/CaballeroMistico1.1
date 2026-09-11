@@ -390,6 +390,10 @@ var customLevelActive = false;
 var customLevelGoal = null;
 var customRooms = [], customRoomIndex = 0;
 var editorRoomIndex = 0;
+var editorSavedLevelIndex = -1;
+var customLevelSelection = 0;
+var editorMouseDown = false;
+var editorMouseButton = 0;
 var editorCategories = ["FAVORITOS", "PINCHOS", "ENEMIGOS", "PLATAFORMAS"];
 var editorPalette = [
   [
@@ -491,7 +495,13 @@ function saveCustomEditorLevel() {
   editorLevel.timestamp = Date.now();
   editorLevel.name = editorLevel.name || "NIVEL PERSONALIZADO";
   var levels = getCustomLevels();
-  levels[0] = JSON.parse(JSON.stringify(editorLevel));
+  var savedLevel = JSON.parse(JSON.stringify(editorLevel));
+  if (editorSavedLevelIndex >= 0 && editorSavedLevelIndex < levels.length) {
+    levels[editorSavedLevelIndex] = savedLevel;
+  } else {
+    levels.push(savedLevel);
+    editorSavedLevelIndex = levels.length - 1;
+  }
   try {
     localStorage.setItem(CUSTOM_LEVELS_KEY, JSON.stringify(levels));
     editorMessage = "NIVEL GUARDADO";
@@ -500,10 +510,12 @@ function saveCustomEditorLevel() {
   }
 }
 
-function loadCustomEditorLevel() {
+function loadCustomEditorLevel(levelIndex) {
   var levels = getCustomLevels();
   if (!levels.length || !levels[0]) return false;
-  var saved = levels[0];
+  var selectedIndex = Math.max(0, Math.min(levels.length - 1, Number(levelIndex) || 0));
+  var saved = levels[selectedIndex];
+  editorSavedLevelIndex = selectedIndex;
   editorLevel = createBlankEditorLevel();
   editorLevel.name = saved.name || editorLevel.name;
   editorLevel.timestamp = saved.timestamp || 0;
@@ -522,14 +534,15 @@ function loadCustomEditorLevel() {
 function openNewEditorLevel() {
   editorLevel = createBlankEditorLevel();
   editorRoomIndex = 0;
+  editorSavedLevelIndex = -1;
   editorCategory = 0;
   editorPaletteSelection = 0;
   editorMessage = "";
   gameState = ST_LEVEL_EDITOR;
 }
 
-function openCustomEditorLevel() {
-  if (!loadCustomEditorLevel()) return false;
+function openCustomEditorLevel(levelIndex) {
+  if (!loadCustomEditorLevel(levelIndex)) return false;
   editorCategory = 0;
   editorPaletteSelection = 0;
   gameState = ST_LEVEL_EDITOR;
@@ -562,7 +575,7 @@ function buildCustomRoom(roomData, index) {
     var x = col * EDITOR_CELL, y = row * EDITOR_CELL;
     var item = getEditorPaletteItemById(id);
     if (!item) return;
-    if (id === "start") start = {x: x + 5, y: y + 2};
+    if (id === "start") start = {x: x + 5, y: Math.max(0, y - 8)};
     else if (id === "goal" || id === "door") goal = {x: x, y: y, w: EDITOR_CELL, h: EDITOR_CELL, type: id};
     else if (item.kind === "platform") platforms.push({x: x, y: y + 22, w: EDITOR_CELL, h: 10});
     else if (item.kind === "wall") walls.push({x: x, y: y, w: EDITOR_CELL, h: EDITOR_CELL});
@@ -580,8 +593,16 @@ function buildCustomRoom(roomData, index) {
   return {platforms: platforms, spikes: spikes, walls: walls, transitionZone: null, height: 600, roomWidth: 576, start: start, goal: goal, custom: true};
 }
 
-function startCustomLevel() {
-  if (!loadCustomEditorLevel()) return false;
+function getCustomRoomStart(roomData, enterFromTop) {
+  if (roomData && roomData.start) return roomData.start;
+  return {
+    x: 32,
+    y: enterFromTop ? 40 : (roomData.height - player.h - 40)
+  };
+}
+
+function startCustomLevel(levelIndex) {
+  if (!loadCustomEditorLevel(levelIndex)) return false;
   enemies.forEach(function(enemy) { if (!enemy.boss) enemy.dead = true; });
   customRooms = (editorLevel.rooms || [{cells: editorLevel.cells}]).map(buildCustomRoom);
   customRoomIndex = 0;
@@ -593,8 +614,9 @@ function startCustomLevel() {
   currentRoom = 0;
   cameraX = 0; targetCamX = 0; cameraY = 0; targetCamY = 0;
   hasSword = true; swordEquipped = true; player.hasSword = true; player.swordEquipped = true; player.swordSheathed = false;
-  player.x = customRooms[0].start ? customRooms[0].start.x : 32; player.y = customRooms[0].start ? customRooms[0].start.y : 400;
-  player.vx = 0; player.vy = 0; player.hp = player.maxHp = 10;
+  var firstRoomStart = getCustomRoomStart(customRooms[0], false);
+  player.x = firstRoomStart.x; player.y = firstRoomStart.y;
+  player.vx = 0; player.vy = 0; player.onGround = false; player.hp = player.maxHp = 10;
   customLevelGoal = customRooms[0].goal;
   gameState = ST_PLAYING;
   return true;
@@ -654,7 +676,7 @@ function handleLevelEditorMouse(event) {
   var index = row * EDITOR_COLS + col;
   var item = getEditorPaletteItem();
   if (!editorLevel || !item) return;
-  if (event.button === 2 || item.kind === "erase") editorLevel.cells[index] = null;
+  if (event.button === 2 || editorMouseButton === 2 || item.kind === "erase") editorLevel.cells[index] = null;
   else editorLevel.cells[index] = item.id;
 }
 

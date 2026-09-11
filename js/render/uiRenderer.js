@@ -946,9 +946,14 @@ function drawMenu() {
     ctx.fillStyle = "#ffd700"; ctx.font = "bold 26px monospace";
     ctx.fillText("NIVELES", canvas.width/2, 170);
     var customLevels = getCustomLevels();
-    var levelOptions = ["CARGAR NIVEL", "CREAR NIVEL"];
+    var savedLevelCount = customLevels.length;
+    var levelOptions = [];
+    for (var levelIndex = 0; levelIndex < savedLevelCount; levelIndex++) {
+      levelOptions.push("CARGAR NIVEL " + (levelIndex + 1));
+    }
+    levelOptions.push("CREAR NIVEL");
     levelOptions.forEach(function(option, index) {
-      var optionY = 250 + index * 75, selected = levelsSelection === index;
+      var optionY = 215 + index * 55, selected = levelsSelection === index;
       ctx.fillStyle = selected ? "rgba(100,200,255,0.16)" : "rgba(255,255,255,0.03)";
       ctx.fillRect(180, optionY - 27, 440, 54);
       ctx.strokeStyle = selected ? "#6cc" : "#333"; ctx.lineWidth = selected ? 2 : 1;
@@ -958,7 +963,7 @@ function drawMenu() {
     });
     ctx.fillStyle = customLevels.length ? "#8f8" : "#666";
     ctx.font = "12px monospace";
-    ctx.fillText(customLevels.length ? "NIVEL PERSONALIZADO GUARDADO" : "NO HAY NIVELES GUARDADOS", canvas.width/2, 410);
+    ctx.fillText(customLevels.length ? customLevels.length + " NIVEL(ES) PERSONALIZADO(S) GUARDADO(S)" : "NO HAY NIVELES GUARDADOS", canvas.width/2, 410);
     ctx.fillStyle = "#666";
     ctx.fillText("↑/↓ Navegar  •  ENTER Confirmar  •  ESC Volver", canvas.width/2, 500);
   }
@@ -1046,8 +1051,7 @@ function drawMenu() {
       "🌐 " + translateText("Idioma") + ": " + languages[languageSelection].label,
       "🎮 " + translateText("Dispositivo") + ": " + translateText(devices[deviceSelection].label),
       "☀️ Brillo: " + Math.round(brightnessBoost * 100) + "%",
-      "⏱️ Velocidad del juego: " + getGameSpeedLabel(),
-      "🎮 Cambiar controles"
+      "⏱️ Velocidad del juego: " + getGameSpeedLabel()
     ];
     settings.forEach(function(option, index) {
       var y = 205 + index * 58, selected = settingsSelection === index;
@@ -1193,8 +1197,7 @@ function drawPause() {
       "🌐 Idioma: " + languages[languageSelection].label,
       "🎮 Dispositivo: " + devices[deviceSelection].label,
       "☀️ Brillo: " + Math.round(brightnessBoost * 100) + "%",
-      "⏱️ Velocidad del juego: " + getGameSpeedLabel(),
-      "🎮 Cambiar controles"
+      "⏱️ Velocidad del juego: " + getGameSpeedLabel()
     ];
     pauseSettings.forEach(function(option, index) {
       var y = 190 + index * 55, selected = settingsSelection === index;
