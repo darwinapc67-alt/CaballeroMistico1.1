@@ -871,6 +871,10 @@ document.addEventListener("keyup", function(e) {
   var normalizedKey = e.key === " " ? " " : (e.key === "Shift" ? "shift" : e.key.toLowerCase());
   keys[normalizedKey] = false;
   if (e.code) keys[e.code.toLowerCase()] = false;
+  if (gameState === ST_PLAYING && adminMode && adminConsoleOpen) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  }
   if (e.key === "a" || e.key === "A" || e.code === "KeyA" || e.key === "ArrowLeft" || e.code === "ArrowLeft") interiorMoveLeft = false;
   if (e.key === "d" || e.key === "D" || e.code === "KeyD" || e.key === "ArrowRight" || e.code === "ArrowRight") interiorMoveRight = false;
   if (e.key === "a" || e.key === "A") keys["a"] = false;
