@@ -88,10 +88,10 @@ function resetPlayer() {
   player.jumpHeld = false;
   player.maxJumps = hasDoubleJump ? 2 : 1;
   player.frozen = false;
-  player.swordSwing = 0; player.swordCooldown = 0; player.bowCooldown = 0; player.attackHeld = false; player.attackCharge = 0; player.attackCharged = false; player.attackDown = false; player.attackType = "";
+  player.swordSwing = 0; player.swordCooldown = 0; player.bowCooldown = 0; player.attackHeld = false; player.attackCharge = 0; player.attackCharged = false; player.attackDown = false; player.attackType = ""; player.attackDirection = "forward";
   player.swordSheathed = true; player.swordSheathTimer = 0;
   player.blocking = false;
-  player.dashTimer = 0; player.dashCooldown = 0; player.dashDir = 1; player.dashing = false; player.recoilTimer = 0;
+  player.dashTimer = 0; player.dashCooldown = 0; player.dashDir = 1; player.dashVx = 0; player.dashVy = 0; player.dashing = false; player.swordDashTimer = 0; player.swordDashDirection = "forward"; player.recoilTimer = 0;
   playerDead = false;
   deathTimer = 0;
   particles = []; floatTexts = []; arrowsInFlight = []; bombsInFlight = []; impactBursts = []; healingHearts = []; azariDrops = []; flash = 0;
@@ -104,10 +104,10 @@ function resetPlayer() {
     player2.jumpHeld = false;
     player2.maxJumps = hasDoubleJump ? 2 : 1;
     player2.frozen = false;
-    player2.swordSwing = 0; player2.swordCooldown = 0; player2.bowCooldown = 0; player2.attackHeld = false; player2.attackCharge = 0; player2.attackCharged = false; player2.attackDown = false; player2.attackType = ""; player2.weaponId = weaponId;
+    player2.swordSwing = 0; player2.swordCooldown = 0; player2.bowCooldown = 0; player2.attackHeld = false; player2.attackCharge = 0; player2.attackCharged = false; player2.attackDown = false; player2.attackType = ""; player2.attackDirection = "forward"; player2.weaponId = weaponId;
     player2.swordSheathed = true; player2.swordSheathTimer = 0;
     player2.blocking = false;
-    player2.dashTimer = 0; player2.dashCooldown = 0; player2.dashDir = 1; player2.dashing = false; player2.recoilTimer = 0;
+    player2.dashTimer = 0; player2.dashCooldown = 0; player2.dashDir = 1; player2.dashVx = 0; player2.dashVy = 0; player2.dashing = false; player2.swordDashTimer = 0; player2.swordDashDirection = "forward"; player2.recoilTimer = 0;
   }
 }
 
@@ -1239,7 +1239,7 @@ function defeatBoss(e) {
   }
 }
 
-function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed, interactPressed, shootPressed, blockPressed, dashPressed, downPressed, bombPressed) {
+function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed, interactPressed, shootPressed, blockPressed, dashPressed, downPressed, bombPressed, upPressed, attackDirection) {
   if (gameState !== ST_PLAYING) return;
   if (bombPressed && !p.bombHeld) {
     p.bombHeld = true;
@@ -1311,10 +1311,12 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     return;
   }
   if (p.dashCooldown > 0) p.dashCooldown--;
-  if (hasDash && dashPressed && p.dashCooldown <= 0 && p.dashTimer <= 0 && !p.blocking) {
+  if (hasDash && dashPressed && p.dashCooldown <= 0 && p.dashTimer <= 0 && p.swordDashTimer <= 0 && !p.blocking) {
     p.dashTimer = DASH_DURATION;
     p.dashCooldown = DASH_COOLDOWN;
     p.dashDir = moveLeft ? -1 : (moveRight ? 1 : p.facing || 1);
+    p.dashVx = p.dashDir * DASH_SPEED;
+    p.dashVy = 0;
     p.facing = p.dashDir;
     p.dashing = true;
     p.inv = Math.max(p.inv, DASH_INV_FRAMES);
@@ -1322,7 +1324,13 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     spawnParticles(p.x + p.w / 2, p.y + p.h / 2, "#7af", 8, 3);
   }
 
-  if (p.dashTimer > 0) {
+  if (p.swordDashTimer > 0) {
+    p.swordDashTimer--;
+    p.dashing = true;
+    p.vx = p.dashVx;
+    p.vy = p.dashVy;
+    if (p.swordDashTimer <= 0) p.dashing = false;
+  } else if (p.dashTimer > 0) {
     p.dashTimer--;
     p.dashing = true;
     p.vx = p.dashDir * DASH_SPEED;
@@ -1544,8 +1552,14 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       p.attackCharge = 0;
       p.attackCharged = false;
       p.attackDown = combatSkills.aerial && !p.onGround && downPressed;
+      p.attackDirection = downPressed ? "down" : (upPressed ? "up" :
+        (moveLeft ? (p.facing < 0 ? "forward" : "back") :
+        (moveRight ? (p.facing > 0 ? "forward" : "back") : "forward")));
     } else if (p.attackCharge < 45) {
       p.attackCharge++;
+      p.attackDirection = downPressed ? "down" : (upPressed ? "up" :
+        (moveLeft ? (p.facing < 0 ? "forward" : "back") :
+        (moveRight ? (p.facing > 0 ? "forward" : "back") : p.attackDirection)));
       if (combatSkills.charged && p.attackCharge === 30) {
         p.attackCharged = true;
         spawnFloatText(p.x, p.y - 22, "¡Golpe cargado!", "#ffd700");
@@ -1558,6 +1572,22 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       p.swordCooldown = p.attackType === "charged" ? weapon.cooldown + 12 : weapon.cooldown;
       p.swordSheathed = false;
       p.swordSheathTimer = 180;
+      if (combatSkills.aerial && !p.onGround) {
+        p.swordDashDirection = p.attackDirection || "forward";
+        p.swordDashTimer = DASH_DURATION;
+        p.inv = Math.max(p.inv, DASH_INV_FRAMES);
+        if (p.swordDashDirection === "up") {
+          p.dashVx = 0; p.dashVy = -DASH_SPEED;
+        } else if (p.swordDashDirection === "down") {
+          p.dashVx = 0; p.dashVy = DASH_SPEED;
+        } else {
+          p.dashVx = (p.swordDashDirection === "back" ? -p.facing : p.facing) * DASH_SPEED;
+          p.dashVy = 0;
+        }
+        p.dashDir = p.dashVx < 0 ? -1 : 1;
+        p.dashing = true;
+        spawnParticles(p.x + p.w / 2, p.y + p.h / 2, "#ffd85a", 10, 4);
+      }
       stats.attacks++;
       spawnParticles(p.x + p.w/2 + p.facing * 18, p.y + p.h/2, p.attackType === "charged" ? "#ff9d4d" : "#ffd700", p.attackType === "charged" ? 12 : 6, 4);
       sfxAttack();
@@ -1634,6 +1664,7 @@ function updatePlayer() {
     if (jumpPads.some(function(pad) { return gpButtons[pad] && !prevGPButtons[pad]; })) jump = true;
     attack = isControlPadPressed("attack", gpButtons);
     down = down || gpAxes.y > 0.5;
+    up = up || gpAxes.y < -0.5;
     var shootPads = getControlPads("shoot");
     var interactPads = getControlPads("interact");
     if (shootPads.some(function(pad) { return gpButtons[pad] && !prevGPButtons[pad]; })) shoot = true;
@@ -1641,7 +1672,9 @@ function updatePlayer() {
     if (isControlPadPressed("block", gpButtons)) block = true;
     if (getControlPads("dash").some(function(pad) { return gpButtons[pad] && !prevGPButtons[pad]; })) dash = true;
   }
-  updateGenericPlayer(player, moveLeft, moveRight, jump, attack, interact, shoot, block, dash, down, bomb);
+  var up = keys["arrowup"] || keys["w"];
+  var attackDirection = down ? "down" : (up ? "up" : (moveLeft || moveRight ? (moveLeft === (player.facing > 0) ? "back" : "forward") : "forward"));
+  updateGenericPlayer(player, moveLeft, moveRight, jump, attack, interact, shoot, block, dash, down, bomb, up, attackDirection);
 }
 
 function updatePlayer2() {
@@ -1652,7 +1685,8 @@ function updatePlayer2() {
   var attack = keys["ctrl"] && hasSword;
   var down = keys["arrowdown"];
   var interact = keys["alt"];
-  updateGenericPlayer(player2, moveLeft, moveRight, jump, attack, interact, false, false, keys["shift"], down);
+  var attackDirection = down ? "down" : (keys["arrowup"] ? "up" : (moveLeft || moveRight ? (moveLeft === (player2.facing > 0) ? "back" : "forward") : "forward"));
+  updateGenericPlayer(player2, moveLeft, moveRight, jump, attack, interact, false, false, keys["shift"], down, false, keys["arrowup"], attackDirection);
   if (rectHit(player, player2)) {
     var dx = (player.x + player.w/2) - (player2.x + player2.w/2);
     if (dx > 0) { player.x += 1; player2.x -= 1; }
