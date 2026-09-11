@@ -38,6 +38,8 @@ function playerTakeDamage(p, dmg, isBossDamage) {
     deathTimer = 0;
     deathAnimTimer = 0;
     deathChoice = 0;
+    deathMenuInputDelay = 60;
+    deathMenuConfirmReleased = !(keys["enter"] || keys["numpadenter"] || keys[" "]);
     gameState = ST_DEATH;
     p.frozen = true;
     sfxDeath();
@@ -94,6 +96,8 @@ function resetPlayer() {
   player.dashTimer = 0; player.dashCooldown = 0; player.dashDir = 1; player.dashVx = 0; player.dashVy = 0; player.dashing = false; player.swordDashTimer = 0; player.swordDashDirection = "forward"; player.recoilTimer = 0;
   playerDead = false;
   deathTimer = 0;
+  deathMenuInputDelay = 0;
+  deathMenuConfirmReleased = true;
   particles = []; floatTexts = []; arrowsInFlight = []; bombsInFlight = []; impactBursts = []; healingHearts = []; azariDrops = []; flash = 0;
   combatShake = 0; combatHitStop = 0;
   healing = false; healTimer = 0; healingStoneCooldown = 0;
@@ -229,6 +233,11 @@ function restoreCheckpoint(preserveInfiniteProgress) {
       bowLevel = infiniteState.bowLevel;
       combatSkills = infiniteState.combatSkills;
       infiniteWave = infiniteState.infiniteWave;
+      player.hasSword = hasSword;
+      player.swordEquipped = swordEquipped;
+      player.weaponId = weaponId;
+      player.swordSheathed = !swordEquipped;
+      if (device === "touch") setupTouchControls();
       unlockWeaponsForInfiniteWave(infiniteWave);
       weaponId = isWeaponUnlocked(weaponId) ? weaponId : DEFAULT_WEAPON_ID;
       player.x = 100;

@@ -370,9 +370,18 @@ window.addEventListener("keydown", function(e) {
 
   if (gameState === ST_DEATH) {
     var deathOptions = 3;
+    if (deathMenuInputDelay > 0) {
+      e.preventDefault();
+      return;
+    }
+    if ((confirm || e.key === " ") && !deathMenuConfirmReleased) {
+      e.preventDefault();
+      return;
+    }
     if (up || k === "w") deathChoice = (deathChoice - 1 + deathOptions) % deathOptions;
     if (down || k === "s") deathChoice = (deathChoice + 1) % deathOptions;
-    if (confirm) {
+    if (confirm && deathMenuConfirmReleased) {
+      deathMenuConfirmReleased = false;
       if (deathChoice === 0) {
         restoreCheckpoint(true);
       } else if (deathChoice === 1) {

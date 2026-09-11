@@ -47,6 +47,7 @@ function resetAll() {
   azariDrops = [];
   playerDead = false; deathTimer = 0;
   deathChoice = 0; deathAnimTimer = 0;
+  deathMenuInputDelay = 0; deathMenuConfirmReleased = true;
   consecutiveDeaths = 0;
   infiniteWave = 0; infiniteSpawnTimer = 60;
   highestRoomReached = 0;
@@ -70,6 +71,12 @@ function resetAll() {
     room0.walls = [{x:0, y:0, w:20, h:600}, {x:780, y:0, w:20, h:600}, {x:0, y:0, w:800, h:20}, {x:0, y:580, w:800, h:20}];
     hasSword = true; swordEquipped = true; player.hasSword = true; player.swordEquipped = true; player.swordSheathed = false;
     bombs = 10;
+    checkpointState.hasSword = true;
+    checkpointState.swordEquipped = true;
+    checkpointState.weaponId = weaponId;
+    checkpointState.unlockedWeapons = unlockedWeapons.slice();
+    checkpointState.bombs = bombs;
+    if (device === "touch") setupTouchControls();
   } else {
     room0.platforms = [{x:0, y:560, w:220, h:40}, {x:500, y:560, w:300, h:40}, {x:180, y:490, w:75, h:14}, {x:300, y:490, w:75, h:14}, {x:420, y:490, w:75, h:14}, {x:540, y:490, w:75, h:14}, {x:360, y:410, w:65, h:14}];
     room0.spikes = [{x:220, y:580, w:280, h:20}];
@@ -142,6 +149,8 @@ function update() {
   if (shopOpen && gameState === ST_PLAYING) { updateShopPlayer(); return; }
   if (gameState === ST_TRANSITION) { updateTransition(); return; }
   if (gameState === ST_DEATH) {
+    if (deathMenuInputDelay > 0) deathMenuInputDelay--;
+    if (!keys["enter"] && !keys["numpadenter"] && !keys[" "]) deathMenuConfirmReleased = true;
     deathAnimTimer++;
     for (var deathIndex = deathParticles.length - 1; deathIndex >= 0; deathIndex--) {
       var deathParticle = deathParticles[deathIndex];

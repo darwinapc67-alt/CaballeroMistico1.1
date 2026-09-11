@@ -426,7 +426,7 @@ var azariDrops = [];
 var deathParticles = [];
 var playerDead = false;
 var deathTimer = 0;
-var deathChoice = 0, deathAnimTimer = 0;
+var deathChoice = 0, deathAnimTimer = 0, deathMenuInputDelay = 0, deathMenuConfirmReleased = true;
 var consecutiveDeaths = 0;
 var checkpointState = null;
 var highestRoomReached = 0;
