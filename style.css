@@ -188,6 +188,16 @@
     .touchActions button[data-key="c"] {
       border-color: rgba(157,232,255,.8);
     }
+    .touchActions button[data-key="z"] {
+      border-color: rgba(255,213,112,.85);
+    }
+    .touchActions button[data-key="b"] {
+      border-color: rgba(255,145,105,.85);
+    }
+    .touchActions button[data-key="`"],
+    .touchActions button[data-key="m"] {
+      border-color: rgba(190,160,255,.85);
+    }
     .touchActions button[data-key="shift"] {
       border-color: rgba(122,170,255,.8);
     }

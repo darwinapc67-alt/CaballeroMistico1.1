@@ -232,13 +232,14 @@ var touchLayout = {
 var touchEditSelection = 0;
 var touchControlsSignature = "";
 var TOUCH_LAYOUT_KEY = "caballero_mistico_touch_layout_v2";
-var touchButtonKeys = [" ", "x", "c", "shift", "e", "escape", "b", "delete"];
+var touchButtonKeys = [" ", "x", "z", "c", "shift", "e", "`", "m", "b", "escape", "delete"];
 
 function resetTouchButtonPositions() {
   var positions = [
-    { x: 57, y: 58 }, { x: 69, y: 58 }, { x: 81, y: 58 },
-    { x: 57, y: 78 }, { x: 69, y: 73 }, { x: 81, y: 73 },
-    { x: 57, y: 77 }, { x: 69, y: 77 }
+    { x: 57, y: 56 }, { x: 69, y: 56 }, { x: 81, y: 56 },
+    { x: 57, y: 65 }, { x: 69, y: 65 }, { x: 81, y: 65 },
+    { x: 57, y: 74 }, { x: 69, y: 74 }, { x: 81, y: 74 },
+    { x: 57, y: 43 }, { x: 69, y: 43 }
   ];
   touchLayout.buttons = {};
   touchButtonKeys.forEach(function(key, index) {

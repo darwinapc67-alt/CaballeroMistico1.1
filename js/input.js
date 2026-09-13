@@ -182,6 +182,15 @@ window.addEventListener("keydown", function(e) {
 
   }
 
+  if (k === "m" && gameState === ST_PLAYING) {
+    if (hasMap) {
+      inventoryOpen = true;
+      mapOpen = true;
+      gameState = ST_INVENTORY;
+    }
+    e.preventDefault();
+    return;
+  }
   if (gameState === ST_INVENTORY && k === "m") {
     if (hasMap) mapOpen = !mapOpen;
     e.preventDefault();
@@ -1398,11 +1407,14 @@ function setupTouchControls() {
     '<div class="touchActions">' +
     '<button class="touchJump" data-key=" " aria-label="Saltar">⬆</button>' +
     '<button data-key="x" aria-label="Atacar">⚔</button>' +
-    '<button data-key="e" aria-label="Interactuar">✦</button>' +
-    '<button data-key="escape" aria-label="Pausa">Ⅱ</button>' +
-    (bossAbilities.guardian ? '<button data-key="c" aria-label="Usar escudo">🛡</button>' : '') +
+    (hasBow ? '<button data-key="z" aria-label="Disparar arco">🏹</button>' : '') +
+    '<button data-key="c" aria-label="Bloquear">🛡</button>' +
     (hasDash ? '<button data-key="shift" aria-label="Dash">↯</button>' : '') +
+    '<button data-key="e" aria-label="Interactuar">✦</button>' +
+    '<button data-key="`" aria-label="Abrir inventario">🎒</button>' +
+    (hasMap ? '<button data-key="m" aria-label="Abrir mapa">🗺</button>' : '') +
     (bombs > 0 ? '<button data-key="b" aria-label="Lanzar bomba">💣</button>' : '') +
+    '<button data-key="escape" aria-label="Pausa">Ⅱ</button>' +
     '<button class="touchDelete" data-key="delete" aria-label="Borrar partida">🗑</button>' +
     '</div>';
   var joystick = controls.querySelector(".touchJoystick");
@@ -1414,6 +1426,8 @@ function setupTouchControls() {
     knob.style.transform = "translate(-50%, -50%)";
     keys.a = false;
     keys.d = false;
+    keys.arrowup = false;
+    keys.arrowdown = false;
   }
   function moveJoystick(event) {
     if (joystickPointer !== event.pointerId) return;
@@ -1430,6 +1444,8 @@ function setupTouchControls() {
     var deadZone = rect.width * 0.2;
     keys.a = dx < -deadZone;
     keys.d = dx > deadZone;
+    keys.arrowup = dy < -deadZone;
+    keys.arrowdown = dy > deadZone;
     if (gameState !== ST_PLAYING && gameState !== ST_INVENTORY) {
       var direction = Math.abs(dy) > deadZone ? (dy < 0 ? "ArrowUp" : "ArrowDown") : "";
       if (direction && direction !== lastMenuDirection) {
@@ -1556,7 +1572,7 @@ function setupTouchControls() {
 }
 
 function getTouchControlsSignature() {
-  return [hasSword, hasDash, !!bossAbilities.guardian, bombs > 0].join("|");
+  return [hasSword, hasBow, hasDash, hasMap, bombs > 0].join("|");
 }
 
 function updateTouchMenuButton() {
