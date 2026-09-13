@@ -170,7 +170,7 @@ function drawInventory() {
     { name: "Amuleto", kind: "amulet", owned: hasAzariCharm, detail: "bendición", color: "#73d4cc" },
     { name: "Linterna", kind: "lantern", owned: hasLantern, detail: hasLantern ? "nivel " + lanternLevel : "sin obtener", color: "#f2c45c" },
     { name: "Mapa", kind: "map", owned: hasMap, detail: "zonas descubiertas", color: "#8bb7d9" },
-    { name: "Fragmento", kind: "fragment", owned: heartFragments1 > 0 || heartFragments2 > 0, detail: (heartFragments1 + heartFragments2) + " / 6", color: "#a88be8" },
+    { name: "Fragmento", kind: "fragment", owned: heartFragments1 > 0 || heartFragments2 > 0, detail: (heartFragments1 + heartFragments2) + " / 4", color: "#a88be8" },
     { name: "Doble salto", kind: "doubleJump", owned: hasDoubleJump, detail: "habilidad", color: "#8ad6ff" },
     { name: "Dash", kind: "dash", owned: hasDash, detail: "habilidad", color: "#c58cff" },
     { name: "Armadura", kind: "armor", owned: armorLevel > 0, detail: armorLevel > 0 ? "nivel " + armorLevel + " • " + [0, 25, 40, 55][armorLevel] + "% medio daño" : "sin obtener", color: "#d8a85f" },
@@ -243,7 +243,7 @@ function drawInventory() {
   ctx.fillStyle = "#78879d";
   ctx.fillText("COLECCIONABLES", 548, 296);
   ctx.fillText("Fragmentos", 548, 324);
-  ctx.fillText(heartFragments1 + heartFragments2 + " / 6", 700, 324);
+  ctx.fillText(heartFragments1 + heartFragments2 + " / 4", 700, 324);
   ctx.fillText("Secretos", 548, 354);
   ctx.fillText(Object.keys(hiddenCollectibles).filter(function(key) { return hiddenCollectibles[key]; }).length + " / 3", 700, 354);
   ctx.fillText("Azari", 548, 384);
@@ -277,7 +277,7 @@ function drawInventory() {
     "🌑 Fragmento abisal " + (bossUniqueItems.abyssal_knight ? "✓" : "—"),
     "🛡️ Armadura: " + armorId,
     "⚔️ Espada +" + swordLevel + "  🏹 Arco +" + bowLevel,
-    "❤️ Vida: " + player.maxHp + "  Fragmentos " + heartFragments1 + "/3",
+    "❤️ Vida: " + player.maxHp + "  Fragmentos " + heartFragments1 + "/4",
     "💠 Azari: " + azari + "  Saltos: " + (hasDoubleJump ? "Doble" : "Simple"),
     "🗝️ Llave vieja " + (hasOldKey ? "✓" : "—")
   ];
@@ -652,8 +652,8 @@ function drawGame() {
 
   if (heartFragments1 > 0 || heartFragments2 > 0) {
     ctx.fillStyle = "#f44"; ctx.font = "bold 12px monospace";
-    var fragText = "❤️ J1:" + heartFragments1 + "/3";
-    if (twoPlayerMode) fragText += "  J2:" + heartFragments2 + "/3";
+    var fragText = "❤️ J1:" + heartFragments1 + "/4";
+    if (twoPlayerMode) fragText += "  J2:" + heartFragments2 + "/4";
     ctx.fillText(fragText, barX, twoPlayerMode ? 50 : 28);
   }
   ctx.fillStyle = "#fff"; ctx.font = "13px monospace";
@@ -1124,12 +1124,15 @@ function drawMenu() {
     ctx.fillText("⚙️ CONFIGURACIÓN", canvas.width / 2, 150);
     var settings = [
       "🌐 " + translateText("Idioma") + ": " + languages[languageSelection].label,
-      "🎮 " + translateText("Dispositivo") + ": " + translateText(devices[deviceSelection].label),
+      "🎵 Música: " + (musicEnabled ? "ACTIVADA" : "DESACTIVADA"),
+      "🔊 Sonidos: " + (sfxEnabled ? "ACTIVADOS" : "DESACTIVADOS"),
+      "🎮 Controles",
       "☀️ Brillo: " + Math.round(brightnessBoost * 100) + "%",
-      "⏱️ Velocidad del juego: " + getGameSpeedLabel()
+      "⏱️ Velocidad del juego: " + getGameSpeedLabel(),
+      "👥 Agregar J2: " + (twoPlayerMode ? "ACTIVADO" : "DESACTIVADO")
     ];
     settings.forEach(function(option, index) {
-      var y = 205 + index * 58, selected = settingsSelection === index;
+      var y = 185 + index * 46, selected = settingsSelection === index;
       ctx.fillStyle = selected ? "rgba(100,200,255,0.16)" : "rgba(255,255,255,0.03)";
       ctx.fillRect(180, y - 25, 440, 48);
       ctx.strokeStyle = selected ? "#6cc" : "#333"; ctx.lineWidth = selected ? 2 : 1;
@@ -1138,7 +1141,7 @@ function drawMenu() {
       ctx.fillText((selected ? "▶  " : "    ") + option, canvas.width / 2, y + 5);
     });
     ctx.fillStyle = "#666"; ctx.font = "12px monospace";
-    ctx.fillText("↑/↓ Navegar  •  ←/→ Ajustar opción  •  ENTER Seleccionar  •  ESC Volver", canvas.width / 2, 535);
+    ctx.fillText("↑/↓ Navegar  •  ←/→ Ajustar  •  ENTER Seleccionar  •  ESC Volver", canvas.width / 2, 535);
   }
   if (menuSubState === "controls_config") {
     ctx.fillStyle = "rgba(0,0,0,0.94)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1599,9 +1602,9 @@ function drawShop() {
   var armorShopText = armorLevel >= 3 ? "Armadura al máximo" : (armorLevel === 0 ? "Armadura nivel 1 (50 Azari)" : "Mejorar armadura a nivel " + (armorLevel + 1) + " (" + [0, 50, 80, 120][armorLevel] + " Azari)");
   var shopItems = [
     "Mapa (45 Azari)", "Arco (35 Azari)", "Flechas x20 (5 Azari)", "Fragmento de vida J1 (25 Azari)", "Fragmento de vida J2 (25 Azari)",
-    "Amuleto", "Imán de Azari", "Bolsa de Azari", "Linterna", "Llave vieja",
+    "Bendición codiciosa (45 Azari)", "Imán de Azari (60 Azari)", "Bolsa de Azari", "Linterna", "Llave vieja (40 Azari)",
     "Mejora de espada", "Mejora de arco", "Flecha pesada", "Golpe cargado",
-    "Ataque aéreo", "Combo", "Bendición codiciosa", "Bombas x5", armorShopText
+    "Ataque aéreo", "Combo", "Bendición codiciosa (ya incluida)", "Bombas x5", armorShopText
   ];
   WEAPON_PROGRESSION.forEach(function(id) {
     var weapon = getWeaponConfig(id);

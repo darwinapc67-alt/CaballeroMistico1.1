@@ -39,6 +39,7 @@ window.addEventListener("keydown", function(e) {
       controlsConfigListening = false;
       if (controlsConfigDevice === "touch") {
         touchEditSelection = 0;
+        controlsFromMain = true;
         gameState = ST_PAUSED;
         pauseSubState = "controls_touch";
       } else {
@@ -553,19 +554,41 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (menuSubState === "settings") {
-      if (up || k === "w") { settingsSelection = (settingsSelection - 1 + 4) % 4; e.preventDefault(); return; }
-      if (down || k === "s") { settingsSelection = (settingsSelection + 1) % 4; e.preventDefault(); return; }
-      if (settingsSelection === 2 && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+      if (up || k === "w") { settingsSelection = (settingsSelection - 1 + 7) % 7; e.preventDefault(); return; }
+      if (down || k === "s") { settingsSelection = (settingsSelection + 1) % 7; e.preventDefault(); return; }
+      if (settingsSelection === 4 && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
         brightnessBoost = Math.max(0, Math.min(1, brightnessBoost + (e.key === "ArrowRight" ? 0.1 : -0.1)));
         e.preventDefault(); return;
       }
-      if (settingsSelection === 3 && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+      if (settingsSelection === 5 && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
         adjustGameSpeed(e.key === "ArrowRight" ? 1 : -1);
+        e.preventDefault(); return;
+      }
+      if ((settingsSelection === 1 || settingsSelection === 2) && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+        if (settingsSelection === 1) toggleMusic();
+        else toggleSfx();
         e.preventDefault(); return;
       }
       if (confirm) {
         if (settingsSelection === 0) { settingsReturn = true; gameState = ST_LANGUAGE; }
-        if (settingsSelection === 1) { settingsReturn = true; gameState = ST_DEVICE; }
+        if (settingsSelection === 1) toggleMusic();
+        if (settingsSelection === 2) toggleSfx();
+        if (settingsSelection === 3) {
+          controlsConfigSelection = 0;
+          controlsConfigActionSelection = 0;
+          controlsConfigListening = false;
+          menuSubState = "controls_category";
+        }
+        if (settingsSelection === 6) {
+          twoPlayerMode = !twoPlayerMode;
+          if (twoPlayerMode && gameMode === "infinite" && hasSword) {
+            player2.hasSword = true;
+            player2.swordEquipped = true;
+            player2.swordSheathed = false;
+            player2.weaponId = weaponId;
+          }
+          updateUI();
+        }
         e.preventDefault(); return;
       }
       return;
@@ -736,7 +759,13 @@ window.addEventListener("keydown", function(e) {
     if (pauseSubState === "controls_touch") {
       if (e.key === "Escape") {
         saveTouchLayout();
-        pauseSubState = "controls";
+        if (controlsFromMain) {
+          controlsFromMain = false;
+          gameState = ST_MENU;
+          menuSubState = "settings";
+        } else {
+          pauseSubState = "controls";
+        }
       } else if (up || k === "w") {
         touchEditSelection = (touchEditSelection + 2) % 3;
       } else if (down || k === "s") {
@@ -870,17 +899,17 @@ window.addEventListener("keydown", function(e) {
           arrows += 20;
           sfxBuy();
         }
-        if (menuSelection === 3 && heartFragmentsBought1 < 2 && spendAzari(25, "heart_fragment_1")) {
+        if (menuSelection === 3 && heartFragmentsBought1 < 4 && spendAzari(25, "heart_fragment_1")) {
           heartFragments1++;
           heartFragmentsBought1++;
           sfxBuy();
-          if (heartFragments1 >= 3) { heartFragments1 -= 3; player.maxHp++; player.hp = player.maxHp; }
+          if (heartFragments1 >= 4) { heartFragments1 -= 4; player.maxHp++; player.hp = player.maxHp; }
         }
-        if (menuSelection === 4 && heartFragmentsBought2 < 2 && spendAzari(25, "heart_fragment_2")) {
+        if (menuSelection === 4 && heartFragmentsBought2 < 4 && spendAzari(25, "heart_fragment_2")) {
           heartFragments2++;
           heartFragmentsBought2++;
           sfxBuy();
-          if (heartFragments2 >= 3) { heartFragments2 -= 3; player2.maxHp++; player2.hp = player2.maxHp; }
+          if (heartFragments2 >= 4) { heartFragments2 -= 4; player2.maxHp++; player2.hp = player2.maxHp; }
         }
         if (menuSelection === 5 && !hasAzariCharm && spendAzari(45, "azari_charm")) {
           hasAzariCharm = true;
@@ -935,10 +964,7 @@ window.addEventListener("keydown", function(e) {
           combatSkills.combo = true;
           sfxBuy();
         }
-        if (menuSelection === 16 && !hasAzariCharm && spendAzari(45, "azari_charm")) {
-          hasAzariCharm = true;
-          sfxBuy();
-        }
+        if (menuSelection === 16 && !hasAzariCharm && spendAzari(45, "greedy_blessing")) { hasAzariCharm = true; sfxBuy(); }
         if (menuSelection === 17 && azari >= 1) { spendAzari(1, "bombs"); bombs += 5; sfxBuy(); }
         if (menuSelection === 18) buyArmorUpgrade();
         if (menuSelection >= 19 && menuSelection <= 24) {
@@ -974,11 +1000,11 @@ window.addEventListener("keydown", function(e) {
       if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 2) % 2; e.preventDefault(); return; }
       if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % 2; e.preventDefault(); return; }
       if (e.key === "Enter") {
-        if (menuSelection === 0 && heartFragmentsBought2 < 2 && azari >= 25) {
+        if (menuSelection === 0 && heartFragmentsBought2 < 4 && azari >= 25) {
           spendAzari(25, "heart_fragment_2"); heartFragments2++; heartFragmentsBought2++;
           spawnFloatText(player2.x, player2.y - 30, "¡Fragmento J2!", "#f4f");
           sfxBuy();
-          if (heartFragments2 >= 3) { heartFragments2 -= 3; player2.maxHp++; player2.hp = player2.maxHp; spawnFloatText(player2.x, player2.y - 50, "¡Vida +1!", "#f4f"); spawnParticles(player2.x + player2.w/2, player2.y + player2.h/2, "#f4f", 20, 5); }
+          if (heartFragments2 >= 4) { heartFragments2 -= 4; player2.maxHp++; player2.hp = player2.maxHp; spawnFloatText(player2.x, player2.y - 50, "¡Vida +1!", "#f4f"); spawnParticles(player2.x + player2.w/2, player2.y + player2.h/2, "#f4f", 20, 5); }
         }
         if (menuSelection === 1 && !hasAzariCharm && azari >= 45) { spendAzari(45, "azari_charm"); hasAzariCharm = true; spawnFloatText(player.x, player.y - 30, "¡Amuleto!", "#0ff"); sfxBuy(); }
         e.preventDefault(); return;
@@ -1139,8 +1165,8 @@ function processGamepadInput() {
         if (menuSelection === 0 && !hasMap && azari >= 45) { spendAzari(45, "map"); hasMap = true; sfxBuy(); }
         if (menuSelection === 1 && !hasBow && azari >= 35) { spendAzari(35, "bow"); hasBow = true; arrows = Math.max(arrows, 20); if (device === "touch") setupTouchControls(); sfxBuy(); }
         if (menuSelection === 2 && azari >= 5) { spendAzari(5, "arrows"); arrows += 20; sfxBuy(); }
-        if (menuSelection === 3 && heartFragmentsBought1 < 2 && azari >= 25) { spendAzari(25, "heart_fragment_1"); heartFragments1++; heartFragmentsBought1++; sfxBuy(); if (heartFragments1 >= 3) { heartFragments1 -= 3; player.maxHp++; player.hp = player.maxHp; } }
-        if (menuSelection === 4 && heartFragmentsBought2 < 2 && azari >= 25) { spendAzari(25, "heart_fragment_2"); heartFragments2++; heartFragmentsBought2++; sfxBuy(); if (heartFragments2 >= 3) { heartFragments2 -= 3; player2.maxHp++; player2.hp = player2.maxHp; } }
+        if (menuSelection === 3 && heartFragmentsBought1 < 4 && azari >= 25) { spendAzari(25, "heart_fragment_1"); heartFragments1++; heartFragmentsBought1++; sfxBuy(); if (heartFragments1 >= 4) { heartFragments1 -= 4; player.maxHp++; player.hp = player.maxHp; } }
+        if (menuSelection === 4 && heartFragmentsBought2 < 4 && azari >= 25) { spendAzari(25, "heart_fragment_2"); heartFragments2++; heartFragmentsBought2++; sfxBuy(); if (heartFragments2 >= 4) { heartFragments2 -= 4; player2.maxHp++; player2.hp = player2.maxHp; } }
         if (menuSelection === 5 && !hasAzariCharm && azari >= 45) { spendAzari(45, "azari_charm"); hasAzariCharm = true; sfxBuy(); }
         if (menuSelection === 6 && !hasAzariMagnet && azari >= 60) { spendAzari(60, "azari_magnet"); hasAzariMagnet = true; sfxBuy(); }
         if (menuSelection === 7 && azariBagLevel < 5) {
@@ -1220,6 +1246,24 @@ function processGamepadInput() {
   }
   if (gameState === ST_MENU) {
     if (device !== "play") return;
+    if (menuSubState === "controls_category") {
+      if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
+      if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { controlsConfigSelection = (controlsConfigSelection + 2) % 3; gamepadMenuAxisLock = 1; }
+      if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { controlsConfigSelection = (controlsConfigSelection + 1) % 3; gamepadMenuAxisLock = 1; }
+      if (btn0) {
+        controlsConfigDevice = ["play", "pc", "touch"][controlsConfigSelection];
+        controlsConfigSlot = 0;
+        controlsConfigListening = false;
+        if (controlsConfigDevice === "touch") {
+          controlsFromMain = true;
+          gameState = ST_PAUSED;
+          pauseSubState = "controls_touch";
+        } else {
+          menuSubState = "controls_config";
+        }
+      }
+      return;
+    }
     if (menuSubState === "controls_config") {
       if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
       if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { controlsConfigActionSelection = (controlsConfigActionSelection - 1 + controlActions.length) % controlActions.length; gamepadMenuAxisLock = 1; }
@@ -1243,13 +1287,31 @@ function processGamepadInput() {
     }
     if (menuSubState === "settings") {
       if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
-      if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { settingsSelection = (settingsSelection - 1 + 4) % 4; gamepadMenuAxisLock = 1; }
-      if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { settingsSelection = (settingsSelection + 1) % 4; gamepadMenuAxisLock = 1; }
-      if (settingsSelection === 2 && (btn14 || btn15)) { brightnessBoost = Math.max(0, Math.min(1, brightnessBoost + (btn15 ? 0.1 : -0.1))); }
-      if (settingsSelection === 3 && (btn14 || btn15)) adjustGameSpeed(btn15 ? 1 : -1);
+      if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { settingsSelection = (settingsSelection - 1 + 7) % 7; gamepadMenuAxisLock = 1; }
+      if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { settingsSelection = (settingsSelection + 1) % 7; gamepadMenuAxisLock = 1; }
+      if (settingsSelection === 4 && (btn14 || btn15)) { brightnessBoost = Math.max(0, Math.min(1, brightnessBoost + (btn15 ? 0.1 : -0.1))); }
+      if (settingsSelection === 5 && (btn14 || btn15)) adjustGameSpeed(btn15 ? 1 : -1);
+      if (settingsSelection === 1 && (btn14 || btn15)) toggleMusic();
+      if (settingsSelection === 2 && (btn14 || btn15)) toggleSfx();
       if (btn0) {
         if (settingsSelection === 0) { settingsReturn = true; gameState = ST_LANGUAGE; }
-        if (settingsSelection === 1) { settingsReturn = true; gameState = ST_DEVICE; }
+        if (settingsSelection === 1) toggleMusic();
+        if (settingsSelection === 2) toggleSfx();
+        if (settingsSelection === 3) {
+          controlsConfigSelection = 0;
+          controlsConfigActionSelection = 0;
+          controlsConfigListening = false;
+          menuSubState = "controls_category";
+        }
+        if (settingsSelection === 6) {
+          twoPlayerMode = !twoPlayerMode;
+          if (twoPlayerMode && gameMode === "infinite" && hasSword) {
+            player2.hasSword = true;
+            player2.swordEquipped = true;
+            player2.swordSheathed = false;
+            player2.weaponId = weaponId;
+          }
+        }
       }
       return;
     }
@@ -1653,7 +1715,13 @@ function setupTouchControls() {
     event.preventDefault();
     if (touchDrag.key === "escape" && !touchDrag.moved) {
       saveTouchLayout();
-      pauseSubState = "controls";
+      if (controlsFromMain) {
+        controlsFromMain = false;
+        gameState = ST_MENU;
+        menuSubState = "settings";
+      } else {
+        pauseSubState = "controls";
+      }
     }
     touchDrag = null;
     saveTouchLayout();
