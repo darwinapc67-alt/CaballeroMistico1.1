@@ -26,7 +26,7 @@ function playerTakeDamage(p, dmg, isBossDamage) {
       var totalDeaths = stats.deaths;
       trackGameEvent("player_death", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
       trackGameEvent("game_over", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
-      restoreCheckpoint(false);
+      restoreCheckpoint(gameMode === "infinite");
       stats.deaths = totalDeaths;
       consecutiveDeaths = 0;
       spawnFloatText(player.x, player.y - 32, "¡Tres derrotas! Último punto de guardado", "#ffd700");
