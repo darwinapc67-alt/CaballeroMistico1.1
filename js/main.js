@@ -5,6 +5,9 @@ function resetAll() {
   brightnessBoost = 1;
   transIsFall = false; transitionCooldown = 0;
   floorCollapseTimer = 0;
+  eterium = 0;
+  hasEteriumSkill = false;
+  eteriumShard = null;
   roomQuakeTimer = 0;
   roomAtmosphereRoom = -1;
   atmosphereRocks = [];

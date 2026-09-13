@@ -86,6 +86,17 @@ function playerTakeDamage(p, dmg, isBossDamage) {
   }
 }
 
+function collectEterium(amount, source) {
+  var value = Math.max(0, Math.floor(Number(amount) || 0));
+  if (!value) return;
+  eterium += value;
+  trackGameEvent("eterium_obtained", { amount: value, source: source || "special_event" });
+  spawnParticles(player.x + player.w / 2, player.y + player.h / 2, "#61d9ff", 22, 4);
+  spawnFloatText(player.x, player.y - 38, "+" + value + " Eterium", "#70e8ff");
+  sfxEterium();
+  if (activeSlot >= 0) saveGame(activeSlot);
+}
+
 function checkAchievementProgress(isBoss) {
   var unlocked = [];
   if (isBoss && !achievements.firstBoss) {
@@ -149,6 +160,15 @@ function startRoomAtmosphere(roomIndex) {
   roomQuakeTimer = 90;
   roomQuakeStrength = 4;
   roomAtmosphereWind = [11, 19, 35, 37, 39].indexOf(roomIndex) >= 0;
+  eteriumShard = null;
+  if (Math.random() < 0.05 && roomIndex > 0) {
+    eteriumShard = {
+      x: origin + 55 + Math.random() * Math.max(120, roomWidth - 110),
+      y: 110 + Math.random() * Math.max(100, room.height - 230),
+      room: roomIndex,
+      collected: false
+    };
+  }
   atmosphereRocks = [];
   atmosphereWindParticles = [];
   atmosphereTorches = [];
@@ -231,6 +251,9 @@ function updateRoomAtmosphere() {
         spawnParticles(torch.x, torch.y - 8, "#ffd36a", 5, 1.4);
       }
     }
+  }
+  if (eteriumShard && !eteriumShard.collected && eteriumShard.room === currentRoom) {
+    eteriumShard.y += Math.sin(frameCounter * 0.08) * 0.08;
   }
 }
 
@@ -329,6 +352,8 @@ function restoreCheckpoint(preserveInfiniteProgress) {
     currentRoom = cp.room; player.x = cp.px; player.y = cp.py;
     player.hp = cp.hp; player.maxHp = cp.maxHp;
     azari = gameMode === "infinite" && preserveInfiniteProgress ? azari : cp.azari;
+    eterium = Math.max(eterium, Number(cp.eterium) || 0);
+    hasEteriumSkill = hasEteriumSkill || !!cp.hasEteriumSkill;
     hasSword = !!cp.hasSword || currentSwordState.hasSword;
     swordEquipped = hasSword && (!!cp.swordEquipped || currentSwordState.swordEquipped);
     weaponId = normalizeWeaponId(cp.weaponId || currentSwordState.weaponId);
@@ -666,6 +691,10 @@ function executeAdminCommand(rawCommand) {
     if (item === "azari" && Number.isFinite(amount)) {
       azari += Math.max(0, amount);
       adminCommandMessage = "Azari concedidos: +" + amount;
+    } else if ((item === "eterium" || item === "etherium") && Number.isFinite(amount)) {
+      eterium += Math.max(0, Math.floor(amount));
+      adminCommandMessage = "Eterium concedido: +" + Math.floor(amount);
+      if (activeSlot >= 0) saveGame(activeSlot);
     } else if (item === "espada" || item === "sword") {
       hasSword = true; player.hasSword = true; player.swordEquipped = true; player.swordSheathed = false;
       adminCommandMessage = "Espada concedida.";
@@ -714,7 +743,7 @@ function executeAdminCommand(rawCommand) {
         adminCommandMessage = "Usa /give luz infinito.";
       }
     } else {
-      adminCommandMessage = "Objeto no válido. Usa espada, arco, mapa, flechas, vida, dash o linterna.";
+      adminCommandMessage = "Objeto no válido. Usa espada, arco, mapa, flechas, eterium, vida, dash o linterna.";
     }
 
   } else if (parts[0] === "/hme") {
@@ -1500,6 +1529,7 @@ function defeatBoss(e) {
     return;
   }
   bossArenaState[e.type] = true;
+  collectEterium(1, "boss_" + e.type);
   bossAbilities[e.type] = true;
   bossZonesUnlocked[e.type] = true;
   e.deathTimer = 90;
@@ -1983,6 +2013,18 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     rewardAzariCollected = true;
     if (activeSlot >= 0) saveGame(activeSlot);
     spawnFloatText(p.x, p.y - 30, "+230 AZARI", "#42d9ff");
+  }
+  if (p === player && eteriumShard && !eteriumShard.collected && eteriumShard.room === currentRoom &&
+      rectHit(p, {x: eteriumShard.x - 28, y: eteriumShard.y - 28, w: 56, h: 56})) {
+    eteriumShard.collected = true;
+    collectEterium(1, "cave_shake_fragment");
+  }
+  if (p === player && interactPressed && room.chests && Array.isArray(room.chests)) {
+    room.chests.forEach(function(chest) {
+      if (!chest.legendary || chest.opened || !rectHit(p, { x: chest.x - 34, y: chest.y - 34, w: 68, h: 68 })) return;
+      chest.opened = true;
+      if (Math.random() < 0.05) collectEterium(1, "legendary_chest");
+    });
   }
 
   if (jumpPressed && !p.jumpHeld && (p.jumpsLeft > 0 || p.wallContact) && !p.frozen) {

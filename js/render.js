@@ -150,6 +150,23 @@ function drawGameWorld() {
     ctx.fillRect(windParticle.x, windParticle.y, windParticle.length, 1);
   });
   ctx.globalAlpha = 1;
+  if (eteriumShard && !eteriumShard.collected && eteriumShard.room === currentRoom) {
+    var shardPulse = 1 + Math.sin(Date.now() / 160) * 0.12;
+    ctx.save();
+    ctx.translate(eteriumShard.x, eteriumShard.y);
+    ctx.scale(shardPulse, shardPulse);
+    ctx.globalAlpha = 0.22;
+    ctx.fillStyle = "#39cfff";
+    ctx.beginPath(); ctx.arc(0, 0, 24, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#4fdcff";
+    ctx.beginPath();
+    ctx.moveTo(0, -13); ctx.lineTo(9, -3); ctx.lineTo(5, 14);
+    ctx.lineTo(-6, 9); ctx.lineTo(-10, -5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#c7f7ff";
+    ctx.fillRect(-2, -9, 3, 8);
+    ctx.restore();
+  }
   drawEnemies();
   drawBossDeathEffects();
   drawHealingHearts();

@@ -377,8 +377,11 @@ function drawInventory() {
   ctx.fillText(Object.keys(hiddenCollectibles).filter(function(key) { return hiddenCollectibles[key]; }).length + " / 3", 700, 354);
   ctx.fillText("Azari", 548, 384);
   ctx.fillText(String(azari), 700, 384);
-  ctx.fillText("ARMAS DESBLOQUEADAS", 548, 410);
-  ctx.fillText(unlockedWeapons.length + " obtenidas", 700, 410);
+  ctx.fillStyle = "#70e8ff";
+  ctx.fillText("Eterium", 548, 414);
+  ctx.fillText(String(eterium), 700, 414);
+  ctx.fillText("HABILIDAD LEGENDARIA", 548, 444);
+  ctx.fillText(hasEteriumSkill ? "Obtenida" : "Bloqueada", 700, 444);
   ctx.fillStyle = "#59677d";
   ctx.fillText("Cada arma ocupa su propio espacio.", 548, 438);
   ctx.fillText("Selecciona un arma y pulsa ENTER", 548, 456);
@@ -882,7 +885,7 @@ function drawGame() {
   }
 
   ctx.textAlign = "right"; ctx.fillStyle = "#0ff"; ctx.font = "bold 13px monospace";
-  ctx.fillText("💠 " + azari, canvas.width - 20, 98);
+  ctx.fillText("💠 " + azari + "  ✦ " + eterium, canvas.width - 20, 98);
   ctx.textAlign = "left";
   ctx.fillStyle = "rgba(100,200,255,0.3)";
   ctx.font = "12px monospace";
@@ -1822,7 +1825,7 @@ function drawShop() {
   ctx.fillStyle = "#ffd700"; ctx.font = "bold 18px monospace"; ctx.textAlign = "center";
   ctx.fillText("TIENDA UNIFICADA", canvas.width/2, 85);
   ctx.fillStyle = "#6cc"; ctx.font = "16px monospace";
-  ctx.fillText("💠 Azari: " + azari, canvas.width/2, 120);
+  ctx.fillText("💠 Azari: " + azari + "   ✦ Eterium: " + eterium, canvas.width/2, 120);
   ctx.fillStyle = "#553311"; ctx.fillRect(82, 500, 38, 60);
   ctx.fillStyle = "#ffd700"; ctx.fillRect(106, 532, 5, 5);
   ctx.fillStyle = "#aaa"; ctx.font = "12px monospace";
@@ -1856,6 +1859,7 @@ function drawShop() {
     "Mejora de espada", "Mejora de arco", "Flecha pesada", "Golpe cargado",
     "Ataque aéreo", "Combo", "Bendición codiciosa (ya incluida)", "Bombas x5", armorShopText
   ];
+  shopItems.push(hasEteriumSkill ? "Habilidad legendaria (obtenida)" : "Habilidad legendaria (8 Eterium)");
   WEAPON_PROGRESSION.forEach(function(id) {
     var weapon = getWeaponConfig(id);
     shopItems.push((isWeaponUnlocked(id) ? "Mejorar " : "Comprar ") + weapon.shortName + " (" + (isWeaponUnlocked(id) ? getWeaponLevel(id) + "/3" : "100 Azari") + ")");
@@ -1875,6 +1879,7 @@ function drawShop() {
   }
   ctx.textAlign = "right";
   ctx.fillStyle = "#6cc"; ctx.fillText("Bombas: " + bombs, 730, 275);
+  ctx.fillStyle = "#70e8ff"; ctx.fillText("Eterium: " + eterium, 730, 308);
   ctx.fillText("Armadura: " + (armorLevel > 0 ? "nivel " + armorLevel : "no"), 730, 292);
   ctx.textAlign = "center";
   ctx.fillStyle = "#777"; ctx.fillText("↑/↓ elegir • ENTER comprar • ESC salir", canvas.width / 2, 575);

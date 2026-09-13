@@ -6,7 +6,7 @@ var GUARD_DURATION = 120, GUARD_COOLDOWN = 240;
    rooms 11-13 are the Guardian, Queen Larva, and Abyssal Knight arenas. */
 var WORLD_W = 43 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
-var VERSION = "v2.05 beta";
+var VERSION = "v2.45 beta";
 
 var ST_LANGUAGE = 0, ST_DEVICE = 1, ST_MENU = 2, ST_PLAYING = 3, ST_PAUSED = 4, ST_TRANSITION = 5, ST_INVENTORY = 7, ST_DIALOGUE = 8, ST_DEATH = 9, ST_HOUSE = 10, ST_LEVEL_EDITOR = 11, ST_INTRO = 12;
 var introTimer = 0, introAmbientCue = -1;
@@ -65,7 +65,7 @@ var translations = {
     "Doble": "Double", "Simple": "Single", "MAPA DE TODAS LAS ZONAS": "MAP OF ALL AREAS", "ZONA": "AREA", "JEFE": "BOSS",
     "ESTADÍSTICAS": "STATS", "Nueva criatura descubierta!": "New creature discovered!", "Listo": "Ready", "Encuentra la espada...": "Find the sword...",
     "Dash": "Dash", "CONSOLA ADMIN  •  COMANDOS DISPONIBLES": "ADMIN CONSOLE  •  AVAILABLE COMMANDS",
-    "Ejemplo: /give azari 1000": "Example: /give azari 1000", "Ejemplo: /tp habitacion 5": "Example: /tp room 5",
+    "Ejemplo: /give azari 1000": "Example: /give azari 1000", "Ejemplo: /give eterium 10000000": "Example: /give eterium 10000000", "Ejemplo: /tp habitacion 5": "Example: /tp room 5",
     "ENTER ejecutar  •  ESC cerrar": "ENTER execute  •  ESC close", "ENTER / ESPACIO para continuar": "ENTER / SPACE to continue",
     "¿BORRAR RANURA": "DELETE SLOT", "Esta acción no se puede deshacer": "This action cannot be undone",
     "Confirmar": "Confirm", "Cancelar": "Cancel",     "ENTER confirmar  •  ESC cancelar": "ENTER confirm  •  ESC cancel", "Música y sonido": "Music & sound",
@@ -115,7 +115,7 @@ var translations = {
     "JUGADOR 1": "JOGADOR 1", "Arco": "Arco", "Flechas": "Flechas", "Bendición codiciosa": "Bênção gananciosa", "Saltos": "Saltos",
     "Doble": "Duplo", "Simple": "Simples", "MAPA DE TODAS LAS ZONAS": "MAPA DE TODAS AS ÁREAS", "ZONA": "ÁREA", "JEFE": "CHEFE",
     "Dash": "Dash", "CONSOLA ADMIN  •  COMANDOS DISPONIBLES": "CONSOLE ADMIN  •  COMANDOS DISPONÍVEIS",
-    "Ejemplo: /give azari 1000": "Exemplo: /give azari 1000", "Ejemplo: /tp habitacion 5": "Exemplo: /tp sala 5",
+    "Ejemplo: /give azari 1000": "Exemplo: /give azari 1000", "Ejemplo: /give eterium 10000000": "Exemplo: /give eterium 10000000", "Ejemplo: /tp habitacion 5": "Exemplo: /tp sala 5",
     "ENTER ejecutar  •  ESC cerrar": "ENTER executar  •  ESC fechar", "ENTER / ESPACIO para continuar": "ENTER / ESPAÇO para continuar",
     "¿BORRAR RANURA": "APAGAR ESPAÇO", "Esta acción no se puede deshacer": "Esta ação não pode ser desfeita",
     "Confirmar": "Confirmar", "Cancelar": "Cancelar",     "ENTER confirmar  •  ESC cancelar": "ENTER confirmar  •  ESC cancelar", "Música y sonido": "Música e som",
@@ -208,7 +208,7 @@ var transTimer = 0, transPhase = "out", transTargetRoom = 0, transFade = 0;
 var transIsFall = false, transIsRise = false, transitionCooldown = 0;
 var floorCollapseTimer = 0;
 var roomQuakeTimer = 0, roomQuakeStrength = 0;
-var roomAtmosphereRoom = -1, roomAtmosphereWind = false;
+var roomAtmosphereRoom = -1, roomAtmosphereWind = false, eteriumShard = null;
 var atmosphereRocks = [], atmosphereWindParticles = [], atmosphereTorches = [];
 
 var audioCtx = null, musicPlaying = false, musicInterval = null, sfxEnabled = true, musicEnabled = true;
@@ -714,7 +714,7 @@ function saveGame(i) {
     room: currentRoom, px: player.x, py: player.y,
     twoPlayer: twoPlayerMode, hasSword: hasSword, swordEquipped: swordEquipped, weaponId: weaponId, unlockedWeapons: unlockedWeapons.slice(), hasBow: hasBow, arrows: arrows, bombs: bombs,
     enemiesKilled: enemies.map(function(e){ return e.dead; }),
-    azari: azari, hasMap: hasMap, hp: player.hp, maxHp: player.maxHp,
+    azari: azari, eterium: eterium, hasEteriumSkill: hasEteriumSkill, hasMap: hasMap, hp: player.hp, maxHp: player.maxHp,
     highestRoomReached: highestRoomReached,
     checkpointState: checkpointState ? JSON.parse(JSON.stringify(checkpointState)) : null,
     heartFragments1: heartFragments1, heartFragments2: heartFragments2,
@@ -777,7 +777,7 @@ function loadGame(i) {
   weaponId = isWeaponUnlocked(weaponId) ? weaponId : DEFAULT_WEAPON_ID;
   player.hasSword = hasSword; player.swordEquipped = swordEquipped; player.weaponId = weaponId;
   hasBow = s.hasBow || false; arrows = s.arrows || 0; bombs = Math.max(0, Number(s.bombs) || 0);
-  azari = s.azari || 0; hasMap = s.hasMap || false;
+  azari = s.azari || 0; eterium = Math.max(0, Number(s.eterium) || 0); hasEteriumSkill = !!s.hasEteriumSkill; hasMap = s.hasMap || false;
   player.hp = s.hp !== undefined ? s.hp : 10;
   player.maxHp = s.maxHp !== undefined ? s.maxHp : 10;
   twoPlayerMode = s.twoPlayer || false;
