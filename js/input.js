@@ -296,6 +296,10 @@ window.addEventListener("keydown", function(e) {
   }
 
   if (gameState === ST_DIALOGUE) {
+    if (dialogueMode === "sword_pickup") {
+      e.preventDefault();
+      return;
+    }
     if (e.key === "Escape") {
       bossDialogueLines = [];
       dialogueMode = "boss";

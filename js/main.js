@@ -183,7 +183,10 @@ function update() {
     }
     return;
   }
-  if (gameState === ST_DIALOGUE) return;
+  if (gameState === ST_DIALOGUE) {
+    if (dialogueMode === "sword_pickup") updateSwordPickupCinematic();
+    return;
+  }
   if (gameState === ST_HOUSE) {
     updateHouseInterior();
     return;
@@ -315,7 +318,11 @@ function loop() {
   else if (gameState === ST_PAUSED) { drawGame(); drawPause(); }
   else if (gameState === ST_TRANSITION) drawTransition();
   else if (gameState === ST_INVENTORY) { drawGame(); drawInventory(); }
-  else if (gameState === ST_DIALOGUE) { drawGame(); drawBossDialogue(); }
+  else if (gameState === ST_DIALOGUE) {
+    drawGame();
+    if (dialogueMode === "sword_pickup") drawSwordPickupCinematic();
+    else drawBossDialogue();
+  }
   else if (gameState === ST_HOUSE) drawHouseInterior();
   else if (gameState === ST_DEATH) drawDeathScreen();
   else if (gameState === ST_LEVEL_EDITOR) drawLevelEditor();

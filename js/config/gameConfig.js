@@ -10,6 +10,7 @@ var VERSION = "v2.05 beta";
 
 var ST_LANGUAGE = 0, ST_DEVICE = 1, ST_MENU = 2, ST_PLAYING = 3, ST_PAUSED = 4, ST_TRANSITION = 5, ST_INVENTORY = 7, ST_DIALOGUE = 8, ST_DEATH = 9, ST_HOUSE = 10, ST_LEVEL_EDITOR = 11, ST_INTRO = 12;
 var introTimer = 0, introAmbientCue = -1;
+var swordPickupCinematicTimer = 0;
 
 var isMobileBrowser = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
   (navigator.maxTouchPoints > 0 && window.innerWidth <= 900);

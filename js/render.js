@@ -180,7 +180,7 @@ function drawGameWorld() {
     ctx.closePath(); ctx.fill();
     ctx.restore();
   });
-  drawPlayerEntity(player);
+  if (dialogueMode !== "sword_pickup") drawPlayerEntity(player);
   if (twoPlayerMode) drawPlayerEntity(player2);
   if (customLevelActive && customLevelGoal) {
     ctx.fillStyle = customLevelGoal.type === "door" ? "#23834b" : "#ffd700";

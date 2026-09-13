@@ -92,10 +92,12 @@ function checkAchievementProgress(isBoss) {
     achievements.firstBoss = true;
     unlocked.push("Primer jefe");
   }
+
   if (!isBoss && !achievements.firstEnemy) {
     achievements.firstEnemy = true;
     unlocked.push("Primer enemigo");
   }
+
   if (stats.enemiesKilled >= 50 && !achievements.enemies50) {
     achievements.enemies50 = true;
     unlocked.push("50 enemigos");
@@ -110,6 +112,31 @@ function checkAchievementProgress(isBoss) {
     });
     achievementNotify = { active: true, timer: 240, title: unlocked[unlocked.length - 1] };
     sfxDiscovery();
+  }
+}
+
+function updateSwordPickupCinematic() {
+  swordPickupCinematicTimer++;
+  if (swordPickupCinematicTimer === 1) sfxTransition();
+  if (swordPickupCinematicTimer === 72) sfxSwordRelease();
+  if (swordPickupCinematicTimer === 96) {
+    room1.pedestal.taken = true;
+    spawnParticles(1180, 470, "#fff", 30, 5);
+    spawnParticles(1180, 470, "#ffd700", 24, 4);
+    combatShake = 4;
+  }
+  for (var i = particles.length - 1; i >= 0; i--) {
+    var particle = particles[i];
+    particle.x += particle.vx; particle.y += particle.vy; particle.vy += 0.025; particle.life--;
+    if (particle.life <= 0) particles.splice(i, 1);
+  }
+  if (swordPickupCinematicTimer >= 220) {
+    hasSword = true; swordEquipped = true;
+    player.hasSword = true; player.swordEquipped = true; player.frozen = false;
+    if (twoPlayerMode) { player2.hasSword = true; player2.swordEquipped = true; }
+    spawnFloatText(1180, 400, "Has recuperado tu poder", "#ffd700");
+    spawnFloatText(1180, 420, "Presiona X/J o CTRL para atacar", "#aaa");
+    dialogueMode = "boss"; swordPickupCinematicTimer = 0; gameState = ST_PLAYING; updateUI();
   }
 }
 
@@ -2096,17 +2123,12 @@ function tryInteractFor(p) {
     var dx = (p.x + p.w/2) - (ped.glass.x + ped.glass.w/2);
     var dy = (p.y + p.h/2) - (ped.glass.y + ped.glass.h/2);
     if (Math.sqrt(dx*dx + dy*dy) < 70) {
-      room1.pedestal.taken = true;
-      hasSword = true; swordEquipped = true;
-      player.hasSword = true; player.swordEquipped = true;
-      if (twoPlayerMode) { player2.hasSword = true; player2.swordEquipped = true; }
-      flash = 0.6;
-      spawnParticles(1180, 470, "#ffd700", 25, 5);
-      sfxEquip();
-      spawnParticles(1180, 470, "#fff", 15, 4);
-      spawnFloatText(1180, 400, "¡Obtuviste la Espada!", "#ffd700");
-      spawnFloatText(1180, 420, "Presiona X/J o CTRL para atacar", "#aaa");
-      updateUI();
+      swordPickupCinematicTimer = 1;
+      player.frozen = true;
+      player.vx = 0;
+      player.vy = 0;
+      dialogueMode = "sword_pickup";
+      gameState = ST_DIALOGUE;
       return;
     }
   }

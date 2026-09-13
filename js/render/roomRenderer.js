@@ -18,6 +18,42 @@ function drawBossDoor(roomIndex) {
   ctx.fillText(locked ? "BLOQUEADO" : "ABIERTO", x + 6, 28);
   ctx.textAlign = "left";
 }
+function drawSwordPickupCinematic() {
+  var timer = swordPickupCinematicTimer;
+  var reveal = Math.max(0, Math.min(1, (timer - 95) / 55));
+  if (reveal > 0) {
+    var pedestalX = room1.pedestal.stone.x + room1.pedestal.stone.w / 2 - cameraX;
+    var pedestalY = room1.pedestal.stone.y - cameraY;
+    var knightX = pedestalX - 82;
+    var knightY = pedestalY - 30;
+    drawPlayerEntity({
+      x: knightX, y: knightY, w: player.w, h: player.h, vx: 0, vy: 0, facing: 1,
+      color: player.color, headColor: player.headColor, inv: 0, dashing: false,
+      blocking: false, hasSword: false, swordEquipped: false, swordSheathed: true, swordSwing: 0
+    });
+    var swordY = pedestalY - 78 - reveal * 100;
+    var swordX = knightX + 28;
+    ctx.save(); ctx.translate(swordX, swordY); ctx.rotate(-0.08);
+    ctx.shadowColor = "#fff4a8"; ctx.shadowBlur = 14;
+    ctx.fillStyle = "#f4fbff";
+    ctx.beginPath(); ctx.moveTo(-7, 0); ctx.lineTo(7, 0); ctx.lineTo(8, 58); ctx.lineTo(0, 76); ctx.lineTo(-8, 58); ctx.closePath(); ctx.fill();
+    ctx.shadowBlur = 0; ctx.fillStyle = "#d9e8ff"; ctx.fillRect(-2, 5, 3, 55);
+    ctx.fillStyle = "#f5d46b"; ctx.fillRect(-17, 60, 34, 7);
+    ctx.fillStyle = "#5a351f"; ctx.fillRect(-4, 67, 8, 23);
+    ctx.fillStyle = "#f5d46b"; ctx.fillRect(-7, 88, 14, 7);
+    ctx.restore();
+  }
+  var darkness = timer < 55 ? timer / 55 : (timer < 95 ? 1 : Math.max(0, 1 - (timer - 95) / 55));
+  if (darkness > 0) {
+    ctx.fillStyle = "rgba(0,0,0," + darkness + ")";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+  if (timer >= 165) {
+    ctx.textAlign = "center"; ctx.fillStyle = "#ffd700"; ctx.font = "bold 22px monospace";
+    ctx.fillText("Has recuperado tu poder", canvas.width / 2, canvas.height - 52);
+    ctx.textAlign = "left";
+  }
+}
 function drawBossDialogue() {
   var line = bossDialogueLines[bossDialogueIndex];
   if (!line) return;
@@ -156,6 +192,16 @@ function drawPedestal() {
   ctx.fillRect(ped.stone.x, ped.stone.y, ped.stone.w, ped.stone.h);
   ctx.fillStyle = "#5a5a6a";
   ctx.fillRect(ped.stone.x, ped.stone.y, ped.stone.w, 4);
+  ctx.strokeStyle = "rgba(20, 22, 38, 0.8)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(ped.stone.x + 18, ped.stone.y + 9);
+  ctx.lineTo(ped.stone.x + 32, ped.stone.y + 19);
+  ctx.lineTo(ped.stone.x + 26, ped.stone.y + 35);
+  ctx.moveTo(ped.stone.x + 73, ped.stone.y + 7);
+  ctx.lineTo(ped.stone.x + 61, ped.stone.y + 17);
+  ctx.lineTo(ped.stone.x + 67, ped.stone.y + 34);
+  ctx.stroke();
   if (!ped.taken) {
     ped.glow += 0.05;
     var glowAlpha = 0.15 + Math.sin(ped.glow) * 0.1;
@@ -166,10 +212,85 @@ function drawPedestal() {
     ctx.strokeStyle = "rgba(255, 215, 0, 0.4)";
     ctx.lineWidth = 1;
     ctx.strokeRect(ped.glass.x, ped.glass.y, ped.glass.w, ped.glass.h);
-    ctx.fillStyle = "#ffd700";
-    ctx.fillRect(ped.sword.x, ped.sword.y, ped.sword.w, ped.sword.h);
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(ped.sword.x + 1, ped.sword.y + 2, ped.sword.w - 2, ped.sword.h * 0.6);
+    var swordX = ped.sword.x + ped.sword.w / 2;
+    var swordTop = ped.sword.y;
+    var guardY = swordTop + 25;
+    var bladeTop = guardY + 3;
+    var bladeBottom = ped.stone.y + 7;
+    var bladeWidth = 13;
+    var bladeGradient = ctx.createLinearGradient(swordX - bladeWidth, bladeTop, swordX + bladeWidth, bladeTop);
+    bladeGradient.addColorStop(0, "#8e9baa");
+    bladeGradient.addColorStop(0.28, "#eaf7ff");
+    bladeGradient.addColorStop(0.52, "#ffffff");
+    bladeGradient.addColorStop(1, "#657487");
+    ctx.fillStyle = bladeGradient;
+    ctx.beginPath();
+    ctx.moveTo(swordX - bladeWidth / 2, bladeTop);
+    ctx.lineTo(swordX + bladeWidth / 2, bladeTop);
+    ctx.lineTo(swordX + bladeWidth * 0.62, bladeBottom - 10);
+    ctx.lineTo(swordX, bladeBottom);
+    ctx.lineTo(swordX - bladeWidth * 0.62, bladeBottom - 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "#b9d6e5";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    ctx.beginPath();
+    ctx.moveTo(swordX - 2, bladeTop + 4);
+    ctx.lineTo(swordX + 1, bladeTop + 4);
+    ctx.lineTo(swordX + 1, bladeBottom - 9);
+    ctx.lineTo(swordX - 1, bladeBottom - 5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#c49a3a";
+    ctx.fillRect(swordX - 16, guardY - 2, 32, 7);
+    ctx.fillStyle = "#f5d46b";
+    ctx.fillRect(swordX - 13, guardY - 1, 26, 3);
+    ctx.fillStyle = "#5a351f";
+    ctx.fillRect(swordX - 3, swordTop, 6, 22);
+    ctx.strokeStyle = "#d09a45";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(swordX - 3, swordTop + 5);
+    ctx.lineTo(swordX + 3, swordTop + 9);
+    ctx.moveTo(swordX + 3, swordTop + 12);
+    ctx.lineTo(swordX - 3, swordTop + 16);
+    ctx.stroke();
+    ctx.fillStyle = "#b9c5d4";
+    ctx.beginPath();
+    ctx.arc(swordX, swordTop - 4, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(255, 215, 80, 0.16)";
+    ctx.beginPath();
+    ctx.ellipse(swordX, guardY + 3, 30, 48, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // The pedestal occludes the blade at the impact point so it reads as embedded.
+    ctx.fillStyle = "#4a4a5a";
+    ctx.beginPath();
+    ctx.moveTo(swordX - 17, ped.stone.y);
+    ctx.lineTo(swordX + 17, ped.stone.y);
+    ctx.lineTo(swordX + 10, ped.stone.y + 10);
+    ctx.lineTo(swordX - 11, ped.stone.y + 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#5a5a6a";
+    ctx.fillRect(swordX - 13, ped.stone.y, 26, 3);
+    ctx.fillStyle = "rgba(10, 12, 24, 0.72)";
+    ctx.beginPath();
+    ctx.ellipse(swordX, ped.stone.y + 4, 9, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(20, 22, 38, 0.9)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(swordX - 10, ped.stone.y + 2);
+    ctx.lineTo(swordX - 18, ped.stone.y + 13);
+    ctx.lineTo(swordX - 9, ped.stone.y + 22);
+    ctx.moveTo(swordX + 10, ped.stone.y + 2);
+    ctx.lineTo(swordX + 18, ped.stone.y + 13);
+    ctx.lineTo(swordX + 9, ped.stone.y + 22);
+    ctx.stroke();
   }
 
 }
