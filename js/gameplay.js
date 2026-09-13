@@ -22,7 +22,7 @@ function playerTakeDamage(p, dmg, isBossDamage) {
   if (p.hp <= 0) {
     stats.deaths++;
     consecutiveDeaths++;
-    if (gameMode === "infinite" && consecutiveDeaths >= 3) {
+    if (consecutiveDeaths >= 3) {
       var totalDeaths = stats.deaths;
       trackGameEvent("player_death", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
       trackGameEvent("game_over", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
@@ -32,6 +32,23 @@ function playerTakeDamage(p, dmg, isBossDamage) {
       spawnFloatText(player.x, player.y - 32, "¡Tres derrotas! Último punto de guardado", "#ffd700");
       return;
     }
+    if (consecutiveDeaths < 3) {
+      trackGameEvent("player_death", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
+      player.x = p === player ? lastSafeX : p.x;
+      player.y = p === player ? lastSafeY : p.y;
+      player.vx = 0;
+      player.vy = 0;
+      player.hp = player.maxHp;
+      player.frozen = false;
+      playerDead = false;
+      player.inv = 90;
+      player.hasSword = hasSword;
+      player.swordEquipped = swordEquipped;
+      player.swordSheathed = !swordEquipped;
+      gameState = ST_PLAYING;
+      spawnFloatText(player.x, player.y - 32, "DERROTA " + consecutiveDeaths + " / 3", "#ff7777");
+      return;
+    }
     playerDead = true;
     spawnFloatText(p.x, p.y - 34, "DERROTA " + consecutiveDeaths + " / 3", "#ff7777");
     trackGameEvent("player_death", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
@@ -39,7 +56,7 @@ function playerTakeDamage(p, dmg, isBossDamage) {
     deathAnimTimer = 0;
     deathChoice = 0;
     deathMenuInputDelay = 60;
-    deathMenuConfirmReleased = !(keys["enter"] || keys["numpadenter"] || keys[" "]);
+    deathMenuReadyAt = Date.now() + 1000;
     gameState = ST_DEATH;
     p.frozen = true;
     sfxDeath();
@@ -97,7 +114,7 @@ function resetPlayer() {
   playerDead = false;
   deathTimer = 0;
   deathMenuInputDelay = 0;
-  deathMenuConfirmReleased = true;
+  deathMenuReadyAt = 0;
   particles = []; floatTexts = []; arrowsInFlight = []; bombsInFlight = []; impactBursts = []; healingHearts = []; azariDrops = []; flash = 0;
   combatShake = 0; combatHitStop = 0;
   healing = false; healTimer = 0; healingStoneCooldown = 0;
@@ -349,6 +366,157 @@ function updateHiddenCollectibles() {
       sfxDiscovery();
     }
   });
+}
+
+function applyMenuModification(index) {
+  if (index === 0) {
+    hasLantern = true;
+    infiniteLight = true;
+    adminCommandMessage = "Luz infinita activada.";
+  } else if (index === 1) {
+    player.color = player.color === "#0aa" ? "#a0a" : "#0aa";
+    player.headColor = player.headColor === "#0cc" ? "#c0c" : "#0cc";
+    adminCommandMessage = "Personaje cambiado.";
+  } else if (index === 2) {
+    hasSword = true;
+    swordEquipped = true;
+    player.hasSword = true;
+    player.swordEquipped = true;
+    player.swordSheathed = false;
+    adminCommandMessage = "Espada concedida.";
+  } else if (index === 3) {
+    player.hp = player.maxHp;
+    adminCommandMessage = "Vida completa.";
+  }
+  if (device === "touch") setupTouchControls();
+  spawnFloatText(player.x, player.y - 30, adminCommandMessage, "#7dffad");
+}
+
+function addAssistantPlatform() {
+  var room = rooms[currentRoom];
+  if (!room || !Array.isArray(room.platforms)) return false;
+  room.platforms.push({
+    x: Math.round(player.x - 80),
+    y: Math.round(Math.max(80, player.y + player.h + 12)),
+    w: 180,
+    h: 20
+  });
+  return true;
+}
+
+function assistantReply(message) {
+  adminCommandMessage = String(message);
+  assistantHistory.push({ from: "ia", text: message });
+  if (assistantHistory.length > 8) assistantHistory.shift();
+}
+
+function applyAssistantAction(action, roomNumber) {
+  if (action === "give_sword") executeAdminCommand("/give espada");
+  else if (action === "give_bow") executeAdminCommand("/give arco");
+  else if (action === "give_dash") executeAdminCommand("/give dash");
+  else if (action === "give_double_jump") executeAdminCommand("/give ds");
+  else if (action === "heal") executeAdminCommand("/give vida");
+  else if (action === "infinite_light") executeAdminCommand("/give luz infinito");
+  else if (action === "add_platform") addAssistantPlatform();
+  else if (action === "teleport_room" && Number.isInteger(roomNumber)) executeAdminCommand("/tp habitacion " + roomNumber);
+}
+
+async function askGameAssistant(request) {
+  assistantBusy = true;
+  adminCommandMessage = "Pensando...";
+  try {
+    var response = await fetch("http://localhost:8787/api/assistant", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: request,
+        context: { room: currentRoom + 1, hp: player.hp, hasSword: hasSword, history: assistantHistory.slice(-6) }
+      })
+    });
+    if (!response.ok) throw new Error("Servidor de IA no disponible");
+    var result = await response.json();
+    assistantHistory.push({ from: "jugador", text: request });
+    assistantReply(result.reply);
+    applyAssistantAction(result.action, result.room);
+  } catch (error) {
+    executeGameAssistant(request);
+    adminCommandMessage += " (IA online no disponible; usé el asistente local.)";
+  } finally {
+    assistantBusy = false;
+  }
+}
+
+function executeGameAssistant(rawRequest) {
+  var request = String(rawRequest || "").trim();
+  var normalized = request.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (!normalized) {
+    assistantReply("Escribe una instrucción o pregúntame algo. Por ejemplo: ¿cómo consigo una espada?");
+    return;
+  }
+  assistantLastRequest = request;
+  assistantHistory.push({ from: "jugador", text: request });
+  if (assistantHistory.length > 8) assistantHistory.shift();
+  if (normalized.charAt(0) === "/") {
+    executeAdminCommand(request);
+    assistantReply(adminCommandMessage);
+    return;
+  }
+  if (/^(hola|buenas|hey|saludos)\b/.test(normalized) || /(hola|buenas|hey|saludos)/.test(normalized)) {
+    assistantReply("¡Hola! Soy la asistente de Caballero Místico. Puedes preguntarme sobre controles, armas, habitaciones o pedirme cambios.");
+  } else if (/(quien eres|que eres|eres una ia|eres una inteligencia)/.test(normalized)) {
+    assistantReply("Soy la asistente local del juego. Entiendo tus frases y puedo responder sobre Caballero Místico o modificar esta partida.");
+  } else if (/(como|donde|dónde|que necesito|qué necesito).*(espada|arma)/.test(normalized)) {
+    assistantReply("La espada se consigue durante la aventura. Si quieres tenerla ahora, dime: dame una espada.");
+  } else if (/(como|donde|dónde|que necesito|qué necesito).*(luz|linterna)/.test(normalized)) {
+    assistantReply("La luz ayuda a explorar zonas oscuras. Puedes conseguir una linterna o decirme: activa la luz infinita.");
+  } else if (/(como|donde|dónde|que hace|para que sirve).*(dash|impulso)/.test(normalized)) {
+    assistantReply("El dash sirve para desplazarte rápidamente y el dash aéreo permite lanzarte con la espada mientras estás en el aire.");
+  } else if (/(controles|teclas|como juego|cómo juego)/.test(normalized)) {
+    assistantReply("A/D te mueve, ESPACIO salta, X o J ataca, Z dispara con el arco, C usa habilidades y `/` abre este asistente.");
+  } else if (/(habitacion|habitación|sala|nivel|mapa)/.test(normalized) && /(cuantas|cuántas|donde|dónde|cual|cuál|hay)/.test(normalized)) {
+    assistantReply("La partida tiene " + rooms.length + " habitaciones. Puedo llevarte a una si dices: llévame a la habitación 3.");
+  } else if (/(que puedes|qué puedes|ayuda|ayudame|ayúdame|sabes hacer|hablar)/.test(normalized)) {
+    assistantReply("Puedo conversar contigo, explicar controles y habilidades, darte espada, arco, dash, doble salto o vida, activar luz, crear una plataforma y teletransportarte.");
+  } else if (/(plataforma|piso|suelo)/.test(normalized) && /(anade|agrega|crea|pon|coloca)/.test(normalized)) {
+    if (addAssistantPlatform()) {
+      assistantReply("He añadido una plataforma cerca de ti.");
+      spawnParticles(player.x + player.w / 2, player.y + player.h, "#6cc", 12, 3);
+    } else {
+      assistantReply("No puedo añadir una plataforma en esta habitación.");
+    }
+  } else if (/(luz|ilumina|linterna)/.test(normalized) && /(infinita|infinito|todo|mas|aumenta)/.test(normalized)) {
+    executeAdminCommand("/give luz infinito");
+    assistantReply(adminCommandMessage);
+  } else if (/(espada|arma)/.test(normalized) && /(dame|quiero|anade|agrega|obten|consigue|equipa)/.test(normalized)) {
+    executeAdminCommand("/give espada");
+    assistantReply(adminCommandMessage);
+  } else if (/(vida|curame|cura|salud)/.test(normalized)) {
+    executeAdminCommand("/give vida");
+    assistantReply(adminCommandMessage);
+  } else if (/(doble salto|doblesalto)/.test(normalized) && !/(quita|desactiva)/.test(normalized)) {
+    executeAdminCommand("/give ds");
+    assistantReply(adminCommandMessage);
+  } else if (/(dash|impulso)/.test(normalized) && !/(quita|desactiva)/.test(normalized)) {
+    executeAdminCommand("/give dash");
+    assistantReply(adminCommandMessage);
+  } else if (/(arco|flecha)/.test(normalized) && /(dame|quiero|anade|agrega|obten|consigue)/.test(normalized)) {
+    executeAdminCommand("/give arco");
+    assistantReply(adminCommandMessage);
+  } else if (/(teletransporta|lleva|ir a|ve a|habitacion)/.test(normalized)) {
+    var roomMatch = normalized.match(/(?:habitacion|habitaci[oó]n|sala)\s*(\d+)/);
+    if (roomMatch) {
+      executeAdminCommand("/tp habitacion " + roomMatch[1]);
+      assistantReply(adminCommandMessage);
+    } else assistantReply("Dime el número de habitación, por ejemplo: llévame a la habitación 3.");
+  } else if (/(personaje|apariencia|color)/.test(normalized) && /(cambia|modifica|quiero|pon)/.test(normalized)) {
+    applyMenuModification(1);
+    assistantReply(adminCommandMessage);
+  } else if (/(ayuda|que puedes|comandos|instrucciones)/.test(normalized)) {
+    assistantReply("Puedo conversar contigo, responder preguntas del juego, darte objetos, activar luz, curarte, añadir plataformas o teletransportarte.");
+  } else {
+    assistantReply("No estoy segura de lo que quieres decir. Puedes preguntarme “¿cómo juego?” o pedirme “dame una espada”.");
+  }
 }
 
 function executeAdminCommand(rawCommand) {
@@ -1615,7 +1783,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     arrowsInFlight.push({ x: p.x + (p.facing > 0 ? p.w : -12), y: p.y + 13, w: 12, h: 3, vx: p.facing * 8, vy: arrowType === "heavy" ? 0.3 : 0, life: 100, damage: 1 + bowLevel, type: arrowType });
     sfxBow();
   }
-  if (bombPressed && p.id === 1 && bombs > 0 && !p.frozen) {
+  if (bombPressed && bombs > 0 && !p.frozen) {
     bombs--;
     bombsInFlight.push({
       x: p.x + (p.facing > 0 ? p.w : -14), y: p.y + 10, w: 14, h: 14,
@@ -1667,7 +1835,7 @@ function updatePlayer() {
   var interact = isControlPressed("interact");
   var block = isControlPressed("block");
   var dash = isControlPressed("dash");
-  var bomb = keys["b"];
+  var bomb = keys["b"] || (gamepadConnected && gpButtons[4] && !prevGPButtons[4]);
   if (gamepadConnected) {
     if (gpAxes.x < -0.25) moveLeft = true;
     if (gpAxes.x > 0.25) moveRight = true;
@@ -1696,8 +1864,26 @@ function updatePlayer2() {
   var attack = keys["ctrl"] && hasSword;
   var down = keys["arrowdown"];
   var interact = keys["alt"];
-  var attackDirection = down ? "down" : (keys["arrowup"] ? "up" : (moveLeft || moveRight ? (moveLeft === (player2.facing > 0) ? "back" : "forward") : "forward"));
-  updateGenericPlayer(player2, moveLeft, moveRight, jump, attack, interact, false, false, keys["shift"], down, false, keys["arrowup"], attackDirection);
+  var up = keys["arrowup"];
+  var shoot = false;
+  var block = false;
+  var dash = false;
+  var bomb = keys["b"];
+  if (gamepad2Connected) {
+    moveLeft = gp2Axes.x < -0.25;
+    moveRight = gp2Axes.x > 0.25;
+    up = gp2Axes.y < -0.5;
+    down = gp2Axes.y > 0.5;
+    jump = !!gp2Buttons[0] && !prevGP2Buttons[0];
+    attack = isControlPadPressed("attack", gp2Buttons);
+    shoot = isControlPadPressed("shoot", gp2Buttons);
+    interact = isControlPadPressed("interact", gp2Buttons);
+    block = isControlPadPressed("block", gp2Buttons);
+    dash = isControlPadPressed("dash", gp2Buttons);
+    bomb = gp2Buttons[4] && !prevGP2Buttons[4];
+  }
+  var attackDirection = down ? "down" : (up ? "up" : (moveLeft || moveRight ? (moveLeft === (player2.facing > 0) ? "back" : "forward") : "forward"));
+  updateGenericPlayer(player2, moveLeft, moveRight, jump, attack, interact, shoot, block, dash, down, bomb, up, attackDirection);
   if (rectHit(player, player2)) {
     var dx = (player.x + player.w/2) - (player2.x + player2.w/2);
     if (dx > 0) { player.x += 1; player2.x -= 1; }

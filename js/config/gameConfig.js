@@ -146,6 +146,8 @@ var levelsSelection = 0;
 var settingsSelection = 0, settingsReturn = false, adminFromSettings = false;
 var guideReturnState = "menu";
 var guideSelection = 0;
+var modificationSelection = 0;
+var modificationOptions = ["LUZ INFINITA", "PERSONAJE", "ESPADA", "VIDA COMPLETA"];
 var guidePages = [
   { label: "Cómo jugar", path: "como-jugar/" },
   { label: "Enemigos", path: "enemigos/" },
@@ -193,6 +195,9 @@ var difficultyOptions = [
 ];
 var adminPassword = "", adminMessage = "";
 var adminMode = false, adminConsoleOpen = false, adminCommand = "", adminCommandMessage = "";
+var assistantHistory = [];
+var assistantLastRequest = "";
+var assistantBusy = false;
 var pauseSelection = 0, pauseSubState = "menu", diaryCategory = "enemies", diaryScroll = 0;
 
 var transTimer = 0, transPhase = "out", transTargetRoom = 0, transFade = 0;
@@ -202,7 +207,9 @@ var audioCtx = null, musicPlaying = false, musicInterval = null, sfxEnabled = tr
 var masterVolume = 1, musicVolume = 0.75, sfxVolume = 0.7, audioSelection = 0;
 var ambientTimer = 0;
 var gamepadConnected = false, gamepadIndex = -1;
+var gamepad2Connected = false, gamepad2Index = -1;
 var gpButtons = {}, prevGPButtons = {}, gpAxes = { x: 0, y: 0 };
+var gp2Buttons = {}, prevGP2Buttons = {}, gp2Axes = { x: 0, y: 0 };
 var gamepadMenuAxisLock = 0;
 var controlActions = [
   { id: "moveLeft", label: "Mover izquierda", key: ["a"], pad: [14] },
@@ -426,7 +433,7 @@ var azariDrops = [];
 var deathParticles = [];
 var playerDead = false;
 var deathTimer = 0;
-var deathChoice = 0, deathAnimTimer = 0, deathMenuInputDelay = 0, deathMenuConfirmReleased = true;
+var deathChoice = 0, deathAnimTimer = 0, deathMenuInputDelay = 0, deathMenuReadyAt = 0;
 var consecutiveDeaths = 0;
 var checkpointState = null;
 var highestRoomReached = 0;

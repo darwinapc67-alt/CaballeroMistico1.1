@@ -2,13 +2,16 @@ window.addEventListener("keydown", function(e) {
   initAudio();
   var k = e.key.toLowerCase();
   var normalizedKey = e.key === " " ? " " : (e.key === "Shift" ? "shift" : k);
-  if (gameState === ST_PLAYING && adminMode && adminConsoleOpen) {
+  if (gameState === ST_PLAYING && adminConsoleOpen) {
     if (e.key === "Escape") {
       adminConsoleOpen = false;
       adminCommand = "";
     } else if (e.key === "Enter" || e.code === "Enter" || e.code === "NumpadEnter") {
-      executeAdminCommand(adminCommand);
-      adminCommand = "";
+      if (!assistantBusy) {
+        var assistantRequest = adminCommand.trim();
+        adminCommand = "";
+        if (assistantRequest) askGameAssistant(assistantRequest);
+      }
     } else if (e.key === "Backspace") {
       adminCommand = adminCommand.slice(0, -1);
     } else if (e.key.length === 1 && adminCommand.length < 120) {
@@ -374,14 +377,9 @@ window.addEventListener("keydown", function(e) {
       e.preventDefault();
       return;
     }
-    if ((confirm || e.key === " ") && !deathMenuConfirmReleased) {
-      e.preventDefault();
-      return;
-    }
     if (up || k === "w") deathChoice = (deathChoice - 1 + deathOptions) % deathOptions;
     if (down || k === "s") deathChoice = (deathChoice + 1) % deathOptions;
-    if (confirm && deathMenuConfirmReleased) {
-      deathMenuConfirmReleased = false;
+    if (confirm && !e.repeat && Date.now() >= deathMenuReadyAt) {
       if (deathChoice === 0) {
         restoreCheckpoint(true);
       } else if (deathChoice === 1) {
@@ -526,6 +524,17 @@ window.addEventListener("keydown", function(e) {
       }
       return;
     }
+    if (menuSubState === "modifications") {
+      if (up || k === "w") { modificationSelection = (modificationSelection - 1 + modificationOptions.length) % modificationOptions.length; e.preventDefault(); return; }
+      if (down || k === "s") { modificationSelection = (modificationSelection + 1) % modificationOptions.length; e.preventDefault(); return; }
+      if (confirm) {
+        applyMenuModification(modificationSelection);
+        e.preventDefault();
+        return;
+      }
+      if (e.key === "Escape") { menuSubState = "slots"; e.preventDefault(); }
+      return;
+    }
     if (menuSubState === "settings") {
       if (up || k === "w") { settingsSelection = (settingsSelection - 1 + 4) % 4; e.preventDefault(); return; }
       if (down || k === "s") { settingsSelection = (settingsSelection + 1) % 4; e.preventDefault(); return; }
@@ -577,8 +586,8 @@ window.addEventListener("keydown", function(e) {
     }
 
     if (menuSubState === "slots") {
-      if (up || k === "w") { menuSelection = (menuSelection - 1 + 8) % 8; e.preventDefault(); return; }
-      if (down || k === "s") { menuSelection = (menuSelection + 1) % 8; e.preventDefault(); return; }
+      if (up || k === "w") { menuSelection = (menuSelection - 1 + 9) % 9; e.preventDefault(); return; }
+      if (down || k === "s") { menuSelection = (menuSelection + 1) % 9; e.preventDefault(); return; }
       if (confirm) {
         if (menuSelection === 5) { menuSubState = "levels"; levelsSelection = 0; e.preventDefault(); return; }
         if (menuSelection === 6) { menuSubState = "settings"; settingsSelection = 0; e.preventDefault(); return; }
@@ -737,7 +746,16 @@ window.addEventListener("keydown", function(e) {
     if (confirm) {
       if (pauseSelection === 0) gameState = ST_PLAYING;
       if (pauseSelection === 1) pauseSubState = "diary";
-      if (pauseSelection === 2) { twoPlayerMode = !twoPlayerMode; updateUI(); }
+      if (pauseSelection === 2) {
+        twoPlayerMode = !twoPlayerMode;
+        if (twoPlayerMode && gameMode === "infinite" && hasSword) {
+          player2.hasSword = true;
+          player2.swordEquipped = true;
+          player2.swordSheathed = false;
+          player2.weaponId = weaponId;
+        }
+        updateUI();
+      }
       if (pauseSelection === 3) {
         controlsConfigSelection = 0;
         controlsConfigActionSelection = 0;
@@ -756,9 +774,9 @@ window.addEventListener("keydown", function(e) {
   }
 
   if (gameState === ST_PLAYING) {
-    if (adminMode && adminConsoleOpen) {
+    if (adminConsoleOpen) {
       if (e.key === "Enter" || e.code === "Enter" || e.code === "NumpadEnter") {
-        executeAdminCommand(adminCommand);
+        executeGameAssistant(adminCommand);
         adminCommand = "";
         e.preventDefault();
         return;
@@ -770,9 +788,9 @@ window.addEventListener("keydown", function(e) {
       }
       return;
     }
-    if (adminMode && e.key === "/") {
+    if (e.key === "/" || e.code === "Slash") {
       adminConsoleOpen = true;
-      adminCommand = "/";
+      adminCommand = "";
       adminCommandMessage = "";
       e.preventDefault();
       return;
@@ -880,7 +898,7 @@ document.addEventListener("keyup", function(e) {
   var normalizedKey = e.key === " " ? " " : (e.key === "Shift" ? "shift" : e.key.toLowerCase());
   keys[normalizedKey] = false;
   if (e.code) keys[e.code.toLowerCase()] = false;
-  if (gameState === ST_PLAYING && adminMode && adminConsoleOpen) {
+  if (gameState === ST_PLAYING && adminConsoleOpen) {
     e.preventDefault();
     e.stopImmediatePropagation();
   }
@@ -932,52 +950,76 @@ function updateFullscreenButton() {
 function scanGamepads() {
   try {
     var pads = navigator.getGamepads ? navigator.getGamepads() : [];
-    var found = false;
+    var connected = [];
     for (var i = 0; i < pads.length; i++) {
       var gp = pads[i];
-      if (gp && gp.connected && !found) {
-        if (!gamepadConnected || gamepadIndex !== i) {
-          gamepadConnected = true; gamepadIndex = i;
-          spawnFloatText(player.x || 100, (player.y || 400) - 40, "🎮 Mando detectado", "#0f0");
-          updateUI();
-        }
-        found = true;
-      }
+      if (gp && gp.connected) connected.push(i);
     }
-    if (!found && gamepadConnected) {
+    var firstIndex = gamepadConnected && connected.indexOf(gamepadIndex) >= 0
+      ? gamepadIndex : (connected.length > 0 ? connected[0] : -1);
+    var remaining = connected.filter(function(index) { return index !== firstIndex; });
+    var secondIndex = gamepad2Connected && remaining.indexOf(gamepad2Index) >= 0
+      ? gamepad2Index : (remaining.length > 0 ? remaining[0] : -1);
+    if (firstIndex >= 0 && (!gamepadConnected || gamepadIndex !== firstIndex)) {
+      gamepadConnected = true; gamepadIndex = firstIndex;
+      spawnFloatText(player.x || 100, (player.y || 400) - 40, "🎮 Mando J1 conectado", "#0f0");
+      updateUI();
+    }
+    if (secondIndex >= 0 && (!gamepad2Connected || gamepad2Index !== secondIndex)) {
+      gamepad2Connected = true; gamepad2Index = secondIndex;
+      spawnFloatText(player2.x || 140, (player2.y || 400) - 40, "🎮 Mando J2 conectado", "#f0f");
+      updateUI();
+    }
+    if (firstIndex < 0 && gamepadConnected) {
       gamepadConnected = false; gamepadIndex = -1;
       gpButtons = {}; gpAxes = {x:0,y:0};
+    }
+    if (secondIndex < 0 && gamepad2Connected) {
+      gamepad2Connected = false; gamepad2Index = -1;
+      gp2Buttons = {}; gp2Axes = {x:0,y:0};
+    }
+    if (firstIndex < 0 && secondIndex < 0) {
       updateUI();
     }
   } catch(e) {}
 }
 
+function pollSingleGamepad(index, previousButtons, buttons, axes) {
+  var pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  var gp = pads[index];
+  if (!gp) return { buttons: {}, axes: { x: 0, y: 0 } };
+  var nextButtons = {};
+  for (var i = 0; i < gp.buttons.length; i++) nextButtons[i] = gp.buttons[i].pressed;
+  var ax = gp.axes[0] || 0;
+  var ay = gp.axes[1] || 0;
+  return {
+    buttons: nextButtons,
+    axes: { x: Math.abs(ax) < 0.25 ? 0 : ax, y: Math.abs(ay) < 0.25 ? 0 : ay }
+  };
+}
+
 function pollGamepad() {
   if (gamepadConnected && gamepadIndex >= 0) {
-    var gp = navigator.getGamepads()[gamepadIndex];
-    if (gp) {
-      var deadzone = 0.25;
-      var ax = gp.axes[0] || 0; if (Math.abs(ax) < deadzone) ax = 0;
-      gpAxes.x = ax;
-      var ay = gp.axes[1] || 0; if (Math.abs(ay) < deadzone) ay = 0;
-      gpAxes.y = ay;
-      prevGPButtons = {};
-      for (var k in gpButtons) prevGPButtons[k] = gpButtons[k];
-      gpButtons = {};
-      for (var i = 0; i < gp.buttons.length; i++) gpButtons[i] = gp.buttons[i].pressed;
-    }
+    prevGPButtons = gpButtons;
+    var first = pollSingleGamepad(gamepadIndex, prevGPButtons, gpButtons, gpAxes);
+    gpButtons = first.buttons; gpAxes = first.axes;
+  }
+  if (gamepad2Connected && gamepad2Index >= 0) {
+    prevGP2Buttons = gp2Buttons;
+    var second = pollSingleGamepad(gamepad2Index, prevGP2Buttons, gp2Buttons, gp2Axes);
+    gp2Buttons = second.buttons; gp2Axes = second.axes;
   }
 }
 
 function processGamepadInput() {
   if (!gamepadConnected) return;
-  var btn9 = gpButtons[9] && !prevGPButtons[9];
-  var btn8 = gpButtons[8] && !prevGPButtons[8];
-  var btn0 = gpButtons[0] && !prevGPButtons[0];
-  var btn12 = gpButtons[12] && !prevGPButtons[12];
-  var btn13 = gpButtons[13] && !prevGPButtons[13];
-  var btn14 = gpButtons[14] && !prevGPButtons[14];
-  var btn15 = gpButtons[15] && !prevGPButtons[15];
+  var btn9 = (gpButtons[9] && !prevGPButtons[9]) || (gp2Buttons[9] && !prevGP2Buttons[9]);
+  var btn8 = (gpButtons[8] && !prevGPButtons[8]) || (gp2Buttons[8] && !prevGP2Buttons[8]);
+  var btn0 = (gpButtons[0] && !prevGPButtons[0]) || (gp2Buttons[0] && !prevGP2Buttons[0]);
+  var btn12 = (gpButtons[12] && !prevGPButtons[12]) || (gp2Buttons[12] && !prevGP2Buttons[12]);
+  var btn13 = (gpButtons[13] && !prevGPButtons[13]) || (gp2Buttons[13] && !prevGP2Buttons[13]);
+  var btn14 = (gpButtons[14] && !prevGPButtons[14]) || (gp2Buttons[14] && !prevGP2Buttons[14]);
+  var btn15 = (gpButtons[15] && !prevGPButtons[15]) || (gp2Buttons[15] && !prevGP2Buttons[15]);
   if (shopOpen && shopId === 0) {
     if (btn9) {
       shopOpen = false; shopMenuOpen = false; shopConfirm = -1; shopExitCooldown = 30;
@@ -1135,13 +1177,21 @@ function processGamepadInput() {
       }
       return;
     }
+    if (menuSubState === "modifications") {
+      if (btn9) { menuSubState = "slots"; return; }
+      if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
+      if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { modificationSelection = (modificationSelection - 1 + modificationOptions.length) % modificationOptions.length; gamepadMenuAxisLock = 1; }
+      if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { modificationSelection = (modificationSelection + 1) % modificationOptions.length; gamepadMenuAxisLock = 1; }
+      if (btn0) applyMenuModification(modificationSelection);
+      return;
+    }
     if (menuSubState === "guide") {
       if (btn9) menuSubState = "slots";
       return;
     }
     if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
-    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + 8) % 8; gamepadMenuAxisLock = 1; }
-    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % 8; gamepadMenuAxisLock = 1; }
+    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + 9) % 9; gamepadMenuAxisLock = 1; }
+    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % 9; gamepadMenuAxisLock = 1; }
     if (btn0 || (gpButtons[1] && !prevGPButtons[1])) {
       activeSlot = menuSelection;
       if (menuSelection === 5) {
@@ -1157,6 +1207,11 @@ function processGamepadInput() {
       if (menuSelection === 7) {
         guideSelection = 0;
         menuSubState = "guide";
+        return;
+      }
+      if (menuSelection === 8) {
+        modificationSelection = 0;
+        menuSubState = "modifications";
         return;
       }
       var saves = getSaves();
@@ -1255,7 +1310,16 @@ function processGamepadInput() {
     if (btn0) {
       if (pauseSelection === 0) gameState = ST_PLAYING;
       if (pauseSelection === 1) pauseSubState = "diary";
-      if (pauseSelection === 2) { twoPlayerMode = !twoPlayerMode; updateUI(); }
+      if (pauseSelection === 2) {
+        twoPlayerMode = !twoPlayerMode;
+        if (twoPlayerMode && gameMode === "infinite" && hasSword) {
+          player2.hasSword = true;
+          player2.swordEquipped = true;
+          player2.swordSheathed = false;
+          player2.weaponId = weaponId;
+        }
+        updateUI();
+      }
       if (pauseSelection === 3) pauseSubState = "controls";
       if (pauseSelection === 4) pauseSubState = "audio";
       if (pauseSelection === 5) pauseSubState = "settings";
@@ -1333,7 +1397,7 @@ function setupTouchControls() {
   controls.innerHTML = '<div class="touchPad" aria-label="Joystick de movimiento"><div class="touchJoystick"><div class="touchKnob">●</div></div></div>' +
     '<div class="touchActions">' +
     '<button class="touchJump" data-key=" " aria-label="Saltar">⬆</button>' +
-    (hasSword ? '<button data-key="x" aria-label="Atacar">⚔</button>' : '') +
+    '<button data-key="x" aria-label="Atacar">⚔</button>' +
     '<button data-key="e" aria-label="Interactuar">✦</button>' +
     '<button data-key="escape" aria-label="Pausa">Ⅱ</button>' +
     (bossAbilities.guardian ? '<button data-key="c" aria-label="Usar escudo">🛡</button>' : '') +

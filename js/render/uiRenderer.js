@@ -835,35 +835,42 @@ function drawTutorial() {
 }
 function drawAdminConsole() {
   ctx.fillStyle = "rgba(3, 5, 12, 0.94)";
-  ctx.fillRect(45, canvas.height - 255, canvas.width - 90, 215);
-  ctx.strokeStyle = "#f66";
+  ctx.fillRect(45, canvas.height - 285, canvas.width - 90, 245);
+  ctx.strokeStyle = "#6cc";
   ctx.lineWidth = 2;
-  ctx.strokeRect(45, canvas.height - 255, canvas.width - 90, 215);
+  ctx.strokeRect(45, canvas.height - 285, canvas.width - 90, 245);
   ctx.textAlign = "left";
-  ctx.fillStyle = "#f66";
+  ctx.fillStyle = "#6cc";
   ctx.font = "bold 14px monospace";
-  ctx.fillText(translateText("CONSOLA ADMIN  •  COMANDOS DISPONIBLES"), 65, canvas.height - 228);
+  ctx.fillText("ASISTENTE DEL JUEGO  •  ESCRIBE LO QUE QUIERES CAMBIAR", 65, canvas.height - 258);
   ctx.fillStyle = "#d5def5";
   ctx.font = "11px monospace";
-  ctx.fillText("/give azari [cantidad]", 65, canvas.height - 202);
-  ctx.fillText("/give espada", 65, canvas.height - 184);
-  ctx.fillText("/give arco", 65, canvas.height - 166);
-  ctx.fillText("/give mapa", 65, canvas.height - 148);
-  ctx.fillText("/give flechas [cantidad]", 65, canvas.height - 130);
-  ctx.fillText("/give vida", 65, canvas.height - 112);
-  ctx.fillText("/give dash", 65, canvas.height - 94);
-  ctx.fillText("/give linterna [nivel]  |  /give luz infinito", 65, canvas.height - 76);
-  ctx.fillText("/give ds  |  /give qds", 65, canvas.height - 58);
-  ctx.fillText("/tp habitacion [1-23]", 330, canvas.height - 202);
-  ctx.fillText(translateText("Ejemplo: /give azari 1000"), 330, canvas.height - 184);
-  ctx.fillText(translateText("Ejemplo: /tp habitacion 5"), 330, canvas.height - 166);
+  ctx.fillText("EJEMPLOS", 65, canvas.height - 232);
+  ctx.fillText("dame una espada", 65, canvas.height - 214);
+  ctx.fillText("activa la luz infinita", 65, canvas.height - 196);
+  ctx.fillText("añade una plataforma aquí", 65, canvas.height - 178);
+  ctx.fillText("llévame a la habitación 3", 65, canvas.height - 160);
+  ctx.fillText("CONVERSACIÓN", 430, canvas.height - 232);
+  var history = assistantHistory.slice(-3);
+  history.forEach(function(entry, index) {
+    var historyText = entry.text.length > 42 ? entry.text.slice(0, 39) + "..." : entry.text;
+    ctx.fillStyle = entry.from === "jugador" ? "#ffd36a" : "#9fe8ff";
+    ctx.fillText((entry.from === "jugador" ? "Tú: " : "IA: ") + historyText, 430, canvas.height - 214 + index * 18);
+  });
+  ctx.fillStyle = "#777";
+  ctx.fillText("También entiende /give y /tp", 430, canvas.height - 160);
   ctx.fillStyle = "#fff";
   ctx.font = "14px monospace";
-  ctx.fillText("> " + adminCommand + "_", 65, canvas.height - 78);
-  ctx.fillStyle = "#fff";
+  ctx.fillText("> " + adminCommand + "_", 65, canvas.height - 92);
   ctx.fillStyle = "#aaa";
   ctx.font = "11px monospace";
-  ctx.fillText(adminCommandMessage || translateText("ENTER ejecutar  •  ESC cerrar"), 65, canvas.height - 55);
+  ctx.fillText(assistantBusy ? "La IA está pensando..." : "ENTER enviar  •  ESC cerrar  •  `/` abrir asistente", 65, canvas.height - 68);
+  if (adminCommandMessage) {
+    ctx.fillStyle = "#9fe8ff";
+    ctx.font = "bold 12px monospace";
+    var visibleReply = adminCommandMessage.length > 92 ? adminCommandMessage.slice(0, 89) + "..." : adminCommandMessage;
+    ctx.fillText("IA: " + visibleReply, 65, canvas.height - 45);
+  }
   ctx.textAlign = "left";
 }
 function drawMenu() {
@@ -929,8 +936,16 @@ function drawMenu() {
   ctx.fillStyle = guideSelected ? "#6cc" : "#888"; ctx.font = "bold 14px monospace";
   ctx.fillText((guideSelected ? "▶  " : "    ") + "📖 GUÍA", canvas.width/2, guideY);
 
+  var modificationY = 585, modificationSelected = menuSelection === 8;
+  ctx.fillStyle = modificationSelected ? "rgba(100,200,255,0.15)" : "rgba(255,255,255,0.02)";
+  ctx.fillRect(180, modificationY - 20, 440, 30);
+  ctx.strokeStyle = modificationSelected ? "#6cc" : "#333"; ctx.lineWidth = modificationSelected ? 2 : 1;
+  ctx.strokeRect(180, modificationY - 20, 440, 30);
+  ctx.fillStyle = modificationSelected ? "#6cc" : "#888"; ctx.font = "bold 14px monospace";
+  ctx.fillText((modificationSelected ? "▶  " : "    ") + "🛠️ MODIFICACIONES", canvas.width/2, modificationY);
+
   ctx.textAlign = "center"; ctx.fillStyle = "#333"; ctx.font = "12px monospace";
-  ctx.fillText(gamepadConnected ? "⬆️⬇️ Navegar  •  ❌ Seleccionar  •  ⬜ Borrar" : "↑/↓ Navegar  •  ENTER Seleccionar  •  DEL/X Borrar", canvas.width/2, 590);
+  ctx.fillText(gamepadConnected ? "⬆️⬇️ Navegar  •  ❌ Seleccionar  •  ⬜ Borrar" : "↑/↓ Navegar  •  ENTER Seleccionar  •  DEL/X Borrar", canvas.width/2, 599);
 
   if (menuSubState === "confirm_delete") {
     ctx.fillStyle = "rgba(0,0,0,0.92)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -987,6 +1002,26 @@ function drawMenu() {
     });
     ctx.fillStyle = "#666"; ctx.font = "12px monospace";
     ctx.fillText("↑/↓ Elegir  •  ENTER Abrir página  •  ESC Volver al menú", canvas.width / 2, 535);
+  }
+  if (menuSubState === "modifications") {
+    ctx.fillStyle = "rgba(0,0,0,0.96)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#ffd15c"; ctx.font = "bold 28px monospace";
+    ctx.fillText("🛠️ MODIFICACIONES", canvas.width / 2, 130);
+    ctx.fillStyle = "#8bd"; ctx.font = "bold 16px monospace";
+    ctx.fillText("SELECCIONA UNA MODIFICACIÓN", canvas.width / 2, 170);
+    modificationOptions.forEach(function(option, index) {
+      var y = 215 + index * 58;
+      var selected = modificationSelection === index;
+      ctx.fillStyle = selected ? "rgba(100,200,255,0.18)" : "rgba(255,255,255,0.03)";
+      ctx.fillRect(180, y - 24, 440, 45);
+      ctx.strokeStyle = selected ? "#6cc" : "#333";
+      ctx.strokeRect(180, y - 24, 440, 45);
+      ctx.fillStyle = selected ? "#6cc" : "#aaa";
+      ctx.font = "bold 16px monospace";
+      ctx.fillText((selected ? "▶  " : "    ") + option, canvas.width / 2, y + 5);
+    });
+    ctx.fillStyle = "#666"; ctx.font = "12px monospace";
+    ctx.fillText("↑/↓ Navegar  •  ENTER Activar  •  ESC Volver", canvas.width / 2, 500);
   }
   if (menuSubState === "admin_password") {
     ctx.fillStyle = "rgba(0,0,0,0.94)"; ctx.fillRect(0, 0, canvas.width, canvas.height);

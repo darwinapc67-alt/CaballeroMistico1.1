@@ -6,7 +6,9 @@ function resetAll() {
   transIsFall = false; transitionCooldown = 0;
   stopMusic();
   gamepadConnected = false; gamepadIndex = -1;
-  gpButtons = {}; prevGPButtons = {}; gpAxes = {x:0,y:0}; gamepadMenuAxisLock = 0;
+  gamepad2Connected = false; gamepad2Index = -1;
+  gpButtons = {}; prevGPButtons = {}; gpAxes = {x:0,y:0};
+  gp2Buttons = {}; prevGP2Buttons = {}; gp2Axes = {x:0,y:0}; gamepadMenuAxisLock = 0;
   inventoryOpen = false;
   mapOpen = false;
   inventoryPage = 0;
@@ -47,7 +49,7 @@ function resetAll() {
   azariDrops = [];
   playerDead = false; deathTimer = 0;
   deathChoice = 0; deathAnimTimer = 0;
-  deathMenuInputDelay = 0; deathMenuConfirmReleased = true;
+  deathMenuInputDelay = 0; deathMenuReadyAt = 0;
   consecutiveDeaths = 0;
   infiniteWave = 0; infiniteSpawnTimer = 60;
   highestRoomReached = 0;
@@ -70,6 +72,12 @@ function resetAll() {
     room0.spikes = [];
     room0.walls = [{x:0, y:0, w:20, h:600}, {x:780, y:0, w:20, h:600}, {x:0, y:0, w:800, h:20}, {x:0, y:580, w:800, h:20}];
     hasSword = true; swordEquipped = true; player.hasSword = true; player.swordEquipped = true; player.swordSheathed = false;
+    if (twoPlayerMode) {
+      player2.hasSword = true;
+      player2.swordEquipped = true;
+      player2.swordSheathed = false;
+      player2.weaponId = weaponId;
+    }
     bombs = 10;
     checkpointState.hasSword = true;
     checkpointState.swordEquipped = true;
@@ -351,6 +359,16 @@ canvas.addEventListener("click", function(event) {
   }
 });
 canvas.addEventListener("click", function(event) {
+  if (gameState !== ST_MENU || menuSubState !== "modifications") return;
+  var rect = canvas.getBoundingClientRect();
+  var y = (event.clientY - rect.top) * canvas.height / rect.height;
+  var selected = Math.floor((y - 185) / 58);
+  if (selected >= 0 && selected < modificationOptions.length) {
+    modificationSelection = selected;
+    applyMenuModification(selected);
+  }
+});
+canvas.addEventListener("click", function(event) {
   if (gameState !== ST_MENU || menuSubState !== "slots") return;
   var rect = canvas.getBoundingClientRect();
   var y = (event.clientY - rect.top) * canvas.height / rect.height;
@@ -363,6 +381,14 @@ canvas.addEventListener("click", function(event) {
   } else if (y >= 510 && y < 550) {
     menuSelection = 6;
     menuSubState = "settings";
+  } else if (y >= 550 && y < 580) {
+    menuSelection = 7;
+    menuSubState = "guide";
+    guideSelection = 0;
+  } else if (y >= 580 && y < 610) {
+    menuSelection = 8;
+    menuSubState = "modifications";
+    modificationSelection = 0;
   }
 });
 canvas.addEventListener("click", function(event) {
