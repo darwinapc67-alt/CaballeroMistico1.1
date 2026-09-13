@@ -412,16 +412,6 @@ canvas.addEventListener("click", function(event) {
   }
 });
 canvas.addEventListener("click", function(event) {
-  if (gameState !== ST_MENU || menuSubState !== "modifications") return;
-  var rect = canvas.getBoundingClientRect();
-  var y = (event.clientY - rect.top) * canvas.height / rect.height;
-  var selected = Math.floor((y - 185) / 58);
-  if (selected >= 0 && selected < modificationOptions.length) {
-    modificationSelection = selected;
-    applyMenuModification(selected);
-  }
-});
-canvas.addEventListener("click", function(event) {
   if (gameState !== ST_MENU || menuSubState !== "slots") return;
   var rect = canvas.getBoundingClientRect();
   var y = (event.clientY - rect.top) * canvas.height / rect.height;
@@ -438,10 +428,6 @@ canvas.addEventListener("click", function(event) {
     menuSelection = 7;
     menuSubState = "guide";
     guideSelection = 0;
-  } else if (y >= 580 && y < 610) {
-    menuSelection = 8;
-    menuSubState = "modifications";
-    modificationSelection = 0;
   }
 });
 canvas.addEventListener("click", function(event) {

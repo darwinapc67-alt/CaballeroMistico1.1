@@ -7,11 +7,9 @@ window.addEventListener("keydown", function(e) {
       adminConsoleOpen = false;
       adminCommand = "";
     } else if (e.key === "Enter" || e.code === "Enter" || e.code === "NumpadEnter") {
-      if (!assistantBusy) {
-        var assistantRequest = adminCommand.trim();
-        adminCommand = "";
-        if (assistantRequest) askGameAssistant(assistantRequest);
-      }
+      var adminRequest = adminCommand.trim();
+      adminCommand = "";
+      if (adminRequest) executeAdminCommand(adminRequest);
     } else if (e.key === "Backspace") {
       adminCommand = adminCommand.slice(0, -1);
     } else if (e.key.length === 1 && adminCommand.length < 120) {
@@ -550,17 +548,6 @@ window.addEventListener("keydown", function(e) {
       }
       return;
     }
-    if (menuSubState === "modifications") {
-      if (up || k === "w") { modificationSelection = (modificationSelection - 1 + modificationOptions.length) % modificationOptions.length; e.preventDefault(); return; }
-      if (down || k === "s") { modificationSelection = (modificationSelection + 1) % modificationOptions.length; e.preventDefault(); return; }
-      if (confirm) {
-        applyMenuModification(modificationSelection);
-        e.preventDefault();
-        return;
-      }
-      if (e.key === "Escape") { menuSubState = "slots"; e.preventDefault(); }
-      return;
-    }
     if (menuSubState === "settings") {
       if (up || k === "w") { settingsSelection = (settingsSelection - 1 + 7) % 7; e.preventDefault(); return; }
       if (down || k === "s") { settingsSelection = (settingsSelection + 1) % 7; e.preventDefault(); return; }
@@ -634,8 +621,8 @@ window.addEventListener("keydown", function(e) {
     }
 
     if (menuSubState === "slots") {
-      if (up || k === "w") { menuSelection = (menuSelection - 1 + 9) % 9; e.preventDefault(); return; }
-      if (down || k === "s") { menuSelection = (menuSelection + 1) % 9; e.preventDefault(); return; }
+      if (up || k === "w") { menuSelection = (menuSelection - 1 + 8) % 8; e.preventDefault(); return; }
+      if (down || k === "s") { menuSelection = (menuSelection + 1) % 8; e.preventDefault(); return; }
       if (confirm) {
         if (menuSelection === 5) { menuSubState = "levels"; levelsSelection = 0; e.preventDefault(); return; }
         if (menuSelection === 6) { menuSubState = "settings"; settingsSelection = 0; e.preventDefault(); return; }
@@ -830,7 +817,7 @@ window.addEventListener("keydown", function(e) {
   if (gameState === ST_PLAYING) {
     if (adminConsoleOpen) {
       if (e.key === "Enter" || e.code === "Enter" || e.code === "NumpadEnter") {
-        executeGameAssistant(adminCommand);
+        executeAdminCommand(adminCommand);
         adminCommand = "";
         e.preventDefault();
         return;
@@ -1371,21 +1358,13 @@ function processGamepadInput() {
       }
       return;
     }
-    if (menuSubState === "modifications") {
-      if (btn9) { menuSubState = "slots"; return; }
-      if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
-      if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { modificationSelection = (modificationSelection - 1 + modificationOptions.length) % modificationOptions.length; gamepadMenuAxisLock = 1; }
-      if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { modificationSelection = (modificationSelection + 1) % modificationOptions.length; gamepadMenuAxisLock = 1; }
-      if (btn0) applyMenuModification(modificationSelection);
-      return;
-    }
     if (menuSubState === "guide") {
       if (btn9) menuSubState = "slots";
       return;
     }
     if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
-    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + 9) % 9; gamepadMenuAxisLock = 1; }
-    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % 9; gamepadMenuAxisLock = 1; }
+    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + 8) % 8; gamepadMenuAxisLock = 1; }
+    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % 8; gamepadMenuAxisLock = 1; }
     if (btn0 || (gpButtons[1] && !prevGPButtons[1])) {
       activeSlot = menuSelection;
       if (menuSelection === 5) {
@@ -1401,11 +1380,6 @@ function processGamepadInput() {
       if (menuSelection === 7) {
         guideSelection = 0;
         menuSubState = "guide";
-        return;
-      }
-      if (menuSelection === 8) {
-        modificationSelection = 0;
-        menuSubState = "modifications";
         return;
       }
       var saves = getSaves();

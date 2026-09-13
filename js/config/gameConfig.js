@@ -149,8 +149,6 @@ var levelsSelection = 0;
 var settingsSelection = 0, settingsReturn = false, adminFromSettings = false, controlsFromMain = false;
 var guideReturnState = "menu";
 var guideSelection = 0;
-var modificationSelection = 0;
-var modificationOptions = ["LUZ INFINITA", "PERSONAJE", "ESPADA", "VIDA COMPLETA"];
 var guidePages = [
   { label: "Cómo jugar", path: "como-jugar/" },
   { label: "Enemigos", path: "enemigos/" },
@@ -199,9 +197,6 @@ var difficultyOptions = [
 ];
 var adminPassword = "", adminMessage = "";
 var adminMode = false, adminConsoleOpen = false, adminCommand = "", adminCommandMessage = "";
-var assistantHistory = [];
-var assistantLastRequest = "";
-var assistantBusy = false;
 var pauseSelection = 0, pauseSubState = "menu", diaryCategory = "enemies", diaryScroll = 0;
 
 var transTimer = 0, transPhase = "out", transTargetRoom = 0, transFade = 0;
