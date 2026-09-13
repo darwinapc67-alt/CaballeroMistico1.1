@@ -13,8 +13,10 @@ var introTimer = 0;
 
 var isMobileBrowser = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
   (navigator.maxTouchPoints > 0 && window.innerWidth <= 900);
-var gameState = ST_LANGUAGE;
-var languageSelection = 0, language = "es";
+var browserLanguage = (navigator.language || "es").toLowerCase();
+var detectedLanguage = browserLanguage.indexOf("pt") === 0 ? "pt" : (browserLanguage.indexOf("en") === 0 ? "en" : "es");
+var gameState = ST_MENU;
+var languageSelection = detectedLanguage === "en" ? 1 : (detectedLanguage === "pt" ? 2 : 0), language = detectedLanguage;
 var deviceSelection = isMobileBrowser ? 1 : 0, device = isMobileBrowser ? "touch" : "pc";
 var devices = [
   { code: "pc", label: "PC" },
