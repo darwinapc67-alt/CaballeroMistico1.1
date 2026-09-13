@@ -662,6 +662,30 @@ function drawGame() {
     ctx.fillStyle = "#ff9b3d"; ctx.font = "bold 13px monospace";
     ctx.fillText("COLISEO INFINITO  •  RONDA " + infiniteWave + "  •  ARMAS " + unlockedWeapons.length + "/" + WEAPON_PROGRESSION.length + "  •  PODER " + (swordLevel + (hasDash ? 1 : 0) + (hasDoubleJump ? 1 : 0) + (hasBow ? 1 : 0)), 12, canvas.height - 18);
   }
+  if (gameMode === "normal") {
+    var unlocks = [
+      { active: hasSword, icon: "⚔", key: "X", color: "#ffd700" },
+      { active: bombs > 0, icon: "💣", key: "B", color: "#ff7138" },
+      { active: hasBow, icon: "🏹", key: "Z", color: "#b98b58" }
+    ];
+    var activeUnlocks = unlocks.filter(function(unlock) { return unlock.active; });
+    if (activeUnlocks.length > 0) {
+      var slotSize = 54, slotGap = 7, slotX = 12, slotY = canvas.height - 78;
+      activeUnlocks.forEach(function(unlock, index) {
+        var x = slotX + index * (slotSize + slotGap);
+        ctx.fillStyle = "rgba(5, 10, 22, 0.9)";
+        ctx.fillRect(x, slotY, slotSize, slotSize);
+        ctx.strokeStyle = unlock.color;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, slotY, slotSize, slotSize);
+        ctx.fillStyle = unlock.color;
+        ctx.font = "20px sans-serif";
+        ctx.fillText(unlock.icon, x + slotSize / 2, slotY + 26);
+        ctx.font = "bold 10px monospace";
+        ctx.fillText("[" + unlock.key + "]", x + slotSize / 2, slotY + 46);
+      });
+    }
+  }
   if (hasSword) { ctx.fillStyle = player.swordCooldown <= 0 ? "#ffd700" : "#444"; ctx.fillText("⚔️ J1: " + (player.swordCooldown <= 0 ? (player.swordSheathed ? "🔒" : "⚔️") : "···"), 12, 42); }
   else { ctx.fillStyle = "#555"; ctx.fillText(translateText("Encuentra la espada..."), 12, 42); }
   if (hasBow) { ctx.fillStyle = player.bowCooldown <= 0 ? "#ffd700" : "#444"; ctx.fillText("🏹 " + translateText("Arco") + ": " + (player.bowCooldown <= 0 ? translateText("Listo") : "···"), 12, 62); }
@@ -1574,7 +1598,7 @@ function drawShop() {
   }
   var armorShopText = armorLevel >= 3 ? "Armadura al máximo" : (armorLevel === 0 ? "Armadura nivel 1 (50 Azari)" : "Mejorar armadura a nivel " + (armorLevel + 1) + " (" + [0, 50, 80, 120][armorLevel] + " Azari)");
   var shopItems = [
-    "Mapa", "Arco", "Flechas x20", "Fragmento de vida J1", "Fragmento de vida J2",
+    "Mapa (45 Azari)", "Arco (35 Azari)", "Flechas x20 (5 Azari)", "Fragmento de vida J1 (25 Azari)", "Fragmento de vida J2 (25 Azari)",
     "Amuleto", "Imán de Azari", "Bolsa de Azari", "Linterna", "Llave vieja",
     "Mejora de espada", "Mejora de arco", "Flecha pesada", "Golpe cargado",
     "Ataque aéreo", "Combo", "Bendición codiciosa", "Bombas x5", armorShopText
