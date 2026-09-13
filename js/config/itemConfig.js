@@ -7,7 +7,7 @@ var hasAzariCharm = false, hasDoubleJump = false;
 var hasAzariMagnet = false, hasAzariBag = false, azariBagLevel = 0, hasOldKey = false, keyReady = false, doorUnlocked = false, rewardAzariCollected = false, hasLantern = false, lanternLevel = 0, infiniteLight = false;
 var hasDash = false;
 var swordLevel = 0, bowLevel = 0, arrowType = "normal";
-var hasEteriumSkill = false;
+var hasEteriumSkill = false, eteriumSkillLevel = 0, eteriumSkillCooldown = 0;
 
 var armorId = "vacío", armorLevel = 0;
 var permanentUpgrades = { vitality: 0, strength: 0 };

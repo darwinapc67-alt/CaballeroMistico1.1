@@ -97,6 +97,26 @@ function collectEterium(amount, source) {
   if (activeSlot >= 0) saveGame(activeSlot);
 }
 
+function useEteriumSkill() {
+  if (!hasEteriumSkill || eteriumSkillLevel < 1 || eteriumSkillCooldown > 0) return false;
+  var damage = eteriumSkillLevel * 5;
+  var affected = 0;
+  enemies.forEach(function(enemy) {
+    if (enemy.dead || enemy.room !== currentRoom) return;
+    enemy.hp = Math.max(0, enemy.hp - damage);
+    affected++;
+    registerCombatImpact(enemy, damage, false);
+    spawnParticles(enemy.x + enemy.w / 2, enemy.y + enemy.h / 2, "#55dcff", 8, 3);
+    spawnFloatText(enemy.x, enemy.y - 18, "-" + damage, "#70e8ff");
+    if (enemy.hp <= 0 && enemy.boss) defeatBoss(enemy);
+  });
+  eteriumSkillCooldown = eteriumSkillLevel === 1 ? 2400 : (eteriumSkillLevel === 2 ? 1800 : 1500);
+  spawnParticles(player.x + player.w / 2, player.y + player.h / 2, "#42d9ff", 30, 5);
+  spawnFloatText(player.x, player.y - 42, "¡Eterium desatado! -" + damage, "#70e8ff");
+  combatShake = 5;
+  return affected > 0;
+}
+
 function checkAchievementProgress(isBoss) {
   var unlocked = [];
   if (isBoss && !achievements.firstBoss) {
@@ -354,6 +374,7 @@ function restoreCheckpoint(preserveInfiniteProgress) {
     azari = gameMode === "infinite" && preserveInfiniteProgress ? azari : cp.azari;
     eterium = Math.max(eterium, Number(cp.eterium) || 0);
     hasEteriumSkill = hasEteriumSkill || !!cp.hasEteriumSkill;
+    eteriumSkillLevel = Math.max(eteriumSkillLevel, Math.min(3, Number(cp.eteriumSkillLevel) || (hasEteriumSkill ? 1 : 0)));
     hasSword = !!cp.hasSword || currentSwordState.hasSword;
     swordEquipped = hasSword && (!!cp.swordEquipped || currentSwordState.swordEquipped);
     weaponId = normalizeWeaponId(cp.weaponId || currentSwordState.weaponId);
@@ -2263,6 +2284,7 @@ function checkSwordHitEnemiesFor(p) {
       var baseGain = e.type === "blue_sentry" ? 6 : (e.type === 'larva_mosca' ? 4 : 2);
       var azariGain = e.type === "blue_sentry" ? 6 : (hasAzariCharm ? baseGain * 2 : baseGain);
       dropAzari(e, azariGain);
+      if (!e.boss && Math.random() < 0.005) collectEterium(1, "normal_enemy");
       if (bestiary[e.type]) bestiary[e.type].count++;
       if (bestiary[e.type] && !bestiary[e.type].discovered) {
         bestiary[e.type].discovered = true;

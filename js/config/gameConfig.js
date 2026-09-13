@@ -64,7 +64,7 @@ var translations = {
     "JUGADOR 1": "PLAYER 1", "Arco": "Bow", "Flechas": "Arrows", "Bendición codiciosa": "Greedy blessing", "Saltos": "Jumps",
     "Doble": "Double", "Simple": "Single", "MAPA DE TODAS LAS ZONAS": "MAP OF ALL AREAS", "ZONA": "AREA", "JEFE": "BOSS",
     "ESTADÍSTICAS": "STATS", "Nueva criatura descubierta!": "New creature discovered!", "Listo": "Ready", "Encuentra la espada...": "Find the sword...",
-    "Dash": "Dash", "CONSOLA ADMIN  •  COMANDOS DISPONIBLES": "ADMIN CONSOLE  •  AVAILABLE COMMANDS",
+    "Dash": "Dash", "C: bloquear": "C: block", "V: habilidad legendaria": "V: legendary skill", "CONSOLA ADMIN  •  COMANDOS DISPONIBLES": "ADMIN CONSOLE  •  AVAILABLE COMMANDS",
     "Ejemplo: /give azari 1000": "Example: /give azari 1000", "Ejemplo: /give eterium 10000000": "Example: /give eterium 10000000", "Ejemplo: /tp habitacion 5": "Example: /tp room 5",
     "ENTER ejecutar  •  ESC cerrar": "ENTER execute  •  ESC close", "ENTER / ESPACIO para continuar": "ENTER / SPACE to continue",
     "¿BORRAR RANURA": "DELETE SLOT", "Esta acción no se puede deshacer": "This action cannot be undone",
@@ -114,7 +114,7 @@ var translations = {
     "INVENTARIO": "INVENTÁRIO", "Presiona ` o SHARE para cerrar": "Pressione ` ou SHARE para fechar", "cerrar mapa": "fechar mapa", "usar mapa": "usar mapa",
     "JUGADOR 1": "JOGADOR 1", "Arco": "Arco", "Flechas": "Flechas", "Bendición codiciosa": "Bênção gananciosa", "Saltos": "Saltos",
     "Doble": "Duplo", "Simple": "Simples", "MAPA DE TODAS LAS ZONAS": "MAPA DE TODAS AS ÁREAS", "ZONA": "ÁREA", "JEFE": "CHEFE",
-    "Dash": "Dash", "CONSOLA ADMIN  •  COMANDOS DISPONIBLES": "CONSOLE ADMIN  •  COMANDOS DISPONÍVEIS",
+    "Dash": "Dash", "C: bloquear": "C: bloquear", "V: habilidad legendaria": "V: habilidade lendária", "CONSOLA ADMIN  •  COMANDOS DISPONIBLES": "CONSOLE ADMIN  •  COMANDOS DISPONÍVEIS",
     "Ejemplo: /give azari 1000": "Exemplo: /give azari 1000", "Ejemplo: /give eterium 10000000": "Exemplo: /give eterium 10000000", "Ejemplo: /tp habitacion 5": "Exemplo: /tp sala 5",
     "ENTER ejecutar  •  ESC cerrar": "ENTER executar  •  ESC fechar", "ENTER / ESPACIO para continuar": "ENTER / ESPAÇO para continuar",
     "¿BORRAR RANURA": "APAGAR ESPAÇO", "Esta acción no se puede deshacer": "Esta ação não pode ser desfeita",
@@ -714,7 +714,7 @@ function saveGame(i) {
     room: currentRoom, px: player.x, py: player.y,
     twoPlayer: twoPlayerMode, hasSword: hasSword, swordEquipped: swordEquipped, weaponId: weaponId, unlockedWeapons: unlockedWeapons.slice(), hasBow: hasBow, arrows: arrows, bombs: bombs,
     enemiesKilled: enemies.map(function(e){ return e.dead; }),
-    azari: azari, eterium: eterium, hasEteriumSkill: hasEteriumSkill, hasMap: hasMap, hp: player.hp, maxHp: player.maxHp,
+    azari: azari, eterium: eterium, hasEteriumSkill: hasEteriumSkill, eteriumSkillLevel: eteriumSkillLevel, hasMap: hasMap, hp: player.hp, maxHp: player.maxHp,
     highestRoomReached: highestRoomReached,
     checkpointState: checkpointState ? JSON.parse(JSON.stringify(checkpointState)) : null,
     heartFragments1: heartFragments1, heartFragments2: heartFragments2,
@@ -777,7 +777,7 @@ function loadGame(i) {
   weaponId = isWeaponUnlocked(weaponId) ? weaponId : DEFAULT_WEAPON_ID;
   player.hasSword = hasSword; player.swordEquipped = swordEquipped; player.weaponId = weaponId;
   hasBow = s.hasBow || false; arrows = s.arrows || 0; bombs = Math.max(0, Number(s.bombs) || 0);
-  azari = s.azari || 0; eterium = Math.max(0, Number(s.eterium) || 0); hasEteriumSkill = !!s.hasEteriumSkill; hasMap = s.hasMap || false;
+  azari = s.azari || 0; eterium = Math.max(0, Number(s.eterium) || 0); hasEteriumSkill = !!s.hasEteriumSkill; eteriumSkillLevel = Math.max(0, Math.min(3, Number(s.eteriumSkillLevel) || (hasEteriumSkill ? 1 : 0))); hasMap = s.hasMap || false;
   player.hp = s.hp !== undefined ? s.hp : 10;
   player.maxHp = s.maxHp !== undefined ? s.maxHp : 10;
   twoPlayerMode = s.twoPlayer || false;

@@ -861,6 +861,7 @@ window.addEventListener("keydown", function(e) {
     if (e.key === "z" || e.key === "Z") { keys["z"] = true; e.preventDefault(); }
     if (e.key === "e" || e.key === "E") { keys["e"] = true; e.preventDefault(); }
     if (e.key === "c" || e.key === "C") { keys["c"] = true; e.preventDefault(); }
+    if (e.key === "v" || e.key === "V") { keys["v"] = true; if (gameState === ST_PLAYING) useEteriumSkill(); e.preventDefault(); }
     if (e.key === "b" || e.key === "B" || e.code === "KeyB") { keys["b"] = true; e.preventDefault(); }
     if (e.key === "Shift" || e.key === "ShiftLeft" || e.key === "ShiftRight") { keys["shift"] = true; e.preventDefault(); }
     if (e.key === "m" || e.key === "M") { initAudio(); toggleMusic(); e.preventDefault(); }
@@ -975,11 +976,17 @@ window.addEventListener("keydown", function(e) {
         if (menuSelection === 16 && !hasAzariCharm && spendAzari(45, "greedy_blessing")) { hasAzariCharm = true; sfxBuy(); }
         if (menuSelection === 17 && azari >= 1) { spendAzari(1, "bombs"); bombs += 5; sfxBuy(); }
         if (menuSelection === 18) buyArmorUpgrade();
-        if (menuSelection === 19 && !hasEteriumSkill && eterium >= 8) {
-          eterium -= 8;
-          hasEteriumSkill = true;
-          sfxEterium();
-          spawnFloatText(player.x, player.y - 30, "¡Habilidad legendaria obtenida!", "#70e8ff");
+        if (menuSelection === 19) {
+          var skillCost = eteriumSkillLevel === 0 ? 8 : 8 + eteriumSkillLevel;
+          if (eteriumSkillLevel < 3 && eterium >= skillCost) {
+            eterium -= skillCost;
+            eteriumSkillLevel++;
+            hasEteriumSkill = true;
+            sfxEterium();
+            spawnFloatText(player.x, player.y - 30, "¡Habilidad legendaria nivel " + eteriumSkillLevel + "!", "#70e8ff");
+            if (activeSlot >= 0) saveGame(activeSlot);
+          }
+          e.preventDefault(); return;
         }
         if (menuSelection >= 20 && menuSelection <= 25) {
           var keyboardWeaponId = WEAPON_PROGRESSION[menuSelection - 20];
@@ -1059,6 +1066,7 @@ document.addEventListener("keyup", function(e) {
   if (e.key === "z" || e.key === "Z") keys["z"] = false;
   if (e.key === "e" || e.key === "E") keys["e"] = false;
   if (e.key === "c" || e.key === "C") keys["c"] = false;
+  if (e.key === "v" || e.key === "V") keys["v"] = false;
   if (e.key === "b" || e.key === "B" || e.code === "KeyB") keys["b"] = false;
   if (e.key === "Shift") keys["shift"] = false;
 });
@@ -1202,8 +1210,13 @@ function processGamepadInput() {
         if (menuSelection === 16 && !hasAzariCharm && azari >= 45) { spendAzari(45, "azari_charm"); hasAzariCharm = true; sfxBuy(); }
         if (menuSelection === 17 && azari >= 1) { spendAzari(1, "bombs"); bombs += 5; sfxBuy(); }
         if (menuSelection === 18) buyArmorUpgrade();
-        if (menuSelection === 19 && !hasEteriumSkill && eterium >= 8) {
-          eterium -= 8; hasEteriumSkill = true; sfxEterium();
+        if (menuSelection === 19) {
+          var gamepadSkillCost = eteriumSkillLevel === 0 ? 8 : 8 + eteriumSkillLevel;
+          if (eteriumSkillLevel < 3 && eterium >= gamepadSkillCost) {
+            eterium -= gamepadSkillCost; eteriumSkillLevel++; hasEteriumSkill = true; sfxEterium();
+            if (activeSlot >= 0) saveGame(activeSlot);
+          }
+          return;
         }
         if (menuSelection >= 20 && menuSelection <= 25) {
           var weaponShopId = WEAPON_PROGRESSION[menuSelection - 20];

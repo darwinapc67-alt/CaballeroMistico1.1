@@ -1056,7 +1056,8 @@ function drawTutorial() {
     "E: interactuar y recoger objetos",
     "X/J: atacar con la espada",
     "Z: disparar con el arco",
-    "C: usar tus habilidades"
+    "C: bloquear",
+    "V: habilidad legendaria"
   ];
   ctx.fillStyle = "rgba(4, 8, 20, 0.82)";
   ctx.fillRect(18, 78, 330, 42);
@@ -1859,7 +1860,8 @@ function drawShop() {
     "Mejora de espada", "Mejora de arco", "Flecha pesada", "Golpe cargado",
     "Ataque aéreo", "Combo", "Bendición codiciosa (ya incluida)", "Bombas x5", armorShopText
   ];
-  shopItems.push(hasEteriumSkill ? "Habilidad legendaria (obtenida)" : "Habilidad legendaria (8 Eterium)");
+  var legendarySkillCost = eteriumSkillLevel === 0 ? 8 : 8 + eteriumSkillLevel;
+  shopItems.push(eteriumSkillLevel >= 3 ? "Habilidad legendaria (MAX)" : "Habilidad legendaria nivel " + (eteriumSkillLevel + 1) + " (" + legendarySkillCost + " Eterium)");
   WEAPON_PROGRESSION.forEach(function(id) {
     var weapon = getWeaponConfig(id);
     shopItems.push((isWeaponUnlocked(id) ? "Mejorar " : "Comprar ") + weapon.shortName + " (" + (isWeaponUnlocked(id) ? getWeaponLevel(id) + "/3" : "100 Azari") + ")");

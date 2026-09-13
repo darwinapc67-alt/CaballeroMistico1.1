@@ -7,6 +7,8 @@ function resetAll() {
   floorCollapseTimer = 0;
   eterium = 0;
   hasEteriumSkill = false;
+  eteriumSkillLevel = 0;
+  eteriumSkillCooldown = 0;
   eteriumShard = null;
   roomQuakeTimer = 0;
   roomAtmosphereRoom = -1;
@@ -228,6 +230,7 @@ function update() {
 
   if (gameState === ST_PLAYING) {
     frameCounter++;
+    if (eteriumSkillCooldown > 0) eteriumSkillCooldown--;
     if (frameCounter >= 60) { frameCounter = 0; stats.playTime++; }
     updateStalactites();
     updateWaterDrops();
