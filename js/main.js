@@ -145,7 +145,23 @@ function update() {
   if (bossIntroTimer > 0 && gameState === ST_PLAYING) bossIntroTimer--;
   if (gameState === ST_INTRO) {
     introTimer++;
-    if (introTimer >= 900) finishIntro();
+    if (introTimer === 45) sfxCaveEcho();
+    if (introTimer === 105) { sfxStalactiteFall(); combatShake = 1.5; }
+    if (introTimer === 180) sfxCaveEcho();
+    if (introTimer >= 300) finishIntro();
+    for (var introParticleIndex = particles.length - 1; introParticleIndex >= 0; introParticleIndex--) {
+      var introParticle = particles[introParticleIndex];
+      introParticle.x += introParticle.vx;
+      introParticle.y += introParticle.vy;
+      introParticle.vy += 0.025;
+      introParticle.life--;
+      if (introParticle.life <= 0) particles.splice(introParticleIndex, 1);
+    }
+    if (introTimer === 105) {
+      for (var dustIndex = 0; dustIndex < 18; dustIndex++) {
+        spawnParticles(260 + Math.random() * 300, 90 + Math.random() * 50, "#8d8a9e", 1, 0.7);
+      }
+    }
     return;
   }
   if (achievementNotify.active) {

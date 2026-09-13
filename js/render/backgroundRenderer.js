@@ -10,6 +10,7 @@ function drawCaveBg(rx, decor, roomH, roomWidth) {
   ctx.fillStyle = backGradient;
   ctx.fillRect(rx, 0, roomWidth, roomH);
   drawCaveBackRelief(rx, roomH, roomWidth, roomSeed);
+  if (gameMode === "normal") drawNormalCaveAtmosphere(rx, roomH, roomWidth, roomSeed);
   for (var i = 0; i < 20; i++) {
     var sx = rx + (i * 137) % roomWidth, sy = (i * 89) % roomH;
     ctx.globalAlpha = 0.1 + Math.sin(Date.now()/2000 + i) * 0.05;
@@ -51,6 +52,107 @@ function drawCaveBg(rx, decor, roomH, roomWidth) {
       ctx.fillRect(d.x + 3, d.y + 8, Math.max(2, d.w - 8), 2);
     }
   });
+}
+function drawNormalCaveAtmosphere(rx, roomH, roomWidth, seed) {
+  ctx.save();
+  var tileWidth = 240;
+  var tileCount = Math.ceil(roomWidth / tileWidth) + 1;
+
+  // Repeated silhouettes keep the backdrop reusable across rooms without touching gameplay geometry.
+  ctx.globalAlpha = 0.34;
+  for (var tile = 0; tile < tileCount; tile++) {
+    var tileX = rx + tile * tileWidth - (seed % 3) * 18;
+    var ruinY = Math.min(roomH - 105, 320 + ((seed + tile) % 3) * 18);
+    ctx.fillStyle = tile % 2 ? "#111226" : "#15142a";
+    ctx.fillRect(tileX + 34, ruinY, 72, 72);
+    ctx.fillRect(tileX + 20, ruinY + 18, 18, 54);
+    ctx.fillRect(tileX + 104, ruinY + 29, 20, 43);
+    ctx.beginPath();
+    ctx.moveTo(tileX + 22, ruinY);
+    ctx.lineTo(tileX + 69, ruinY - 25 - ((seed + tile) % 2) * 12);
+    ctx.lineTo(tileX + 120, ruinY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "rgba(83, 82, 111, 0.3)";
+    ctx.fillRect(tileX + 47, ruinY + 13, 9, 20);
+    ctx.fillRect(tileX + 78, ruinY + 30, 10, 17);
+    ctx.fillRect(tileX + 29, ruinY + 52, 15, 5);
+  }
+
+  // Hanging silhouettes are deliberately confined to the ceiling band.
+  ctx.globalAlpha = 0.62;
+  for (var stal = 0; stal < tileCount * 2; stal++) {
+    var stalX = rx + 42 + stal * 113 + (seed % 5) * 7;
+    var stalH = 18 + ((seed * 11 + stal * 17) % 42);
+    ctx.fillStyle = stal % 2 ? "#1b1b31" : "#23233b";
+    ctx.beginPath();
+    ctx.moveTo(stalX - 13, 0);
+    ctx.lineTo(stalX + 13, 0);
+    ctx.lineTo(stalX + 4, stalH - 5);
+    ctx.lineTo(stalX, stalH);
+    ctx.lineTo(stalX - 7, stalH - 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "rgba(91, 94, 123, 0.22)";
+    ctx.fillRect(stalX - 3, 2, 3, Math.max(3, stalH - 12));
+  }
+
+  // Wall crystals and purple plants use small local halos instead of heavy lighting.
+  for (var crystal = 0; crystal < tileCount; crystal++) {
+    var crystalX = rx + 74 + crystal * 197 + ((seed * 13) % 24);
+    var crystalY = Math.min(roomH - 80, 150 + ((seed + crystal * 2) % 3) * 64);
+    var crystalGlow = ctx.createRadialGradient(crystalX, crystalY, 2, crystalX, crystalY, 30);
+    crystalGlow.addColorStop(0, "rgba(93, 216, 255, 0.22)");
+    crystalGlow.addColorStop(1, "rgba(41, 104, 157, 0)");
+    ctx.fillStyle = crystalGlow;
+    ctx.beginPath(); ctx.arc(crystalX, crystalY, 30, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#347d9c";
+    ctx.beginPath();
+    ctx.moveTo(crystalX, crystalY - 17);
+    ctx.lineTo(crystalX + 7, crystalY + 8);
+    ctx.lineTo(crystalX - 4, crystalY + 13);
+    ctx.lineTo(crystalX - 10, crystalY - 6);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#a8efff";
+    ctx.fillRect(crystalX - 2, crystalY - 10, 3, 7);
+
+    var plantX = crystalX + 45;
+    var plantY = roomH - 28 - ((seed + crystal) % 2) * 8;
+    ctx.fillStyle = "rgba(177, 71, 255, 0.18)";
+    ctx.beginPath(); ctx.arc(plantX, plantY - 10, 26, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#5f2d78";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(plantX, plantY);
+    ctx.quadraticCurveTo(plantX - 8, plantY - 18, plantX - 13, plantY - 25);
+    ctx.moveTo(plantX + 2, plantY);
+    ctx.quadraticCurveTo(plantX + 6, plantY - 16, plantX + 15, plantY - 22);
+    ctx.stroke();
+    ctx.fillStyle = "#bf69e8";
+    ctx.fillRect(plantX - 16, plantY - 28, 6, 5);
+    ctx.fillRect(plantX + 13, plantY - 25, 6, 5);
+  }
+
+  // Low-opacity fog bands and shadows add depth while leaving the combat lane readable.
+  ctx.globalAlpha = 0.1;
+  for (var fog = 0; fog < tileCount; fog++) {
+    var fogX = rx + fog * tileWidth;
+    var fogGradient = ctx.createLinearGradient(fogX, roomH * 0.42, fogX, roomH * 0.66);
+    fogGradient.addColorStop(0, "rgba(124, 126, 170, 0)");
+    fogGradient.addColorStop(0.5, "rgba(124, 126, 170, 0.6)");
+    fogGradient.addColorStop(1, "rgba(124, 126, 170, 0)");
+    ctx.fillStyle = fogGradient;
+    ctx.fillRect(fogX, roomH * 0.42, tileWidth, Math.min(150, roomH * 0.28));
+  }
+  ctx.globalAlpha = 0.16;
+  for (var shadow = 0; shadow < tileCount; shadow++) {
+    var shadowX = rx + 90 + shadow * tileWidth;
+    ctx.fillStyle = "#02020b";
+    ctx.beginPath();
+    ctx.ellipse(shadowX, roomH - 112 - (shadow % 2) * 55, 72, 30, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
 }
 function drawCaveBackRelief(rx, roomH, roomWidth, seed) {
   ctx.save();

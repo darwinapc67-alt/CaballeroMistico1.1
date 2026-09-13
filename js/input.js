@@ -1536,6 +1536,7 @@ function beginNewGameFromDifficulty() {
   resetAll();
   menuSubState = "slots";
   introTimer = 0;
+  introAmbientCue = -1;
   gameState = ST_INTRO;
   trackGameEvent("game_start", { game_mode: gameMode, difficulty: difficulty });
   trackGameEvent("level_start", { level: 1, room: 0 });

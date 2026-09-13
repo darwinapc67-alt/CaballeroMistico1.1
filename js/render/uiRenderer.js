@@ -787,34 +787,94 @@ function drawGame() {
   drawTutorial();
 }
 function drawIntro() {
- var t = introTimer / 60;
- var phase = t < 3 ? 0 : (t < 7 ? 1 : (t < 12 ? 2 : 3));
- ctx.fillStyle = phase === 0 ? "#020208" : "#0b1024";
+ var fade = Math.min(1, introTimer / 28, Math.max(0, (300 - introTimer) / 35));
+ var tremor = introTimer >= 96 && introTimer < 132 ? Math.sin(introTimer * 1.8) * 2 : 0;
+ ctx.fillStyle = "#03030b";
  ctx.fillRect(0, 0, canvas.width, canvas.height);
- if (phase >= 1) {
-   ctx.fillStyle = "rgba(255,80,30,0.25)";
-   ctx.beginPath(); ctx.arc(130, 400, 95 + Math.sin(introTimer / 12) * 8, 0, Math.PI * 2); ctx.fill();
-   ctx.fillStyle = "#070914";
-   ctx.beginPath(); ctx.moveTo(0, 470); ctx.lineTo(180, 300); ctx.lineTo(320, 470); ctx.lineTo(500, 280); ctx.lineTo(800, 460); ctx.lineTo(800, 600); ctx.lineTo(0, 600); ctx.closePath(); ctx.fill();
-   ctx.fillStyle = "#ff7138";
-   for (var i = 0; i < 6; i++) ctx.fillRect(90 + i * 120, 430 - (i % 2) * 18, 5, 24);
+ ctx.save();
+ ctx.globalAlpha = fade;
+ ctx.translate(tremor, tremor * 0.35);
+
+ var cave = ctx.createLinearGradient(0, 0, 0, canvas.height);
+ cave.addColorStop(0, "#080b19");
+ cave.addColorStop(0.55, "#101126");
+ cave.addColorStop(1, "#17101f");
+ ctx.fillStyle = cave;
+ ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+ // The sword is intentionally absent: it remains in Room 2.
+ ctx.fillStyle = "#17172d";
+ ctx.beginPath();
+ ctx.moveTo(0, 0); ctx.lineTo(145, 0); ctx.lineTo(112, 62); ctx.lineTo(205, 95);
+ ctx.lineTo(155, 132); ctx.lineTo(245, 175); ctx.lineTo(0, 205); ctx.closePath(); ctx.fill();
+ ctx.beginPath();
+ ctx.moveTo(800, 0); ctx.lineTo(650, 0); ctx.lineTo(690, 70); ctx.lineTo(604, 105);
+ ctx.lineTo(655, 148); ctx.lineTo(570, 190); ctx.lineTo(800, 210); ctx.closePath(); ctx.fill();
+
+ for (var stal = 0; stal < 9; stal++) {
+   var stalX = 28 + stal * 96;
+   var stalH = 24 + (stal % 4) * 12;
+   ctx.fillStyle = stal % 2 ? "#252541" : "#1c1d37";
+   ctx.beginPath();
+   ctx.moveTo(stalX - 17, 0); ctx.lineTo(stalX + 17, 0);
+   ctx.lineTo(stalX + 6, stalH - 7); ctx.lineTo(stalX, stalH);
+   ctx.lineTo(stalX - 8, stalH - 9); ctx.closePath(); ctx.fill();
  }
- if (phase >= 2) {
-   ctx.save();
-   ctx.translate(400, 430);
-   ctx.fillStyle = "#080b16"; ctx.fillRect(-30, -125, 60, 125);
-   ctx.beginPath(); ctx.arc(0, -145, 28, 0, Math.PI * 2); ctx.fill();
-   ctx.fillStyle = "#6cc"; ctx.fillRect(-18, -154, 8, 4); ctx.fillRect(10, -154, 8, 4);
-   ctx.strokeStyle = "#d5b66a"; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(24, -105); ctx.lineTo(92, -205); ctx.stroke();
-   ctx.restore();
+
+ // A narrow overhead beam lights the sleeping character without revealing any weapon.
+ var beam = ctx.createLinearGradient(400, 0, 400, 440);
+ beam.addColorStop(0, "rgba(193, 222, 255, 0.24)");
+ beam.addColorStop(1, "rgba(193, 222, 255, 0)");
+ ctx.fillStyle = beam;
+ ctx.beginPath();
+ ctx.moveTo(365, 0); ctx.lineTo(435, 0); ctx.lineTo(515, 430); ctx.lineTo(285, 430); ctx.closePath(); ctx.fill();
+
+ // Wall crystals and the lit torch establish the cave before the tutorial begins.
+ for (var crystal = 0; crystal < 4; crystal++) {
+   var crystalX = 100 + crystal * 205;
+   var crystalY = 300 + (crystal % 2) * 28;
+   var crystalGlow = ctx.createRadialGradient(crystalX, crystalY, 2, crystalX, crystalY, 48);
+   crystalGlow.addColorStop(0, "rgba(89, 220, 255, 0.28)");
+   crystalGlow.addColorStop(1, "rgba(89, 220, 255, 0)");
+   ctx.fillStyle = crystalGlow;
+   ctx.beginPath(); ctx.arc(crystalX, crystalY, 48, 0, Math.PI * 2); ctx.fill();
+   ctx.fillStyle = "#4faac2";
+   ctx.beginPath(); ctx.moveTo(crystalX, crystalY - 20); ctx.lineTo(crystalX + 9, crystalY + 9);
+   ctx.lineTo(crystalX - 5, crystalY + 16); ctx.lineTo(crystalX - 12, crystalY - 5); ctx.closePath(); ctx.fill();
+   ctx.fillStyle = "#c1f6ff"; ctx.fillRect(crystalX - 3, crystalY - 12, 3, 8);
  }
- if (phase === 3 && introTimer % 90 < 18) { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
- ctx.textAlign = "center"; ctx.fillStyle = "#f2ead7"; ctx.font = "bold 22px monospace";
- if (phase === 0) ctx.fillText("Durante siglos, el reino permaneció en paz…", 400, 310);
- else if (phase === 1) ctx.fillText("Hasta que algo despertó.", 400, 310);
- else if (phase === 2) ctx.fillText("Y ahora… te toca enfrentarlo.", 400, 250);
- else { ctx.fillStyle = "#ffd36a"; ctx.font = "bold 34px monospace"; ctx.fillText("⚔ CABALLERO MÍSTICO", 400, 270); ctx.fillStyle = "#fff"; ctx.font = "16px monospace"; ctx.fillText("El destino comienza aquí.", 400, 315); }
- ctx.fillStyle = "rgba(255,255,255,0.55)"; ctx.font = "11px monospace"; ctx.fillText("ENTER / ESPACIO para omitir", 400, 560);
+ var torchGlow = ctx.createRadialGradient(145, 425, 4, 145, 425, 105);
+ torchGlow.addColorStop(0, "rgba(255, 173, 76, 0.3)");
+ torchGlow.addColorStop(1, "rgba(255, 120, 40, 0)");
+ ctx.fillStyle = torchGlow; ctx.beginPath(); ctx.arc(145, 425, 105, 0, Math.PI * 2); ctx.fill();
+ ctx.fillStyle = "#75472d"; ctx.fillRect(141, 423, 8, 75);
+ ctx.fillStyle = "#ffad45"; ctx.fillRect(137, 408, 16, 18);
+ ctx.fillStyle = "#fff1a6"; ctx.fillRect(142, 399, 6, 12);
+
+ ctx.fillStyle = "#080914";
+ ctx.beginPath(); ctx.ellipse(430, 495, 155, 25, 0, 0, Math.PI * 2); ctx.fill();
+ ctx.fillStyle = "#111321"; ctx.fillRect(390, 380, 80, 105);
+ ctx.beginPath(); ctx.arc(430, 365, 34, 0, Math.PI * 2); ctx.fill();
+ ctx.fillStyle = "#526078"; ctx.fillRect(414, 354, 9, 4); ctx.fillRect(442, 354, 9, 4);
+
+ ctx.fillStyle = "rgba(9, 8, 18, 0.72)";
+ ctx.beginPath(); ctx.ellipse(680, 340, 54, 135, 0, 0, Math.PI * 2); ctx.fill();
+ ctx.beginPath(); ctx.ellipse(230, 230, 38, 90, 0, 0, Math.PI * 2); ctx.fill();
+
+ particles.forEach(function(particle) {
+   ctx.globalAlpha = fade * Math.max(0, particle.life / particle.maxLife);
+   ctx.fillStyle = particle.color;
+   ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
+ });
+ ctx.restore();
+ ctx.globalAlpha = 1;
+ ctx.textAlign = "center";
+ ctx.fillStyle = "#f0e8d8";
+ ctx.font = "bold 20px monospace";
+ ctx.fillText(introTimer < 90 ? "La oscuridad te despierta..." : "Encuentra la espada...", 400, 545);
+ ctx.fillStyle = "rgba(255,255,255,0.55)";
+ ctx.font = "11px monospace";
+ ctx.fillText("ENTER / ESPACIO para omitir", 400, 575);
  ctx.textAlign = "left";
 }
 function drawDeathScreen() {
@@ -858,7 +918,7 @@ function drawDeathScreen() {
 function drawTutorial() {
   if (gameState !== ST_PLAYING || tutorialTimer <= 0 || tutorialStep >= 6) return;
   var messages = [
-    "A/D: moverte",
+    "Encuentra la espada...",
     "ESPACIO: saltar",
     "E: interactuar y recoger objetos",
     "X/J: atacar con la espada",
