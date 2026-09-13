@@ -206,6 +206,10 @@ var pauseSelection = 0, pauseSubState = "menu", diaryCategory = "enemies", diary
 
 var transTimer = 0, transPhase = "out", transTargetRoom = 0, transFade = 0;
 var transIsFall = false, transIsRise = false, transitionCooldown = 0;
+var floorCollapseTimer = 0;
+var roomQuakeTimer = 0, roomQuakeStrength = 0;
+var roomAtmosphereRoom = -1, roomAtmosphereWind = false;
+var atmosphereRocks = [], atmosphereWindParticles = [], atmosphereTorches = [];
 
 var audioCtx = null, musicPlaying = false, musicInterval = null, sfxEnabled = true, musicEnabled = true;
 var masterVolume = 1, musicVolume = 0.75, sfxVolume = 0.7, audioSelection = 0;
@@ -391,7 +395,7 @@ var lastSafeX = 100, lastSafeY = 400;
 var healing = false, healTimer = 0, healingStoneCooldown = 0, hitFlash = 0, needsRespawn = false;
 
 var twoPlayerMode = false;
-var inventoryOpen = false, mapOpen = false, inventoryPage = 0, inventorySelection = 0, inventoryHover = -1;
+var inventoryOpen = false, mapOpen = false, mapFade = 0, mapClosing = false, inventoryPage = 0, inventorySelection = 0, inventoryHover = -1;
 
 var CUSTOM_LEVELS_KEY = "caballero_mistico_custom_levels_v1";
 var EDITOR_COLS = 18, EDITOR_ROWS = 12, EDITOR_CELL = 32;

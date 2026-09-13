@@ -46,7 +46,7 @@ function drawGameWorld() {
     var room = rooms[r];
     if (room.height < camTop - 100 || 0 > camBottom + 100) continue;
     if (room.city) drawCityBg(rx, room);
-    else drawCaveBg(rx, room.decor, room.height, roomWidth);
+    else drawCaveBg(rx, room.decor, room.height, roomWidth, r);
     drawPlatforms(room);
     drawWalls(room);
     if (r === 30) {
@@ -138,6 +138,18 @@ function drawGameWorld() {
     if (room.bossName) drawBossDoor(r);
     if (r === 9) { drawShopNPC(); drawHealingStone(); }
   }
+  atmosphereRocks.forEach(function(rock) {
+    ctx.fillStyle = "#766d68";
+    ctx.fillRect(rock.x - rock.size / 2, rock.y - rock.size / 2, rock.size, rock.size);
+    ctx.fillStyle = "#aaa09a";
+    ctx.fillRect(rock.x - rock.size / 2, rock.y - rock.size / 2, Math.max(1, rock.size / 2), 1);
+  });
+  atmosphereWindParticles.forEach(function(windParticle) {
+    ctx.globalAlpha = windParticle.alpha;
+    ctx.fillStyle = "#d4d0bf";
+    ctx.fillRect(windParticle.x, windParticle.y, windParticle.length, 1);
+  });
+  ctx.globalAlpha = 1;
   drawEnemies();
   drawBossDeathEffects();
   drawHealingHearts();

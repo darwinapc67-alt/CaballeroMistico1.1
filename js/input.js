@@ -187,13 +187,17 @@ window.addEventListener("keydown", function(e) {
     if (hasMap) {
       inventoryOpen = true;
       mapOpen = true;
+      mapClosing = false;
+      mapFade = 0;
       gameState = ST_INVENTORY;
     }
     e.preventDefault();
     return;
   }
   if (gameState === ST_INVENTORY && k === "m") {
-    if (hasMap) mapOpen = !mapOpen;
+    if (hasMap && mapOpen) {
+      mapClosing = true;
+    }
     e.preventDefault();
     return;
   }

@@ -4,6 +4,12 @@ function resetAll() {
   });
   brightnessBoost = 1;
   transIsFall = false; transitionCooldown = 0;
+  floorCollapseTimer = 0;
+  roomQuakeTimer = 0;
+  roomAtmosphereRoom = -1;
+  atmosphereRocks = [];
+  atmosphereWindParticles = [];
+  atmosphereTorches = [];
   stopMusic();
   gamepadConnected = false; gamepadIndex = -1;
   gamepad2Connected = false; gamepad2Index = -1;
@@ -11,6 +17,8 @@ function resetAll() {
   gp2Buttons = {}; prevGP2Buttons = {}; gp2Axes = {x:0,y:0}; gamepadMenuAxisLock = 0;
   inventoryOpen = false;
   mapOpen = false;
+  mapFade = 0;
+  mapClosing = false;
   inventoryPage = 0;
   inventorySelection = 0;
   inventoryHover = -1;
@@ -128,8 +136,19 @@ function update() {
   if (adMessageTimer > 0) adMessageTimer--;
   if (adAzariBonusTimer > 0) adAzariBonusTimer--;
   if (shopExitCooldown > 0) shopExitCooldown--;
+  if (mapOpen && !mapClosing) mapFade = Math.min(1, mapFade + 0.12);
+  if (mapClosing) {
+    mapFade = Math.max(0, mapFade - 0.12);
+    if (mapFade === 0) {
+      mapClosing = false;
+      mapOpen = false;
+      inventoryOpen = false;
+      gameState = ST_PLAYING;
+    }
+  }
   if (combatShake > 0) combatShake *= 0.82;
   if (combatShake < 0.1) combatShake = 0;
+  updateRoomAtmosphere();
   for (var impactIndex = impactBursts.length - 1; impactIndex >= 0; impactIndex--) {
     impactBursts[impactIndex].life--;
     if (impactBursts[impactIndex].life <= 0) impactBursts.splice(impactIndex, 1);
@@ -185,6 +204,7 @@ function update() {
   }
   if (gameState === ST_DIALOGUE) {
     if (dialogueMode === "sword_pickup") updateSwordPickupCinematic();
+    else if (dialogueMode === "floor_collapse") updateFloorCollapse();
     return;
   }
   if (gameState === ST_HOUSE) {
@@ -321,6 +341,7 @@ function loop() {
   else if (gameState === ST_DIALOGUE) {
     drawGame();
     if (dialogueMode === "sword_pickup") drawSwordPickupCinematic();
+    else if (dialogueMode === "floor_collapse") drawFloorCollapse();
     else drawBossDialogue();
   }
   else if (gameState === ST_HOUSE) drawHouseInterior();

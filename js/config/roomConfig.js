@@ -166,7 +166,7 @@ var room11 = {
   platforms: [
     {x:8800, y:560, w:800, h:40}
   ],
-  spikes: [], walls: [{x:9582, y:0, w:18, h:600}],
+  spikes: [], walls: [],
   transitionZone: {x:9540, y:460, w:40, h:100, to:12},
   decor: genDecor(8800, 6, 5, 600)
 };

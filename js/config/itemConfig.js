@@ -20,4 +20,4 @@ var hiddenCollectibleData = [
 ];
 
 var twoPlayerMode = false;
-var inventoryOpen = false, mapOpen = false, inventoryPage = 0, inventorySelection = 0, inventoryHover = -1;
+var inventoryOpen = false, mapOpen = false, mapFade = 0, mapClosing = false, inventoryPage = 0, inventorySelection = 0, inventoryHover = -1;

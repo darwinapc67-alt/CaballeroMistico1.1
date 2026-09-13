@@ -140,6 +140,100 @@ function updateSwordPickupCinematic() {
   }
 }
 
+function startRoomAtmosphere(roomIndex) {
+  var room = rooms[roomIndex];
+  if (!room) return;
+  var origin = room.worldX !== undefined ? room.worldX : roomIndex * ROOM_W;
+  var roomWidth = room.roomWidth || ROOM_W;
+  roomAtmosphereRoom = roomIndex;
+  roomQuakeTimer = 90;
+  roomQuakeStrength = 4;
+  roomAtmosphereWind = [11, 19, 35, 37, 39].indexOf(roomIndex) >= 0;
+  atmosphereRocks = [];
+  atmosphereWindParticles = [];
+  atmosphereTorches = [];
+
+  for (var rockIndex = 0; rockIndex < 9; rockIndex++) {
+    atmosphereRocks.push({
+      x: origin + 35 + Math.random() * Math.max(120, roomWidth - 70),
+      y: -8 - Math.random() * 110,
+      vx: (Math.random() - 0.5) * 0.7,
+      vy: 1.2 + Math.random() * 1.5,
+      size: 3 + Math.floor(Math.random() * 5),
+      room: roomIndex
+    });
+  }
+  if (roomAtmosphereWind) {
+    for (var windIndex = 0; windIndex < 28; windIndex++) {
+      atmosphereWindParticles.push({
+        x: origin + Math.random() * roomWidth,
+        y: 70 + Math.random() * Math.max(100, room.height - 150),
+        vx: 1.4 + Math.random() * 2.6,
+        length: 3 + Math.random() * 8,
+        alpha: 0.2 + Math.random() * 0.35
+      });
+    }
+    sfxWind();
+  }
+  if (room.height >= 560) {
+    var torchX = origin + (roomIndex % 2 ? roomWidth - 105 : 105);
+    atmosphereTorches.push({
+      x: torchX,
+      y: room.height - 125,
+      lit: true,
+      flicker: 0,
+      nextChange: 300 + Math.floor(Math.random() * 420),
+      smokeTimer: 0
+    });
+  }
+}
+
+function updateRoomAtmosphere() {
+  if (roomQuakeTimer > 0) {
+    roomQuakeTimer--;
+    combatShake = Math.max(combatShake, roomQuakeStrength * (roomQuakeTimer / 90));
+  }
+  for (var rockIndex = atmosphereRocks.length - 1; rockIndex >= 0; rockIndex--) {
+    var rock = atmosphereRocks[rockIndex];
+    rock.x += rock.vx;
+    rock.vy += 0.08;
+    rock.y += rock.vy;
+    var room = rooms[roomAtmosphereRoom];
+    var floorY = room ? room.height - 42 : 558;
+    if (rock.y >= floorY) {
+      spawnParticles(rock.x, floorY, "#8b8178", 7, 2.2);
+      atmosphereRocks.splice(rockIndex, 1);
+      combatShake = Math.max(combatShake, 1.2);
+    }
+  }
+  for (var windIndex = 0; windIndex < atmosphereWindParticles.length; windIndex++) {
+    var windParticle = atmosphereWindParticles[windIndex];
+    windParticle.x += windParticle.vx;
+    var windRoom = rooms[roomAtmosphereRoom];
+    var windOrigin = windRoom && windRoom.worldX !== undefined ? windRoom.worldX : roomAtmosphereRoom * ROOM_W;
+    var windWidth = windRoom && windRoom.roomWidth || ROOM_W;
+    if (windParticle.x > windOrigin + windWidth + 12) windParticle.x = windOrigin - 12;
+  }
+  for (var torchIndex = 0; torchIndex < atmosphereTorches.length; torchIndex++) {
+    var torch = atmosphereTorches[torchIndex];
+    torch.flicker = Math.sin(frameCounter * 0.31 + torch.x) * 0.18 + Math.sin(frameCounter * 0.73) * 0.12;
+    if (torch.smokeTimer > 0) torch.smokeTimer--;
+    torch.nextChange--;
+    if (torch.nextChange <= 0) {
+      if (torch.lit) {
+        torch.lit = false;
+        torch.smokeTimer = 90;
+        spawnParticles(torch.x, torch.y - 8, "#777784", 8, 1.3);
+        torch.nextChange = 150 + Math.floor(Math.random() * 180);
+      } else {
+        torch.lit = true;
+        torch.nextChange = 360 + Math.floor(Math.random() * 480);
+        spawnParticles(torch.x, torch.y - 8, "#ffd36a", 5, 1.4);
+      }
+    }
+  }
+}
+
 function resetPlayer() {
   player.x = 100; player.y = 400; player.vx = 0; player.vy = 0;
   player.jumpsLeft = hasDoubleJump ? 2 : 1; player.facing = 1; player.inv = 0; player.autoWalk = 0;
@@ -961,10 +1055,10 @@ function updateInfiniteMode() {
       var infiniteBossType = infiniteBossTypes[(Math.floor(infiniteWave / 5) - 1) % infiniteBossTypes.length];
       var bossScale = 1 + Math.floor(infiniteWave / 5) * 0.22;
       var bossSizes = {
-        guardian: { w: 70, h: 90, hp: 100 },
-        queen_larva: { w: 78, h: 90, hp: 140 },
-        abyssal_knight: { w: 60, h: 100, hp: 180 },
-        dragon: { w: 110, h: 120, hp: 260 }
+        guardian: { w: 70, h: 90, hp: 240 },
+        queen_larva: { w: 78, h: 90, hp: 340 },
+        abyssal_knight: { w: 60, h: 100, hp: 440 },
+        dragon: { w: 110, h: 120, hp: 900 }
       };
       var bossSize = bossSizes[infiniteBossType];
       enemies.push({
@@ -1451,8 +1545,57 @@ function defeatBoss(e) {
     hasDash = true;
     spawnFloatText(player.x, player.y - 40, "¡Dash desbloqueado!", "#79c");
   }
+  if (e.room === 39) startFloorCollapse();
   if (e.room < rooms.length - 1) {
-    rooms[e.room].transitionZone = {x: e.room * ROOM_W + ROOM_W - 70, y: 450, w: 60, h: 110, to: e.room + 1};
+    if (e.type !== "dragon") {
+      rooms[e.room].transitionZone = {x: e.room * ROOM_W + ROOM_W - 70, y: 450, w: 60, h: 110, to: e.room + 1};
+    }
+  }
+}
+
+function startFloorCollapse() {
+  if (gameState !== ST_PLAYING || floorCollapseTimer > 0) return;
+  floorCollapseTimer = 180;
+  player.frozen = true; player.vx = 0; player.vy = 0;
+  if (twoPlayerMode) { player2.frozen = true; player2.vx = 0; player2.vy = 0; }
+  dialogueMode = "floor_collapse";
+  gameState = ST_DIALOGUE;
+  sfxStalactiteFall();
+  spawnFloatText(player.x, player.y - 70, "El suelo se está rompiendo...", "#ffb347");
+}
+
+function updateFloorCollapse() {
+  floorCollapseTimer--;
+  var collapseProgress = Math.max(0, Math.min(1, (60 - floorCollapseTimer) / 60));
+  if (floorCollapseTimer <= 120 && floorCollapseTimer % 4 === 0) {
+    var debrisSpread = 110 + collapseProgress * 150;
+    spawnParticles(player.x + (Math.random() - 0.5) * debrisSpread, player.y + player.h, "#706b68", 8, 4);
+    spawnParticles(player.x + (Math.random() - 0.5) * debrisSpread, player.y + player.h, "#b08a62", 5, 5);
+  }
+  if (floorCollapseTimer <= 60) {
+    player.y += 1.8 + collapseProgress * 2.4;
+    player.vy = 1.8 + collapseProgress * 2.4;
+    if (twoPlayerMode) {
+      player2.y += 1.8 + collapseProgress * 2.4;
+      player2.vy = 1.8 + collapseProgress * 2.4;
+    }
+  }
+  combatShake = Math.max(combatShake, floorCollapseTimer <= 60 ? 8 + collapseProgress * 5 : 2 + (1 - floorCollapseTimer / 120) * 3);
+  if (floorCollapseTimer === 60) sfxFall();
+  if (floorCollapseTimer === 18) {
+    sfxStalactiteFall();
+    spawnParticles(player.x, player.y + player.h, "#c6b29a", 55, 7);
+    combatShake = 15;
+  }
+  for (var i = particles.length - 1; i >= 0; i--) {
+    var particle = particles[i];
+    particle.x += particle.vx; particle.y += particle.vy; particle.vy += 0.08; particle.life--;
+    if (particle.life <= 0) particles.splice(i, 1);
+  }
+  if (floorCollapseTimer <= 0) {
+    floorCollapseTimer = 0; player.frozen = false;
+    if (twoPlayerMode) player2.frozen = false;
+    startFallThroughTransition(41);
   }
 }
 
@@ -1749,7 +1892,8 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     }
     var roomBoss = enemies.find ? enemies.find(function(enemy) { return enemy.boss && enemy.room === currentRoom; }) : null;
     if (room.transitionZone && rectHit(p, room.transitionZone) && (!roomBoss || roomBoss.dead)) {
-      startTransition(room.transitionZone.to, room.transitionZone.to < currentRoom ? "back" : "forward");
+      if (room.floorCollapse) startFallThroughTransition(room.transitionZone.to);
+      else startTransition(room.transitionZone.to, room.transitionZone.to < currentRoom ? "back" : "forward");
       return;
     }
   }
@@ -2315,6 +2459,7 @@ function updateTransition() {
     if (transTimer === 25) {
       trackLevelChange(currentRoom, transTargetRoom);
       currentRoom = transTargetRoom;
+      startRoomAtmosphere(currentRoom);
       if (currentRoom > highestRoomReached) highestRoomReached = currentRoom;
       unlockWeaponsForRoom(currentRoom);
       var room = rooms[currentRoom];
@@ -2353,7 +2498,6 @@ function updateTransition() {
       var names = ["", "CUEVA OLVIDADA", "", "", "", "", "", "", "", "TIENDA", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""];
       zoneName = names[currentRoom] || "";
       zoneNameTimer = 120;
-      startBossDialogue(currentRoom);
     }
     if (transTimer <= 0) { transPhase = "in"; transTimer = transIsFall ? 155 : 50; }
   } else if (transPhase === "in") {

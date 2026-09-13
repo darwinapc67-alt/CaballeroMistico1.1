@@ -123,6 +123,135 @@ function drawInventoryIcon(iconX, iconY, kind, owned, color) {
   ctx.restore();
 }
 
+function drawMapOverlay() {
+  ctx.save();
+  ctx.globalAlpha = mapFade;
+  ctx.fillStyle = "rgba(3, 8, 20, 0.98)";
+  ctx.fillRect(14, 14, canvas.width - 28, canvas.height - 28);
+  ctx.strokeStyle = "#6cc";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(14, 14, canvas.width - 28, canvas.height - 28);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#ffd700";
+  ctx.font = "bold 20px monospace";
+  ctx.fillText("🗺 MAPA", canvas.width / 2, 44);
+  ctx.fillStyle = "#8fa7c7";
+  ctx.font = "11px monospace";
+  ctx.fillText("M: cerrar mapa", canvas.width / 2, 64);
+
+  var columns = 7, chamberW = 100, chamberH = 46, gapX = 10, gapY = 12;
+  var startX = 20, startY = 80;
+  var positions = [];
+  rooms.forEach(function(room, roomIndex) {
+    var row = Math.floor(roomIndex / columns);
+    var column = roomIndex % columns;
+    var direction = row % 2 === 0 ? column : columns - 1 - column;
+    positions[roomIndex] = {
+      x: startX + direction * (chamberW + gapX),
+      y: startY + row * (chamberH + gapY)
+    };
+  });
+
+  // Continuous corridors are drawn first so explored chambers read as one map.
+  ctx.lineWidth = 7;
+  for (var connectionIndex = 0; connectionIndex < rooms.length - 1; connectionIndex++) {
+    var from = positions[connectionIndex];
+    var to = positions[connectionIndex + 1];
+    var connectionExplored = connectionIndex < highestRoomReached;
+    ctx.strokeStyle = connectionExplored ? "#263f52" : "#111b2a";
+    ctx.beginPath();
+    ctx.moveTo(from.x + chamberW / 2, from.y + chamberH / 2);
+    ctx.lineTo(to.x + chamberW / 2, to.y + chamberH / 2);
+    ctx.stroke();
+  }
+
+  rooms.forEach(function(room, roomIndex) {
+    var position = positions[roomIndex];
+    var explored = roomIndex <= highestRoomReached;
+    var current = roomIndex === currentRoom;
+    var x = position.x, y = position.y;
+    var roomOrigin = room.worldX !== undefined ? room.worldX : roomIndex * ROOM_W;
+    var roomWidth = room.roomWidth || ROOM_W;
+    var roomHeight = room.height || ROOM_H;
+    var innerX = x + 5, innerY = y + 5, innerW = chamberW - 10, innerH = chamberH - 10;
+
+    // Chamfered outlines resemble connected Metroid-style chambers.
+    ctx.fillStyle = explored ? (current ? "#382e0f" : "#101d2b") : "#080e18";
+    ctx.beginPath();
+    ctx.moveTo(x + 8, y); ctx.lineTo(x + chamberW - 8, y);
+    ctx.lineTo(x + chamberW, y + 8); ctx.lineTo(x + chamberW, y + chamberH - 8);
+    ctx.lineTo(x + chamberW - 8, y + chamberH); ctx.lineTo(x + 8, y + chamberH);
+    ctx.lineTo(x, y + chamberH - 8); ctx.lineTo(x, y + 8); ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = current ? "#ffd700" : (explored ? "#52758a" : "#263246");
+    ctx.lineWidth = current ? 3 : 1;
+    ctx.stroke();
+    if (!explored) {
+      ctx.fillStyle = "#3d4352";
+      ctx.font = "bold 17px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("?", x + chamberW / 2, y + chamberH / 2 + 6);
+      return;
+    }
+
+    ctx.fillStyle = "#0e1a29";
+    ctx.fillRect(innerX, innerY, innerW, innerH);
+    ctx.strokeStyle = "#20384c";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(innerX, innerY, innerW, innerH);
+    (room.platforms || []).forEach(function(platform) {
+      var platformX = platform.x - roomOrigin;
+      var platformY = platform.y;
+      var platformWidth = Math.max(2, platform.w * innerW / roomWidth);
+      var platformHeight = Math.max(2, platform.h * innerH / roomHeight);
+      var drawX = innerX + platformX * innerW / roomWidth;
+      var drawY = innerY + platformY * innerH / roomHeight;
+      if (drawX + platformWidth < innerX || drawX > innerX + innerW ||
+          drawY + platformHeight < innerY || drawY > innerY + innerH) return;
+      ctx.fillStyle = platformY > roomHeight - 100 ? "#a97845" : "#64879c";
+      ctx.fillRect(drawX, drawY, platformWidth, platformHeight);
+    });
+    if (room.lockedDoor) {
+      ctx.fillStyle = "#e05a62";
+      ctx.fillRect(innerX, innerY + innerH - 12, 5, 10);
+    }
+    if (room.openDoor || room.transitionZone) {
+      ctx.fillStyle = "#55d6a5";
+      ctx.fillRect(innerX + innerW - 5, innerY + innerH - 12, 5, 10);
+    }
+    if (room.rewardPile || room.chests) {
+      ctx.fillStyle = "#d6a649";
+      ctx.fillRect(innerX + innerW * 0.48, innerY + innerH * 0.62, 8, 6);
+    }
+    if (room.bossName) {
+      ctx.fillStyle = "#d68cff";
+      ctx.beginPath();
+      ctx.moveTo(innerX + innerW - 25, innerY + innerH - 3);
+      ctx.lineTo(innerX + innerW - 19, innerY + innerH - 13);
+      ctx.lineTo(innerX + innerW - 13, innerY + innerH - 3);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.fillStyle = current ? "#ffd700" : "#6e8496";
+    ctx.font = "9px monospace";
+    ctx.textAlign = "left";
+    ctx.fillText("H" + (roomIndex + 1), x + 8, y + 12);
+  });
+  ctx.textAlign = "left";
+  ctx.font = "10px monospace";
+  ctx.fillStyle = "#e05a62";
+  ctx.fillText("■ puerta cerrada", 28, canvas.height - 25);
+  ctx.fillStyle = "#d6a649";
+  ctx.fillText("■ cofre", 180, canvas.height - 25);
+  ctx.fillStyle = "#d68cff";
+  ctx.fillText("▲ jefe", 285, canvas.height - 25);
+  ctx.restore();
+  if (mapClosing) {
+    ctx.fillStyle = "rgba(0, 0, 0, " + (1 - mapFade) + ")";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+}
+
 function drawInventory() {
   ctx.fillStyle = "rgba(0,0,0,0.88)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -254,6 +383,7 @@ function drawInventory() {
   ctx.fillText("Cada arma ocupa su propio espacio.", 548, 438);
   ctx.fillText("Selecciona un arma y pulsa ENTER", 548, 456);
   ctx.textAlign = "left";
+  if (mapOpen && hasMap) drawMapOverlay();
   return;
   if (hasMap) {
     ctx.textAlign = "center";
@@ -1555,6 +1685,7 @@ function drawTransition() {
       var streakY = (i * 47 + (155 - transTimer) * 8) % (canvas.height + 40) - 20;
       ctx.fillRect(canvas.width / 2 - 90 + (i % 5) * 45, streakY, 2, 24);
     }
+
     ctx.fillStyle = "#fff";
     ctx.font = "bold 30px monospace";
     ctx.textAlign = "center";
@@ -1580,6 +1711,65 @@ function drawTransition() {
     ctx.fillText(transIsRise ? "↑" : "↓", canvas.width / 2, canvas.height - 40);
     ctx.textAlign = "left";
   }
+}
+
+function drawFloorCollapse() {
+  var progress = 1 - floorCollapseTimer / 180;
+  var crackProgress = Math.max(0, Math.min(1, (180 - floorCollapseTimer) / 120));
+  var collapseProgress = Math.max(0, Math.min(1, (60 - floorCollapseTimer) / 60));
+  ctx.save();
+  ctx.fillStyle = "rgba(8, 7, 12, " + (0.12 + progress * 0.4) + ")";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (crackProgress > 0) {
+    ctx.strokeStyle = "#d2a477";
+    ctx.lineWidth = 3 + crackProgress * 2;
+    ctx.beginPath();
+    ctx.moveTo(canvas.width * 0.47, canvas.height * 0.82);
+    ctx.lineTo(canvas.width * (0.47 - 0.39 * crackProgress), canvas.height * (0.78 - 0.05 * crackProgress));
+    ctx.lineTo(canvas.width * (0.08 + 0.12 * (1 - crackProgress)), canvas.height * (0.82 - 0.04 * crackProgress));
+    ctx.moveTo(canvas.width * 0.47, canvas.height * 0.82);
+    ctx.lineTo(canvas.width * (0.47 + 0.42 * crackProgress), canvas.height * (0.78 - 0.08 * crackProgress));
+    ctx.lineTo(canvas.width * (0.94 - 0.08 * (1 - crackProgress)), canvas.height * (0.82 - 0.04 * crackProgress));
+    ctx.moveTo(canvas.width * 0.47, canvas.height * 0.82);
+    ctx.lineTo(canvas.width * (0.47 - 0.06 * crackProgress), canvas.height * (0.48 + 0.16 * (1 - crackProgress)));
+    ctx.moveTo(canvas.width * 0.47, canvas.height * 0.82);
+    ctx.lineTo(canvas.width * (0.47 + 0.11 * crackProgress), canvas.height * (0.5 + 0.14 * (1 - crackProgress)));
+    ctx.stroke();
+  }
+  if (collapseProgress > 0) {
+    ctx.fillStyle = "rgba(18, 12, 16, " + (0.55 + collapseProgress * 0.35) + ")";
+    ctx.beginPath();
+    ctx.moveTo(canvas.width * 0.28, canvas.height * 0.84);
+    ctx.lineTo(canvas.width * 0.47, canvas.height * 0.78);
+    ctx.lineTo(canvas.width * 0.7, canvas.height * 0.84);
+    ctx.lineTo(canvas.width * 0.78, canvas.height);
+    ctx.lineTo(canvas.width * 0.2, canvas.height);
+    ctx.closePath();
+    ctx.fill();
+  }
+  if (collapseProgress > 0) {
+    ctx.fillStyle = "#8f6d52";
+    for (var i = 0; i < 24; i++) {
+      var debrisX = canvas.width * (0.08 + ((i * 43) % 84) / 100);
+      var debrisY = canvas.height * (0.62 + ((i * 17) % 24) / 100) + collapseProgress * (80 + (i % 5) * 20);
+      var debrisSize = 3 + (i % 4) * 2;
+      ctx.save();
+      ctx.translate(debrisX, debrisY);
+      ctx.rotate((i % 5) * 0.35 + collapseProgress * 2);
+      ctx.fillRect(-debrisSize, -debrisSize / 2, debrisSize * 2, debrisSize);
+      ctx.restore();
+    }
+  }
+  ctx.fillStyle = "rgba(210, 205, 190, " + (0.08 + collapseProgress * 0.3) + ")";
+  ctx.fillRect(0, canvas.height * 0.58, canvas.width, canvas.height * 0.42);
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 17px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(floorCollapseTimer > 60 ? "EL SUELO SE AGRIETA" : "EL SUELO COLAPSA", canvas.width / 2, 48);
+  ctx.font = "12px monospace";
+  ctx.fillText(floorCollapseTimer > 60 ? "Las grietas se expanden..." : "La sala se está derrumbando...", canvas.width / 2, 70);
+  ctx.textAlign = "left";
+  ctx.restore();
 }
 function drawShop() {
   if (shopAnim > 0) {

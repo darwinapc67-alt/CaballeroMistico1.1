@@ -1,4 +1,4 @@
-function drawCaveBg(rx, decor, roomH, roomWidth) {
+function drawCaveBg(rx, decor, roomH, roomWidth, roomIndex) {
   roomWidth = roomWidth || ROOM_W;
   var roomSeed = Math.floor(rx / ROOM_W);
   ctx.fillStyle = "#080818";
@@ -23,7 +23,7 @@ function drawCaveBg(rx, decor, roomH, roomWidth) {
     ctx.fillRect(drop.x, drop.y, 2, 8);
   });
   ctx.globalAlpha = 1;
-  drawCaveEdgeDetails(rx, roomH, roomWidth, roomSeed);
+  drawCaveEdgeDetails(rx, roomH, roomWidth, roomSeed, roomIndex);
   decor.forEach(function(d) {
     if (d.type === 'stalactite') {
       ctx.fillStyle = "#1a1a2e";
@@ -181,7 +181,7 @@ function drawCaveBackRelief(rx, roomH, roomWidth, seed) {
   }
   ctx.restore();
 }
-function drawCaveEdgeDetails(rx, roomH, roomWidth, seed) {
+function drawCaveEdgeDetails(rx, roomH, roomWidth, seed, roomIndex) {
   ctx.save();
   for (var i = 0; i < 5; i++) {
     var side = i % 2 ? 1 : -1;
@@ -217,17 +217,34 @@ function drawCaveEdgeDetails(rx, roomH, roomWidth, seed) {
   if (roomH >= 560) {
     var torchX = rx + (seed % 2 ? roomWidth - 105 : 105);
     var torchY = roomH - 125;
-    var glow = ctx.createRadialGradient(torchX, torchY, 3, torchX, torchY, 58);
-    glow.addColorStop(0, "rgba(255, 170, 72, 0.18)");
-    glow.addColorStop(1, "rgba(255, 120, 42, 0)");
-    ctx.fillStyle = glow;
-    ctx.beginPath(); ctx.arc(torchX, torchY, 58, 0, Math.PI * 2); ctx.fill();
+    var torchState = roomIndex === currentRoom && roomIndex === roomAtmosphereRoom ? atmosphereTorches[0] : null;
+    var windBoost = roomAtmosphereWind && torchState ? 0.18 : 0;
+    var flamePower = torchState && !torchState.lit ? 0 : 1 + windBoost + (torchState ? torchState.flicker : 0);
+    if (flamePower > 0) {
+      var glow = ctx.createRadialGradient(torchX, torchY, 3, torchX, torchY, 58 + flamePower * 8);
+      glow.addColorStop(0, "rgba(255, 170, 72, " + (0.13 + flamePower * 0.08) + ")");
+      glow.addColorStop(1, "rgba(255, 120, 42, 0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(torchX, torchY, 58 + flamePower * 8, 0, Math.PI * 2); ctx.fill();
+    } else {
+      var shade = ctx.createRadialGradient(torchX, torchY, 2, torchX, torchY, 70);
+      shade.addColorStop(0, "rgba(0, 0, 8, 0.3)");
+      shade.addColorStop(1, "rgba(0, 0, 8, 0)");
+      ctx.fillStyle = shade;
+      ctx.beginPath(); ctx.arc(torchX, torchY, 70, 0, Math.PI * 2); ctx.fill();
+    }
     ctx.fillStyle = "#70452e";
     ctx.fillRect(torchX - 3, torchY, 6, 27);
-    ctx.fillStyle = "#ffb54d";
-    ctx.fillRect(torchX - 5, torchY - 8, 10, 10);
-    ctx.fillStyle = "#ffe6a1";
-    ctx.fillRect(torchX - 2, torchY - 12, 4, 6);
+    if (flamePower > 0) {
+      ctx.save();
+      ctx.translate(torchX, torchY - 5);
+      ctx.rotate(torchState ? (torchState.flicker + windBoost) * 0.65 : 0);
+      ctx.fillStyle = "#ffb54d";
+      ctx.fillRect(-5, -3 - flamePower * 4, 10, 10 + flamePower * 3);
+      ctx.fillStyle = "#ffe6a1";
+      ctx.fillRect(-2, -8 - flamePower * 4, 4, 6 + flamePower * 2);
+      ctx.restore();
+    }
   }
   ctx.restore();
 }
