@@ -26,6 +26,18 @@ function playerTakeDamage(p, dmg, isBossDamage) {
       var totalDeaths = stats.deaths;
       trackGameEvent("player_death", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
       trackGameEvent("game_over", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
+      if (gameMode === "hardcore") {
+        trackGameEvent("hardcore_reset", { room: currentRoom, deaths: totalDeaths });
+        if (activeSlot >= 0) {
+          deleteSave(activeSlot);
+        }
+        resetAll();
+        menuSubState = "slots";
+        introTimer = 0;
+        hardcoreGameOver = true;
+        gameState = ST_DEATH;
+        return;
+      }
       restoreCheckpoint(gameMode === "infinite");
       stats.deaths = totalDeaths;
       consecutiveDeaths = 0;

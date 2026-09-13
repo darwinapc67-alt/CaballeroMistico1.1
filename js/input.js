@@ -381,6 +381,14 @@ window.addEventListener("keydown", function(e) {
   }
 
   if (gameState === ST_DEATH) {
+    if (hardcoreGameOver) {
+      if (confirm && !e.repeat) {
+        hardcoreGameOver = false;
+        beginNewGameFromDifficulty();
+      }
+      e.preventDefault();
+      return;
+    }
     var deathOptions = 3;
     if (deathMenuInputDelay > 0) {
       e.preventDefault();

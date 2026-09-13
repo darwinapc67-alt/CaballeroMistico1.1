@@ -188,6 +188,7 @@ var GAM_AD_UNIT_PATH = "";
 var GAM_ENABLE_TEST_REWARDS = false;
 var modeOptions = [
   { id: "normal", name: "MODO NORMAL", desc: "Recorre la historia y derrota a los jefes." },
+  { id: "hardcore", name: "MODO HARDCORE", desc: "Tras tres derrotas, la partida vuelve a empezar desde cero." },
   { id: "infinite", name: "MODO INFINITO", desc: "Sobrevive a oleadas interminables de enemigos." }
 ];
 var difficultyOptions = [
@@ -436,6 +437,7 @@ var azariDrops = [];
 var deathParticles = [];
 var playerDead = false;
 var deathTimer = 0;
+var hardcoreGameOver = false;
 var deathChoice = 0, deathAnimTimer = 0, deathMenuInputDelay = 0, deathMenuReadyAt = 0;
 var consecutiveDeaths = 0;
 var checkpointState = null;
@@ -658,6 +660,17 @@ function handleLevelEditorMouse(event) {
   var rect = canvas.getBoundingClientRect();
   var x = (event.clientX - rect.left) * canvas.width / rect.width;
   var y = (event.clientY - rect.top) * canvas.height / rect.height;
+  if (y >= 12 && y < 42 && x >= 704 && x < 788) {
+    gameState = ST_MENU;
+    menuSubState = "slots";
+    menuSelection = 5;
+    editorMessage = "";
+    return;
+  }
+  if (y >= 12 && y < 42 && x >= 650 && x < 704) {
+    saveCustomEditorLevel();
+    return;
+  }
   if (y >= 60 && y < 82 && x >= 24 && x < 310) {
     if (x < 105) selectEditorRoom(editorRoomIndex - 1);
     else if (x < 190) selectEditorRoom(editorRoomIndex + 1);

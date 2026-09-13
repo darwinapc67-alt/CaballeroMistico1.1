@@ -412,7 +412,13 @@ function drawLevelEditor() {
   ctx.fillText("🎒 EDITOR DE NIVELES", 24, 35);
   ctx.fillStyle = "#888";
   ctx.font = "11px monospace";
-  ctx.fillText("Clic: colocar  •  Clic derecho: quitar  •  S: guardar  •  ESC: salir", 24, 58);
+  ctx.fillText("Toca: colocar/quitar  •  S: guardar  •  ESC: salir", 24, 58);
+  ctx.fillStyle = "#7dffad";
+  ctx.fillText("GUARDAR", 662, 27);
+  ctx.fillStyle = "#ff8b8b";
+  ctx.fillText("SALIR", 716, 27);
+  ctx.strokeStyle = "#43516f";
+  ctx.strokeRect(650, 12, 138, 20);
   ctx.fillStyle = "#18243b";
   ctx.fillRect(24, 62, 286, 20);
   ctx.fillStyle = "#8cf0ff";
@@ -792,6 +798,16 @@ function drawDeathScreen() {
   ctx.fillStyle = "rgba(2, 2, 10, 0.86)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.textAlign = "center";
+  if (hardcoreGameOver) {
+    ctx.fillStyle = "#ff526f";
+    ctx.font = "bold 34px monospace";
+    ctx.fillText("¡Haz muerto!", canvas.width / 2, 220);
+    ctx.fillStyle = "#ddd";
+    ctx.font = "14px monospace";
+    ctx.fillText("Presiona Enter o Espacio para empezar de nuevo", canvas.width / 2, 280);
+    ctx.textAlign = "left";
+    return;
+  }
   ctx.fillStyle = "#ff526f";
   ctx.font = "bold 34px monospace";
   ctx.fillText("HAS MUERTO", canvas.width / 2, 170);

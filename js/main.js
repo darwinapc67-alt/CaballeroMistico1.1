@@ -325,21 +325,24 @@ canvas.addEventListener("click", function(event) {
     beginNewGameFromDifficulty();
   }
 });
-canvas.addEventListener("mousedown", function(event) {
+canvas.addEventListener("pointerdown", function(event) {
   if (gameState !== ST_LEVEL_EDITOR) return;
   event.preventDefault();
+  canvas.setPointerCapture(event.pointerId);
   editorMouseDown = true;
-  editorMouseButton = event.button;
+  editorMouseButton = event.button === 2 ? 2 : 0;
   handleLevelEditorMouse(event);
 });
-canvas.addEventListener("mouseup", function() {
+canvas.addEventListener("pointerup", function(event) {
+  if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
   editorMouseDown = false;
 });
-canvas.addEventListener("mouseleave", function() {
+canvas.addEventListener("pointercancel", function(event) {
+  if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
   editorMouseDown = false;
 });
-canvas.addEventListener("mousemove", function(event) {
-  if (gameState !== ST_LEVEL_EDITOR || !editorMouseDown || event.buttons === 0) return;
+canvas.addEventListener("pointermove", function(event) {
+  if (gameState !== ST_LEVEL_EDITOR || !editorMouseDown) return;
   event.preventDefault();
   handleLevelEditorMouse(event);
 });
