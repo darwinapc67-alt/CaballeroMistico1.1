@@ -111,7 +111,12 @@ function useEteriumSkill() {
     if (enemy.hp <= 0 && enemy.boss) defeatBoss(enemy);
   });
   eteriumSkillCooldown = eteriumSkillLevel === 1 ? 2400 : (eteriumSkillLevel === 2 ? 1800 : 1500);
-  spawnParticles(player.x + player.w / 2, player.y + player.h / 2, "#42d9ff", 30, 5);
+  var skillX = player.x + player.w / 2;
+  var skillY = player.y + player.h / 2;
+  spawnParticles(skillX, skillY, "#42d9ff", 30, 5);
+  spawnParticles(skillX, skillY, "#d9fbff", 12, 3);
+  impactBursts.push({ x: skillX, y: skillY, life: 26, maxLife: 26, critical: false, eterium: true });
+  flash = Math.max(flash, 0.18);
   spawnFloatText(player.x, player.y - 42, "¡Eterium desatado! -" + damage, "#70e8ff");
   combatShake = 5;
   return affected > 0;

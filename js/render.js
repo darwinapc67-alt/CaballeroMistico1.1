@@ -259,6 +259,20 @@ function drawGameWorld() {
   particles.forEach(function(p) { ctx.globalAlpha = Math.max(0, p.life/p.maxLife); ctx.fillStyle = p.color; ctx.fillRect(p.x-p.size/2, p.y-p.size/2, p.size, p.size); });
   impactBursts.forEach(function(b) {
     var progress = 1 - b.life / b.maxLife;
+    if (b.eterium) {
+      ctx.globalAlpha = Math.max(0, b.life / b.maxLife);
+      ctx.strokeStyle = "#42d9ff";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, 12 + progress * 52, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(217, 251, 255, 0.8)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, 5 + progress * 28, 0, Math.PI * 2);
+      ctx.stroke();
+      return;
+    }
     ctx.globalAlpha = Math.max(0, b.life / b.maxLife);
     ctx.strokeStyle = b.critical ? "#fff36b" : "#9de8ff";
     ctx.lineWidth = b.critical ? 4 : 2;
