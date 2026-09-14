@@ -123,6 +123,60 @@ function drawInventoryIcon(iconX, iconY, kind, owned, color) {
   ctx.restore();
 }
 
+function drawEteriumSkillHud() {
+  if (!hasEteriumSkill || eteriumSkillLevel < 1) return;
+
+  var maxCooldown = eteriumSkillLevel === 1 ? 2400 : (eteriumSkillLevel === 2 ? 1800 : 1500);
+  var cooldown = Math.max(0, eteriumSkillCooldown);
+  var available = cooldown <= 0;
+  var progress = available ? 1 : Math.max(0, Math.min(1, 1 - cooldown / maxCooldown));
+  var panelW = Math.min(232, canvas.width - 24);
+  var panelX = 12;
+  var panelY = canvas.height - 128;
+  var panelH = 42;
+
+  ctx.save();
+  ctx.fillStyle = "rgba(5, 10, 22, 0.9)";
+  ctx.fillRect(panelX, panelY, panelW, panelH);
+  ctx.strokeStyle = available ? "#70e8ff" : "#42677a";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(panelX, panelY, panelW, panelH);
+
+  var iconX = panelX + 22;
+  var iconY = panelY + 21;
+  ctx.fillStyle = available ? "#42d9ff" : "#41677a";
+  ctx.beginPath();
+  ctx.moveTo(iconX, iconY - 13);
+  ctx.lineTo(iconX + 10, iconY - 4);
+  ctx.lineTo(iconX + 6, iconY + 11);
+  ctx.lineTo(iconX - 7, iconY + 11);
+  ctx.lineTo(iconX - 11, iconY - 4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#d9fbff";
+  ctx.fillRect(iconX - 2, iconY - 8, 4, 12);
+
+  ctx.textAlign = "left";
+  ctx.fillStyle = available ? "#d9fbff" : "#9bb8c4";
+  ctx.font = "bold 11px monospace";
+  ctx.fillText("ETERIUM  [V]", panelX + 42, panelY + 16);
+  ctx.fillStyle = available ? "#70e8ff" : "#aab7bd";
+  ctx.font = "bold 10px monospace";
+  ctx.fillText(available ? "DISPONIBLE" : "RECARGA: " + Math.ceil(cooldown / 60) + "s", panelX + 42, panelY + 31);
+
+  var barX = panelX + 145;
+  var barY = panelY + 25;
+  var barW = Math.max(40, panelW - 155);
+  ctx.fillStyle = "#172a35";
+  ctx.fillRect(barX, barY, barW, 7);
+  ctx.fillStyle = available ? "#42d9ff" : "#39758d";
+  ctx.fillRect(barX, barY, barW * progress, 7);
+  ctx.strokeStyle = "rgba(180, 240, 255, 0.55)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(barX, barY, barW, 7);
+  ctx.restore();
+}
+
 function drawMapOverlay() {
   ctx.save();
   ctx.globalAlpha = mapFade;
@@ -851,6 +905,7 @@ function drawGame() {
     ctx.fillText("🪨 " + guardText, canvas.width - 20, twoPlayerMode ? 106 : 76);
     ctx.textAlign = "left";
   }
+  drawEteriumSkillHud();
   if (zoneNameTimer > 0) {
     ctx.globalAlpha = Math.min(1, zoneNameTimer/30);
     ctx.fillStyle = "#ffd700"; ctx.font = "bold 20px monospace"; ctx.textAlign = "center";

@@ -1895,9 +1895,16 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   }
   if (p === player && interactPressed && room.chests && Array.isArray(room.chests)) {
     room.chests.forEach(function(chest) {
-      if (!chest.legendary || chest.opened || !rectHit(p, { x: chest.x - 34, y: chest.y - 34, w: 68, h: 68 })) return;
+      if ((!chest.legendary && !chest.rewardAzari) || chest.opened ||
+          !rectHit(p, { x: chest.x - 34, y: chest.y - 34, w: 68, h: 68 })) return;
       chest.opened = true;
-      if (Math.random() < 0.05) collectEterium(1, "legendary_chest");
+      if (chest.rewardAzari) {
+        var azariReward = Math.max(0, Number(chest.rewardAmount) || 0);
+        collectAzari(azariReward);
+        spawnFloatText(p.x, p.y - 30, "+" + azariReward + " AZARI", "#ffd45c");
+      }
+      if (chest.legendary && Math.random() < 0.05) collectEterium(1, "legendary_chest");
+      if (activeSlot >= 0) saveGame(activeSlot);
     });
   }
 

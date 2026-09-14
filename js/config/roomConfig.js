@@ -13,7 +13,7 @@ var room0 = {
     {x:0, y:430, w:20, h:130, breakable: true, requiresSword: true, broken: false},
     {x:0, y:560, w:20, h:40}
   ],
-  chests: [{x:-150, y:520, legendary: true, opened: false}],
+  chests: [{x:-205, y:520, rewardAzari: true, rewardAmount: 125, opened: false}],
   secretPassage: {x:-240, y:0, w:240, h:600},
   transitionZone: null,
   decor: genDecor(0, 10, 6, 600)
