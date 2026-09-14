@@ -7,6 +7,15 @@ function drawEnemies() {
     if (e.x + e.w < camLeft - 50 || e.x > camRight + 50) return;
     if (e.y + e.h < camTop - 50 || e.y > camBottom + 50) return;
     ctx.save();
+    var zoneProfile = getZoneVisualProfile(currentRoom);
+    var zoneAura = zoneProfile.id === "marsh" ? "rgba(126, 220, 137, 0.18)" :
+      (zoneProfile.id === "abyss" ? "rgba(83, 157, 255, 0.18)" :
+      (zoneProfile.id === "boss" ? "rgba(236, 76, 116, 0.18)" :
+      (zoneProfile.id === "city" ? "rgba(255, 194, 94, 0.12)" : "rgba(94, 214, 255, 0.14)")));
+    ctx.fillStyle = zoneAura;
+    ctx.beginPath();
+    ctx.arc(e.x + e.w / 2, e.y + e.h / 2, Math.max(e.w, e.h) * 0.9, 0, Math.PI * 2);
+    ctx.fill();
     if (e.hitFlash > 0) {
       e.hitFlash--;
       ctx.globalAlpha = 0.45 + (e.hitFlash % 2) * 0.25;

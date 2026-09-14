@@ -47,7 +47,7 @@ function drawGameWorld() {
     if (room.height < camTop - 100 || 0 > camBottom + 100) continue;
     if (room.city) drawCityBg(rx, room);
     else drawCaveBg(rx, room.decor, room.height, roomWidth, r);
-    drawPlatforms(room);
+    drawPlatforms(room, r);
     drawWalls(room);
     if (r === 30) {
       var holeX = 30 * ROOM_W + 580;
