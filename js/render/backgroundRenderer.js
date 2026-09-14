@@ -411,6 +411,12 @@ function drawCityHouses(room, roomIndex) {
 function drawPlatforms(room, roomIndex) {
   var profile = getZoneVisualProfile(roomIndex !== undefined ? roomIndex :
     Math.floor((room.worldX !== undefined ? room.worldX : room.platforms[0].x) / ROOM_W));
+  (room.hiddenPlatforms || []).forEach(function(p) {
+    ctx.fillStyle = "rgba(126, 205, 255, 0.12)";
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.strokeStyle = "rgba(154, 224, 255, 0.35)";
+    ctx.strokeRect(p.x, p.y, p.w, p.h);
+  });
   room.platforms.forEach(function(p) {
     ctx.fillStyle = p.y > 500 ? profile.platform : profile.accent;
     ctx.fillRect(p.x, p.y, p.w, p.h);
@@ -435,13 +441,27 @@ function drawPlatforms(room, roomIndex) {
 }
 function drawWalls(room) {
   room.walls.forEach(function(w) {
-    ctx.fillStyle = "#343447";
+    if (w.broken) {
+      var breakAge = frameCounter - (w.brokenAt || 0);
+      if (breakAge >= 0 && breakAge < 18) {
+        ctx.globalAlpha = 1 - breakAge / 18;
+        ctx.fillStyle = "#8b7057";
+        for (var fragment = 0; fragment < 5; fragment++) {
+          var fragmentX = w.x + ((fragment * 13) % Math.max(4, w.w - 4));
+          var fragmentY = w.y + ((fragment * 37 + breakAge * (fragment + 1) * 2) % Math.max(8, w.h - 8));
+          ctx.fillRect(fragmentX, fragmentY, 4 + (fragment % 2) * 3, 4);
+        }
+        ctx.globalAlpha = 1;
+      }
+      return;
+    }
+    ctx.fillStyle = w.breakable ? "#59483e" : "#343447";
     ctx.fillRect(w.x, w.y, w.w, w.h);
-    ctx.fillStyle = "#55556b";
+    ctx.fillStyle = w.breakable ? "#8b7057" : "#55556b";
     ctx.fillRect(w.x, w.y, w.w, 4);
-    ctx.fillStyle = "#1b1b2b";
+    ctx.fillStyle = w.breakable ? "#302722" : "#1b1b2b";
     ctx.fillRect(w.x + w.w - 4, w.y, 4, w.h);
-    ctx.strokeStyle = "rgba(105, 106, 132, 0.35)";
+    ctx.strokeStyle = w.breakable ? "rgba(226, 188, 125, 0.42)" : "rgba(105, 106, 132, 0.35)";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(w.x + 6, w.y + 12);
@@ -451,6 +471,15 @@ function drawWalls(room) {
     ctx.fillStyle = "rgba(12, 13, 25, 0.55)";
     for (var blockY = w.y + 45; blockY < w.y + w.h - 5; blockY += 24) {
       ctx.fillRect(w.x + 3, blockY, Math.max(2, w.w - 9), 2);
+    }
+    if (w.breakable) {
+      ctx.strokeStyle = "rgba(244, 210, 145, 0.65)";
+      ctx.beginPath();
+      ctx.moveTo(w.x + 4, w.y + 42);
+      ctx.lineTo(w.x + w.w - 5, w.y + 86);
+      ctx.moveTo(w.x + w.w - 5, w.y + 135);
+      ctx.lineTo(w.x + 4, w.y + 188);
+      ctx.stroke();
     }
   });
 }
@@ -470,14 +499,10 @@ function drawSpikes(room) {
 }
 function drawTransitionZone(tz) {
   if (!tz) return;
-  ctx.fillStyle = "rgba(100, 200, 255, 0.08)";
-  ctx.fillRect(tz.x, tz.y, tz.w, tz.h);
-  ctx.strokeStyle = "rgba(100, 200, 255, 0.3)";
-  ctx.lineWidth = 1;
-  ctx.strokeRect(tz.x, tz.y, tz.w, tz.h);
-  ctx.fillStyle = "rgba(100, 200, 255, 0.4)";
-  ctx.font = "10px monospace";
-  ctx.fillText("→", tz.x + tz.w/2 - 4, tz.y + tz.h/2 + 3);
+  ctx.fillStyle = "rgba(92, 72, 57, 0.72)";
+  ctx.fillRect(tz.x, tz.y + tz.h - 8, tz.w, 8);
+  ctx.fillStyle = "rgba(211, 165, 102, 0.5)";
+  ctx.fillRect(tz.x, tz.y + tz.h - 8, tz.w, 2);
 }
 function drawCityBuildings() {
   ctx.fillStyle = "#0a0a1a";

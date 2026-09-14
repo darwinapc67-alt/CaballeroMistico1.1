@@ -74,12 +74,17 @@ function resetAll() {
   room6.transitionZone = null; room7.transitionZone = null; room8.transitionZone = null;
   room9.transitionZone = {x:7960, y:460, w:40, h:100, to:10};
   room10.transitionZone = {x:8000, y:500, w:40, h:100, to:9, sharedBoundary: true};
-  room11.transitionZone = {x:9540, y:460, w:40, h:100, to:12};
-  rooms[19].transitionZone = {x:15940, y:460, w:40, h:100, to:20};
+  room11.transitionZone = {x:9540, y:460, w:40, h:100, to:12, requiresBoss: true};
+  rooms[19].transitionZone = {x:15940, y:460, w:40, h:100, to:20, requiresBoss: true};
   rooms[20].transitionZone = null;
   room36.transitionZone = {x: 39 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 37};
   room37.transitionZone = {x: 40 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 38};
   room38.transitionZone = {x: 41 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 39};
+  rooms.forEach(function(room) {
+    (room.walls || []).forEach(function(wall) {
+      if (wall.breakable) wall.broken = false;
+    });
+  });
   if (gameMode === "infinite") {
     room0.platforms = [{x:20, y:560, w:760, h:40}];
     room0.spikes = [];
@@ -99,9 +104,19 @@ function resetAll() {
     checkpointState.bombs = bombs;
     if (device === "touch") setupTouchControls();
   } else {
-    room0.platforms = [{x:0, y:560, w:220, h:40}, {x:500, y:560, w:300, h:40}, {x:180, y:490, w:75, h:14}, {x:300, y:490, w:75, h:14}, {x:420, y:490, w:75, h:14}, {x:540, y:490, w:75, h:14}, {x:360, y:410, w:65, h:14}];
-    room0.spikes = [{x:220, y:580, w:280, h:20}];
-    room0.walls = [];
+    room0.platforms = [
+      {x:-240, y:560, w:600, h:40}, {x:500, y:560, w:300, h:40},
+      {x:35, y:390, w:125, h:16}, {x:45, y:255, w:105, h:16},
+      {x:180, y:490, w:75, h:14}, {x:300, y:490, w:75, h:14},
+      {x:420, y:490, w:75, h:14}, {x:540, y:490, w:75, h:14},
+      {x:360, y:410, w:65, h:14}
+    ];
+    room0.spikes = [{x:360, y:580, w:140, h:20}];
+    room0.walls = [
+      {x:0, y:0, w:20, h:430},
+      {x:0, y:430, w:20, h:130, breakable: true, requiresSword: true, broken: false},
+      {x:0, y:560, w:20, h:40}
+    ];
   }
   bossArenaState = { guardian: false, queen_larva: false, abyssal_knight: false, dragon: false };
   bossAbilities = { guardian: false, queen_larva: false, abyssal_knight: false, dragon: false };
@@ -288,7 +303,8 @@ function update() {
       var roomWidth = room.roomWidth || ROOM_W;
       targetCamX = Math.max(room.worldX, Math.min(targetCamX, room.worldX + roomWidth - canvas.width));
     } else {
-      targetCamX = Math.max(0, Math.min(targetCamX, WORLD_W - canvas.width));
+      targetCamX = Math.max(currentRoom === 0 && room0.walls[1] && room0.walls[1].broken ? -240 : 0,
+        Math.min(targetCamX, WORLD_W - canvas.width));
     }
     var diff = targetCamX - cameraX;
     cameraX += diff * 0.14;

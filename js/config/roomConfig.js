@@ -1,13 +1,20 @@
 var room0 = {
   height: 600,
   platforms: [
-    {x:0, y:560, w:220, h:40}, {x:500, y:560, w:300, h:40},
+    {x:-240, y:560, w:600, h:40}, {x:500, y:560, w:300, h:40},
+    {x:35, y:390, w:125, h:16}, {x:45, y:255, w:105, h:16},
     {x:180, y:490, w:75, h:14}, {x:300, y:490, w:75, h:14},
     {x:420, y:490, w:75, h:14}, {x:540, y:490, w:75, h:14},
     {x:360, y:410, w:65, h:14}
   ],
-  spikes: [{x:220, y:580, w:280, h:20}],
-  walls: [],
+  spikes: [{x:360, y:580, w:140, h:20}],
+  walls: [
+    {x:0, y:0, w:20, h:430},
+    {x:0, y:430, w:20, h:130, breakable: true, requiresSword: true, broken: false},
+    {x:0, y:560, w:20, h:40}
+  ],
+  chests: [{x:-150, y:520, legendary: true, opened: false}],
+  secretPassage: {x:-240, y:0, w:240, h:600},
   transitionZone: null,
   decor: genDecor(0, 10, 6, 600)
 };
@@ -60,10 +67,14 @@ var room4 = {
     {x:3400, y:420, w:90, h:14}, {x:3550, y:360, w:90, h:14},
     {x:3700, y:300, w:90, h:14}, {x:3300, y:250, w:80, h:14},
     {x:3500, y:200, w:80, h:14}, {x:3750, y:420, w:80, h:14},
-    {x:3350, y:350, w:80, h:14}
+    {x:3350, y:350, w:80, h:14},
+    {x:3835, y:470, w:130, h:14}, {x:3860, y:390, w:100, h:14}
   ],
   spikes: [{x:3600, y:560, w:200, h:20}],
-  walls: [],
+  walls: [
+    {x:3200 + 590, y:120, w:22, h:440, breakable: true, requiresSword: true, broken: false}
+  ],
+  chests: [{x:3200 + 690, y:500, legendary: true, opened: false}],
   transitionZone: null,
   decor: genDecor(3200, 10, 6, 600)
 };
@@ -133,15 +144,21 @@ var room9 = {
     {x:7200, y:560, w:800, h:40},
     {x:7300, y:400, w:100, h:14}, {x:7500, y:350, w:100, h:14},
     {x:7700, y:400, w:100, h:14}, {x:7400, y:280, w:80, h:14},
-    {x:7600, y:250, w:80, h:14}, {x:7800, y:280, w:80, h:14}
+    {x:7600, y:250, w:80, h:14}, {x:7800, y:280, w:80, h:14},
+    {x:7865, y:470, w:90, h:14}, {x:7880, y:390, w:70, h:14}
   ],
-  spikes: [], walls: [{x:7980, y:0, w:20, h:600}],
+  spikes: [], walls: [{
+    x:7980, y:0, w:20, h:600, breakable: true, requiresSword: true, broken: false
+  }, {
+    x:7200 + 645, y:120, w:22, h:440, breakable: true, requiresSword: true, broken: false
+  }],
   transitionZone: {x:7960, y:460, w:40, h:100, to:10},
   shopDoor: {x:7485, y:475, w:55, h:85},
   shops: [
     { id: 0, npc: {x:7400, y:525, w:20, h:35}, label: "" }
   ],
   healingStone: {x: 7250, y: 520, w: 50, h: 40, active: true},
+  chests: [{x:7200 + 690, y:500, legendary: true, opened: false}],
   decor: genDecor(7200, 10, 8, 600)
 };
 
@@ -174,7 +191,9 @@ var room11 = {
 var room12 = {
   height: 600,
   platforms: [{x:15200, y:560, w:800, h:40}],
-  spikes: [], walls: [{x:15982, y:0, w:18, h:600}],
+  spikes: [], walls: [{
+    x:15982, y:0, w:18, h:600, breakable: true, requiresSword: true, broken: false
+  }],
   transitionZone: {x:15940, y:460, w:40, h:100, to:20},
   decor: genDecor(15200, 8, 4, 600), bossName: "REINA LARVA"
 };
@@ -449,6 +468,7 @@ var room39 = {
   bossName: "DRAGÓN DEL VACÍO",
   decor: genDecor(42 * ROOM_W, 18, 6, 700)
 };
+
 shiftRoomGeometry(room13, 3 * ROOM_W);
 cityRooms.forEach(function(room) { shiftRoomGeometry(room, 3 * ROOM_W); });
 shiftRoomGeometry(room30, 3 * ROOM_W);

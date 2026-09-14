@@ -1563,6 +1563,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       p.jumpsLeft = p.maxJumps;
     }
     recoilRoom.walls.forEach(function(wall) {
+      if (wall.broken) return;
       if (!rectHit(p, wall)) return;
       if (p.vx > 0) { p.x = wall.x - p.w; p.vx = 0; }
       else if (p.vx < 0) { p.x = wall.x + wall.w; p.vx = 0; }
@@ -1615,6 +1616,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   }
 
   var left = 0, right = WORLD_W;
+  if (currentRoom === 0 && room0.walls[1] && room0.walls[1].breakable && room0.walls[1].broken) left = -240;
   if (gameMode === "custom") { left = 16; right = 576; }
   if (p.x < left + 5) { p.x = left + 5; p.vx = 0; }
   if (p.x + p.w > right - 5) { p.x = right - 5 - p.w; p.vx = 0; }
@@ -1630,6 +1632,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   }
 
   var newRoom = Math.floor(p.x / ROOM_W);
+  if (newRoom < 0) newRoom = 0;
   if (gameMode === "infinite" || gameMode === "custom") newRoom = 0;
   if (newRoom >= rooms.length) newRoom = rooms.length - 1;
   if (rooms[currentRoom].verticalRoom) newRoom = currentRoom;
@@ -1725,6 +1728,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   });
 
   room.walls.forEach(function(w) {
+    if (w.broken) return;
     if (rectHit(p, w)) {
       if (p.vx > 0) { p.x = w.x - p.w; p.vx = 0; p.wallContact = 1; }
       else if (p.vx < 0) { p.x = w.x + w.w; p.vx = 0; p.wallContact = -1; }
@@ -1790,7 +1794,8 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       }
     }
     var roomBoss = enemies.find ? enemies.find(function(enemy) { return enemy.boss && enemy.room === currentRoom; }) : null;
-    if (room.transitionZone && rectHit(p, room.transitionZone) && (!roomBoss || roomBoss.dead)) {
+    if (room.transitionZone && (room.transitionZone.requiresBoss || room.transitionZone.floorCollapse) &&
+        rectHit(p, room.transitionZone) && (!roomBoss || roomBoss.dead)) {
       if (room.floorCollapse) startFallThroughTransition(room.transitionZone.to);
       else startTransition(room.transitionZone.to, room.transitionZone.to < currentRoom ? "back" : "forward");
       return;
@@ -2032,6 +2037,20 @@ function checkSwordHitEnemiesFor(p) {
     { x: p.x - 18, y: p.y + p.h - 4, w: p.w + 36, h: reach }
   ];
   var room = rooms[currentRoom];
+  room.walls.forEach(function(wall) {
+    if (!wall.breakable || wall.broken || (wall.requiresSword && !p.hasSword)) return;
+    for (var wallBoxIndex = 0; wallBoxIndex < swingBoxes.length; wallBoxIndex++) {
+      if (!rectHit(swingBoxes[wallBoxIndex], wall)) continue;
+      wall.broken = true;
+      wall.brokenAt = frameCounter;
+      spawnParticles(wall.x + wall.w / 2, wall.y + wall.h / 2, "#c6a47a", 28, 6);
+      spawnParticles(wall.x + wall.w / 2, wall.y + wall.h / 2, "#f4d27a", 12, 4);
+      spawnFloatText(wall.x, wall.y - 18, "¡Pared destruida!", "#ffd36a");
+      sfxAttack();
+      if (activeSlot >= 0) saveGame(activeSlot);
+      break;
+    }
+  });
   bossProjectiles.forEach(function(projectile) {
     if (projectile.kind !== "blue_ray" || projectile.room !== currentRoom || projectile.reflected) return;
     for (var projectileBoxIndex = 0; projectileBoxIndex < swingBoxes.length; projectileBoxIndex++) {

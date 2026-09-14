@@ -720,6 +720,9 @@ function saveGame(i) {
     swordLevel: swordLevel, weaponLevels: JSON.parse(JSON.stringify(weaponLevels)), hasBrokenLarvaSword: hasBrokenLarvaSword, bowLevel: bowLevel, arrowType: arrowType, combatSkills: combatSkills,
     blessingSlots: blessingSlots, equippedBlessings: equippedBlessings, armorId: armorId, armorLevel: armorLevel,
     permanentUpgrades: permanentUpgrades, bossUniqueItems: bossUniqueItems, hiddenCollectibles: hiddenCollectibles,
+    brokenWalls: rooms.map(function(room) {
+      return (room.walls || []).map(function(wall) { return !!wall.broken; });
+    }),
     bossesDefeated: {
       guardian: !!bossArenaState.guardian,
       queen_larva: !!bossArenaState.queen_larva,
@@ -813,12 +816,21 @@ function loadGame(i) {
   bossZonesUnlocked.queen_larva = bossArenaState.queen_larva;
   bossZonesUnlocked.abyssal_knight = bossArenaState.abyssal_knight;
   bossZonesUnlocked.dragon = bossArenaState.dragon;
-  rooms[11].transitionZone = bossArenaState.guardian ? {x: 9540, y: 460, w: 40, h: 100, to: 12} : null;
-  rooms[19].transitionZone = bossArenaState.queen_larva ? {x: 15940, y: 460, w: 40, h: 100, to: 20} : null;
-  rooms[20].transitionZone = bossArenaState.abyssal_knight ? {x: 16730, y: 460, w: 40, h: 100, to: 21} : null;
+  rooms[11].transitionZone = bossArenaState.guardian ? {x: 9540, y: 460, w: 40, h: 100, to: 12, requiresBoss: true} : null;
+  rooms[19].transitionZone = bossArenaState.queen_larva ? {x: 15940, y: 460, w: 40, h: 100, to: 20, requiresBoss: true} : null;
+  rooms[20].transitionZone = bossArenaState.abyssal_knight ? {x: 16730, y: 460, w: 40, h: 100, to: 21, requiresBoss: true} : null;
   room36.transitionZone = {x: 39 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 37};
   room37.transitionZone = {x: 40 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 38};
   room38.transitionZone = {x: 41 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 39};
+  if (Array.isArray(s.brokenWalls)) {
+    s.brokenWalls.forEach(function(roomWalls, roomIndex) {
+      if (!rooms[roomIndex] || !Array.isArray(roomWalls)) return;
+      roomWalls.forEach(function(broken, wallIndex) {
+        var wall = rooms[roomIndex].walls[wallIndex];
+        if (wall && wall.breakable) wall.broken = !!broken;
+      });
+    });
+  }
   if (hasDoubleJump) { player.maxJumps = 2; player2.maxJumps = 2; }
   if (s.bestiary) bestiary = JSON.parse(JSON.stringify(s.bestiary));
   Object.keys(bestiaryInfo).forEach(function(key) {

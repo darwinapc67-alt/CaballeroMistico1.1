@@ -47,8 +47,35 @@ function drawGameWorld() {
     if (room.height < camTop - 100 || 0 > camBottom + 100) continue;
     if (room.city) drawCityBg(rx, room);
     else drawCaveBg(rx, room.decor, room.height, roomWidth, r);
+    if (r === 0 && room.secretPassage && room.walls[1] && room.walls[1].broken) {
+      ctx.fillStyle = "#0a1018";
+      ctx.fillRect(room.secretPassage.x, room.secretPassage.y, room.secretPassage.w, room.secretPassage.h);
+      ctx.fillStyle = "#28313b";
+      ctx.fillRect(-220, 80, 12, 390);
+      ctx.fillRect(-70, 40, 12, 300);
+      ctx.fillStyle = "#80664d";
+      ctx.fillRect(-190, 535, 30, 8);
+      ctx.fillRect(-105, 525, 22, 7);
+    }
     drawPlatforms(room, r);
     drawWalls(room);
+    if (room.chests && Array.isArray(room.chests)) {
+      room.chests.forEach(function(chest) {
+        if (chest.opened) {
+          ctx.fillStyle = "rgba(57, 59, 69, 0.9)";
+          ctx.fillRect(chest.x, chest.y, 22, 18);
+          ctx.fillStyle = "rgba(255, 216, 120, 0.8)";
+          ctx.fillRect(chest.x + 4, chest.y + 4, 14, 10);
+        } else {
+          ctx.fillStyle = "#5b4337";
+          ctx.fillRect(chest.x, chest.y, 26, 22);
+          ctx.fillStyle = "#d0a96b";
+          ctx.fillRect(chest.x + 3, chest.y + 3, 20, 14);
+          ctx.fillStyle = "#f7d67d";
+          ctx.fillRect(chest.x + 6, chest.y + 6, 14, 8);
+        }
+      });
+    }
     if (r === 30) {
       var holeX = 30 * ROOM_W + 580;
       ctx.fillStyle = "#020208";
@@ -66,7 +93,7 @@ function drawGameWorld() {
     drawSpikes(room);
     if (room.city) drawCityHouses(room, r);
     if (r === 1) drawPedestal();
-    if (room.transitionZone && !room.noDoor && !(r === 10 && room.transitionZone.sharedBoundary)) drawTransitionZone(room.transitionZone);
+    if (room.transitionZone && !room.noDoor && !(r === 10 && room.transitionZone.sharedBoundary) && !room.secretRoom) drawTransitionZone(room.transitionZone);
     if (r === 37 && room.lockedDoor) {
       var door = room.lockedDoor;
       ctx.fillStyle = doorUnlocked ? "#23834b" : "#a83232";
