@@ -547,42 +547,6 @@ function updateHiddenCollectibles() {
   });
 }
 
-function applyMenuModification(index) {
-  if (index === 0) {
-    hasLantern = true;
-    infiniteLight = true;
-    adminCommandMessage = "Luz infinita activada.";
-  } else if (index === 1) {
-    player.color = player.color === "#0aa" ? "#a0a" : "#0aa";
-    player.headColor = player.headColor === "#0cc" ? "#c0c" : "#0cc";
-    adminCommandMessage = "Personaje cambiado.";
-  } else if (index === 2) {
-    hasSword = true;
-    swordEquipped = true;
-    player.hasSword = true;
-    player.swordEquipped = true;
-    player.swordSheathed = false;
-    adminCommandMessage = "Espada concedida.";
-  } else if (index === 3) {
-    player.hp = player.maxHp;
-    adminCommandMessage = "Vida completa.";
-  }
-  if (device === "touch") setupTouchControls();
-  spawnFloatText(player.x, player.y - 30, adminCommandMessage, "#7dffad");
-}
-
-function addAssistantPlatform() {
-  var room = rooms[currentRoom];
-  if (!room || !Array.isArray(room.platforms)) return false;
-  room.platforms.push({
-    x: Math.round(player.x - 80),
-    y: Math.round(Math.max(80, player.y + player.h + 12)),
-    w: 180,
-    h: 20
-  });
-  return true;
-}
-
 function executeAdminCommand(rawCommand) {
   var parts = rawCommand.trim().toLowerCase().split(/\s+/);
   if (parts.join(" ") === "/give ds") parts = ["/give", "ds"];
@@ -1245,7 +1209,6 @@ function updateStalactites() {
 function updateWaterDrops() {
   if (Math.random() < 0.006) {
     waterDrops.push({ x: currentRoom * ROOM_W + 20 + Math.random() * (ROOM_W - 40), y: cameraY - 12, vy: 3 + Math.random() * 2, life: 90 });
-    sfxWaterDrop();
   }
 
   waterDrops.forEach(function(drop) { drop.y += drop.vy; drop.life--; });

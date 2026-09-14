@@ -829,7 +829,7 @@ window.addEventListener("keydown", function(e) {
       }
       return;
     }
-    if (e.key === "/" || e.code === "Slash") {
+    if (adminMode && (e.key === "/" || e.code === "Slash")) {
       adminConsoleOpen = true;
       adminCommand = "";
       adminCommandMessage = "";

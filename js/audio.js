@@ -82,7 +82,7 @@ function speakBossDialogue(text) {
   window.speechSynthesis.speak(utterance);
 }
 function sfxBossVoice() { playTone(110, 0.18, "sawtooth", 0.08, 0); playTone(82, 0.24, "triangle", 0.06, 0.1); }
-function sfxWaterDrop() { playTone(1050, 0.05, "sine", 0.07, 0); playTone(1450, 0.09, "sine", 0.05, 0.04); }
+function sfxWaterDrop() {}
 function sfxBossDoorsLock() { playTone(95, 0.28, "sawtooth", 0.12, 0); playTone(58, 0.42, "square", 0.1, 0.08); playNoise(0.18, 0.08, 0.04); }
 function sfxBossDoorsOpen() { playTone(180, 0.16, "sine", 0.1, 0); playTone(360, 0.22, "sine", 0.09, 0.12); playTone(720, 0.28, "triangle", 0.07, 0.24); }
 function sfxDoorOpen() { playTone(110, 0.25, "square", 0.1, 0); playTone(220, 0.3, "sawtooth", 0.08, 0.2); playNoise(0.28, 0.08, 0.04); }
@@ -184,12 +184,16 @@ function updateAudioEnvironment() {
     if (!musicPlaying || desiredTrack !== musicRequestedTrack) startMusic(desiredTrack);
   }
   if (gameState !== ST_PLAYING || shopOpen) return;
+  if (currentRoom === 1) {
+    ambientTimer = 240;
+    return;
+  }
   ambientTimer--;
   if (ambientTimer <= 0) {
     ambientTimer = 180 + Math.floor(Math.random() * 240);
-    if (currentRoom === 0 || currentRoom === 1 || currentRoom === 9) sfxWaterDrop();
+    if (currentRoom === 0 || currentRoom === 9) sfxCaveEcho();
     else if (currentRoom >= 10) sfxCaveEcho();
-    else sfxWind();
+    else if (currentRoom !== 1) sfxWind();
   }
 }
 function startBossMusic() { startMusic("boss"); }
