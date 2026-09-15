@@ -116,6 +116,7 @@ function useEteriumSkill() {
   spawnParticles(skillX, skillY, "#42d9ff", 30, 5);
   spawnParticles(skillX, skillY, "#d9fbff", 12, 3);
   impactBursts.push({ x: skillX, y: skillY, life: 26, maxLife: 26, critical: false, eterium: true });
+  eteriumSkillEffect = { x: skillX, y: skillY, life: 30, maxLife: 30 };
   flash = Math.max(flash, 0.18);
   spawnFloatText(player.x, player.y - 42, "¡Eterium desatado! -" + damage, "#70e8ff");
   combatShake = 5;

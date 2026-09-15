@@ -173,6 +173,10 @@ function update() {
     impactBursts[impactIndex].life--;
     if (impactBursts[impactIndex].life <= 0) impactBursts.splice(impactIndex, 1);
   }
+  if (eteriumSkillEffect) {
+    eteriumSkillEffect.life--;
+    if (eteriumSkillEffect.life <= 0) eteriumSkillEffect = null;
+  }
   if (combatHitStop > 0) {
     combatHitStop--;
     return;

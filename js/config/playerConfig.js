@@ -19,6 +19,7 @@ var player2 = {
 var hasSword = false, swordEquipped = false, weaponId = DEFAULT_WEAPON_ID;
 var currentRoom = 0, cameraX = 0, targetCamX = 0, cameraY = 0, targetCamY = 0;
 var particles = [], floatTexts = [], arrowsInFlight = [], bombsInFlight = [], impactBursts = [], flash = 0;
+var eteriumSkillEffect = null;
 var combatShake = 0, combatHitStop = 0;
 var healingHearts = [];
 var keys = {};

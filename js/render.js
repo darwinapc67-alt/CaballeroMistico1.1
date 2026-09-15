@@ -301,4 +301,26 @@ function drawGameWorld() {
   darkness.addColorStop(1, "rgba(2, 3, 10, " + (0.88 * darknessFactor) + ")");
   ctx.fillStyle = darkness;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (eteriumSkillEffect) {
+    var effectProgress = 1 - eteriumSkillEffect.life / eteriumSkillEffect.maxLife;
+    var effectX = eteriumSkillEffect.x - cameraX;
+    var effectY = eteriumSkillEffect.y - cameraY;
+    var effectAlpha = Math.max(0, eteriumSkillEffect.life / eteriumSkillEffect.maxLife);
+    ctx.save();
+    ctx.globalAlpha = effectAlpha;
+    ctx.strokeStyle = "#42d9ff";
+    ctx.shadowColor = "#42d9ff";
+    ctx.shadowBlur = 18;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(effectX, effectY, 16 + effectProgress * 76, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "#d9fbff";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(effectX, effectY, 7 + effectProgress * 42, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
 }
