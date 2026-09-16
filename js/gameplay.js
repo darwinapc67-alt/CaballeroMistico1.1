@@ -99,6 +99,7 @@ function collectEterium(amount, source) {
 
 function useEteriumSkill() {
   if (!hasEteriumSkill || eteriumSkillLevel < 1 || eteriumSkillCooldown > 0) return false;
+  sfxEteriumSkill();
   var damage = eteriumSkillLevel * 5;
   var affected = 0;
   enemies.forEach(function(enemy) {
