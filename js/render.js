@@ -202,6 +202,21 @@ function drawGameWorld() {
     ctx.fillRect(-2, -9, 3, 8);
     ctx.restore();
   }
+  acidPuddles.forEach(function(puddle) {
+    if (puddle.room !== currentRoom) return;
+    var acidAlpha = Math.min(0.8, puddle.life / 45);
+    ctx.globalAlpha = acidAlpha;
+    ctx.fillStyle = "#74d936";
+    ctx.beginPath();
+    ctx.ellipse(puddle.x + puddle.w / 2, puddle.y + puddle.h / 2, puddle.w / 2, puddle.h / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#c8ff5a";
+    ctx.globalAlpha = acidAlpha * 0.75;
+    ctx.beginPath();
+    ctx.ellipse(puddle.x + puddle.w * 0.35, puddle.y + 4, 10, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  });
   drawEnemies();
   drawBossDeathEffects();
   drawHealingHearts();

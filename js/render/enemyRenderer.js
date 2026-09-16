@@ -135,6 +135,72 @@ function drawEnemies() {
       ctx.fillStyle = "#292b30";
       ctx.fillRect(e.x + 3, e.y + 17, 5, 5);
       ctx.fillRect(e.x + e.w - 8, e.y + 17, 5, 5);
+    } else if (e.type === 'acid_slime') {
+      var slimePulse = Math.sin(Date.now() / 180) * 2;
+      ctx.fillStyle = "rgba(126, 239, 55, 0.25)";
+      ctx.beginPath();
+      ctx.ellipse(e.x + e.w / 2, e.y + e.h, e.w * 0.75, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#65bd36";
+      ctx.beginPath();
+      ctx.moveTo(e.x + 2, e.y + e.h);
+      ctx.quadraticCurveTo(e.x + 3, e.y + 7 + slimePulse, e.x + e.w / 2, e.y + 5);
+      ctx.quadraticCurveTo(e.x + e.w - 3, e.y + 7 - slimePulse, e.x + e.w - 2, e.y + e.h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#b8ff55";
+      ctx.fillRect(e.x + 9, e.y + 9, 4, 4);
+      ctx.fillRect(e.x + e.w - 13, e.y + 9, 4, 4);
+      ctx.fillStyle = "#183b1e";
+      ctx.fillRect(e.x + 10, e.y + 10, 2, 2);
+      ctx.fillRect(e.x + e.w - 12, e.y + 10, 2, 2);
+    } else if (e.type === 'kamikaze_bat') {
+      var kamikazePulse = 0.8 + Math.sin(Date.now() / 90) * 0.2;
+      var kamikazeFacing = e.vx < 0 ? -1 : 1;
+      if (!e.launched) {
+        ctx.strokeStyle = "#25202c";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(e.x + e.w / 2, e.y - 16);
+        ctx.lineTo(e.x + e.w / 2, e.y + 2);
+        ctx.stroke();
+        ctx.fillStyle = "#514053";
+        ctx.fillRect(e.x + e.w / 2 - 7, e.y - 19, 14, 4);
+      }
+      ctx.fillStyle = "rgba(255, 82, 48, " + (0.16 * kamikazePulse) + ")";
+      ctx.beginPath();
+      ctx.arc(e.x + e.w / 2, e.y + e.h / 2, 27, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#351622";
+      ctx.beginPath();
+      ctx.moveTo(e.x + e.w / 2, e.y + e.h);
+      ctx.lineTo(e.x - 10, e.y + 5);
+      ctx.lineTo(e.x + 4, e.y + 3);
+      ctx.lineTo(e.x + e.w / 2, e.y + 9);
+      ctx.lineTo(e.x + e.w - 4, e.y + 3);
+      ctx.lineTo(e.x + e.w + 10, e.y + 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#a83232";
+      ctx.beginPath();
+      ctx.moveTo(e.x + e.w / 2, e.y + 1);
+      ctx.lineTo(e.x + e.w - 4, e.y + e.h - 3);
+      ctx.lineTo(e.x + e.w / 2, e.y + e.h - 7);
+      ctx.lineTo(e.x + 4, e.y + e.h - 3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#ffcf5a";
+      ctx.fillRect(e.x + (kamikazeFacing > 0 ? e.w - 9 : 5), e.y + 7, 4, 3);
+      ctx.fillStyle = "#ff493d";
+      ctx.fillRect(e.x + e.w / 2 - 2, e.y + 11, 4, 7);
+      if (e.launched) {
+        ctx.strokeStyle = "rgba(255, 91, 59, 0.8)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(e.x + e.w / 2 - e.vx * 2, e.y + e.h / 2 - e.vy * 2);
+        ctx.lineTo(e.x + e.w / 2 - e.vx * 5, e.y + e.h / 2 - e.vy * 5);
+        ctx.stroke();
+      }
     } else if (e.type === 'larva_mosca') {
       var wiggle = Math.sin(Date.now()/100) * 3;
       ctx.fillStyle = "#6a4";

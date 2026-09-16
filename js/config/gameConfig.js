@@ -436,6 +436,7 @@ var stalactites = [];
 var waterDrops = [];
 var azariDrops = [];
 var deathParticles = [];
+var acidPuddles = [];
 var playerDead = false;
 var deathTimer = 0;
 var hardcoreGameOver = false;

@@ -56,9 +56,10 @@ function resetAll() {
   if (twoPlayerMode) player2.hp = player2.maxHp = 10;
   stats = { playTime: 0, enemiesKilled: 0, roomsVisited: 1, jumps: 0, attacks: 0, deaths: 0 };
   frameCounter = 0;
-  bestiary = { bat: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 }, cazador_paramo: { discovered: false, count: 0 }, dark_knight: { discovered: false, count: 0 }, blue_sentry: { discovered: false, count: 0 } };
+  bestiary = { bat: { discovered: false, count: 0 }, kamikaze_bat: { discovered: false, count: 0 }, acid_slime: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 }, cazador_paramo: { discovered: false, count: 0 }, dark_knight: { discovered: false, count: 0 }, blue_sentry: { discovered: false, count: 0 } };
   diaryScroll = 0;
   deathParticles = [];
+  acidPuddles = [];
   azariDrops = [];
   playerDead = false; deathTimer = 0;
   deathChoice = 0; deathAnimTimer = 0;
@@ -143,6 +144,14 @@ function resetAll() {
       e.deathTimer = 0; e.attackHit = false; e.phaseNotice = 0;
     }
     e.vy = 0;
+    if (e.type === "kamikaze_bat") {
+      e.x = e.spawnX;
+      e.y = e.ceilingY;
+      e.vx = 0;
+      e.vy = 0;
+      e.launched = false;
+    }
+    if (e.type === "acid_slime") e.hp = e.maxHp;
   });
   if (gameMode === "infinite") {
     enemies.forEach(function(e) { if (e.room === 0 && !e.boss) e.dead = true; });
@@ -264,6 +273,7 @@ function update() {
     updatePlayer();
     updatePlayer2();
     updateEnemies();
+    updateAcidPuddles();
     updateInfiniteMode();
     updateCustomLevel();
     updateArrows();

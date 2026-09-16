@@ -1,11 +1,13 @@
 var bestiaryInfo = {
   bat: { name: "Murciélago Sombrío", desc: "Criatura alada que habita las profundidades. se alimenta de energia de hechizos." },
+  kamikaze_bat: { name: "Murciélago Kamikaze", desc: "Aparece en el techo y se lanza en línea recta hacia el Caballero a toda velocidad." },
+  acid_slime: { name: "Limo de Ácido", desc: "Al morir explota y deja un charco corrosivo durante varios segundos." },
   larva_mosca: { name: "Larva-Mosca", desc: "Aberración híbrida que embiste con ferocidad." },
   cazador_paramo: { name: "Cazador del Páramo", desc: "Depredador terrestre que patrulla los páramos y persigue a los intrusos." },
   dark_knight: { name: "Caballero oscuro", desc: "Guerrero blindado que combate con espada, bloquea golpes y carga con un dash." },
   blue_sentry: { name: "Centinela Azul", desc: "Entidad flotante que dispara rayos azules y puede recibirlos de vuelta con la Espada Mística." }
 };
-var bestiary = { bat: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 }, cazador_paramo: { discovered: false, count: 0 }, dark_knight: { discovered: false, count: 0 }, blue_sentry: { discovered: false, count: 0 } };
+var bestiary = { bat: { discovered: false, count: 0 }, kamikaze_bat: { discovered: false, count: 0 }, acid_slime: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 }, cazador_paramo: { discovered: false, count: 0 }, dark_knight: { discovered: false, count: 0 }, blue_sentry: { discovered: false, count: 0 } };
 
 var enemies = [
   {x: 9630, y: 520, w: 24, h: 20, vx: 1.2, vy: 0, baseY: 520, range: 180, speed: 1.2, dead: false, room: 12, type: 'cazador_paramo', terrestrial: true},
@@ -18,6 +20,9 @@ var enemies = [
   {x: 150, y: 350, w: 24, h: 20, vx: 1.5, vy: 0, baseY: 350, range: 60, dead: false, room: 0, type: 'bat'},
   {x: 350, y: 400, w: 24, h: 20, vx: -1.2, vy: 0, baseY: 400, range: 50, dead: false, room: 0, type: 'bat'},
   {x: 550, y: 300, w: 24, h: 20, vx: 1.8, vy: 0, baseY: 300, range: 80, dead: false, room: 0, type: 'bat'},
+  {x: 610, y: 52, w: 28, h: 22, vx: 0, vy: 0, baseY: 52, ceilingY: 52, spawnX: 610, range: 0, speed: 8, visionRadius: 620, launched: false, dead: false, hp: 2, maxHp: 2, staysRoom: true, room: 0, type: 'kamikaze_bat'},
+  {x: 680, y: 52, w: 28, h: 22, vx: 0, vy: 0, baseY: 52, ceilingY: 52, spawnX: 680, range: 0, speed: 8, visionRadius: 620, launched: false, dead: false, hp: 2, maxHp: 2, staysRoom: true, room: 0, type: 'kamikaze_bat'},
+  {x: 750, y: 52, w: 28, h: 22, vx: 0, vy: 0, baseY: 52, ceilingY: 52, spawnX: 750, range: 0, speed: 8, visionRadius: 620, launched: false, dead: false, hp: 2, maxHp: 2, staysRoom: true, room: 0, type: 'kamikaze_bat'},
   {x: 1050, y: 350, w: 24, h: 20, vx: 1.5, vy: 0, baseY: 350, range: 60, dead: false, room: 1, type: 'bat'},
   {x: 1250, y: 400, w: 24, h: 20, vx: -1.2, vy: 0, baseY: 400, range: 50, dead: false, room: 1, type: 'bat'},
   {x: 1150, y: 250, w: 24, h: 20, vx: 1.3, vy: 0, baseY: 250, range: 70, dead: false, room: 1, type: 'bat'},
@@ -99,4 +104,25 @@ for (var approachRoom = 20; approachRoom <= 22; approachRoom++) {
 enemies.forEach(function(enemy) {
   if (enemy.room >= 20 && !enemy.preserveRoom) { enemy.room += 3; enemy.x += 3 * ROOM_W; }
 });
-enemies.forEach(function(e) { e.canRoam = !e.boss; });
+for (var kamikazeRoom = 1; kamikazeRoom <= 9; kamikazeRoom++) {
+  [200, 400, 600].forEach(function(offset, groupIndex) {
+    var kamikazeX = kamikazeRoom * ROOM_W + offset;
+    enemies.push({
+      x: kamikazeX, y: 52, w: 28, h: 22, vx: 0, vy: 0,
+      baseY: 52, ceilingY: 52, spawnX: kamikazeX, range: 0,
+      speed: 8, visionRadius: 620, launched: false, dead: false,
+      hp: 2, maxHp: 2, staysRoom: true, room: kamikazeRoom, type: "kamikaze_bat"
+    });
+  });
+}
+for (var acidRoom = 0; acidRoom <= 9; acidRoom++) {
+  var acidX = acidRoom * ROOM_W + 300;
+  enemies.push({
+    x: acidX, y: rooms[acidRoom].height - 70, w: 34, h: 28, vx: acidRoom % 2 ? -0.6 : 0.6,
+    vy: 0, baseY: rooms[acidRoom].height - 70, range: 80, speed: 0.6,
+    hp: 4, maxHp: 4, dead: false, room: acidRoom, type: "acid_slime", staysRoom: true
+  });
+}
+enemies.forEach(function(e) {
+  e.canRoam = !e.boss && e.type !== "kamikaze_bat";
+});

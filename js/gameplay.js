@@ -86,6 +86,49 @@ function playerTakeDamage(p, dmg, isBossDamage) {
   }
 }
 
+function spawnAcidPuddle(enemy) {
+  if (enemy.type !== "acid_slime") return;
+  acidPuddles.push({
+    x: enemy.x - 16, y: enemy.y + enemy.h - 8, w: enemy.w + 32, h: 16,
+    room: enemy.room, life: 420, maxLife: 420
+  });
+  spawnParticles(enemy.x + enemy.w / 2, enemy.y + enemy.h / 2, "#8cff42", 18, 4);
+  impactBursts.push({ x: enemy.x + enemy.w / 2, y: enemy.y + enemy.h / 2, life: 16, maxLife: 16, critical: true });
+}
+
+function defeatRegularEnemy(enemy) {
+  if (enemy.dead) return;
+  enemy.dead = true;
+  enemy.hp = 0;
+  stats.enemiesKilled++;
+  checkAchievementProgress(false);
+  if (bestiary[enemy.type]) {
+    bestiary[enemy.type].count++;
+    bestiary[enemy.type].discovered = true;
+  }
+  var gain = enemy.type === "blue_sentry" ? 6 : (enemy.type === "larva_mosca" ? 4 : 2);
+  dropAzari(enemy, hasAzariCharm ? gain * 2 : gain);
+  dropHealingHeart(enemy);
+  spawnAcidPuddle(enemy);
+  spawnParticles(enemy.x + enemy.w / 2, enemy.y + enemy.h / 2, "#f88", 12, 5);
+  spawnFloatText(enemy.x, enemy.y - 10, "¡Muerto!", "#f88");
+  sfxEnemyDie();
+}
+
+function updateAcidPuddles() {
+  for (var i = acidPuddles.length - 1; i >= 0; i--) {
+    var puddle = acidPuddles[i];
+    puddle.life--;
+    if (puddle.life <= 0) {
+      acidPuddles.splice(i, 1);
+      continue;
+    }
+    if (puddle.room !== currentRoom) continue;
+    if (player.inv <= 0 && !player.frozen && rectHit(player, puddle)) playerTakeDamage(player, 1);
+    if (twoPlayerMode && player2.inv <= 0 && !player2.frozen && rectHit(player2, puddle)) playerTakeDamage(player2, 1);
+  }
+}
+
 function collectEterium(amount, source) {
   var value = Math.max(0, Math.floor(Number(amount) || 0));
   if (!value) return;
@@ -1137,6 +1180,15 @@ function updateCustomLevel() {
   }
 }
 
+function killEnemyOnSpikes(enemy) {
+  if (enemy.boss) {
+    enemy.hp = 0;
+    defeatBoss(enemy);
+    return;
+  }
+  defeatRegularEnemy(enemy);
+}
+
 function updateEnemies() {
   if (gameState !== ST_PLAYING) return;
   enemies.forEach(function(e) {
@@ -1144,6 +1196,14 @@ function updateEnemies() {
     if (gameMode === "custom" && !e.customEnemy) return;
     if (gameMode === "infinite" && e.room === 0 && !e.infiniteEnemy && !e.boss) return;
     if (e.boss && e.room !== currentRoom) return;
+    var enemyRoom = rooms[e.room];
+    if (enemyRoom && enemyRoom.spikes && enemyRoom.spikes.some(function(spike) {
+      var spikeHit = {x: spike.x + 5, y: spike.y - e.h, w: spike.w - 10, h: spike.h + e.h};
+      return rectHit(e, spikeHit);
+    })) {
+      killEnemyOnSpikes(e);
+      return;
+    }
     if (e.type === "blue_sentry") {
       if (e.room === currentRoom && !player.frozen) {
         e.shootTimer--;
@@ -1158,6 +1218,37 @@ function updateEnemies() {
       }
       return;
     }
+    if (e.type === "kamikaze_bat") {
+      if (e.room !== currentRoom) return;
+      var kamikazeTarget = player;
+      var kamikazeDx = player.x + player.w / 2 - (e.x + e.w / 2);
+      var kamikazeDy = player.y + player.h / 2 - (e.y + e.h / 2);
+      var kamikazeDistance = Math.sqrt(kamikazeDx * kamikazeDx + kamikazeDy * kamikazeDy);
+      if (twoPlayerMode) {
+        var kamikazeP2Dx = player2.x + player2.w / 2 - (e.x + e.w / 2);
+        var kamikazeP2Dy = player2.y + player2.h / 2 - (e.y + e.h / 2);
+        var kamikazeP2Distance = Math.sqrt(kamikazeP2Dx * kamikazeP2Dx + kamikazeP2Dy * kamikazeP2Dy);
+        if (kamikazeP2Distance < kamikazeDistance) {
+          kamikazeTarget = player2;
+          kamikazeDx = kamikazeP2Dx;
+          kamikazeDy = kamikazeP2Dy;
+          kamikazeDistance = kamikazeP2Distance;
+        }
+      }
+      if (!e.launched && kamikazeDistance <= e.visionRadius && !kamikazeTarget.frozen) {
+        var kamikazeLength = Math.max(1, kamikazeDistance);
+        e.vx = kamikazeDx / kamikazeLength * e.speed;
+        e.vy = kamikazeDy / kamikazeLength * e.speed;
+        e.launched = true;
+        spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#d66b9b", 8, 2);
+      }
+      if (e.launched) {
+        e.x += e.vx;
+        e.y += e.vy;
+      } else {
+        e.y = e.ceilingY;
+      }
+    } else {
     var room = rooms[e.room];
     var left = e.room * ROOM_W, right = left + ROOM_W;
     if (e.boss) {
@@ -1199,6 +1290,19 @@ function updateEnemies() {
         if (e.x < hunterLeft) { e.x = hunterLeft; e.vx = Math.abs(e.vx); }
         if (e.x > hunterRight) { e.x = hunterRight; e.vx = -Math.abs(e.vx); }
       }
+    } else if (e.type === 'acid_slime') {
+      var slimeLeft = left + 20;
+      var slimeRight = right - 20 - e.w;
+      e.x += e.vx;
+      e.y = room.height - 40 - e.h;
+      if (e.x <= slimeLeft) {
+        e.x = slimeLeft;
+        e.vx = Math.abs(e.vx || e.speed);
+      }
+      if (e.x >= slimeRight) {
+        e.x = slimeRight;
+        e.vx = -Math.abs(e.vx || e.speed);
+      }
     } else if (e.type === 'larva_mosca') {
       var ecx = e.x + e.w/2, ecy = e.y + e.h/2;
       var pcx = player.x + player.w/2, pcy = player.y + player.h/2;
@@ -1228,6 +1332,7 @@ function updateEnemies() {
       e.x += e.vx;
       e.y = e.baseY + Math.sin(Date.now() / 400 + e.x * 0.01) * e.range * 0.3;
       if (!e.canRoam && (e.x < left + 20 || e.x + e.w > right - 20)) e.vx *= -1;
+    }
     }
     if (e.canRoam) {
       if (e.x < 0) { e.x = 0; e.vx = Math.abs(e.vx); }
@@ -1407,14 +1512,8 @@ function updateArrows() {
           spawnParticles(e.x + e.w/2, e.y + e.h/2, "#7af", 8, 3);
           if (e.hp <= 0) defeatBoss(e);
         } else {
-          e.dead = true; stats.enemiesKilled++; checkAchievementProgress(false); hitEnemy = true;
-          if (bestiary[e.type]) { bestiary[e.type].count++; bestiary[e.type].discovered = true; }
-          var gain = e.type === "larva_mosca" ? 4 : 2;
-          dropAzari(e, gain);
-          dropHealingHeart(e);
-          spawnParticles(e.x + e.w/2, e.y + e.h/2, "#f88", 12, 5);
-          spawnFloatText(e.x, e.y - 10, "¡Muerto!", "#f88");
-          sfxEnemyDie();
+          defeatRegularEnemy(e);
+          hitEnemy = true;
           sfxBossDoorsOpen();
         }
       }
@@ -1436,14 +1535,7 @@ function explodeBomb(bomb) {
       spawnFloatText(enemy.x, enemy.y - 10, "-3", "#ff9d4d");
       if (enemy.hp <= 0) defeatBoss(enemy);
     } else {
-      enemy.dead = true;
-      stats.enemiesKilled++;
-      if (bestiary[enemy.type]) {
-        bestiary[enemy.type].count++;
-        bestiary[enemy.type].discovered = true;
-      }
-      dropAzari(enemy, enemy.type === "larva_mosca" ? 4 : 2);
-      dropHealingHeart(enemy);
+      defeatRegularEnemy(enemy);
     }
   });
   spawnParticles(bomb.x, bomb.y, "#ff7138", 24, 7);
@@ -2267,8 +2359,8 @@ function checkSwordHitEnemiesFor(p) {
         if (e.hp <= 0) defeatBoss(e);
         return;
       }
-      if (e.type === "bat") {
-        if (!isFinite(e.hp) || e.hp === undefined) e.hp = 3;
+      if (e.type === "bat" || e.type === "kamikaze_bat") {
+        if (!isFinite(e.hp) || e.hp === undefined) e.hp = e.type === "kamikaze_bat" ? 2 : 3;
         var batDamage = Math.max(1, Math.round((1 + swordLevel + getWeaponLevel(weapon.id)) * weapon.damage));
         var batCritical = Math.random() < 0.15;
         if (batCritical) batDamage *= 2;
@@ -2277,6 +2369,16 @@ function checkSwordHitEnemiesFor(p) {
         applyWeaponEffect(p, e, weapon);
         impactRegistered = true;
         spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#a0a", 6, 3);
+        if (e.hp > 0) return;
+      }
+      if (e.type === "acid_slime") {
+        if (!isFinite(e.hp) || e.hp === undefined) e.hp = e.maxHp || 4;
+        var slimeDamage = Math.max(1, Math.round((1 + swordLevel + getWeaponLevel(weapon.id)) * weapon.damage));
+        e.hp -= slimeDamage;
+        registerCombatImpact(e, slimeDamage, false);
+        applyWeaponEffect(p, e, weapon);
+        impactRegistered = true;
+        spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#8cff42", 6, 2);
         if (e.hp > 0) return;
       }
       if (e.type === "dark_knight" && e.blocking) {
@@ -2294,7 +2396,7 @@ function checkSwordHitEnemiesFor(p) {
         impactRegistered = true;
         if (e.hp > 0) return;
       }
-      if (e.infiniteEnemy && !e.boss && e.type !== "bat" && e.type !== "dark_knight" && isFinite(e.hp)) {
+      if (e.infiniteEnemy && !e.boss && e.type !== "bat" && e.type !== "kamikaze_bat" && e.type !== "dark_knight" && isFinite(e.hp)) {
         var infiniteDamage = Math.max(1, Math.round((1 + swordLevel + getWeaponLevel(weapon.id)) * weapon.damage));
         e.hp -= infiniteDamage;
         registerCombatImpact(e, infiniteDamage, false);
@@ -2311,10 +2413,7 @@ function checkSwordHitEnemiesFor(p) {
         registerCombatImpact(e, weaponDamage, false);
         applyWeaponEffect(p, e, weapon);
       }
-      e.dead = true;
-      stats.enemiesKilled++;
-      checkAchievementProgress(false);
-      dropHealingHeart(e);
+      defeatRegularEnemy(e);
       for (var i = 0; i < 15; i++) {
         deathParticles.push({
           x: e.x + e.w/2, y: e.y + e.h/2,
@@ -2324,21 +2423,13 @@ function checkSwordHitEnemiesFor(p) {
           size: 2 + Math.random() * 4
         });
       }
-      var baseGain = e.type === "blue_sentry" ? 6 : (e.type === 'larva_mosca' ? 4 : 2);
-      var azariGain = e.type === "blue_sentry" ? 6 : (hasAzariCharm ? baseGain * 2 : baseGain);
-      dropAzari(e, azariGain);
       if (!e.boss && Math.random() < 0.005) collectEterium(1, "normal_enemy");
-      if (bestiary[e.type]) bestiary[e.type].count++;
       if (bestiary[e.type] && !bestiary[e.type].discovered) {
         bestiary[e.type].discovered = true;
         discoveryNotify = { active: true, timer: 200, name: bestiaryInfo[e.type].name };
         sfxDiscovery();
       }
-      spawnParticles(e.x + e.w/2, e.y + e.h/2, "#f88", 12, 5);
-      spawnParticles(e.x + e.w/2, e.y + e.h/2, "#440", 8, 3);
       p.vy = -11; p.onGround = false; p.jumpsLeft = p.maxJumps;
-      spawnFloatText(e.x, e.y - 10, "¡Muerto!", "#f88");
-      sfxEnemyDie();
     }
   });
 }
