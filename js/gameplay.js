@@ -1782,7 +1782,15 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       if (rectHit(p, hit)) {
         touchingSpikes = true;
         playerTakeDamage(p, 1);
-        if (p === player) { hitFlash = 60; needsRespawn = true; p.x = lastSafeX; p.y = lastSafeY; }
+        if (p === player) {
+          hitFlash = 60;
+          needsRespawn = true;
+          p.x = lastSafeX;
+          p.y = lastSafeY;
+          p.vx = 0;
+          p.vy = 0;
+          p.onGround = false;
+        }
         p.frozen = true;
         p.vx = 0; p.vy = 0;
         spawnParticles(p.x + p.w/2, p.y + p.h, "#f44", 12);
