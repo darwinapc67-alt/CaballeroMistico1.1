@@ -172,9 +172,17 @@ function drawGameWorld() {
     ctx.fillRect(rock.x - rock.size / 2, rock.y - rock.size / 2, Math.max(1, rock.size / 2), 1);
   });
   atmosphereWindParticles.forEach(function(windParticle) {
-    ctx.globalAlpha = windParticle.alpha;
-    ctx.fillStyle = "#d4d0bf";
-    ctx.fillRect(windParticle.x, windParticle.y, windParticle.length, 1);
+    if (windParticle.ambient) {
+      ctx.globalAlpha = windParticle.alpha * (0.65 + Math.sin(windParticle.phase) * 0.35);
+      ctx.fillStyle = windParticle.color;
+      ctx.beginPath();
+      ctx.arc(windParticle.x, windParticle.y, windParticle.size, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.globalAlpha = windParticle.alpha;
+      ctx.fillStyle = "#d4d0bf";
+      ctx.fillRect(windParticle.x, windParticle.y, windParticle.length, 1);
+    }
   });
   ctx.globalAlpha = 1;
   if (eteriumShard && !eteriumShard.collected && eteriumShard.room === currentRoom) {
@@ -259,6 +267,15 @@ function drawGameWorld() {
   particles.forEach(function(p) { ctx.globalAlpha = Math.max(0, p.life/p.maxLife); ctx.fillStyle = p.color; ctx.fillRect(p.x-p.size/2, p.y-p.size/2, p.size, p.size); });
   impactBursts.forEach(function(b) {
     var progress = 1 - b.life / b.maxLife;
+    if (b.landing) {
+      ctx.globalAlpha = Math.max(0, b.life / b.maxLife) * 0.7;
+      ctx.strokeStyle = "rgba(210, 195, 175, 0.8)";
+      ctx.lineWidth = 1 + b.strength * 1.5;
+      ctx.beginPath();
+      ctx.ellipse(b.x, b.y, 8 + progress * (18 + b.strength * 18), 3 + progress * 4, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      return;
+    }
     if (b.eterium) {
       ctx.globalAlpha = Math.max(0, b.life / b.maxLife);
       ctx.strokeStyle = "#42d9ff";

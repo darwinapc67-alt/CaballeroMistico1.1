@@ -222,6 +222,21 @@ function startRoomAtmosphere(roomIndex) {
     }
     sfxWind();
   }
+  var ambientColor = roomIndex >= 30 ? "#b6d0d2" : (roomIndex === 11 || roomIndex === 19 ? "#c4b8d8" : "#b9c4c0");
+  for (var moteIndex = 0; moteIndex < 14; moteIndex++) {
+    atmosphereWindParticles.push({
+      x: origin + Math.random() * roomWidth,
+      y: 55 + Math.random() * Math.max(120, room.height - 120),
+      vx: 0.08 + Math.random() * 0.16,
+      vy: (Math.random() - 0.5) * 0.12,
+      length: 1,
+      alpha: 0.12 + Math.random() * 0.14,
+      size: 1 + Math.random() * 1.2,
+      phase: Math.random() * Math.PI * 2,
+      color: ambientColor,
+      ambient: true
+    });
+  }
   if (room.height >= 560) {
     var torchX = origin + (roomIndex % 2 ? roomWidth - 105 : 105);
     atmosphereTorches.push({
@@ -256,10 +271,17 @@ function updateRoomAtmosphere() {
   for (var windIndex = 0; windIndex < atmosphereWindParticles.length; windIndex++) {
     var windParticle = atmosphereWindParticles[windIndex];
     windParticle.x += windParticle.vx;
+    if (windParticle.ambient) {
+      windParticle.y += windParticle.vy;
+      windParticle.phase += 0.018;
+    }
     var windRoom = rooms[roomAtmosphereRoom];
     var windOrigin = windRoom && windRoom.worldX !== undefined ? windRoom.worldX : roomAtmosphereRoom * ROOM_W;
     var windWidth = windRoom && windRoom.roomWidth || ROOM_W;
     if (windParticle.x > windOrigin + windWidth + 12) windParticle.x = windOrigin - 12;
+    if (windParticle.ambient && (windParticle.y < 35 || windParticle.y > (windRoom ? windRoom.height - 35 : 565))) {
+      windParticle.vy *= -1;
+    }
   }
   for (var torchIndex = 0; torchIndex < atmosphereTorches.length; torchIndex++) {
     var torch = atmosphereTorches[torchIndex];
@@ -293,7 +315,7 @@ function resetPlayer() {
   player.swordSwing = 0; player.swordCooldown = 0; player.bowCooldown = 0; player.attackHeld = false; player.attackCharge = 0; player.attackCharged = false; player.attackDown = false; player.attackType = ""; player.attackDirection = "forward";
   player.swordSheathed = true; player.swordSheathTimer = 0;
   player.blocking = false;
-  player.dashTimer = 0; player.dashCooldown = 0; player.dashDir = 1; player.dashVx = 0; player.dashVy = 0; player.dashing = false; player.swordDashTimer = 0; player.swordDashDirection = "forward"; player.recoilTimer = 0;
+  player.dashTimer = 0; player.dashCooldown = 0; player.dashDir = 1; player.dashVx = 0; player.dashVy = 0; player.dashing = false; player.swordDashTimer = 0; player.swordDashDirection = "forward"; player.attackLungeTimer = 0; player.attackLungeVx = 0; player.attackLungeVy = 0; player.attackLungeHits = []; player.recoilTimer = 0;
   playerDead = false;
   deathTimer = 0;
   deathMenuInputDelay = 0;
@@ -311,7 +333,7 @@ function resetPlayer() {
     player2.swordSwing = 0; player2.swordCooldown = 0; player2.bowCooldown = 0; player2.attackHeld = false; player2.attackCharge = 0; player2.attackCharged = false; player2.attackDown = false; player2.attackType = ""; player2.attackDirection = "forward"; player2.weaponId = weaponId;
     player2.swordSheathed = true; player2.swordSheathTimer = 0;
     player2.blocking = false;
-    player2.dashTimer = 0; player2.dashCooldown = 0; player2.dashDir = 1; player2.dashVx = 0; player2.dashVy = 0; player2.dashing = false; player2.swordDashTimer = 0; player2.swordDashDirection = "forward"; player2.recoilTimer = 0;
+    player2.dashTimer = 0; player2.dashCooldown = 0; player2.dashDir = 1; player2.dashVx = 0; player2.dashVy = 0; player2.dashing = false; player2.swordDashTimer = 0; player2.swordDashDirection = "forward"; player2.attackLungeTimer = 0; player2.attackLungeVx = 0; player2.attackLungeVy = 0; player2.attackLungeHits = []; player2.recoilTimer = 0;
   }
 
 }
@@ -1686,6 +1708,12 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     p.vx = p.dashVx;
     p.vy = p.dashVy;
     if (p.swordDashTimer <= 0) p.dashing = false;
+  } else if (p.attackLungeTimer > 0) {
+    p.attackLungeTimer--;
+    p.dashing = true;
+    p.vx = p.attackLungeVx;
+    p.vy = p.attackLungeVy;
+    if (p.attackLungeTimer <= 0) p.dashing = false;
   } else if (p.dashTimer > 0) {
     p.dashTimer--;
     p.dashing = true;
@@ -1701,6 +1729,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     p.vy += GRAVITY; if (p.vy > 12) p.vy = 12;
   }
   p.x += p.vx; p.y += p.vy;
+  if (p.attackLungeTimer > 0) checkSwordHitEnemiesFor(p);
   p.wallContact = 0;
   if (gameMode === "infinite" && currentRoom === 0) {
     if (p.y < 20) { p.y = 20; p.vy = 0; }
@@ -1812,7 +1841,18 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     if (rectHit(p, pl)) {
       if (p.vy >= 0 && p.y + p.h - p.vy <= pl.y + 10) {
         if (!wasOnGround && p.vy > 2) {
-          spawnParticles(p.x + p.w/2, p.y + p.h, "rgba(180,160,140,0.5)", 5, 2);
+          var landingStrength = Math.min(1, (p.vy - 2) / 8);
+          var landingDustCount = 3 + Math.floor(landingStrength * 5);
+          spawnParticles(p.x + p.w/2 - 5, p.y + p.h, "rgba(180,160,140,0.55)", landingDustCount, 1.2 + landingStrength * 1.8);
+          spawnParticles(p.x + p.w/2 + 5, p.y + p.h, "rgba(210,195,175,0.4)", Math.max(2, landingDustCount - 2), 1 + landingStrength * 1.5);
+          impactBursts.push({
+            x: p.x + p.w / 2,
+            y: p.y + p.h - 2,
+            life: 8 + Math.floor(landingStrength * 5),
+            maxLife: 8 + Math.floor(landingStrength * 5),
+            landing: true,
+            strength: landingStrength
+          });
           sfxPlatformLand();
         }
         p.y = pl.y - p.h; p.vy = 0; p.onGround = true; p.jumpsLeft = p.maxJumps;
@@ -1942,7 +1982,26 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       p.swordCooldown = p.attackType === "charged" ? weapon.cooldown + 12 : weapon.cooldown;
       p.swordSheathed = false;
       p.swordSheathTimer = 180;
-      if (combatSkills.aerial && !p.onGround) {
+      var hasLungeDirection = moveLeft || moveRight || upPressed || downPressed;
+      if (hasLungeDirection && !p.attackDown) {
+        p.attackType = "lunge";
+        p.attackLungeTimer = p.swordSwing;
+        p.attackLungeHits = [];
+        p.inv = Math.max(p.inv, p.attackLungeTimer);
+        var attackLungeSpeed = hasDash ? DASH_SPEED : 3.5;
+        if (upPressed) {
+          p.attackLungeVx = 0; p.attackLungeVy = -attackLungeSpeed;
+        } else if (downPressed) {
+          p.attackLungeVx = 0; p.attackLungeVy = attackLungeSpeed;
+        } else {
+          p.attackLungeVx = moveLeft ? -attackLungeSpeed : attackLungeSpeed;
+          p.facing = p.attackLungeVx < 0 ? -1 : 1;
+          p.attackLungeVy = 0;
+        }
+        p.dashing = true;
+        spawnParticles(p.x + p.w / 2, p.y + p.h / 2, "#ffd700", 8, 3);
+      }
+      if (combatSkills.aerial && !p.onGround && p.attackType !== "lunge") {
         p.swordDashDirection = p.attackDirection || "forward";
         p.swordDashTimer = DASH_DURATION;
         p.inv = Math.max(p.inv, DASH_INV_FRAMES);
@@ -2175,17 +2234,23 @@ function checkSwordHitEnemiesFor(p) {
       }
     }
   });
-  enemies.forEach(function(e) {
+  enemies.forEach(function(e, enemyIndex) {
     if (e.dead || e.room !== currentRoom) return;
     var hit = false;
     for (var i = 0; i < swingBoxes.length; i++) {
       if (rectHit(swingBoxes[i], e)) { hit = true; break; }
     }
     if (hit) {
+      if (p.attackType === "lunge") {
+        if (p.attackLungeHits.indexOf(enemyIndex) >= 0) return;
+        p.attackLungeHits.push(enemyIndex);
+      }
       var impactRegistered = false;
-      p.recoilTimer = 10;
-      p.vx = -p.facing * 8;
-      p.vy = -5;
+      if (p.attackType !== "lunge") {
+        p.recoilTimer = 10;
+        p.vx = -p.facing * 8;
+        p.vy = -5;
+      }
       if (e.boss) {
         if (e.lastSwordHit === frameCounter) return;
         e.lastSwordHit = frameCounter;
