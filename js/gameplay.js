@@ -312,6 +312,21 @@ function resetPlayer() {
     player2.blocking = false;
     player2.dashTimer = 0; player2.dashCooldown = 0; player2.dashDir = 1; player2.dashVx = 0; player2.dashVy = 0; player2.dashing = false; player2.swordDashTimer = 0; player2.swordDashDirection = "forward"; player2.recoilTimer = 0;
   }
+
+}
+
+function revivePlayerFromReward() {
+  if (gameState !== ST_DEATH || hardcoreGameOver || !playerDead) return false;
+  adRewardedRevive = false;
+  player.hp = Math.max(1, Math.ceil(player.maxHp / 2));
+  player.frozen = false;
+  playerDead = false;
+  player.inv = 90;
+  deathTimer = 0;
+  deathAnimTimer = 0;
+  gameState = ST_PLAYING;
+  showAdMessage("¡Has vuelto al combate!");
+  return true;
 }
 
 function saveHealingStoneCheckpoint() {

@@ -1,16 +1,5 @@
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    #seoContent {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
-    }
     body {
       background: #020205;
       display: flex;
@@ -74,9 +63,17 @@
     #gameAd {
       width: min(100%, 800px);
       min-height: 90px;
-      margin-top: 8px;
+      margin: 18px auto 0;
       overflow: hidden;
       text-align: center;
+    }
+    #gameAd::before {
+      content: "PUBLICIDAD";
+      display: block;
+      margin-bottom: 5px;
+      color: #596174;
+      font: 10px monospace;
+      letter-spacing: .08em;
     }
     #gameAd ins {
       display: block;

@@ -408,15 +408,19 @@ window.addEventListener("keydown", function(e) {
         restoreCheckpoint(true);
       } else if (deathChoice === 1) {
         if (adRewardedRevive) {
-          adRewardedRevive = false;
-          player.hp = Math.max(1, Math.ceil(player.maxHp / 2));
-          player.frozen = false; playerDead = false; player.inv = 90;
-          gameState = ST_PLAYING;
-          showAdMessage("¡Has vuelto al combate!");
+          revivePlayerFromReward();
         } else {
-          requestRewardedAd("revive");
+          requestRewardedAd("revive", function(granted) {
+            if (granted) revivePlayerFromReward();
+          });
         }
-      } else { resetAll(); gameState = ST_MENU; menuSubState = "slots"; }
+      } else {
+        requestInterstitialAd("death_menu", function() {
+          resetAll();
+          gameState = ST_MENU;
+          menuSubState = "slots";
+        });
+      }
       e.preventDefault();
     }
     return;

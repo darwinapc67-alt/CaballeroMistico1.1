@@ -1087,9 +1087,12 @@ function drawDeathScreen() {
   ctx.font = "14px monospace";
   var deathProgress = gameMode === "infinite" ? "Derrota " + consecutiveDeaths + " / 3" : "Derrota";
   ctx.fillText(deathProgress + ": elige cómo continuar.", canvas.width / 2, 215);
-  var deathOptions = ["Volver al último punto de guardado", "💀 " + (adRewardedRevive ? "Revivir ahora" : "Ver anuncio para revivir"), "Ir al menú principal"];
+  ctx.fillStyle = "#aebbd0";
+  ctx.font = "11px monospace";
+  ctx.fillText("Tiempo: " + formatTime(stats.playTime) + "  •  Enemigos: " + stats.enemiesKilled + "  •  Derrotas: " + stats.deaths, canvas.width / 2, 242);
+  var deathOptions = ["Volver al último punto de guardado", "🎁 " + (adRewardedRevive ? "Revivir ahora" : "Ver anuncio para revivir"), "Ir al menú principal"];
   deathOptions.forEach(function(option, index) {
-    var y = 300 + index * 54;
+    var y = 325 + index * 54;
     ctx.fillStyle = deathChoice === index ? "rgba(100, 220, 200, 0.2)" : "rgba(0,0,0,0.25)";
     ctx.fillRect(145, y - 28, canvas.width - 290, 40);
     ctx.strokeStyle = deathChoice === index ? "#6cc" : "#444";
@@ -1100,7 +1103,7 @@ function drawDeathScreen() {
   });
   ctx.fillStyle = "#888";
   ctx.font = "11px monospace";
-  ctx.fillText("↑/↓ elegir • ENTER confirmar", canvas.width / 2, 440 + (deathOptions.length - 2) * 54);
+  ctx.fillText("↑/↓ elegir • ENTER confirmar", canvas.width / 2, 465 + (deathOptions.length - 2) * 54);
   ctx.textAlign = "left";
 }
 function drawTutorial() {

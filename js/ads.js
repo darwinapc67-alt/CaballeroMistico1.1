@@ -31,6 +31,7 @@ function requestRewardedAd(rewardType, onComplete) {
     if (!slot) {
       adRequestInProgress = false;
       showAdMessage("Este anuncio no está disponible.");
+      if (onComplete) onComplete(false);
       return;
     }
     slot.addService(googletag.pubads());
@@ -110,7 +111,7 @@ function requestInterstitialAd(reason, onComplete) {
 function applyAdReward(rewardType) {
   if (rewardType === "revive") {
     adRewardedRevive = true;
-    showAdMessage("¡Puedes revivir una vez!");
+    showAdMessage("¡Recompensa recibida!");
   } else if (rewardType === "azari") {
     collectAzari(35);
     showAdMessage("+35 Azari");
