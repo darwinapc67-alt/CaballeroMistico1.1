@@ -1142,8 +1142,11 @@ function drawAdminConsole() {
   ctx.fillText("/give eterium 10000000", 65, canvas.height - 196);
   ctx.fillText("/give luz infinito", 65, canvas.height - 178);
   ctx.fillText("/tp habitacion 3", 65, canvas.height - 160);
+  ctx.fillText("/fly true  /speed 3  /inmortal true", 430, canvas.height - 214);
+  ctx.fillText("/cooldown 0 all  /tienda", 430, canvas.height - 196);
+  ctx.fillText("/new update  /jefes reina larva", 430, canvas.height - 178);
   ctx.fillStyle = "#777";
-  ctx.fillText("/give y /tp son los comandos disponibles", 430, canvas.height - 160);
+  ctx.fillText("/give, /tp y comandos de movimiento disponibles", 430, canvas.height - 160);
   ctx.fillStyle = "#fff";
   ctx.font = "14px monospace";
   ctx.fillText("> " + adminCommand + "_", 65, canvas.height - 92);

@@ -1,5 +1,5 @@
 function playerTakeDamage(p, dmg, isBossDamage) {
-  if (gameState !== ST_PLAYING || playerDead || p.inv > 0 || p.frozen) return;
+  if (gameState !== ST_PLAYING || playerDead || p.inv > 0 || p.frozen || (adminImmortal && p === player)) return;
   if (p.blocking) {
     p.inv = 8;
     spawnParticles(p.x + p.w/2, p.y + p.h/2, "#9de8ff", 8, 2);
@@ -577,7 +577,64 @@ function executeAdminCommand(rawCommand) {
       parts.join(" ") === "/give linterna infinito" || parts.join(" ") === "/give linterna inf") {
     parts = ["/give", "luz", "infinito"];
   }
-  if (parts[0] === "/give") {
+  if (parts[0] === "/fly") {
+    if (parts[1] === "true" || parts[1] === "on" || parts[1] === "1") adminFly = true;
+    else if (parts[1] === "false" || parts[1] === "off" || parts[1] === "0") adminFly = false;
+    else adminFly = !adminFly;
+    adminCommandMessage = "Vuelo " + (adminFly ? "activado" : "desactivado") + ".";
+  } else if (parts[0] === "/speed") {
+    var speedAmount = Number(parts[1]);
+    if (Number.isFinite(speedAmount) && speedAmount > 0) {
+      adminSpeedMultiplier = Math.max(0.1, Math.min(20, speedAmount));
+      adminCommandMessage = "Velocidad fijada en " + adminSpeedMultiplier + "x.";
+    } else adminCommandMessage = "Usa /speed cantidad.";
+  } else if ((parts[0] === "/set" && (parts[1] === "cooldown" || parts[1] === "cooltdown")) ||
+             parts[0] === "/cooldown" || parts[0] === "/cooltdown") {
+    var cooldownAmount = Number(parts[parts[0] === "/set" ? 2 : 1]);
+    var cooldownTool = parts[parts[0] === "/set" ? 3 : 2] || "all";
+    if (!Number.isFinite(cooldownAmount) || cooldownAmount < 0) {
+      adminCommandMessage = "Usa /set cooldown cantidad herramienta.";
+    } else {
+      cooldownAmount = Math.floor(cooldownAmount);
+      if (cooldownTool === "all") {
+        eteriumSkillCooldown = cooldownAmount;
+        player.swordCooldown = cooldownAmount; player.bowCooldown = cooldownAmount; player.dashCooldown = cooldownAmount;
+        player2.swordCooldown = cooldownAmount; player2.bowCooldown = cooldownAmount; player2.dashCooldown = cooldownAmount;
+      } else if (cooldownTool === "eterium" || cooldownTool === "habilidad" || cooldownTool === "skill") eteriumSkillCooldown = cooldownAmount;
+      else if (cooldownTool === "espada" || cooldownTool === "sword") { player.swordCooldown = cooldownAmount; player2.swordCooldown = cooldownAmount; }
+      else if (cooldownTool === "arco" || cooldownTool === "bow") { player.bowCooldown = cooldownAmount; player2.bowCooldown = cooldownAmount; }
+      else if (cooldownTool === "dash") { player.dashCooldown = cooldownAmount; player2.dashCooldown = cooldownAmount; }
+      else { adminCommandMessage = "Herramienta inválida. Usa eterium, espada, arco, dash o all."; return; }
+      adminCommandMessage = "Cooldown de " + cooldownTool + " fijado en " + cooldownAmount + ".";
+    }
+  } else if (parts[0] === "/inmortal" || parts[0] === "/immortal") {
+    if (parts[1] === "true" || parts[1] === "on" || parts[1] === "1") adminImmortal = true;
+    else if (parts[1] === "false" || parts[1] === "off" || parts[1] === "0") adminImmortal = false;
+    else { adminCommandMessage = "Usa /inmortal true o /inmortal false."; return; }
+    adminCommandMessage = "Modo inmortal " + (adminImmortal ? "activado" : "desactivado") + ".";
+  } else if (parts[0] === "/tienda") {
+    currentRoom = 9;
+    player.x = 9 * ROOM_W + 100; player.y = 420; player.vx = 0; player.vy = 0;
+    cameraX = Math.max(0, player.x - canvas.width / 2); cameraY = 0;
+    adminCommandMessage = "Teletransportado a la tienda.";
+  } else if (parts[0] === "/new" && parts[1] === "update") {
+    currentRoom = 35;
+    player.x = 35 * ROOM_W + 100; player.y = 700; player.vx = 0; player.vy = 0;
+    cameraX = Math.max(0, player.x - canvas.width / 2); cameraY = 0;
+    adminCommandMessage = "Teletransportado a la última actualización.";
+  } else if (parts[0] === "/jefes") {
+    var bossQuery = parts.slice(1).join(" ");
+    var bossRoom = -1;
+    rooms.forEach(function(room, index) {
+      if (room.bossName && room.bossName.toLowerCase().indexOf(bossQuery) >= 0) bossRoom = index;
+    });
+    if (bossRoom >= 0) {
+      var bossOrigin = rooms[bossRoom].worldX !== undefined ? rooms[bossRoom].worldX : bossRoom * ROOM_W;
+      currentRoom = bossRoom; player.x = bossOrigin + 100; player.y = Math.max(40, rooms[bossRoom].height - 140);
+      player.vx = 0; player.vy = 0; cameraX = Math.max(0, player.x - canvas.width / 2); cameraY = 0;
+      adminCommandMessage = "Teletransportado al jefe: " + rooms[bossRoom].bossName + ".";
+    } else adminCommandMessage = "Jefe no encontrado. Usa el nombre del jefe.";
+  } else if (parts[0] === "/give") {
     var item = parts[1];
     var amount = parts[2] ? Number(parts[2]) : 1;
     if (item === "azari" && Number.isFinite(amount)) {
@@ -663,7 +720,7 @@ function executeAdminCommand(rawCommand) {
       adminCommandMessage = "Habitación inválida. Usa un número del 1 al " + rooms.length + ".";
     }
   } else {
-    adminCommandMessage = "Comando no válido. Usa /give o /tp habitacion.";
+    adminCommandMessage = "Comando no válido. Usa /give, /tp, /fly, /speed, /cooldown, /inmortal, /new update, /jefes o /tienda.";
   }
 }
 
@@ -1559,6 +1616,23 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     return;
   }
   if (p.autoWalk > 0 || p.frozen) { p.autoWalk--; return; }
+  if (adminFly && p === player) {
+    var flySpeed = 5 * adminSpeedMultiplier;
+    p.vx = (moveLeft ? -flySpeed : (moveRight ? flySpeed : 0));
+    p.vy = ((keys[" "] || keys["arrowup"] || keys["w"]) ? -flySpeed : (keys["arrowdown"] || keys["s"] ? flySpeed : 0));
+    p.x += p.vx; p.y += p.vy;
+    p.x = Math.max(0, Math.min(WORLD_W - p.w, p.x));
+    p.y = Math.max(0, Math.min((rooms[currentRoom].height || ROOM_H) - p.h, p.y));
+    p.onGround = false;
+    var flyRoom = Math.floor(p.x / ROOM_W);
+    if (flyRoom >= 0 && flyRoom < rooms.length && flyRoom !== currentRoom) {
+      currentRoom = flyRoom;
+      stats.roomsVisited++;
+      zoneName = "";
+      zoneNameTimer = 0;
+    }
+    return;
+  }
 
   var wasOnGround = p.onGround;
   if (p.recoilTimer > 0) {
@@ -1620,8 +1694,8 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     if (p.dashTimer <= 0) p.dashing = false;
   } else {
     p.dashing = false;
-    if (moveLeft) { p.vx = -3.5; p.facing = -1; }
-    else if (moveRight) { p.vx = 3.5; p.facing = 1; }
+    if (moveLeft) { p.vx = -3.5 * adminSpeedMultiplier; p.facing = -1; }
+    else if (moveRight) { p.vx = 3.5 * adminSpeedMultiplier; p.facing = 1; }
     else p.vx *= 0.75;
 
     p.vy += GRAVITY; if (p.vy > 12) p.vy = 12;

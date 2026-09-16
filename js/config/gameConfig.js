@@ -6,7 +6,7 @@ var GUARD_DURATION = 120, GUARD_COOLDOWN = 240;
    rooms 11-13 are the Guardian, Queen Larva, and Abyssal Knight arenas. */
 var WORLD_W = 43 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
-var VERSION = "v2.45 beta";
+var VERSION = "v2.75 beta";
 
 var ST_LANGUAGE = 0, ST_DEVICE = 1, ST_MENU = 2, ST_PLAYING = 3, ST_PAUSED = 4, ST_TRANSITION = 5, ST_INVENTORY = 7, ST_DIALOGUE = 8, ST_DEATH = 9, ST_HOUSE = 10, ST_LEVEL_EDITOR = 11, ST_INTRO = 12;
 var introTimer = 0, introAmbientCue = -1;
@@ -158,6 +158,7 @@ var guidePages = [
 ];
 var brightnessBoost = 1;
 var gameSpeed = 1;
+var adminFly = false, adminSpeedMultiplier = 1, adminImmortal = false;
 var gameSpeedAccumulator = 0;
 var GAME_SPEED_KEY = "caballero_mistico_game_speed_v1";
 var GAME_SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2];
