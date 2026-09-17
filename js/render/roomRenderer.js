@@ -340,4 +340,38 @@ function drawHealingStone() {
     ctx.fillStyle = "rgba(80, 255, 100, " + pulse + ")";
     ctx.beginPath(); ctx.arc(st.x + st.w/2, st.y + st.h/2, 35, 0, Math.PI*2); ctx.fill();
   }
+
+}
+
+function drawAltars() {
+  altars.forEach(function(altar) {
+    if (altar.room !== currentRoom) return;
+    var pulse = 0.7 + Math.sin(Date.now() / 180) * 0.2;
+    ctx.save();
+    ctx.globalAlpha = altar.activated ? 0.22 * pulse : 0.12;
+    ctx.fillStyle = altar.activated ? "#5ce1ff" : "#667080";
+    ctx.beginPath();
+    ctx.arc(altar.x + altar.w / 2, altar.y, 42, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = altar.activated ? "#236b83" : "#343b48";
+    ctx.fillRect(altar.x, altar.y, altar.w, altar.h);
+    ctx.fillStyle = altar.activated ? "#8cf5ff" : "#727b88";
+    ctx.fillRect(altar.x + 6, altar.y + 5, altar.w - 12, 8);
+    ctx.strokeStyle = altar.activated ? "#b8fbff" : "#59616e";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(altar.x, altar.y, altar.w, altar.h);
+    ctx.fillStyle = altar.activated ? "#d9fbff" : "#c5ccd6";
+    ctx.font = "bold 11px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("ALTAR", altar.x + altar.w / 2, altar.y - 9);
+    ctx.textAlign = "left";
+    if (altar.activated) {
+      ctx.fillStyle = "#d9fbff";
+      ctx.beginPath();
+      ctx.arc(altar.x + altar.w / 2, altar.y - 12, 5 + pulse * 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  });
 }

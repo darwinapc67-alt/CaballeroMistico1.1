@@ -417,7 +417,16 @@ function drawPlatforms(room, roomIndex) {
     ctx.strokeStyle = "rgba(154, 224, 255, 0.35)";
     ctx.strokeRect(p.x, p.y, p.w, p.h);
   });
+  var collapsingDragonFloor = floorCollapseTimer > 0 &&
+    roomIndex === currentRoom &&
+    room.bossName === "DRAGÓN DEL VACÍO";
   room.platforms.forEach(function(p) {
+    var isDragonFloor = collapsingDragonFloor && p.y >= 600;
+    var floorDrop = isDragonFloor && floorCollapseTimer <= 60
+      ? Math.pow((60 - floorCollapseTimer) / 60, 1.35) * 360
+      : 0;
+    ctx.save();
+    if (floorDrop > 0) ctx.translate(0, floorDrop);
     ctx.fillStyle = p.y > 500 ? profile.platform : profile.accent;
     ctx.fillRect(p.x, p.y, p.w, p.h);
     ctx.fillStyle = profile.edge;
@@ -437,6 +446,23 @@ function drawPlatforms(room, roomIndex) {
     ctx.stroke();
     ctx.fillStyle = "#1a1a2a";
     ctx.fillRect(p.x, p.y + Math.max(0, p.h - 3), p.w, Math.min(3, p.h));
+    ctx.restore();
+    if (isDragonFloor && floorCollapseTimer <= 120) {
+      var crackProgress = Math.max(0, Math.min(1, (120 - floorCollapseTimer) / 60));
+      ctx.save();
+      ctx.globalAlpha = 0.35 + crackProgress * 0.55;
+      ctx.strokeStyle = "#171421";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(p.x + p.w * 0.28, p.y);
+      ctx.lineTo(p.x + p.w * 0.34, p.y + 10 + crackProgress * 8);
+      ctx.lineTo(p.x + p.w * 0.30, p.y + 20 + crackProgress * 20);
+      ctx.moveTo(p.x + p.w * 0.72, p.y);
+      ctx.lineTo(p.x + p.w * 0.66, p.y + 12 + crackProgress * 9);
+      ctx.lineTo(p.x + p.w * 0.70, p.y + 22 + crackProgress * 18);
+      ctx.stroke();
+      ctx.restore();
+    }
   });
 }
 function drawWalls(room) {

@@ -437,6 +437,11 @@ var waterDrops = [];
 var azariDrops = [];
 var deathParticles = [];
 var acidPuddles = [];
+var altars = [
+  {id: "altar_room9", x: 6880, y: 440, w: 48, h: 40, room: 8, activated: false, azariCost: 10, eteriumCost: 1},
+  {id: "altar_after_queen", x: 20 * ROOM_W + 400, y: 520, w: 48, h: 40, room: 20, activated: false, azariCost: 20, eteriumCost: 2}
+];
+var lastActivatedAltarId = null;
 var playerDead = false;
 var deathTimer = 0;
 var hardcoreGameOver = false;
@@ -714,6 +719,8 @@ function saveGame(i) {
     azari: azari, eterium: eterium, hasEteriumSkill: hasEteriumSkill, eteriumSkillLevel: eteriumSkillLevel, hasMap: hasMap, hp: player.hp, maxHp: player.maxHp,
     highestRoomReached: highestRoomReached,
     checkpointState: checkpointState ? JSON.parse(JSON.stringify(checkpointState)) : null,
+    altars: altars.map(function(altar) { return {id: altar.id, activated: altar.activated}; }),
+    lastActivatedAltarId: lastActivatedAltarId,
     heartFragments1: heartFragments1, heartFragments2: heartFragments2,
     heartFragmentsBought1: heartFragmentsBought1, heartFragmentsBought2: heartFragmentsBought2,
     hasAzariCharm: hasAzariCharm, hasDoubleJump: hasDoubleJump,
@@ -766,6 +773,13 @@ function loadGame(i) {
   currentRoom = Math.max(0, Math.min(rooms.length - 1, s.room || 0));
   highestRoomReached = Math.max(currentRoom, s.highestRoomReached || 0);
   checkpointState = s.checkpointState || checkpointState;
+  if (Array.isArray(s.altars)) {
+    s.altars.forEach(function(savedAltar) {
+      var altar = altars.find(function(candidate) { return candidate.id === savedAltar.id; });
+      if (altar) altar.activated = !!savedAltar.activated;
+    });
+  }
+  lastActivatedAltarId = s.lastActivatedAltarId || null;
   targetCamX = currentRoom * ROOM_W; cameraX = targetCamX;
   player.x = s.px; player.y = s.py; player.vx = 0; player.vy = 0;
   hasSword = s.hasSword || false; swordEquipped = s.swordEquipped || false;

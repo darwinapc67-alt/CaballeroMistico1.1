@@ -434,7 +434,9 @@ function saveHealingStoneCheckpoint() {
     armorLevel: armorLevel,
     permanentUpgrades: JSON.parse(JSON.stringify(permanentUpgrades)),
     bossUniqueItems: JSON.parse(JSON.stringify(bossUniqueItems)),
-    hiddenCollectibles: JSON.parse(JSON.stringify(hiddenCollectibles))
+    hiddenCollectibles: JSON.parse(JSON.stringify(hiddenCollectibles)),
+    altars: altars.map(function(altar) { return {id: altar.id, activated: altar.activated}; }),
+    lastActivatedAltarId: lastActivatedAltarId
   };
   if (activeSlot >= 0) saveGame(activeSlot);
   spawnFloatText(player.x, player.y - 48, "JUEGO GUARDADO", "#64e6ae");
@@ -479,6 +481,13 @@ function restoreCheckpoint(preserveInfiniteProgress) {
     armorId = cp.armorId || "vacío"; armorLevel = Math.max(0, Math.min(3, Number(cp.armorLevel) || (armorId === "plate" ? 1 : 0))); permanentUpgrades = cp.permanentUpgrades || { vitality: 0, strength: 0 };
     bossUniqueItems = cp.bossUniqueItems || { guardian: false, queen_larva: false, abyssal_knight: false };
     hiddenCollectibles = cp.hiddenCollectibles || { eclipse: false, root: false, crown: false };
+    if (Array.isArray(cp.altars)) {
+      cp.altars.forEach(function(savedAltar) {
+        var altar = altars.find(function(candidate) { return candidate.id === savedAltar.id; });
+        if (altar) altar.activated = !!savedAltar.activated;
+      });
+    }
+    lastActivatedAltarId = cp.lastActivatedAltarId || lastActivatedAltarId;
     if (gameMode === "infinite" && infiniteState) {
   // En modo infinito, el equipo se conserva al morir.
   // Nunca usar el checkpoint normal para quitar armas o habilidades.
@@ -1637,7 +1646,7 @@ function defeatBoss(e) {
     hasDash = true;
     spawnFloatText(player.x, player.y - 40, "¡Dash desbloqueado!", "#79c");
   }
-  if (e.room === 39) startFloorCollapse();
+  if (e.type === "dragon" && rooms[e.room] && rooms[e.room].bossName === "DRAGÓN DEL VACÍO") startFloorCollapse();
   if (e.room < rooms.length - 1) {
     if (e.type !== "dragon") {
       rooms[e.room].transitionZone = {x: e.room * ROOM_W + ROOM_W - 70, y: 450, w: 60, h: 110, to: e.room + 1};
@@ -2436,6 +2445,36 @@ function checkSwordHitEnemiesFor(p) {
 
 function tryInteractFor(p) {
   var room = rooms[currentRoom];
+  for (var altarIndex = 0; altarIndex < altars.length; altarIndex++) {
+    var altar = altars[altarIndex];
+    if (altar.room !== currentRoom || !rectHit(p, altar)) continue;
+    if (!altar.activated) {
+      var paidWithEterium = eterium >= altar.eteriumCost;
+      var paidWithAzari = azari >= altar.azariCost;
+      if (!paidWithEterium && !paidWithAzari) {
+        spawnFloatText(p.x, p.y - 30, altar.azariCost + " AZARI o " + altar.eteriumCost + " ETERIUM", "#ff7777");
+        return;
+      }
+      if (paidWithEterium) eterium -= altar.eteriumCost;
+      else azari -= altar.azariCost;
+      altar.activated = true;
+      lastActivatedAltarId = altar.id;
+      p.hp = p.maxHp;
+      saveHealingStoneCheckpoint();
+      checkpointState.px = altar.x + altar.w / 2 - p.w / 2;
+      checkpointState.py = altar.y - p.h;
+      checkpointState.hp = p.maxHp;
+      checkpointState.lastActivatedAltarId = altar.id;
+      if (activeSlot >= 0) saveGame(activeSlot);
+      spawnParticles(altar.x + altar.w / 2, altar.y, "#70e8ff", 24, 4);
+      spawnFloatText(p.x, p.y - 30, "ALTAR ACTIVADO", "#70e8ff");
+      return;
+    }
+    p.hp = p.maxHp;
+    spawnParticles(altar.x + altar.w / 2, altar.y, "#8cffc1", 14, 3);
+    spawnFloatText(p.x, p.y - 30, "VIDA RESTAURADA", "#8cffc1");
+    return;
+  }
   if (room.city && room.houses) {
     for (var h = 0; h < room.houses.length; h++) {
       var house = room.houses[h];

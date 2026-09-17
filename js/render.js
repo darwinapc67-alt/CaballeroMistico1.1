@@ -165,6 +165,7 @@ function drawGameWorld() {
     if (room.bossName) drawBossDoor(r);
     if (r === 9) { drawShopNPC(); drawHealingStone(); }
   }
+  drawAltars();
   atmosphereRocks.forEach(function(rock) {
     ctx.fillStyle = "#766d68";
     ctx.fillRect(rock.x - rock.size / 2, rock.y - rock.size / 2, rock.size, rock.size);

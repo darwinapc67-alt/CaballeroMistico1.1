@@ -60,6 +60,8 @@ function resetAll() {
   diaryScroll = 0;
   deathParticles = [];
   acidPuddles = [];
+  altars.forEach(function(altar) { altar.activated = false; });
+  lastActivatedAltarId = null;
   azariDrops = [];
   playerDead = false; deathTimer = 0;
   deathChoice = 0; deathAnimTimer = 0;
