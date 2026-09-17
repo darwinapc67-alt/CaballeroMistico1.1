@@ -419,10 +419,11 @@ function drawPlatforms(room, roomIndex) {
   });
   var collapsingDragonFloor = floorCollapseTimer > 0 &&
     roomIndex === currentRoom &&
-    room.bossName === "DRAGÓN DEL VACÍO";
+    roomIndex === 39 &&
+    room.bossName === "GUARDIÁN DE LA CUEVA";
   room.platforms.forEach(function(p) {
-    var isDragonFloor = collapsingDragonFloor && p.y >= 600;
-    var floorDrop = isDragonFloor && floorCollapseTimer <= 120
+    var isCollapsingBossFloor = collapsingDragonFloor && p.y >= 600;
+    var floorDrop = isCollapsingBossFloor && floorCollapseTimer <= 120
       ? Math.pow((120 - floorCollapseTimer) / 120, 1.35) * 420
       : 0;
     ctx.save();
@@ -447,7 +448,7 @@ function drawPlatforms(room, roomIndex) {
     ctx.fillStyle = "#1a1a2a";
     ctx.fillRect(p.x, p.y + Math.max(0, p.h - 3), p.w, Math.min(3, p.h));
     ctx.restore();
-    if (isDragonFloor && floorCollapseTimer <= 120) {
+    if (isCollapsingBossFloor && floorCollapseTimer <= 120) {
       var crackProgress = Math.max(0, Math.min(1, (120 - floorCollapseTimer) / 60));
       ctx.save();
       ctx.globalAlpha = 0.35 + crackProgress * 0.55;

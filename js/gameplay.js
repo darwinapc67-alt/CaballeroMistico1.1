@@ -1646,7 +1646,7 @@ function defeatBoss(e) {
     hasDash = true;
     spawnFloatText(player.x, player.y - 40, "¡Dash desbloqueado!", "#79c");
   }
-  if (e.type === "dragon" && rooms[e.room] && rooms[e.room].bossName === "DRAGÓN DEL VACÍO") startFloorCollapse();
+  if (e.type === "guardian" && e.room === 39) startFloorCollapse();
   if (e.room < rooms.length - 1) {
     if (e.type !== "dragon") {
       rooms[e.room].transitionZone = {x: e.room * ROOM_W + ROOM_W - 70, y: 450, w: 60, h: 110, to: e.room + 1};

@@ -838,6 +838,8 @@ function loadGame(i) {
   room36.transitionZone = {x: 39 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 37};
   room37.transitionZone = {x: 40 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 38};
   room38.transitionZone = {x: 41 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 39};
+  rooms[38].transitionZone = {x: 30400 + 750, y: 760, w: 32, h: 100, to: 39, requiresBoss: true};
+  rooms[39].transitionZone = null;
   if (Array.isArray(s.brokenWalls)) {
     s.brokenWalls.forEach(function(roomWalls, roomIndex) {
       if (!rooms[roomIndex] || !Array.isArray(roomWalls)) return;
