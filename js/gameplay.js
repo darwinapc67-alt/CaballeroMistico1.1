@@ -1898,6 +1898,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     }
   }
   if (p.y > room.height + 80) {
+    if (floorCollapseTimer > 0) return;
     if (gameMode === "custom") {
       var customRoomStart = getCustomRoomStart(customRooms[customRoomIndex], customRoomIndex > 0);
       p.x = customRoomStart.x; p.y = customRoomStart.y;

@@ -40,6 +40,7 @@ function drawGameWorld() {
   for (var r = 0; r < rooms.length; r++) {
     if (currentRoom === 37 && r !== 37) continue;
     if (r === 37 && currentRoom !== 37) continue;
+    if ((currentRoom === 39 || currentRoom === 42) && r !== currentRoom) continue;
     var rx = rooms[r].worldX !== undefined ? rooms[r].worldX : r * ROOM_W;
     var roomWidth = rooms[r].roomWidth || ROOM_W;
     if (rx + roomWidth < camLeft - 100 || rx > camRight + 100) continue;
