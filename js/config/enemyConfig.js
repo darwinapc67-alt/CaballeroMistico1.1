@@ -64,7 +64,7 @@ var enemies = [
   {x: 7550, y: 420, w: 24, h: 20, vx: -1.5, vy: 0, baseY: 420, range: 60, dead: false, room: 9, type: 'bat'},
   {x: 7750, y: 300, w: 24, h: 20, vx: 1.2, vy: 0, baseY: 300, range: 50, dead: false, room: 9, type: 'bat'},
   {x:7450, y:250, w:24, h:20, vx: -1.4, vy: 0, baseY: 250, range: 70, dead: false, room: 9, type: 'bat'},
-  {x:36 * ROOM_W + 540, y:770, w:70, h:90, vx: 0, vy: 0, dead: false, room: 36, type: 'guardian',
+  {x:39 * ROOM_W + 540, y:770, w:70, h:90, vx: 0, vy: 0, dead: false, room: 39, preserveRoom: true, type: 'guardian',
     boss: true, bossName: "GUARDIÁN DE LA CUEVA", hp: 240, maxHp: 240, aiTimer: 80, attackTimer: 60, phase: 1, enraged: false},
   {x:15540, y:470, w:78, h:90, vx: 0, vy: 0, dead: false, room: 19, type: 'queen_larva',
     boss: true, bossName: "REINA LARVA", hp: 340, maxHp: 340, aiTimer: 90, attackTimer: 70, phase: 1, enraged: false},

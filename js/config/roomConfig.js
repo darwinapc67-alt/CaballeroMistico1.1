@@ -483,6 +483,9 @@ var rooms = [room0, room1, room2, room3, room4, room5, room6, room7, room8, room
   room10, room11].concat(interludeRooms, [room12], bossApproachRooms, [room13], cityRooms, [room30, room31, room32, room33, room34, room35, room36, room37, room38, room39]);
 var guardianRoom39 = JSON.parse(JSON.stringify(room35));
 shiftRoomGeometry(guardianRoom39, ROOM_W);
+guardianRoom39.transitionZone = null;
+guardianRoom39.bossName = "GUARDIÁN DE LA CUEVA";
 rooms[39] = guardianRoom39;
 rooms[42] = room39;
+room35.bossName = null;
 rooms[38].bossName = null;
