@@ -1657,6 +1657,7 @@ function defeatBoss(e) {
 function startFloorCollapse() {
   if (gameState !== ST_PLAYING || floorCollapseTimer > 0) return;
   floorCollapseTimer = 180;
+  transTargetRoom = 41;
   player.frozen = true; player.inv = Math.max(player.inv, 9999); player.vx = 0; player.vy = 0;
   if (twoPlayerMode) { player2.frozen = true; player2.inv = Math.max(player2.inv, 9999); player2.vx = 0; player2.vy = 0; }
   dialogueMode = "floor_collapse";
@@ -2650,6 +2651,12 @@ function startBossDialogue(roomIndex) {
       ["", "⚔️ ¡EL GUARDIÁN DE LA CUEVA HA DESPERTADO!"]
     ],
     39: [
+      ["GUARDIÁN DE LA CUEVA", "Has llegado demasiado lejos, pequeño caballero."],
+      ["CABALLERO", "No dejaré que cierres mi camino."],
+      ["GUARDIÁN DE LA CUEVA", "Entonces contempla cómo se derrumba este santuario."],
+      ["", "⚔️ ¡COMIENZA EL COMBATE CONTRA EL GUARDIÁN!"]
+    ],
+    42: [
       ["DRAGÓN DEL VACÍO", "Has llegado al último santuario, pequeño caballero."],
       ["CABALLERO", "Tu fuego no impedirá que termine este viaje."],
       ["DRAGÓN DEL VACÍO", "Entonces contempla el aliento del vacío."],
