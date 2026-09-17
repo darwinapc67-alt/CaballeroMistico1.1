@@ -1,5 +1,5 @@
 function playerTakeDamage(p, dmg, isBossDamage) {
-  if (gameState !== ST_PLAYING || playerDead || p.inv > 0 || p.frozen || (adminImmortal && p === player)) return;
+  if (gameState !== ST_PLAYING || floorCollapseTimer > 0 || playerDead || p.inv > 0 || p.frozen || (adminImmortal && p === player)) return;
   if (p.blocking) {
     p.inv = 8;
     spawnParticles(p.x + p.w/2, p.y + p.h/2, "#9de8ff", 8, 2);
@@ -1657,8 +1657,8 @@ function defeatBoss(e) {
 function startFloorCollapse() {
   if (gameState !== ST_PLAYING || floorCollapseTimer > 0) return;
   floorCollapseTimer = 180;
-  player.frozen = true; player.vx = 0; player.vy = 0;
-  if (twoPlayerMode) { player2.frozen = true; player2.vx = 0; player2.vy = 0; }
+  player.frozen = true; player.inv = Math.max(player.inv, 9999); player.vx = 0; player.vy = 0;
+  if (twoPlayerMode) { player2.frozen = true; player2.inv = Math.max(player2.inv, 9999); player2.vx = 0; player2.vy = 0; }
   dialogueMode = "floor_collapse";
   gameState = ST_DIALOGUE;
   sfxStalactiteFall();
@@ -1694,8 +1694,8 @@ function updateFloorCollapse() {
     if (particle.life <= 0) particles.splice(i, 1);
   }
   if (floorCollapseTimer <= 0) {
-    floorCollapseTimer = 0; player.frozen = false;
-    if (twoPlayerMode) player2.frozen = false;
+    floorCollapseTimer = 0; player.frozen = false; player.inv = 90;
+    if (twoPlayerMode) { player2.frozen = false; player2.inv = 90; }
     startFallThroughTransition(41);
   }
 }

@@ -422,8 +422,8 @@ function drawPlatforms(room, roomIndex) {
     room.bossName === "DRAGÓN DEL VACÍO";
   room.platforms.forEach(function(p) {
     var isDragonFloor = collapsingDragonFloor && p.y >= 600;
-    var floorDrop = isDragonFloor && floorCollapseTimer <= 60
-      ? Math.pow((60 - floorCollapseTimer) / 60, 1.35) * 360
+    var floorDrop = isDragonFloor && floorCollapseTimer <= 120
+      ? Math.pow((120 - floorCollapseTimer) / 120, 1.35) * 420
       : 0;
     ctx.save();
     if (floorDrop > 0) ctx.translate(0, floorDrop);
