@@ -775,7 +775,7 @@ function saveGame(i) {
     hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, azariBagLevel: azariBagLevel, hasOldKey: hasOldKey, doorUnlocked: doorUnlocked, rewardAzariCollected: rewardAzariCollected, hasLantern: hasLantern, lanternLevel: lanternLevel, hasDash: hasDash,
     brightnessBoost: brightnessBoost,
     swordLevel: swordLevel, weaponLevels: JSON.parse(JSON.stringify(weaponLevels)), hasBrokenLarvaSword: hasBrokenLarvaSword, bowLevel: bowLevel, arrowType: arrowType, combatSkills: combatSkills,
-    blessingSlots: blessingSlots, equippedBlessings: equippedBlessings, armorId: armorId, armorLevel: armorLevel,
+    blessingSlots: blessingSlots, equippedBlessings: equippedBlessings,     armorId: armorId, armorLevel: armorLevel, ownedSkins: ownedSkins, equippedSkin: equippedSkin,
     permanentUpgrades: permanentUpgrades, bossUniqueItems: bossUniqueItems, hiddenCollectibles: hiddenCollectibles,
     brokenWalls: rooms.map(function(room) {
       return (room.walls || []).map(function(wall) { return !!wall.broken; });
@@ -865,6 +865,8 @@ function loadGame(i) {
   blessingSlots = s.blessingSlots || 2;
   equippedBlessings = s.equippedBlessings || [];
   armorId = s.armorId || "vacío"; armorLevel = Math.max(0, Math.min(3, Number(s.armorLevel) || (armorId === "plate" ? 1 : 0)));
+  ownedSkins = s.ownedSkins || {};
+  equippedSkin = s.equippedSkin || "";
   permanentUpgrades = s.permanentUpgrades || { vitality: 0, strength: 0 };
   bossUniqueItems = s.bossUniqueItems || { guardian: false, queen_larva: false, abyssal_knight: false, dragon: false };
   hiddenCollectibles = s.hiddenCollectibles || { eclipse: false, root: false, crown: false };

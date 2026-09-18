@@ -1896,12 +1896,17 @@ function drawShop() {
     var weapon = getWeaponConfig(id);
     shopItems.push((isWeaponUnlocked(id) ? "Mejorar " : "Comprar ") + weapon.shortName + " (" + (isWeaponUnlocked(id) ? getWeaponLevel(id) + "/3" : "100 Azari") + ")");
   });
+  skinCatalog.forEach(function(skin) {
+    var skinState = ownedSkins[skin.id] ? (equippedSkin === skin.id ? "EQUIPADA" : "EQUIPAR") : skin.price + " Azari";
+    shopItems.push(skin.name + " (" + skinState + ")");
+  });
   ctx.textAlign = "left";
   ctx.fillStyle = "#ffd700"; ctx.font = "bold 15px monospace";
   ctx.fillText("ARTÍCULOS", 110, 275);
   ctx.font = "11px monospace";
   for (var itemIndex = 0; itemIndex < shopItems.length; itemIndex++) {
-    var itemY = 298 + itemIndex * 11;
+    var itemY = 298 + ((itemIndex - Math.max(0, menuSelection - 18)) * 11);
+    if (itemY < 285 || itemY > 535) continue;
     if (itemIndex === menuSelection) {
       ctx.fillStyle = "rgba(108,204,204,.25)";
       ctx.fillRect(100, itemY - 12, 360, 16);

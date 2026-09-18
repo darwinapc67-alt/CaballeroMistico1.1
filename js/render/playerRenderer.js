@@ -1,5 +1,10 @@
 function drawPlayerEntity(p) {
   ctx.save();
+  var skin = null;
+  for (var skinIndex = 0; skinIndex < skinCatalog.length; skinIndex++) {
+    if (skinCatalog[skinIndex].id === equippedSkin) { skin = skinCatalog[skinIndex]; break; }
+  }
+  if (skin) ctx.globalAlpha *= skin.alpha || 1;
   if (p.inv > 0 && p === player) {
     var alpha = p.inv / 40 * 0.6;
     ctx.fillStyle = "rgba(0,0,0," + alpha + ")";
@@ -14,10 +19,14 @@ function drawPlayerEntity(p) {
     ctx.fillStyle = "rgba(120,190,255,0.35)";
     ctx.fillRect(p.x - p.dashDir * 18, p.y + 7, p.w, p.h - 7);
   }
-  ctx.fillStyle = p.color;
+  ctx.fillStyle = skin ? skin.body : p.color;
   ctx.fillRect(p.x+5, p.y+10, p.w-10, p.h-12);
-  ctx.fillStyle = p.headColor;
+  ctx.fillStyle = skin ? skin.head : p.headColor;
   ctx.fillRect(p.x+5, p.y+2, p.w-10, 7);
+  if (skin && skin.cape) {
+    ctx.fillStyle = skin.cape;
+    ctx.fillRect(p.x + (p.facing > 0 ? 1 : p.w - 4), p.y + 11, 4, p.h - 10);
+  }
   ctx.fillStyle = "#fff";
   var eyeX = p.facing > 0 ? p.x+12 : p.x+6;
   ctx.fillRect(eyeX, p.y+4, 2.5, 2.5);

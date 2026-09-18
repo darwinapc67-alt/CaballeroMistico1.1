@@ -883,8 +883,8 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (shopId === 0) {
-      if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 26) % 26; e.preventDefault(); return; }
-      if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % 26; e.preventDefault(); return; }
+      if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 35) % 35; e.preventDefault(); return; }
+      if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % 35; e.preventDefault(); return; }
       if (e.key === "Enter") {
         if (menuSelection === 0 && !hasMap && spendAzari(45, "map")) {
           hasMap = true;
@@ -990,6 +990,20 @@ window.addEventListener("keydown", function(e) {
             else if (!upgradeWeapon(keyboardWeaponId)) { e.preventDefault(); return; }
             spendAzari(keyboardWeaponPrice, "weapon_" + keyboardWeaponId);
             weaponId = keyboardWeaponId; player.weaponId = weaponId; player2.weaponId = weaponId; swordEquipped = true; sfxBuy();
+          }
+        }
+        if (menuSelection >= 26 && menuSelection <= 34) {
+          var selectedSkin = skinCatalog[menuSelection - 26];
+          if (selectedSkin) {
+            if (ownedSkins[selectedSkin.id]) {
+              equippedSkin = selectedSkin.id;
+              if (activeSlot >= 0) saveGame(activeSlot);
+            } else if (spendAzari(selectedSkin.price, "skin_" + selectedSkin.id)) {
+              ownedSkins[selectedSkin.id] = true;
+              equippedSkin = selectedSkin.id;
+              sfxBuy();
+              if (activeSlot >= 0) saveGame(activeSlot);
+            }
           }
         }
         e.preventDefault(); return;
@@ -1172,7 +1186,7 @@ function processGamepadInput() {
     return;
   }
   if (shopOpen && (shopId === 0 || shopId === 1)) {
-    var shopOptions = shopId === 0 ? 26 : 7;
+    var shopOptions = shopId === 0 ? 35 : 7;
     if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
     if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + shopOptions) % shopOptions; gamepadMenuAxisLock = 1; }
     if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % shopOptions; gamepadMenuAxisLock = 1; }
@@ -1222,6 +1236,23 @@ function processGamepadInput() {
             } else if (!upgradeWeapon(weaponShopId)) return;
             spendAzari(weaponPrice, "weapon_" + weaponShopId);
             weaponId = weaponShopId; player.weaponId = weaponId; player2.weaponId = weaponId; swordEquipped = true; sfxBuy();
+          }
+        }
+        if (menuSelection >= 26 && menuSelection <= 34) {
+          var skin = skinCatalog[menuSelection - 26];
+          if (skin) {
+            if (!ownedSkins[skin.id]) {
+              if (spendAzari(skin.price, "skin_" + skin.id)) {
+                ownedSkins[skin.id] = true;
+                equippedSkin = skin.id;
+                sfxBuy();
+                spawnFloatText(player.x, player.y - 30, skin.name + " equipada", "#ffd700");
+              }
+            } else {
+              equippedSkin = skin.id;
+              sfxBuy();
+            }
+            if (activeSlot >= 0) saveGame(activeSlot);
           }
         }
       } else {
@@ -1576,7 +1607,7 @@ function setupTouchControls() {
     '<div class="touchActions">' +
     '<button class="touchJump" data-key=" " aria-label="Saltar">⬆</button>' +
     (hasSword ? '<button data-key="x" aria-label="Atacar con espada">⚔</button>' : '') +
-    (hasSword && combatSkills.charged ? '<button data-key="v" aria-label="Ataque especial">✦</button>' : '') +
+    (hasEteriumSkill ? '<button data-key="v" aria-label="Habilidad especial">✦</button>' : '') +
     (hasBow ? '<button data-key="z" aria-label="Disparar arco">🏹</button>' : '') +
     (hasSword ? '<button data-key="c" aria-label="Bloquear">🛡</button>' : '') +
     (hasDash ? '<button data-key="shift" aria-label="Dash">↯</button>' : '') +
@@ -1657,7 +1688,6 @@ function setupTouchControls() {
         if (key === "d") return "ArrowDown";
         if (key === " ") return "Enter";
       }
-      if (key === "v") return "x";
       return key === " " ? " " : key;
     };
     var press = function(event) {
@@ -1851,7 +1881,7 @@ function setupTouchControls() {
 }
 
 function getTouchControlsSignature() {
-  return [hasSword, hasBow, hasDash, hasMap, bombs > 0, combatSkills.charged].join("|");
+  return [hasSword, hasBow, hasDash, hasMap, bombs > 0, hasEteriumSkill].join("|");
 }
 
 function updateTouchMenuButton() {
