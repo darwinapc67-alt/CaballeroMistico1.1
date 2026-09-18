@@ -85,6 +85,7 @@ function resetAll() {
   room38.transitionZone = {x: 41 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 39};
   rooms[38].transitionZone = {x: 30400 + 750, y: 760, w: 32, h: 100, to: 39, requiresBoss: true};
   rooms[39].transitionZone = null;
+  rooms[39].noDoor = true;
   rooms.forEach(function(room) {
     (room.walls || []).forEach(function(wall) {
       if (wall.breakable) wall.broken = false;

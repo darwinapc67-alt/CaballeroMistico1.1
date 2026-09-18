@@ -1700,10 +1700,46 @@ function updateFloorCollapse() {
     if (particle.life <= 0) particles.splice(i, 1);
   }
   if (floorCollapseTimer <= 0) {
-    floorCollapseTimer = 0; player.frozen = false; player.inv = 90;
-    if (twoPlayerMode) { player2.frozen = false; player2.inv = 90; }
-    startFallThroughTransition(41);
+    finishFloorCollapse();
   }
+}
+
+function finishFloorCollapse() {
+  floorCollapseTimer = 0;
+  var destinationRoom = 41;
+  var destination = rooms[destinationRoom];
+  var destinationOrigin = destination.worldX !== undefined ? destination.worldX : destinationRoom * ROOM_W;
+  currentRoom = destinationRoom;
+  player.x = destinationOrigin + ROOM_W / 2 - player.w / 2;
+  player.y = destination.height - player.h - 40;
+  player.vx = 0;
+  player.vy = 0;
+  player.frozen = false;
+  player.inv = 90;
+  playerDead = false;
+  needsRespawn = false;
+  hitFlash = 0;
+  transTargetRoom = destinationRoom;
+  transPhase = "";
+  transTimer = 0;
+  transFade = 0;
+  transIsFall = false;
+  transIsRise = false;
+  dialogueMode = "";
+  gameState = ST_PLAYING;
+  cameraX = destinationOrigin;
+  targetCamX = destinationOrigin;
+  cameraY = 0;
+  targetCamY = 0;
+  if (twoPlayerMode) {
+    player2.x = destinationOrigin + ROOM_W / 2 - player2.w / 2 + 40;
+    player2.y = player.y;
+    player2.vx = 0;
+    player2.vy = 0;
+    player2.frozen = false;
+    player2.inv = 90;
+  }
+  spawnFloatText(player.x, player.y - 30, "HAS CAÍDO A LA HABITACIÓN 41", "#8cf5ff");
 }
 
 function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed, interactPressed, shootPressed, blockPressed, dashPressed, downPressed, bombPressed, upPressed, attackDirection) {
