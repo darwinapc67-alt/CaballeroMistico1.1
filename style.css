@@ -113,6 +113,10 @@
       font-family: monospace;
     }
     #touchControls {
+      --touch-button-size: clamp(72px, 9vw, 86px);
+      --touch-joystick-size: clamp(126px, 18vw, 162px);
+      --touch-knob-size: clamp(58px, 8vw, 74px);
+      --touch-button-scale: 1;
       position: fixed;
       inset: auto 0 max(12px, env(safe-area-inset-bottom)) 0;
       display: flex;
@@ -124,13 +128,13 @@
       z-index: 10;
     }
     #touchControls button {
-      width: 58px;
-      height: 58px;
+      width: calc(var(--touch-button-size) * var(--touch-button-scale));
+      height: calc(var(--touch-button-size) * var(--touch-button-scale));
       border: 2px solid rgba(108,204,204,.75);
       border-radius: 50%;
       background: rgba(16,28,43,.86);
       color: #fff;
-      font-size: 23px;
+      font-size: calc(clamp(23px, 3vw, 30px) * var(--touch-button-scale));
       touch-action: none;
       pointer-events: auto;
       user-select: none;
@@ -150,8 +154,8 @@
     .touchActions { flex-wrap: wrap; justify-content: flex-end; }
     .touchJoystick {
       position: relative;
-      width: 118px;
-      height: 118px;
+      width: var(--touch-joystick-size);
+      height: var(--touch-joystick-size);
       border: 2px solid rgba(108,204,204,.75);
       border-radius: 50%;
       background: radial-gradient(circle, rgba(108,204,204,.18), rgba(16,28,43,.9));
@@ -171,16 +175,16 @@
       position: absolute;
       left: 50%;
       top: 50%;
-      width: 52px;
-      height: 52px;
+      width: var(--touch-knob-size);
+      height: var(--touch-knob-size);
       transform: translate(-50%, -50%);
       border: 2px solid #9de8ff;
       border-radius: 50%;
       background: rgba(108,204,204,.72);
       color: #fff;
       text-align: center;
-      line-height: 48px;
-      font-size: 18px;
+      line-height: calc(var(--touch-knob-size) - 8px);
+      font-size: clamp(16px, 2.2vw, 22px);
       z-index: 1;
     }
     .touchActions button[data-key="c"] {
@@ -200,9 +204,9 @@
       border-color: rgba(122,170,255,.8);
     }
     .touchActions button[data-key="escape"] {
-      width: 42px;
-      height: 42px;
-      font-size: 18px;
+      width: calc(var(--touch-button-size) * 0.72 * var(--touch-button-scale));
+      height: calc(var(--touch-button-size) * 0.72 * var(--touch-button-scale));
+      font-size: calc(clamp(16px, 2.5vw, 20px) * var(--touch-button-scale));
     }
     @media (max-width: 800px) {
       body { justify-content: flex-start; padding-top: 12px; }
@@ -213,13 +217,15 @@
       #touchControls { max-width: 760px; margin: 0 auto; }
     }
     @media (max-width: 520px) {
-      #touchControls button { width: 50px; height: 50px; font-size: 19px; }
-      .touchJoystick { width: 96px; height: 96px; }
-      .touchKnob { width: 44px; height: 44px; line-height: 40px; }
-      .touchPad, .touchActions { gap: 6px; }
-      .touchActions { width: 52vw; max-width: 220px; }
-      .touchActions button { width: 44px; height: 44px; font-size: 18px; }
-      .touchActions button[data-key="escape"] { width: 36px; height: 36px; }
+      #touchControls {
+        --touch-button-size: clamp(60px, 11vw, 72px);
+        --touch-joystick-size: clamp(104px, 20vw, 126px);
+        --touch-knob-size: clamp(46px, 8vw, 58px);
+      }
+      #touchControls button { font-size: clamp(20px, 4.2vw, 24px); }
+      .touchPad, .touchActions { gap: 7px; }
+      .touchActions { width: 56vw; max-width: 240px; }
+      .touchActions button[data-key="escape"] { width: calc(var(--touch-button-size) * 0.68); height: calc(var(--touch-button-size) * 0.68); }
     }
     @media (orientation: landscape) and (max-height: 600px) {
       body {
@@ -242,24 +248,15 @@
         pointer-events: none;
       }
       #touchControls {
+        --touch-button-size: clamp(58px, 7vw, 66px);
+        --touch-joystick-size: clamp(100px, 14vw, 122px);
+        --touch-knob-size: clamp(42px, 6vw, 54px);
         bottom: max(6px, env(safe-area-inset-bottom));
         padding-left: max(10px, env(safe-area-inset-left));
         padding-right: max(10px, env(safe-area-inset-right));
       }
-      .touchJoystick {
-        width: 84px;
-        height: 84px;
-      }
-      .touchKnob {
-        width: 38px;
-        height: 38px;
-        line-height: 34px;
-        font-size: 15px;
-      }
       #touchControls button {
-        width: 46px;
-        height: 46px;
-        font-size: 18px;
+        font-size: clamp(15px, 2.7vw, 20px);
       }
       .touchActions {
         width: auto;
@@ -267,7 +264,7 @@
         gap: 5px;
       }
       .touchActions button[data-key="escape"] {
-        width: 34px;
-        height: 34px;
+        width: calc(var(--touch-button-size) * 0.72);
+        height: calc(var(--touch-button-size) * 0.72);
       }
     }

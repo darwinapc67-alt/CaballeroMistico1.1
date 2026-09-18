@@ -1686,12 +1686,13 @@ function drawTouchControlsEditor() {
   ctx.fillStyle = "rgba(0,0,0,0.92)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.textAlign = "center";
   ctx.fillStyle = "#8f8"; ctx.font = "bold 25px monospace";
-  ctx.fillText("MOVER BOTONES CELULAR / TABLET", canvas.width / 2, 65);
-  var labels = ["Joystick", "Cada botón táctil (arrástralo)", "Opacidad"];
+  ctx.fillText("AJUSTAR CONTROLES CELULAR / TABLET", canvas.width / 2, 65);
+  var labels = ["Joystick", "Cada botón táctil (arrástralo)", "Opacidad", "Tamaño de botones"];
   var values = [
     Math.round(touchLayout.joystick.x) + "% / " + Math.round(touchLayout.joystick.y) + "%",
     "incluye pausa",
-    Math.round(touchLayout.opacity * 100) + "%"
+    Math.round(touchLayout.opacity * 100) + "%",
+    Math.round(touchLayout.buttonScale * 100) + "%"
   ];
   labels.forEach(function(label, index) {
     var y = 150 + index * 70, selected = touchEditSelection === index;
@@ -1703,7 +1704,7 @@ function drawTouchControlsEditor() {
   });
   ctx.fillStyle = "#8bd"; ctx.font = "12px monospace";
   ctx.fillText("Arrastra cada botón por separado; la pausa no cierra el editor", canvas.width / 2, 390);
-  ctx.fillText("+/-: opacidad  •  ESC: guardar y volver", canvas.width / 2, 415);
+  ctx.fillText("+/-: ajustar opacidad o tamaño  •  ESC: guardar y volver", canvas.width / 2, 415);
   ctx.textAlign = "left";
 }
 function drawTransition() {

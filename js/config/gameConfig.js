@@ -229,6 +229,7 @@ var controlsConfigSelection = 0, controlsConfigActionSelection = 0, controlsConf
 var CONTROLS_KEY = "caballero_mistico_controls_v1";
 var touchLayout = {
   opacity: 0.86,
+  buttonScale: 1,
   joystick: { x: 8, y: 68 },
   actions: { x: 66, y: 66 },
   buttons: {}
@@ -295,6 +296,7 @@ function loadTouchLayout() {
     var saved = JSON.parse(localStorage.getItem(TOUCH_LAYOUT_KEY) || "null");
     if (!saved) return;
     if (typeof saved.opacity === "number") touchLayout.opacity = Math.max(0.2, Math.min(1, saved.opacity));
+    if (typeof saved.buttonScale === "number") touchLayout.buttonScale = Math.max(0.7, Math.min(1.6, saved.buttonScale));
     if (saved.joystick) {
       touchLayout.joystick.x = Number(saved.joystick.x) || touchLayout.joystick.x;
       touchLayout.joystick.y = Number(saved.joystick.y) || touchLayout.joystick.y;
@@ -345,6 +347,7 @@ function applyTouchLayout() {
   var controls = document.getElementById("touchControls");
   if (!controls) return;
   controls.style.opacity = touchLayout.opacity;
+  controls.style.setProperty("--touch-button-scale", touchLayout.buttonScale);
   var pad = controls.querySelector(".touchPad");
   var actions = controls.querySelector(".touchActions");
   if (pad) {

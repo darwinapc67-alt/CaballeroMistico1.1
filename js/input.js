@@ -766,9 +766,9 @@ window.addEventListener("keydown", function(e) {
           pauseSubState = "controls";
         }
       } else if (up || k === "w") {
-        touchEditSelection = (touchEditSelection + 2) % 3;
+        touchEditSelection = (touchEditSelection + 3) % 4;
       } else if (down || k === "s") {
-        touchEditSelection = (touchEditSelection + 1) % 3;
+        touchEditSelection = (touchEditSelection + 1) % 4;
       } else if (left || k === "a" || right || k === "d" || k === "q" || k === "e" || k === "+" || k === "-") {
         var touchDirection = left || k === "a" || k === "q" || k === "-" ? -1 : 1;
         if (touchEditSelection === 0) {
@@ -780,6 +780,7 @@ window.addEventListener("keydown", function(e) {
           else touchLayout.actions.x = Math.max(0, Math.min(82, touchLayout.actions.x + touchDirection * 2));
         }
         if (touchEditSelection === 2) touchLayout.opacity = Math.max(0.2, Math.min(1, touchLayout.opacity + touchDirection * 0.05));
+        if (touchEditSelection === 3) touchLayout.buttonScale = Math.max(0.7, Math.min(1.6, touchLayout.buttonScale + touchDirection * 0.1));
         applyTouchLayout();
         saveTouchLayout();
       }
@@ -1430,13 +1431,14 @@ function processGamepadInput() {
     return;
   }
   if (gameState === ST_PAUSED && pauseSubState === "controls_touch") {
-    if (btn12) touchEditSelection = (touchEditSelection + 2) % 3;
-    if (btn13) touchEditSelection = (touchEditSelection + 1) % 3;
+    if (btn12) touchEditSelection = (touchEditSelection + 3) % 4;
+    if (btn13) touchEditSelection = (touchEditSelection + 1) % 4;
     var touchPadDirection = btn14 ? -1 : (btn15 ? 1 : 0);
     if (touchPadDirection) {
       if (touchEditSelection === 0) touchLayout.joystick.x = Math.max(0, Math.min(82, touchLayout.joystick.x + touchPadDirection * 2));
       if (touchEditSelection === 1) touchLayout.actions.x = Math.max(0, Math.min(82, touchLayout.actions.x + touchPadDirection * 2));
       if (touchEditSelection === 2) touchLayout.opacity = Math.max(0.2, Math.min(1, touchLayout.opacity + touchPadDirection * 0.05));
+      if (touchEditSelection === 3) touchLayout.buttonScale = Math.max(0.7, Math.min(1.6, touchLayout.buttonScale + touchPadDirection * 0.1));
       applyTouchLayout();
       saveTouchLayout();
     }
