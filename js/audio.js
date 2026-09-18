@@ -91,28 +91,43 @@ function sfxBossPhase() { playTone(70, 0.25, "sawtooth", 0.12, 0); playTone(140,
 
 var MUSIC_TRACKS = {
   menu: "assets/music/menu.mp3",
-  gameplay: "assets/music/gameplay.mp3",
-  boss: "assets/music/boss.mp3",
+  normal: "assets/music/normal.mp3",
+  tienda: "assets/music/tienda.mp3",
+  jefe: "assets/music/jefe.mp3",
+  gameplay: "assets/music/normal.mp3",
+  boss: "assets/music/jefe.mp3",
   infinite: "assets/music/infinite.mp3"
 };
+var MUSIC_BASE_VOLUME = 0.2;
 var currentMusicTrack = "";
 var musicRequestedTrack = "";
 var musicPlayers = [];
 var activeMusicPlayer = -1;
 var musicFadeTimer = null;
 var musicUserInteracted = false;
+var musicFallbackTimer = null;
+var musicFallbackTrack = "";
 
 function getMusicTrackForState() {
   if (gameState === ST_MENU || gameState === ST_LANGUAGE || gameState === ST_DEVICE) return "menu";
+  if (shopOpen) return "tienda";
   var activeBoss = enemies && enemies.find ? enemies.find(function(enemy) {
     return enemy.boss && enemy.room === currentRoom && !enemy.dead;
   }) : null;
-  if (activeBoss || gameState === ST_DIALOGUE) return "boss";
+  var roomIsBoss = rooms && rooms[currentRoom] && rooms[currentRoom].bossName;
+  if (activeBoss || roomIsBoss || gameState === ST_DIALOGUE) return "jefe";
   if (gameMode === "infinite") return "infinite";
-  return "gameplay";
+  return "normal";
+}
+function controlarMusica() {
+  if (!musicUserInteracted || !musicEnabled) return;
+  var desiredTrack = getMusicTrackForState();
+  if (musicPlaying && currentMusicTrack === desiredTrack && musicRequestedTrack === desiredTrack) return;
+  if (desiredTrack === "jefe" && currentMusicTrack && currentMusicTrack !== "jefe") stopMusic();
+  startMusic(desiredTrack);
 }
 function setMusicPlayerVolume(player, volume) {
-  player.volume = Math.max(0, Math.min(1, volume * musicVolume * masterVolume));
+  player.volume = Math.max(0, Math.min(1, volume * MUSIC_BASE_VOLUME * musicVolume * masterVolume));
 }
 function ensureMusicPlayers() {
   if (musicPlayers.length) return;
@@ -123,6 +138,47 @@ function ensureMusicPlayers() {
     player.setAttribute("aria-hidden", "true");
     musicPlayers.push(player);
   }
+}
+function playFallbackNote(frequency, duration, type, volume, delay) {
+    if (!audioCtx || !musicEnabled) return;
+    var oscillator = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    var startAt = audioCtx.currentTime + (delay || 0);
+    oscillator.type = type || "square";
+    oscillator.frequency.setValueAtTime(frequency, startAt);
+    gain.gain.setValueAtTime(0.0001, startAt);
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume * MUSIC_BASE_VOLUME * musicVolume * masterVolume), startAt + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+    oscillator.connect(gain);
+    gain.connect(audioCtx.destination);
+    oscillator.start(startAt);
+    oscillator.stop(startAt + duration + 0.02);
+}
+function playFallbackPhrase(trackName) {
+    var phrases = {
+      normal: [220, 262, 330, 392, 330, 262, 196, 220],
+      tienda: [262, 330, 392, 330, 294, 349, 440, 349],
+      jefe: [110, 165, 220, 330, 220, 165, 294, 440]
+    };
+    var notes = phrases[trackName] || phrases.normal;
+    var step = trackName === "jefe" ? 0.18 : (trackName === "tienda" ? 0.42 : 0.3);
+    for (var i = 0; i < notes.length; i++) {
+      playFallbackNote(notes[i], step * 0.82, trackName === "tienda" ? "triangle" : "square", 0.65, i * step);
+      if (trackName !== "tienda") playFallbackNote(notes[i] / 2, step * 0.75, "triangle", 0.3, i * step);
+    }
+}
+function startFallbackMusic(trackName) {
+    if (!musicEnabled) return;
+    if (musicFallbackTimer) clearInterval(musicFallbackTimer);
+    musicFallbackTrack = trackName;
+    musicPlaying = true;
+    currentMusicTrack = trackName;
+    musicRequestedTrack = trackName;
+    playFallbackPhrase(trackName);
+    var phraseDuration = trackName === "jefe" ? 1.44 : (trackName === "tienda" ? 3.36 : 2.4);
+    musicFallbackTimer = setInterval(function() {
+      if (musicFallbackTrack === trackName && musicEnabled) playFallbackPhrase(trackName);
+    }, phraseDuration * 1000);
 }
 function fadeMusicPlayers(targetPlayer, targetVolume, duration) {
   if (musicFadeTimer) clearInterval(musicFadeTimer);
@@ -155,6 +211,9 @@ function startMusic(trackName) {
   var nextIndex = activeMusicPlayer === 0 ? 1 : 0;
   var nextPlayer = musicPlayers[nextIndex];
   nextPlayer.src = source;
+  nextPlayer.onerror = function() {
+    if (currentMusicTrack === trackName) startFallbackMusic(trackName);
+  };
   nextPlayer.loop = true;
   nextPlayer.currentTime = 0;
   setMusicPlayerVolume(nextPlayer, 0);
@@ -177,13 +236,12 @@ function stopMusic() {
     setMusicPlayerVolume(player, 0);
   });
   activeMusicPlayer = -1;
+  if (musicFallbackTimer) { clearInterval(musicFallbackTimer); musicFallbackTimer = null; }
+  musicFallbackTrack = "";
 }
 function updateAudioEnvironment() {
-  if (musicUserInteracted && musicEnabled) {
-    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
-    var desiredTrack = getMusicTrackForState();
-    if (!musicPlaying || desiredTrack !== musicRequestedTrack) startMusic(desiredTrack);
-  }
+  controlarMusica();
+  if (audioCtx && audioCtx.state === "suspended" && musicUserInteracted && musicEnabled) audioCtx.resume();
   if (gameState !== ST_PLAYING || shopOpen) return;
   if (currentRoom === 1) {
     ambientTimer = 240;
