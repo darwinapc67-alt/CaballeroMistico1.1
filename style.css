@@ -207,6 +207,27 @@
     .touchActions button[data-key="shift"] {
       border-color: rgba(122,170,255,.8);
     }
+    .touchResizeControls {
+      position: fixed;
+      left: 50%;
+      bottom: max(10px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      display: none;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: min(96vw, 620px);
+      pointer-events: auto;
+      z-index: 30;
+    }
+    .touchResizeControls button {
+      width: auto !important;
+      height: 38px !important;
+      min-width: 104px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font: bold 12px monospace;
+    }
     #touchControls .touchActions button[data-key="escape"] {
       width: calc(var(--touch-button-size) * 0.72 * var(--touch-button-scale));
       height: calc(var(--touch-button-size) * 0.72 * var(--touch-button-scale));

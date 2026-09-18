@@ -488,6 +488,7 @@ canvas.addEventListener("click", function(event) {
       if (selected >= 0 && selected < 3) {
         controlsConfigSelection = selected;
         activate();
+        updateTouchMenuButton();
       }
     }
   } else if (gameState === ST_PAUSED && (pauseSubState === "controls_keys" || pauseSubState === "controls_pad")) {

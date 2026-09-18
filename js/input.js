@@ -40,6 +40,7 @@ window.addEventListener("keydown", function(e) {
         controlsFromMain = true;
         gameState = ST_PAUSED;
         pauseSubState = "controls_touch";
+        updateTouchMenuButton();
       } else {
         menuSubState = "controls_config";
       }
@@ -698,7 +699,7 @@ window.addEventListener("keydown", function(e) {
         controlsConfigActionSelection = 0;
         if (controlsConfigSelection === 0) { controlsConfigDevice = "play"; pauseSubState = "controls_pad"; }
         else if (controlsConfigSelection === 1) { controlsConfigDevice = "pc"; pauseSubState = "controls_keys"; }
-        else { touchEditSelection = 0; pauseSubState = "controls_touch"; applyTouchLayout(); }
+        else { touchEditSelection = 0; pauseSubState = "controls_touch"; applyTouchLayout(); updateTouchMenuButton(); }
       } else if (e.key === "Escape") {
         pauseSubState = "menu";
       }
@@ -765,6 +766,7 @@ window.addEventListener("keydown", function(e) {
         } else {
           pauseSubState = "controls";
         }
+            updateTouchMenuButton();
       } else if (up || k === "w") {
         touchEditSelection = (touchEditSelection + 3) % 4;
       } else if (down || k === "s") {
@@ -1280,6 +1282,7 @@ function processGamepadInput() {
           controlsFromMain = true;
           gameState = ST_PAUSED;
           pauseSubState = "controls_touch";
+          updateTouchMenuButton();
         } else {
           menuSubState = "controls_config";
         }
@@ -1405,7 +1408,7 @@ function processGamepadInput() {
       controlsConfigSlot = 0;
       if (controlsConfigSelection === 0) { controlsConfigDevice = "play"; pauseSubState = "controls_pad"; }
       else if (controlsConfigSelection === 1) { controlsConfigDevice = "pc"; pauseSubState = "controls_keys"; }
-      else { touchEditSelection = 0; pauseSubState = "controls_touch"; applyTouchLayout(); }
+      else { touchEditSelection = 0; pauseSubState = "controls_touch"; applyTouchLayout(); updateTouchMenuButton(); }
     }
     return;
   }
@@ -1583,6 +1586,12 @@ function setupTouchControls() {
     (bombs > 0 ? '<button data-key="b" aria-label="Lanzar bomba">💣</button>' : '') +
     '<button data-key="escape" aria-label="Pausa">Ⅱ</button>' +
     '<button class="touchDelete" data-key="delete" aria-label="Borrar partida">🗑</button>' +
+    '</div>' +
+    '<div class="touchResizeControls" aria-label="Tamaño de controles">' +
+    '<button type="button" data-resize="joystick-down" aria-label="Reducir joystick">− Joystick</button>' +
+    '<button type="button" data-resize="joystick-up" aria-label="Aumentar joystick">+ Joystick</button>' +
+    '<button type="button" data-resize="buttons-down" aria-label="Reducir botones">− Botones</button>' +
+    '<button type="button" data-resize="buttons-up" aria-label="Aumentar botones">+ Botones</button>' +
     '</div>';
   var joystick = controls.querySelector(".touchJoystick");
   var knob = controls.querySelector(".touchKnob");
@@ -1639,7 +1648,7 @@ function setupTouchControls() {
   joystick.addEventListener("pointerup", resetJoystick);
   joystick.addEventListener("pointercancel", resetJoystick);
   joystick.addEventListener("lostpointercapture", resetJoystick);
-  controls.querySelectorAll("button").forEach(function(button) {
+  controls.querySelectorAll(".touchActions button").forEach(function(button) {
     var key = button.getAttribute("data-key");
     var buttonPointer = null;
     var getVirtualKey = function() {
@@ -1684,9 +1693,25 @@ function setupTouchControls() {
     button.addEventListener("pointercancel", release);
     button.addEventListener("lostpointercapture", release);
   });
+  controls.querySelectorAll(".touchResizeControls button").forEach(function(button) {
+    button.addEventListener("pointerdown", function(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (gameState !== ST_PAUSED || pauseSubState !== "controls_touch") return;
+      var resize = button.getAttribute("data-resize");
+      var direction = resize.indexOf("-up") >= 0 ? 0.1 : -0.1;
+      if (resize.indexOf("joystick") === 0) {
+        touchLayout.joystickScale = Math.max(0.7, Math.min(1.6, touchLayout.joystickScale + direction));
+      } else {
+        touchLayout.buttonScale = Math.max(0.7, Math.min(1.6, touchLayout.buttonScale + direction));
+      }
+      applyTouchLayout();
+      saveTouchLayout();
+    });
+  });
   document.body.appendChild(controls);
   applyTouchLayout();
-  updateTouchMenuButton();
+        updateTouchMenuButton();
   var touchDrag = null;
   var editorPointers = {};
   var pinchDistance = null;
@@ -1713,10 +1738,10 @@ function setupTouchControls() {
     var currentPinchDistance = getPinchDistance();
     if (currentPinchDistance !== null) {
       pinchDistance = currentPinchDistance;
-      if (event.target.closest(".touchPad")) pinchTarget = "joystick";
-      else if (event.target.closest(".touchActions button")) pinchTarget = "buttons";
-      else if (touchEditSelection === 0) pinchTarget = "joystick";
+      if (touchEditSelection === 0) pinchTarget = "joystick";
       else if (touchEditSelection === 3) pinchTarget = "buttons";
+      else if (event.target.closest(".touchPad")) pinchTarget = "joystick";
+      else if (event.target.closest(".touchActions button")) pinchTarget = "buttons";
       touchDrag = null;
       event.preventDefault();
       event.stopPropagation();
@@ -1802,6 +1827,7 @@ function setupTouchControls() {
       } else {
         pauseSubState = "controls";
       }
+      updateTouchMenuButton();
     }
     touchDrag = null;
     saveTouchLayout();
@@ -1832,6 +1858,10 @@ function updateTouchMenuButton() {
   var button = document.querySelector("#touchControls .touchDelete");
   if (!button) return;
   button.style.display = gameState === ST_MENU && menuSubState === "slots" ? "block" : "none";
+  var resizeControls = document.querySelector("#touchControls .touchResizeControls");
+  if (resizeControls) {
+    resizeControls.style.display = gameState === ST_PAUSED && pauseSubState === "controls_touch" ? "flex" : "none";
+  }
 }
 function buyArmorUpgrade() {
   var armorPrices = [50, 80, 120];
