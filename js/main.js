@@ -401,6 +401,27 @@ canvas.tabIndex = 0;
 canvas.focus();
 canvas.addEventListener("click", function() { canvas.focus(); });
 canvas.addEventListener("click", function(event) {
+  if (!shopOpen || !shopMenuOpen || device !== "touch") return;
+  var rect = canvas.getBoundingClientRect();
+  var shopY = (event.clientY - rect.top) * canvas.height / rect.height;
+  if (shopId === 3) {
+    if (shopY >= 318 && shopY < 560) {
+      menuSelection = Math.max(0, Math.min(skinCatalog.length - 1, Math.floor((shopY - 318) / 24)));
+      window.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", code: "Enter"}));
+    }
+    return;
+  }
+  if (shopId === 0 && shopY >= 285 && shopY <= 545) {
+    var shopStart = Math.max(0, menuSelection - 18);
+    var clickedShopItem = shopStart + Math.floor((shopY - 286) / 11);
+    if (clickedShopItem >= 0 && clickedShopItem < 36) {
+      menuSelection = clickedShopItem;
+      window.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", code: "Enter"}));
+    }
+    return;
+  }
+});
+canvas.addEventListener("click", function(event) {
   if (gameState !== ST_MENU || menuSubState !== "difficulty") return;
   var rect = canvas.getBoundingClientRect();
   var y = (event.clientY - rect.top) * canvas.height / rect.height;

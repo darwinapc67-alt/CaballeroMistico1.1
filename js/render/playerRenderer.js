@@ -1,5 +1,8 @@
 function drawPlayerEntity(p) {
   ctx.save();
+  var walkFrame = Math.floor((p.anim || 0) / 6) % 4;
+  var walkBob = p.onGround && Math.abs(p.vx) > 0.5 ? [0, 1, 0, -1][walkFrame] : 0;
+  var drawY = p.y + walkBob;
   var skin = null;
   for (var skinIndex = 0; skinIndex < skinCatalog.length; skinIndex++) {
     if (skinCatalog[skinIndex].id === equippedSkin) { skin = skinCatalog[skinIndex]; break; }
@@ -13,23 +16,37 @@ function drawPlayerEntity(p) {
   }
   if (p.inv > 0 && Math.floor(p.inv/4)%2 === 0) ctx.globalAlpha = 0.3;
 
+  if (p.hasSword && p.swordEquipped && p.swordSwing <= 0) {
+    var backWeapon = getWeaponConfig(p.weaponId || weaponId);
+    var sheathX = p.facing > 0 ? p.x + 2 : p.x + p.w - 6;
+    ctx.save();
+    ctx.translate(sheathX, drawY + 7);
+    ctx.rotate(p.facing > 0 ? -0.18 : 0.18);
+    ctx.fillStyle = "#5a3010";
+    ctx.fillRect(-2, 0, 6, 22);
+    ctx.fillStyle = backWeapon.color;
+    ctx.fillRect(-1, -4, 4, 20);
+    ctx.fillStyle = "#d4af37";
+    ctx.fillRect(-4, -5, 10, 3);
+    ctx.restore();
+  }
   ctx.fillStyle = "#0a0a2a";
-  ctx.fillRect(p.x+4, p.y+8, p.w-8, p.h-8);
+  ctx.fillRect(p.x+4, drawY+8, p.w-8, p.h-8);
   if (p.dashing) {
     ctx.fillStyle = "rgba(120,190,255,0.35)";
-    ctx.fillRect(p.x - p.dashDir * 18, p.y + 7, p.w, p.h - 7);
+    ctx.fillRect(p.x - p.dashDir * 18, drawY + 7, p.w, p.h - 7);
   }
   ctx.fillStyle = skin ? skin.body : p.color;
-  ctx.fillRect(p.x+5, p.y+10, p.w-10, p.h-12);
+  ctx.fillRect(p.x+5, drawY+10, p.w-10, p.h-12);
   ctx.fillStyle = skin ? skin.head : p.headColor;
-  ctx.fillRect(p.x+5, p.y+2, p.w-10, 7);
+  ctx.fillRect(p.x+5, drawY+2, p.w-10, 7);
   if (skin && skin.cape) {
     ctx.fillStyle = skin.cape;
-    ctx.fillRect(p.x + (p.facing > 0 ? 1 : p.w - 4), p.y + 11, 4, p.h - 10);
+    ctx.fillRect(p.x + (p.facing > 0 ? 1 : p.w - 4), drawY + 11, 4, p.h - 10);
   }
   ctx.fillStyle = "#fff";
   var eyeX = p.facing > 0 ? p.x+12 : p.x+6;
-  ctx.fillRect(eyeX, p.y+4, 2.5, 2.5);
+  ctx.fillRect(eyeX, drawY+4, 2.5, 2.5);
   if (p.blocking) {
     ctx.strokeStyle = "#9de8ff";
     ctx.lineWidth = 2;
@@ -38,16 +55,16 @@ function drawPlayerEntity(p) {
     var shieldX = p.x + p.w / 2 + p.facing * 12;
     var shieldStart = p.facing > 0 ? -Math.PI / 2 : Math.PI / 2;
     var shieldEnd = p.facing > 0 ? Math.PI / 2 : Math.PI * 1.5;
-    ctx.arc(shieldX, p.y + p.h/2, 15, shieldStart, shieldEnd);
+    ctx.arc(shieldX, drawY + p.h/2, 15, shieldStart, shieldEnd);
     ctx.stroke();
     ctx.fillStyle = "rgba(157, 232, 255, 0.18)";
     ctx.fill();
     ctx.globalAlpha = 1;
   }
 
-  if (p.hasSword && p.swordEquipped && !p.swordSheathed) {
+  if (p.hasSword && p.swordEquipped && p.swordSwing > 0 && !p.swordSheathed) {
     var weapon = getWeaponConfig(p.weaponId || weaponId);
-    var sx = p.x+p.w/2, sy = p.y+p.h/2, angle = p.facing > 0 ? 0.3 : 2.8;
+    var sx = p.x+p.w/2, sy = drawY+p.h/2, angle = p.facing > 0 ? 0.3 : 2.8;
     if (p.swordSwing > 0) {
       var pr = 1-(p.swordSwing/Math.max(1, weapon.swing));
       if (p.vy < -2) angle = -Math.PI / 2;

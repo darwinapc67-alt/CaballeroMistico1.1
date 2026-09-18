@@ -1872,6 +1872,8 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     p.vy += GRAVITY; if (p.vy > 12) p.vy = 12;
   }
   p.x += p.vx; p.y += p.vy;
+  if (p.onGround && Math.abs(p.vx) > 0.5 && !p.blocking && p.swordSwing <= 0) p.anim = (p.anim + 1) % 24;
+  else p.anim = 0;
   if (p.attackLungeTimer > 0) checkSwordHitEnemiesFor(p);
   p.wallContact = 0;
   if (gameMode === "infinite" && currentRoom === 0) {

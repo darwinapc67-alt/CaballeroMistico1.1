@@ -883,8 +883,8 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (shopId === 0) {
-      if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 35) % 35; e.preventDefault(); return; }
-      if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % 35; e.preventDefault(); return; }
+      if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 36) % 36; e.preventDefault(); return; }
+      if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % 36; e.preventDefault(); return; }
       if (e.key === "Enter") {
         if (menuSelection === 0 && !hasMap && spendAzari(45, "map")) {
           hasMap = true;
@@ -1006,9 +1006,27 @@ window.addEventListener("keydown", function(e) {
             }
           }
         }
+        if (menuSelection === 35) {
+          shopId = 3;
+          menuSelection = ownedSkins[equippedSkin] ? Math.max(0, skinCatalog.findIndex(function(skin) { return skin.id === equippedSkin; })) : 0;
+          sfxNpc();
+        }
         e.preventDefault(); return;
       }
       e.preventDefault(); return;
+    }
+    if (shopId === 3) {
+      if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + skinCatalog.length) % skinCatalog.length; e.preventDefault(); return; }
+      if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % skinCatalog.length; e.preventDefault(); return; }
+      if (e.key === "Enter") {
+        var closetSkin = skinCatalog[menuSelection];
+        if (closetSkin && ownedSkins[closetSkin.id]) {
+          equippedSkin = closetSkin.id;
+          if (activeSlot >= 0) saveGame(activeSlot);
+          sfxBuy();
+        }
+        e.preventDefault(); return;
+      }
     }
     if (shopId === 1) {
       if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 7) % 7; e.preventDefault(); return; }
@@ -1039,7 +1057,10 @@ window.addEventListener("keydown", function(e) {
         e.preventDefault(); return;
       }
     }
-    if (e.key === "Escape") { shopOpen = false; shopMenuOpen = false; shopConfirm = -1; shopExitCooldown = 30; player.x = shopPreviousX; player.y = shopPreviousY; e.preventDefault(); return; }
+    if (e.key === "Escape") {
+      if (shopId === 3) { shopId = 0; menuSelection = 35; e.preventDefault(); return; }
+      shopOpen = false; shopMenuOpen = false; shopConfirm = -1; shopExitCooldown = 30; player.x = shopPreviousX; player.y = shopPreviousY; e.preventDefault(); return;
+    }
   }
 }, true);
 
@@ -1182,16 +1203,23 @@ function processGamepadInput() {
     if (btn9) {
       shopOpen = false; shopMenuOpen = false; shopConfirm = -1; shopExitCooldown = 30;
       player.x = shopPreviousX; player.y = shopPreviousY;
+      return;
     }
-    return;
   }
-  if (shopOpen && (shopId === 0 || shopId === 1)) {
-    var shopOptions = shopId === 0 ? 35 : 7;
+  if (shopOpen && (shopId === 0 || shopId === 1 || shopId === 3)) {
+    var shopOptions = shopId === 0 ? 36 : (shopId === 3 ? skinCatalog.length : 7);
     if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
     if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection - 1 + shopOptions) % shopOptions; gamepadMenuAxisLock = 1; }
     if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { menuSelection = (menuSelection + 1) % shopOptions; gamepadMenuAxisLock = 1; }
     if (btn0) {
-      if (shopId === 0) {
+      if (shopId === 3) {
+        var gamepadSkin = skinCatalog[menuSelection];
+        if (gamepadSkin && ownedSkins[gamepadSkin.id]) {
+          equippedSkin = gamepadSkin.id;
+          if (activeSlot >= 0) saveGame(activeSlot);
+          sfxBuy();
+        }
+      } else if (shopId === 0) {
         if (menuSelection === 0 && !hasMap && azari >= 45) { spendAzari(45, "map"); hasMap = true; sfxBuy(); }
         if (menuSelection === 1 && !hasBow && azari >= 35) { spendAzari(35, "bow"); hasBow = true; arrows = Math.max(arrows, 20); if (device === "touch") setupTouchControls(); sfxBuy(); }
         if (menuSelection === 2 && azari >= 5) { spendAzari(5, "arrows"); arrows += 20; sfxBuy(); }
@@ -1224,6 +1252,12 @@ function processGamepadInput() {
             eterium -= gamepadSkillCost; eteriumSkillLevel++; hasEteriumSkill = true; sfxEterium();
             if (activeSlot >= 0) saveGame(activeSlot);
           }
+          return;
+        }
+        if (menuSelection === 35) {
+          shopId = 3;
+          menuSelection = ownedSkins[equippedSkin] ? Math.max(0, skinCatalog.findIndex(function(skin) { return skin.id === equippedSkin; })) : 0;
+          sfxNpc();
           return;
         }
         if (menuSelection >= 20 && menuSelection <= 25) {

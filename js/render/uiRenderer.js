@@ -1900,6 +1900,26 @@ function drawShop() {
     var skinState = ownedSkins[skin.id] ? (equippedSkin === skin.id ? "EQUIPADA" : "EQUIPAR") : skin.price + " Azari";
     shopItems.push(skin.name + " (" + skinState + ")");
   });
+  shopItems.push("ARMARIO (cambiar outfit)");
+  if (shopId === 3) {
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#ffd700"; ctx.font = "bold 16px monospace"; ctx.fillText("ARMARIO", 110, 275);
+    ctx.fillStyle = "#aaa"; ctx.font = "12px monospace"; ctx.fillText("Elige un outfit comprado para equiparlo", 110, 298);
+    skinCatalog.forEach(function(skin, skinIndex) {
+      var closetY = 335 + skinIndex * 24;
+      if (skinIndex === menuSelection) {
+        ctx.fillStyle = "rgba(108,204,204,.25)";
+        ctx.fillRect(100, closetY - 17, 360, 21);
+      }
+      ctx.fillStyle = ownedSkins[skin.id] ? (skinIndex === menuSelection ? "#9de8ff" : "#fff") : "#555";
+      var closetState = ownedSkins[skin.id] ? (equippedSkin === skin.id ? "EQUIPADA" : "EQUIPAR") : "NO COMPRADA";
+      ctx.fillText((skinIndex === menuSelection ? "▶ " : "  ") + skin.name + " — " + closetState, 110, closetY);
+    });
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#777"; ctx.fillText("↑/↓ elegir • ENTER equipar • ESC volver", canvas.width / 2, 575);
+    ctx.textAlign = "left";
+    return;
+  }
   ctx.textAlign = "left";
   ctx.fillStyle = "#ffd700"; ctx.font = "bold 15px monospace";
   ctx.fillText("ARTÍCULOS", 110, 275);
