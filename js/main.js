@@ -471,6 +471,9 @@ canvas.addEventListener("click", function(event) {
   var x = (event.clientX - rect.left) * canvas.width / rect.width;
   var y = (event.clientY - rect.top) * canvas.height / rect.height;
   var selected = -1;
+  function activate() {
+    window.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", code: "Enter"}));
+  }
   if (gameState === ST_PAUSED && pauseSubState === "menu") {
     if (x >= 220 && x <= 580 && y >= 175 && y < 555) {
       selected = Math.floor((y - 182) / 40);
@@ -484,13 +487,58 @@ canvas.addEventListener("click", function(event) {
       selected = Math.floor((y - 165) / 75);
       if (selected >= 0 && selected < 3) {
         controlsConfigSelection = selected;
-        window.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", code: "Enter"}));
+        activate();
       }
+    }
+  } else if (gameState === ST_PAUSED && (pauseSubState === "controls_keys" || pauseSubState === "controls_pad")) {
+    if (y >= 140 && y < 165 + controlActions.length * 38) {
+      selected = Math.floor((y - 143) / 38);
+      if (selected >= 0 && selected < controlActions.length) {
+        controlsConfigActionSelection = selected;
+        if (x >= 355 && x < 720) {
+          controlsConfigSlot = Math.max(0, Math.min(3, Math.floor((x - 355) / 82)));
+          activate();
+        }
+      }
+    }
+  } else if (gameState === ST_PAUSED && pauseSubState === "controls_touch") {
+    if (y >= 115 && y < 390) {
+      selected = Math.floor((y - 122) / 70);
+      if (selected >= 0 && selected < 4) {
+        touchEditSelection = selected;
+        applyTouchLayout();
+      }
+    }
+  } else if (gameState === ST_PAUSED && pauseSubState === "audio") {
+    if (y >= 170 && y < 370) {
+      selected = Math.floor((y - 178) / 45);
+      if (selected >= 0 && selected < 4) {
+        audioSelection = selected;
+        if (selected < 3) adjustAudioVolume(x < canvas.width / 2 ? -0.05 : 0.05);
+        else toggleMusic();
+      }
+    }
+  } else if (gameState === ST_PAUSED && pauseSubState === "diary") {
+    if (y >= 95 && y < 135) {
+      diaryCategory = x < canvas.width / 2 ? "enemies" : "bosses";
+      diaryScroll = 0;
+    } else if (y > 500) {
+      diaryScroll = Math.min(diaryCategory === "enemies" ? 1 : 0, diaryScroll + 1);
     }
   } else if (gameState === ST_PAUSED && pauseSubState === "settings") {
     if (x >= 160 && x <= 640 && y >= 165 && y < 430) {
       selected = Math.floor((y - 167) / 55);
-      if (selected >= 0 && selected < 4) settingsSelection = selected;
+      if (selected >= 0 && selected < 4) {
+        settingsSelection = selected;
+        if (selected === 2 || selected === 3) {
+          window.dispatchEvent(new KeyboardEvent("keydown", {
+            key: x < canvas.width / 2 ? "ArrowLeft" : "ArrowRight",
+            code: x < canvas.width / 2 ? "ArrowLeft" : "ArrowRight"
+          }));
+        } else {
+          activate();
+        }
+      }
     }
   } else if (gameState === ST_MENU && menuSubState === "slots") {
     if (y >= 155 && y < 470) {
@@ -498,10 +546,15 @@ canvas.addEventListener("click", function(event) {
       window.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", code: "Enter"}));
     }
   } else if (gameState === ST_MENU && menuSubState === "settings") {
-    if (y >= 160 && y < 430) {
-      settingsSelection = Math.floor((y - 167) / 55);
-      if (settingsSelection >= 0 && settingsSelection < 4) {
-        window.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", code: "Enter"}));
+    if (y >= 160 && y < 530) {
+      settingsSelection = Math.max(0, Math.min(6, Math.floor((y - 162) / 46)));
+      if (settingsSelection === 4 || settingsSelection === 5) {
+        window.dispatchEvent(new KeyboardEvent("keydown", {
+          key: x < canvas.width / 2 ? "ArrowLeft" : "ArrowRight",
+          code: x < canvas.width / 2 ? "ArrowLeft" : "ArrowRight"
+        }));
+      } else if (settingsSelection >= 0) {
+        activate();
       }
     }
   } else if (gameState === ST_MENU && menuSubState === "controls_category") {
@@ -510,6 +563,22 @@ canvas.addEventListener("click", function(event) {
       if (controlsConfigSelection >= 0 && controlsConfigSelection < 3) {
         window.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", code: "Enter"}));
       }
+    }
+  } else if (gameState === ST_MENU && menuSubState === "controls_config") {
+    if (y >= 130 && y < 165 + controlActions.length * 40) {
+      selected = Math.floor((y - 133) / 40);
+      if (selected >= 0 && selected < controlActions.length) {
+        controlsConfigActionSelection = selected;
+        if (x >= 355 && x < 720) {
+          controlsConfigSlot = Math.max(0, Math.min(3, Math.floor((x - 355) / 82)));
+          controlsConfigListening = true;
+        }
+      }
+    }
+  } else if (gameState === ST_MENU && menuSubState === "difficulty") {
+    if (y >= 190 && y < 430) {
+      difficultySelection = Math.max(0, Math.min(difficultyOptions.length - 1, Math.floor((y - 190) / 70)));
+      beginNewGameFromDifficulty();
     }
   }
 });
