@@ -1743,7 +1743,11 @@ function setupTouchControls() {
       if (pinchDistance === null) pinchDistance = currentPinchDistance;
       if (Math.abs(currentPinchDistance - pinchDistance) >= 2) {
         var pinchDelta = currentPinchDistance > pinchDistance ? 0.05 : -0.05;
-        touchLayout.buttonScale = Math.max(0.7, Math.min(1.6, touchLayout.buttonScale + pinchDelta));
+        if (touchEditSelection === 0) {
+          touchLayout.joystickScale = Math.max(0.7, Math.min(1.6, touchLayout.joystickScale + pinchDelta));
+        } else if (touchEditSelection === 3) {
+          touchLayout.buttonScale = Math.max(0.7, Math.min(1.6, touchLayout.buttonScale + pinchDelta));
+        }
         pinchDistance = currentPinchDistance;
         applyTouchLayout();
         saveTouchLayout();

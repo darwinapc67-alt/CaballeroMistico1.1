@@ -466,6 +466,54 @@ canvas.addEventListener("click", function(event) {
   }
 });
 canvas.addEventListener("click", function(event) {
+  if (device !== "touch") return;
+  var rect = canvas.getBoundingClientRect();
+  var x = (event.clientX - rect.left) * canvas.width / rect.width;
+  var y = (event.clientY - rect.top) * canvas.height / rect.height;
+  var selected = -1;
+  if (gameState === ST_PAUSED && pauseSubState === "menu") {
+    if (x >= 220 && x <= 580 && y >= 175 && y < 555) {
+      selected = Math.floor((y - 182) / 40);
+      if (selected >= 0 && selected < 8) {
+        pauseSelection = selected;
+        window.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", code: "Enter"}));
+      }
+    }
+  } else if (gameState === ST_PAUSED && pauseSubState === "controls") {
+    if (x >= 180 && x <= 620 && y >= 160 && y < 450) {
+      selected = Math.floor((y - 165) / 75);
+      if (selected >= 0 && selected < 3) {
+        controlsConfigSelection = selected;
+        window.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", code: "Enter"}));
+      }
+    }
+  } else if (gameState === ST_PAUSED && pauseSubState === "settings") {
+    if (x >= 160 && x <= 640 && y >= 165 && y < 430) {
+      selected = Math.floor((y - 167) / 55);
+      if (selected >= 0 && selected < 4) settingsSelection = selected;
+    }
+  } else if (gameState === ST_MENU && menuSubState === "slots") {
+    if (y >= 155 && y < 470) {
+      menuSelection = Math.floor((y - 155) / 63);
+      window.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", code: "Enter"}));
+    }
+  } else if (gameState === ST_MENU && menuSubState === "settings") {
+    if (y >= 160 && y < 430) {
+      settingsSelection = Math.floor((y - 167) / 55);
+      if (settingsSelection >= 0 && settingsSelection < 4) {
+        window.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", code: "Enter"}));
+      }
+    }
+  } else if (gameState === ST_MENU && menuSubState === "controls_category") {
+    if (y >= 165 && y < 430) {
+      controlsConfigSelection = Math.floor((y - 165) / 75);
+      if (controlsConfigSelection >= 0 && controlsConfigSelection < 3) {
+        window.dispatchEvent(new KeyboardEvent("keydown", {key: "Enter", code: "Enter"}));
+      }
+    }
+  }
+});
+canvas.addEventListener("click", function(event) {
   if (gameState !== ST_INVENTORY || mapOpen) return;
   var rect = canvas.getBoundingClientRect();
   var x = (event.clientX - rect.left) * canvas.width / rect.width;

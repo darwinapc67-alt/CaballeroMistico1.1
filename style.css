@@ -117,6 +117,7 @@
       --touch-joystick-size: clamp(126px, 18vw, 162px);
       --touch-knob-size: clamp(58px, 8vw, 74px);
       --touch-button-scale: 1;
+      --touch-joystick-scale: 1;
       position: fixed;
       inset: auto 0 max(12px, env(safe-area-inset-bottom)) 0;
       display: flex;
@@ -154,8 +155,8 @@
     .touchActions { flex-wrap: wrap; justify-content: flex-end; }
     .touchJoystick {
       position: relative;
-      width: var(--touch-joystick-size);
-      height: var(--touch-joystick-size);
+      width: calc(var(--touch-joystick-size) * var(--touch-joystick-scale));
+      height: calc(var(--touch-joystick-size) * var(--touch-joystick-scale));
       border: 2px solid rgba(108,204,204,.75);
       border-radius: 50%;
       background: radial-gradient(circle, rgba(108,204,204,.18), rgba(16,28,43,.9));
@@ -175,16 +176,16 @@
       position: absolute;
       left: 50%;
       top: 50%;
-      width: var(--touch-knob-size);
-      height: var(--touch-knob-size);
+      width: calc(var(--touch-knob-size) * var(--touch-joystick-scale));
+      height: calc(var(--touch-knob-size) * var(--touch-joystick-scale));
       transform: translate(-50%, -50%);
       border: 2px solid #9de8ff;
       border-radius: 50%;
       background: rgba(108,204,204,.72);
       color: #fff;
       text-align: center;
-      line-height: calc(var(--touch-knob-size) - 8px);
-      font-size: clamp(16px, 2.2vw, 22px);
+      line-height: calc((var(--touch-knob-size) * var(--touch-joystick-scale)) - 8px);
+      font-size: calc(clamp(16px, 2.2vw, 22px) * var(--touch-joystick-scale));
       z-index: 1;
     }
     .touchActions button[data-key="c"] {

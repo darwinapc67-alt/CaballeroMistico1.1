@@ -1689,7 +1689,7 @@ function drawTouchControlsEditor() {
   ctx.fillText("AJUSTAR CONTROLES CELULAR / TABLET", canvas.width / 2, 65);
   var labels = ["Joystick", "Cada botón táctil (arrástralo)", "Opacidad", "Tamaño de botones"];
   var values = [
-    Math.round(touchLayout.joystick.x) + "% / " + Math.round(touchLayout.joystick.y) + "%",
+    Math.round(touchLayout.joystick.x) + "% / " + Math.round(touchLayout.joystick.y) + "  (" + Math.round(touchLayout.joystickScale * 100) + "%)",
     "incluye pausa",
     Math.round(touchLayout.opacity * 100) + "%",
     Math.round(touchLayout.buttonScale * 100) + "%"
@@ -1705,8 +1705,9 @@ function drawTouchControlsEditor() {
   ctx.fillStyle = "#8bd"; ctx.font = "12px monospace";
   ctx.fillText("Arrastra cada botón por separado; la pausa no cierra el editor", canvas.width / 2, 390);
   ctx.fillText("Joystick: arriba/abajo elegir • izquierda/derecha ajustar", canvas.width / 2, 415);
-  ctx.fillText("Dos dedos: sepáralos para agrandar • júntalos para reducir", canvas.width / 2, 435);
-  ctx.fillText("Arrastra botones • ESC: guardar y volver", canvas.width / 2, 455);
+  ctx.fillText("Selecciona Joystick o Tamaño de botones antes del gesto de dos dedos", canvas.width / 2, 435);
+  ctx.fillText("Separa dedos para agrandar • júntalos para reducir", canvas.width / 2, 455);
+  ctx.fillText("Arrastra botones • ESC: guardar y volver", canvas.width / 2, 475);
   ctx.textAlign = "left";
 }
 function drawTransition() {
