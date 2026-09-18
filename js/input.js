@@ -1572,9 +1572,10 @@ function setupTouchControls() {
   controls.innerHTML = '<div class="touchPad" aria-label="Joystick de movimiento"><div class="touchJoystick"><div class="touchKnob">●</div></div></div>' +
     '<div class="touchActions">' +
     '<button class="touchJump" data-key=" " aria-label="Saltar">⬆</button>' +
-    '<button data-key="x" aria-label="Atacar">⚔</button>' +
+    (hasSword ? '<button data-key="x" aria-label="Atacar con espada">⚔</button>' : '') +
+    (hasSword && combatSkills.charged ? '<button data-key="v" aria-label="Ataque especial">✦</button>' : '') +
     (hasBow ? '<button data-key="z" aria-label="Disparar arco">🏹</button>' : '') +
-    '<button data-key="c" aria-label="Bloquear">🛡</button>' +
+    (hasSword ? '<button data-key="c" aria-label="Bloquear">🛡</button>' : '') +
     (hasDash ? '<button data-key="shift" aria-label="Dash">↯</button>' : '') +
     '<button data-key="e" aria-label="Interactuar">✦</button>' +
     '<button data-key="`" aria-label="Abrir inventario">🎒</button>' +
@@ -1647,6 +1648,7 @@ function setupTouchControls() {
         if (key === "d") return "ArrowDown";
         if (key === " ") return "Enter";
       }
+      if (key === "v") return "x";
       return key === " " ? " " : key;
     };
     var press = function(event) {
@@ -1823,7 +1825,7 @@ function setupTouchControls() {
 }
 
 function getTouchControlsSignature() {
-  return [hasSword, hasBow, hasDash, hasMap, bombs > 0].join("|");
+  return [hasSword, hasBow, hasDash, hasMap, bombs > 0, combatSkills.charged].join("|");
 }
 
 function updateTouchMenuButton() {
