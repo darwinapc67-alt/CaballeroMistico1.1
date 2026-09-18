@@ -1704,7 +1704,8 @@ function drawTouchControlsEditor() {
   });
   ctx.fillStyle = "#8bd"; ctx.font = "12px monospace";
   ctx.fillText("Arrastra cada botón por separado; la pausa no cierra el editor", canvas.width / 2, 390);
-  ctx.fillText("+/-: ajustar opacidad o tamaño  •  ESC: guardar y volver", canvas.width / 2, 415);
+  ctx.fillText("Joystick: arriba/abajo elegir • izquierda/derecha ajustar", canvas.width / 2, 415);
+  ctx.fillText("Arrastra botones • ESC: guardar y volver", canvas.width / 2, 435);
   ctx.textAlign = "left";
 }
 function drawTransition() {

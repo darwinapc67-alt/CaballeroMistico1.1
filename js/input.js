@@ -1613,7 +1613,12 @@ function setupTouchControls() {
     keys.arrowup = dy < -deadZone;
     keys.arrowdown = dy > deadZone;
     if (gameState !== ST_PLAYING && gameState !== ST_INVENTORY) {
-      var direction = Math.abs(dy) > deadZone ? (dy < 0 ? "ArrowUp" : "ArrowDown") : "";
+      var direction = "";
+      if (pauseSubState === "controls_touch" && Math.abs(dx) > deadZone && Math.abs(dx) > Math.abs(dy)) {
+        direction = dx < 0 ? "ArrowLeft" : "ArrowRight";
+      } else {
+        direction = Math.abs(dy) > deadZone ? (dy < 0 ? "ArrowUp" : "ArrowDown") : "";
+      }
       if (direction && direction !== lastMenuDirection) {
         window.dispatchEvent(new KeyboardEvent("keydown", {key: direction, code: direction}));
       }
@@ -1623,7 +1628,7 @@ function setupTouchControls() {
   joystick.addEventListener("pointerdown", function(event) {
     event.preventDefault();
     joystickPointer = event.pointerId;
-    joystick.setPointerCapture(event.pointerId);
+    if (joystick.setPointerCapture) joystick.setPointerCapture(event.pointerId);
     moveJoystick(event);
   });
   joystick.addEventListener("pointermove", function(event) {
@@ -1649,7 +1654,7 @@ function setupTouchControls() {
       if (gameState === ST_PAUSED && pauseSubState === "controls_touch") return;
       if (buttonPointer !== null) return;
       buttonPointer = event.pointerId;
-      button.setPointerCapture(event.pointerId);
+      if (button.setPointerCapture) button.setPointerCapture(event.pointerId);
       button.classList.add("pressed");
       if (key === "delete") {
         var deleteKey = gameState === ST_MENU && menuSubState === "confirm_delete" ? "Enter" : "Delete";
@@ -1701,7 +1706,7 @@ function setupTouchControls() {
       startY: event.clientY,
       moved: false
     };
-    controls.setPointerCapture(event.pointerId);
+    if (controls.setPointerCapture) controls.setPointerCapture(event.pointerId);
   }, true);
   controls.addEventListener("pointermove", function(event) {
     if (!touchDrag || touchDrag.pointerId !== event.pointerId) return;
@@ -1740,6 +1745,14 @@ function setupTouchControls() {
   controls.addEventListener("pointercancel", function(event) {
     if (!touchDrag || touchDrag.pointerId !== event.pointerId) return;
     touchDrag = null;
+    applyTouchLayout();
+    saveTouchLayout();
+  }, true);
+  controls.addEventListener("lostpointercapture", function(event) {
+    if (!touchDrag || touchDrag.pointerId !== event.pointerId) return;
+    touchDrag = null;
+    applyTouchLayout();
+    saveTouchLayout();
   }, true);
 }
 

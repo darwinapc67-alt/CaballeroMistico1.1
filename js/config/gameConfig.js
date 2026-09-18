@@ -354,18 +354,29 @@ function applyTouchLayout() {
     pad.style.position = "fixed";
     pad.style.left = touchLayout.joystick.x + "vw";
     pad.style.top = touchLayout.joystick.y + "vh";
+    var joystick = pad.querySelector(".touchJoystick");
+    if (joystick) {
+      var joystickRect = joystick.getBoundingClientRect();
+      var maxJoystickX = Math.max(0, 100 - joystickRect.width / window.innerWidth * 100 - 2);
+      var maxJoystickY = Math.max(4, 100 - joystickRect.height / window.innerHeight * 100 - 2);
+      touchLayout.joystick.x = Math.max(0, Math.min(maxJoystickX, touchLayout.joystick.x));
+      touchLayout.joystick.y = Math.max(4, Math.min(maxJoystickY, touchLayout.joystick.y));
+      pad.style.left = touchLayout.joystick.x + "vw";
+      pad.style.top = touchLayout.joystick.y + "vh";
+    }
   }
   if (actions) {
     actions.style.position = "static";
     actions.style.left = "";
     actions.style.top = "";
+    var placedButtonRects = [];
     controls.querySelectorAll(".touchActions button").forEach(function(button, index) {
       var key = button.getAttribute("data-key");
       var position = touchLayout.buttons[key] || {
         x: 57 + (index % 3) * 12,
         y: key === "shift" ? 78 : 58 + Math.floor(index / 3) * 15
       };
-      position.x = Math.max(2, Math.min(84, Number(position.x) || 2));
+      position.x = Math.max(2, Math.min(98, Number(position.x) || 2));
       position.y = Math.max(4, Math.min(78, Number(position.y) || 4));
       touchLayout.buttons[key] = position;
       button.style.position = "fixed";
@@ -373,6 +384,36 @@ function applyTouchLayout() {
       button.style.visibility = "visible";
       button.style.left = position.x + "vw";
       button.style.top = position.y + "vh";
+      var buttonRect = button.getBoundingClientRect();
+      var maxButtonX = Math.max(2, 100 - buttonRect.width / window.innerWidth * 100 - 2);
+      var maxButtonY = Math.max(4, 100 - buttonRect.height / window.innerHeight * 100 - 2);
+      position.x = Math.max(2, Math.min(maxButtonX, position.x));
+      position.y = Math.max(4, Math.min(maxButtonY, position.y));
+      var attempts = 0;
+      while (attempts < 40) {
+        button.style.left = position.x + "vw";
+        button.style.top = position.y + "vh";
+        buttonRect = button.getBoundingClientRect();
+        var overlaps = placedButtonRects.some(function(previous) {
+          return buttonRect.left < previous.right && buttonRect.right > previous.left &&
+            buttonRect.top < previous.bottom && buttonRect.bottom > previous.top;
+        });
+        if (!overlaps) break;
+        var stepX = buttonRect.width / window.innerWidth * 100 + 2;
+        var stepY = buttonRect.height / window.innerHeight * 100 + 2;
+        position.x += stepX;
+        if (position.x > maxButtonX) {
+          position.x = 2;
+          position.y = Math.min(maxButtonY, position.y + stepY);
+        }
+        attempts++;
+      }
+      position.x = Math.max(2, Math.min(maxButtonX, position.x));
+      position.y = Math.max(4, Math.min(maxButtonY, position.y));
+      button.style.left = position.x + "vw";
+      button.style.top = position.y + "vh";
+      buttonRect = button.getBoundingClientRect();
+      if (buttonRect.width > 0 && buttonRect.height > 0) placedButtonRects.push(buttonRect);
     });
   }
 }

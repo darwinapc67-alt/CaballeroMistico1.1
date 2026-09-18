@@ -203,7 +203,7 @@
     .touchActions button[data-key="shift"] {
       border-color: rgba(122,170,255,.8);
     }
-    .touchActions button[data-key="escape"] {
+    #touchControls .touchActions button[data-key="escape"] {
       width: calc(var(--touch-button-size) * 0.72 * var(--touch-button-scale));
       height: calc(var(--touch-button-size) * 0.72 * var(--touch-button-scale));
       font-size: calc(clamp(16px, 2.5vw, 20px) * var(--touch-button-scale));
@@ -225,7 +225,7 @@
       #touchControls button { font-size: clamp(20px, 4.2vw, 24px); }
       .touchPad, .touchActions { gap: 7px; }
       .touchActions { width: 56vw; max-width: 240px; }
-      .touchActions button[data-key="escape"] { width: calc(var(--touch-button-size) * 0.68); height: calc(var(--touch-button-size) * 0.68); }
+      #touchControls .touchActions button[data-key="escape"] { width: calc(var(--touch-button-size) * 0.68 * var(--touch-button-scale)); height: calc(var(--touch-button-size) * 0.68 * var(--touch-button-scale)); }
     }
     @media (orientation: landscape) and (max-height: 600px) {
       body {
@@ -263,7 +263,7 @@
         max-width: 330px;
         gap: 5px;
       }
-      .touchActions button[data-key="escape"] {
+      #touchControls .touchActions button[data-key="escape"] {
         width: calc(var(--touch-button-size) * 0.72);
         height: calc(var(--touch-button-size) * 0.72);
       }
