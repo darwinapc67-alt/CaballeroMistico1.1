@@ -18,16 +18,20 @@ function drawPlayerEntity(p) {
 
   if (p.hasSword && p.swordEquipped && p.swordSwing <= 0) {
     var backWeapon = getWeaponConfig(p.weaponId || weaponId);
-    var sheathX = p.facing > 0 ? p.x + 2 : p.x + p.w - 6;
+    var sheathX = p.x + p.w / 2 - p.facing * 12;
     ctx.save();
-    ctx.translate(sheathX, drawY + 7);
-    ctx.rotate(p.facing > 0 ? -0.18 : 0.18);
-    ctx.fillStyle = "#5a3010";
-    ctx.fillRect(-2, 0, 6, 22);
+    ctx.translate(sheathX, drawY + 15);
+    ctx.rotate(p.facing > 0 ? -0.33 : 0.33);
     ctx.fillStyle = backWeapon.color;
-    ctx.fillRect(-1, -4, 4, 20);
+    ctx.fillRect(-1, -14, 4, 25);
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, -12, 1, 18);
     ctx.fillStyle = "#d4af37";
-    ctx.fillRect(-4, -5, 10, 3);
+    ctx.fillRect(-4, 7, 10, 3);
+    ctx.fillStyle = "#5a3010";
+    ctx.fillRect(0, 10, 3, 8);
+    ctx.fillStyle = "#24150c";
+    ctx.fillRect(-1, 17, 5, 3);
     ctx.restore();
   }
   ctx.fillStyle = "#0a0a2a";
