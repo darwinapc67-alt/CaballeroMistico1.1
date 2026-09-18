@@ -1648,14 +1648,19 @@ function defeatBoss(e) {
   }
   if (e.type === "guardian" && e.room === 39) startFloorCollapse();
   if (e.room < rooms.length - 1) {
-    if (e.type !== "dragon") {
+    if (e.type !== "dragon" && !(e.type === "guardian" && e.room === 39)) {
       rooms[e.room].transitionZone = {x: e.room * ROOM_W + ROOM_W - 70, y: 450, w: 60, h: 110, to: e.room + 1};
     }
   }
 }
 
 function startFloorCollapse() {
-  if (gameState !== ST_PLAYING || floorCollapseTimer > 0) return;
+  if (floorCollapseTimer > 0) return;
+  if (currentRoom !== 39) return;
+  var collapseRoom = rooms[39];
+  var collapseOrigin = collapseRoom.worldX !== undefined ? collapseRoom.worldX : 39 * ROOM_W;
+  player.x = Math.max(collapseOrigin + 30, Math.min(collapseOrigin + (collapseRoom.roomWidth || ROOM_W) - player.w - 30, player.x));
+  if (player.y < 0 || player.y > collapseRoom.height - player.h) player.y = collapseRoom.height - player.h - 40;
   floorCollapseTimer = 180;
   transTargetRoom = 41;
   player.frozen = true; player.inv = Math.max(player.inv, 9999); player.vx = 0; player.vy = 0;
