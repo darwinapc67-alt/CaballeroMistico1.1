@@ -1686,8 +1686,33 @@ function setupTouchControls() {
   applyTouchLayout();
   updateTouchMenuButton();
   var touchDrag = null;
+  var editorPointers = {};
+  var pinchDistance = null;
+  function getPinchDistance() {
+    var pointers = Object.keys(editorPointers);
+    if (pointers.length < 2) return null;
+    var first = editorPointers[pointers[0]];
+    var second = editorPointers[pointers[1]];
+    var dx = second.x - first.x;
+    var dy = second.y - first.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+  function finishEditorPointer(pointerId) {
+    delete editorPointers[pointerId];
+    if (Object.keys(editorPointers).length < 2) pinchDistance = null;
+  }
   controls.addEventListener("pointerdown", function(event) {
     if (gameState !== ST_PAUSED || pauseSubState !== "controls_touch") return;
+    editorPointers[event.pointerId] = {x: event.clientX, y: event.clientY};
+    var currentPinchDistance = getPinchDistance();
+    if (currentPinchDistance !== null) {
+      pinchDistance = currentPinchDistance;
+      touchDrag = null;
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      return;
+    }
     var target = event.target.closest(".touchPad, .touchActions button");
     if (!target) return;
     event.preventDefault();
@@ -1709,6 +1734,24 @@ function setupTouchControls() {
     if (controls.setPointerCapture) controls.setPointerCapture(event.pointerId);
   }, true);
   controls.addEventListener("pointermove", function(event) {
+    if (editorPointers[event.pointerId]) {
+      editorPointers[event.pointerId].x = event.clientX;
+      editorPointers[event.pointerId].y = event.clientY;
+    }
+    var currentPinchDistance = getPinchDistance();
+    if (currentPinchDistance !== null) {
+      if (pinchDistance === null) pinchDistance = currentPinchDistance;
+      if (Math.abs(currentPinchDistance - pinchDistance) >= 2) {
+        var pinchDelta = currentPinchDistance > pinchDistance ? 0.05 : -0.05;
+        touchLayout.buttonScale = Math.max(0.7, Math.min(1.6, touchLayout.buttonScale + pinchDelta));
+        pinchDistance = currentPinchDistance;
+        applyTouchLayout();
+        saveTouchLayout();
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
     if (!touchDrag || touchDrag.pointerId !== event.pointerId) return;
     event.preventDefault();
     if (Math.abs(event.clientX - touchDrag.startX) > 8 ||
@@ -1727,6 +1770,12 @@ function setupTouchControls() {
     applyTouchLayout();
   }, true);
   controls.addEventListener("pointerup", function(event) {
+    if (editorPointers[event.pointerId]) finishEditorPointer(event.pointerId);
+    if (pinchDistance !== null) {
+      touchDrag = null;
+      event.preventDefault();
+      return;
+    }
     if (!touchDrag || touchDrag.pointerId !== event.pointerId) return;
     event.preventDefault();
     if (touchDrag.key === "escape" && !touchDrag.moved) {
@@ -1743,12 +1792,14 @@ function setupTouchControls() {
     saveTouchLayout();
   }, true);
   controls.addEventListener("pointercancel", function(event) {
+    finishEditorPointer(event.pointerId);
     if (!touchDrag || touchDrag.pointerId !== event.pointerId) return;
     touchDrag = null;
     applyTouchLayout();
     saveTouchLayout();
   }, true);
   controls.addEventListener("lostpointercapture", function(event) {
+    finishEditorPointer(event.pointerId);
     if (!touchDrag || touchDrag.pointerId !== event.pointerId) return;
     touchDrag = null;
     applyTouchLayout();
