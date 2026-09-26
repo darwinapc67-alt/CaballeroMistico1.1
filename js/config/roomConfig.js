@@ -495,3 +495,140 @@ rooms[39] = guardianRoom39;
 rooms[42] = room39;
 room35.bossName = null;
 rooms[38].bossName = null;
+
+room0.sideExits = [{
+  x: 724, y: 455, w: 58, h: 105, to: 43,
+  spawnX: 43 * ROOM_W + 90, spawnY: 520,
+  mapRevealAt: 0
+}];
+room3.platforms.push(
+  {x: 3 * ROOM_W + 82, y: 320, w: 138, h: 16},
+  {x: 3 * ROOM_W + 258, y: 252, w: 96, h: 16},
+  {x: 3 * ROOM_W + 418, y: 292, w: 156, h: 16}
+);
+rooms[3].sideExits = [{
+  x: 3 * ROOM_W + 722, y: 455, w: 58, h: 105, to: 46,
+  spawnX: 46 * ROOM_W + 90, spawnY: 520,
+  mapRevealAt: 3
+}];
+room5.platforms.push(
+  {x: 5 * ROOM_W + 142, y: 368, w: 178, h: 18},
+  {x: 5 * ROOM_W + 365, y: 302, w: 110, h: 16},
+  {x: 5 * ROOM_W + 524, y: 382, w: 184, h: 18}
+);
+rooms[5].sideExits = [{
+  x: 5 * ROOM_W + 20, y: 455, w: 58, h: 105, to: 46,
+  spawnX: 46 * ROOM_W + 680, spawnY: 520,
+  mapRevealAt: 5
+}];
+room7.platforms.push(
+  {x: 7 * ROOM_W + 92, y: 365, w: 132, h: 16},
+  {x: 7 * ROOM_W + 260, y: 285, w: 112, h: 16},
+  {x: 7 * ROOM_W + 438, y: 342, w: 168, h: 16}
+);
+rooms[7].sideExits = [{
+  x: 7 * ROOM_W + 722, y: 455, w: 58, h: 105, to: 47,
+  spawnX: 47 * ROOM_W + 90, spawnY: 520,
+  mapRevealAt: 7
+}];
+rooms[9].sideExits = [{
+  x: 9 * ROOM_W + 20, y: 455, w: 58, h: 105, to: 47,
+  spawnX: 47 * ROOM_W + 680, spawnY: 520,
+  mapRevealAt: 9
+}];
+interludeRooms[2].platforms.push(
+  {x: 14 * ROOM_W + 485, y: 315, w: 110, h: 16}
+);
+interludeRooms[2].sideExits = [{
+  x: 14 * ROOM_W + 670, y: 10, w: 52, h: 35, to: 44,
+  spawnX: 44 * ROOM_W + 90, spawnY: 520, requires: "doubleJump",
+  title: "ALTURA", mapRevealAt: 14
+}];
+rooms[18].platforms.push({x: 18 * ROOM_W + 485, y: 315, w: 110, h: 16});
+rooms[18].sideExits = [{
+  x: 18 * ROOM_W + 670, y: 10, w: 52, h: 35, to: 48,
+  spawnX: 48 * ROOM_W + 90, spawnY: 520, requires: "doubleJump",
+  mapRevealAt: 18
+}];
+cityRooms[4].sideExits = [{
+  x: 28 * ROOM_W + 340, y: 165, w: 54, h: 70, to: 45,
+  spawnX: 45 * ROOM_W + 90, spawnY: 520, requires: "dash",
+  mapRevealAt: 28
+}];
+cityRooms[4].platforms.push(
+  {x: 28 * ROOM_W + 155, y: 425, w: 120, h: 18},
+  {x: 28 * ROOM_W + 285, y: 335, w: 92, h: 18},
+  {x: 28 * ROOM_W + 320, y: 235, w: 95, h: 18}
+);
+rooms[24].sideExits = [{
+  x: 24 * ROOM_W + 722, y: 455, w: 58, h: 105, to: 49,
+  spawnX: 49 * ROOM_W + 90, spawnY: 520, requires: "dash",
+  mapRevealAt: 24
+}];
+rooms[26].sideExits = [{
+  x: 26 * ROOM_W + 20, y: 455, w: 58, h: 105, to: 49,
+  spawnX: 49 * ROOM_W + 680, spawnY: 520,
+  mapRevealAt: 26
+}];
+
+function createOptionalCaveRoom(index, title, exitRoom, exitX, exitY, rewardAmount, variant) {
+  var origin = index * ROOM_W;
+  var platformShapes = [
+    [[45, 458, 166, 17], [260, 383, 98, 15], [405, 302, 168, 18], [628, 414, 120, 16]],
+    [[76, 452, 125, 16], [246, 373, 174, 17], [462, 286, 98, 15], [592, 395, 152, 17], [160, 238, 90, 14], [505, 195, 122, 15]],
+    [[45, 468, 150, 16], [226, 390, 106, 15], [388, 322, 184, 17], [610, 430, 130, 16], [176, 247, 110, 14], [505, 208, 100, 14]]
+  ];
+  var platforms = [{x: origin, y: 560, w: ROOM_W, h: 40}];
+  platformShapes[variant].forEach(function(shape) {
+    platforms.push({x: origin + shape[0], y: shape[1], w: shape[2], h: shape[3]});
+  });
+  return {
+    height: 600,
+    platforms: platforms,
+    spikes: variant === 2 ? [{x: origin + 270, y: 540, w: 120, h: 20}] : [],
+    walls: [],
+    optional: true,
+    zoneTitle: title,
+    visualProfile: variant === 2 ? "abyss" : "crystal",
+    sideExits: [{
+      x: origin + 18, y: 455, w: 56, h: 105, to: exitRoom,
+      spawnX: exitX, spawnY: exitY
+    }],
+    decor: genDecor(origin, 8 + variant, 5, 600)
+  };
+}
+
+rooms.push(
+  createOptionalCaveRoom(43, "GRUTA DEL ECO", 0, 650, 520, 100, 0),
+  createOptionalCaveRoom(44, "GALERÍA ALTA", 14, 14 * ROOM_W + 545, 285, 160, 1),
+  createOptionalCaveRoom(45, "GRIETA DEL ABISMO", 28, 28 * ROOM_W + 338, 205, 220, 2),
+  createOptionalCaveRoom(46, "BIFURCACIÓN DEL ECO", 3, 3 * ROOM_W + 690, 520, 130, 0),
+  createOptionalCaveRoom(47, "PASO DE LOS HONGOS", 7, 7 * ROOM_W + 90, 520, 150, 1),
+  createOptionalCaveRoom(48, "GALERÍA DE LAS ALTURAS", 18, 18 * ROOM_W + 545, 285, 180, 1),
+  createOptionalCaveRoom(49, "GRIETA DE LA CIUDAD", 24, 24 * ROOM_W + 690, 520, 240, 2)
+);
+rooms[43].mapRevealAt = 0;
+rooms[44].mapRevealAt = 14;
+rooms[45].mapRevealAt = 28;
+rooms[46].mapRevealAt = 3;
+rooms[47].mapRevealAt = 7;
+rooms[48].mapRevealAt = 18;
+rooms[49].mapRevealAt = 24;
+rooms[45].sideExits[0].spawnX = 28 * ROOM_W + 100;
+rooms[45].sideExits[0].spawnY = 520;
+rooms[46].sideExits.push({
+  x: 46 * ROOM_W + 728, y: 455, w: 56, h: 105, to: 5,
+  spawnX: 5 * ROOM_W + 90, spawnY: 520
+});
+rooms[47].sideExits.push({
+  x: 47 * ROOM_W + 728, y: 455, w: 56, h: 105, to: 9,
+  spawnX: 9 * ROOM_W + 90, spawnY: 520
+});
+rooms[48].sideExits.push({
+  x: 48 * ROOM_W + 728, y: 455, w: 56, h: 105, to: 16,
+  spawnX: 16 * ROOM_W + 90, spawnY: 520
+});
+rooms[49].sideExits.push({
+  x: 49 * ROOM_W + 728, y: 455, w: 56, h: 105, to: 26,
+  spawnX: 26 * ROOM_W + 90, spawnY: 520
+});

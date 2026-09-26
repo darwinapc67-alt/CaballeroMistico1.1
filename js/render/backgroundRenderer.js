@@ -1,4 +1,10 @@
 function getZoneVisualProfile(roomIndex) {
+  if (rooms[roomIndex] && rooms[roomIndex].optional) {
+    if (rooms[roomIndex].visualProfile === "abyss") {
+      return { id: "abyss", top: "#070d1b", middle: "#101d32", bottom: "#03060f", light: "#3b8cff", accent: "#426fa8", platform: "#1d3049", edge: "#4e89bd", particle: "#82c8ff" };
+    }
+    return { id: "crystal", top: "#11152d", middle: "#202b50", bottom: "#070a18", light: "#69dfff", accent: "#536cb4", platform: "#303b5a", edge: "#79b8d6", particle: "#b9f3ff" };
+  }
   if (roomIndex >= 35) {
     return { id: "boss", top: "#170d1d", middle: "#28152d", bottom: "#080610", light: "#ff5b79", accent: "#d94d75", platform: "#3d263d", edge: "#a85b72", particle: "#ff9a72" };
   }

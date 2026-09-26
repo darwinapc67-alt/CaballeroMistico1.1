@@ -457,7 +457,7 @@ function restoreCheckpoint(preserveInfiniteProgress) {
       bowLevel: bowLevel, combatSkills: JSON.parse(JSON.stringify(combatSkills)),
       infiniteWave: infiniteWave
     } : null;
-    var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, weaponId: DEFAULT_WEAPON_ID, unlockedWeapons: [DEFAULT_WEAPON_ID], hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasAzariMagnet: false, hasAzariBag: false, azariBagLevel: 0, hasOldKey: false, doorUnlocked: false, rewardAzariCollected: false, hasLantern: false, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, blessingSlots: 2, equippedBlessings: [], armorId: "vacío", armorLevel: 0, permanentUpgrades: { vitality: 0, strength: 0 }, bossUniqueItems: { guardian: false, queen_larva: false, abyssal_knight: false }, hiddenCollectibles: { eclipse: false, root: false, crown: false } };
+    var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, weaponId: DEFAULT_WEAPON_ID, unlockedWeapons: [DEFAULT_WEAPON_ID], hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasAzariMagnet: false, hasAzariBag: false, azariBagLevel: 0, hasOldKey: false, doorUnlocked: false, rewardAzariCollected: false, hasLantern: false, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, blessingSlots: 2, equippedBlessings: [], armorId: "vacío", armorLevel: 0, permanentUpgrades: { vitality: 0, strength: 0 }, bossUniqueItems: { guardian: false, queen_larva: false, abyssal_knight: false }, hiddenCollectibles: { eclipse: false, root: false, crown: false, echo: false, highGallery: false, abyssRift: false, branchCache: false, fungusCache: false, galleryCache: false, cityCache: false } };
     currentRoom = cp.room; player.x = cp.px; player.y = cp.py;
     player.hp = cp.hp; player.maxHp = cp.maxHp;
     azari = gameMode === "infinite" && preserveInfiniteProgress ? azari : cp.azari;
@@ -480,7 +480,7 @@ function restoreCheckpoint(preserveInfiniteProgress) {
     blessingSlots = cp.blessingSlots || 2; equippedBlessings = cp.equippedBlessings || [];
     armorId = cp.armorId || "vacío"; armorLevel = Math.max(0, Math.min(3, Number(cp.armorLevel) || (armorId === "plate" ? 1 : 0))); permanentUpgrades = cp.permanentUpgrades || { vitality: 0, strength: 0 };
     bossUniqueItems = cp.bossUniqueItems || { guardian: false, queen_larva: false, abyssal_knight: false };
-    hiddenCollectibles = cp.hiddenCollectibles || { eclipse: false, root: false, crown: false };
+    hiddenCollectibles = cp.hiddenCollectibles || { eclipse: false, root: false, crown: false, echo: false, highGallery: false, abyssRift: false, branchCache: false, fungusCache: false, galleryCache: false, cityCache: false };
     if (Array.isArray(cp.altars)) {
       cp.altars.forEach(function(savedAltar) {
         var altar = altars.find(function(candidate) { return candidate.id === savedAltar.id; });
@@ -635,8 +635,18 @@ function updateHiddenCollectibles() {
         permanentUpgrades.strength++;
       } else if (item.id === "crown") {
         blessingSlots++;
+      } else if (item.rewardAzari) {
+        collectAzari(item.rewardAzari);
+        if (checkpointState) {
+          checkpointState.hiddenCollectibles = checkpointState.hiddenCollectibles || {};
+          checkpointState.hiddenCollectibles[item.id] = true;
+          checkpointState.azari = azari;
+        }
+        if (activeSlot >= 0) saveGame(activeSlot);
       }
-      spawnFloatText(player.x, player.y - 28, "¡Coleccionable oculto!", "#ffd700");
+      spawnFloatText(player.x, player.y - 28, item.rewardAzari
+        ? "+" + item.rewardAzari + " AZARI"
+        : "¡Coleccionable oculto!", "#ffd700");
       spawnParticles(player.x + player.w / 2, player.y, "#ffd700", 18, 4);
       sfxDiscovery();
     }
@@ -1911,7 +1921,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     currentRoom = newRoom;
     stats.roomsVisited++;
     var names = ["", "CUEVA OLVIDADA", "", "", "", "", "", "", "", "TIENDA", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""];
-    zoneName = names[currentRoom] || "";
+    zoneName = rooms[currentRoom].zoneTitle || names[currentRoom] || "";
     zoneNameTimer = 120;
     p.inv = 30;
     if (rooms[currentRoom].bossName && bossDoorSoundRoom !== currentRoom) {
@@ -1974,7 +1984,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       p.jumpsLeft = p.maxJumps;
       return;
     }
-    if (currentRoom < rooms.length - 1) { sfxFall(); startFallThroughTransition(currentRoom + 1); return; }
+    if (!room.optional && currentRoom < 42) { sfxFall(); startFallThroughTransition(currentRoom + 1); return; }
     p.x = currentRoom * ROOM_W + ROOM_W / 2 - p.w / 2 + (p.id === 2 ? 30 : -30);
     p.y = 100; p.vx = 0; p.vy = 0;
     spawnFloatText(p.x, p.y - 20, "¡No hay más abajo!", "#f44");
@@ -2189,6 +2199,25 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     sfxBow();
   }
 
+  if (gameMode === "normal" && p === player && transitionCooldown <= 0 && room.sideExits) {
+    for (var sideExitIndex = 0; sideExitIndex < room.sideExits.length; sideExitIndex++) {
+      var sideExit = room.sideExits[sideExitIndex];
+      if (!rectHit(p, sideExit)) continue;
+      if (!isSideExitAvailable(sideExit)) {
+        if (interactPressed) {
+          spawnFloatText(p.x, p.y - 30, sideExit.lockedMessage ||
+            (sideExit.requires === "doubleJump" ? "Necesitas el doble salto." :
+              (sideExit.requires === "dash" ? "Necesitas el dash." : "Necesitas la espada.")), "#ffb347");
+        }
+        continue;
+      }
+      startTransition(sideExit.to, sideExit.to < currentRoom ? "back" : "forward", {
+        x: sideExit.spawnX,
+        y: sideExit.spawnY
+      });
+      return;
+    }
+  }
   if (interactPressed) tryInteractFor(p);
   if (p === player && currentRoom === 39 && room.rewardPile && !rewardAzariCollected &&
       rectHit(p, { x: room.rewardPile.x - 45, y: room.rewardPile.y - 45, w: 90, h: 55 })) {
@@ -2596,6 +2625,7 @@ function startFallThroughTransition(toRoom) {
   transFade = 0;
   transIsFall = true;
   transIsRise = false;
+  transitionSpawn = null;
   player.vx = 0; player.vy = 0;
   if (twoPlayerMode) { player2.vx = 0; player2.vy = 0; }
 }
@@ -2609,6 +2639,7 @@ function startRiseThroughTransition(toRoom) {
   transFade = 0;
   transIsFall = false;
   transIsRise = true;
+  transitionSpawn = null;
   player.vx = 0; player.vy = 0;
   if (twoPlayerMode) { player2.vx = 0; player2.vy = 0; }
 }
@@ -2635,7 +2666,14 @@ function updateHouseInterior() {
   }
 }
 
-function startTransition(toRoom, direction) {
+function isSideExitAvailable(exit) {
+  if (exit.requires === "doubleJump") return hasDoubleJump;
+  if (exit.requires === "dash") return hasDash;
+  if (exit.requires === "sword") return hasSword;
+  return true;
+}
+
+function startTransition(toRoom, direction, destinationSpawn) {
   if (gameState === ST_TRANSITION) return;
   sfxTransition();
   particles = [];
@@ -2644,13 +2682,14 @@ function startTransition(toRoom, direction) {
   transPhase = "out";
   transTimer = 50;
   transTargetRoom = toRoom;
+  transitionSpawn = destinationSpawn || null;
   transFade = 0;
   transIsFall = false;
   player.autoWalk = 50;
   if (twoPlayerMode) player2.autoWalk = 50;
   if (direction === "back") { player.vx = -2; if (twoPlayerMode) player2.vx = -2; }
   else { player.vx = 2; if (twoPlayerMode) player2.vx = 2; }
-  requestInterstitialAd("zone");
+  if (!destinationSpawn) requestInterstitialAd("zone");
 }
 
 function startBossDialogue(roomIndex) {
@@ -2745,16 +2784,20 @@ function updateTransition() {
   } else if (transPhase === "load") {
     transFade = 1;
     if (transTimer === 25) {
-      trackLevelChange(currentRoom, transTargetRoom);
+      if (!rooms[currentRoom].optional && !rooms[transTargetRoom].optional) {
+        trackLevelChange(currentRoom, transTargetRoom);
+      }
       currentRoom = transTargetRoom;
       startRoomAtmosphere(currentRoom);
-      if (currentRoom > highestRoomReached) highestRoomReached = currentRoom;
-      unlockWeaponsForRoom(currentRoom);
       var room = rooms[currentRoom];
+      if (!room.optional) {
+        if (currentRoom > highestRoomReached) highestRoomReached = currentRoom;
+        unlockWeaponsForRoom(currentRoom);
+      }
       var transitionRoomOrigin = room.worldX !== undefined ? room.worldX : currentRoom * ROOM_W;
       cameraX = Math.max(0, Math.min(transitionRoomOrigin, WORLD_W - canvas.width));
       targetCamX = cameraX;
-      if (currentRoom % 5 === 0) {
+      if (!room.optional && currentRoom % 5 === 0) {
         checkpointState = { room: currentRoom, px: currentRoom * ROOM_W + 100, py: room.height - 120, hp: player.hp, maxHp: player.maxHp, azari: azari, hasSword: hasSword, swordEquipped: swordEquipped, weaponId: weaponId, unlockedWeapons: unlockedWeapons.slice(), hasBow: hasBow, arrows: arrows, bombs: bombs, hasMap: hasMap, hasAzariCharm: hasAzariCharm, hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, azariBagLevel: azariBagLevel, hasOldKey: hasOldKey, doorUnlocked: doorUnlocked, rewardAzariCollected: rewardAzariCollected, hasLantern: hasLantern, lanternLevel: lanternLevel, hasDash: hasDash, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: JSON.parse(JSON.stringify(combatSkills)), blessingSlots: blessingSlots, equippedBlessings: equippedBlessings.slice(), armorId: armorId, armorLevel: armorLevel, permanentUpgrades: JSON.parse(JSON.stringify(permanentUpgrades)), bossUniqueItems: JSON.parse(JSON.stringify(bossUniqueItems)), hiddenCollectibles: JSON.parse(JSON.stringify(hiddenCollectibles)) };
         if (activeSlot >= 0) saveGame(activeSlot);
         spawnFloatText(player.x, player.y - 35, "PUNTO DE GUARDADO", "#64e6ae");
@@ -2769,6 +2812,18 @@ function updateTransition() {
         var upperOrigin = room.worldX !== undefined ? room.worldX : currentRoom * ROOM_W;
         player.x = upperOrigin + 420; player.y = 760; player.vx = 0; player.vy = 0;
         if (twoPlayerMode) { player2.x = upperOrigin + 470; player2.y = 760; player2.vx = 0; player2.vy = 0; }
+      } else if (transitionSpawn) {
+        player.x = transitionSpawn.x;
+        player.y = transitionSpawn.y;
+        player.vx = 0;
+        player.vy = 0;
+        if (twoPlayerMode) {
+          player2.x = transitionSpawn.x + 34;
+          player2.y = transitionSpawn.y;
+          player2.vx = 0;
+          player2.vy = 0;
+        }
+        transitionSpawn = null;
       } else {
         var roomOrigin = room.worldX !== undefined ? room.worldX : currentRoom * ROOM_W;
         var roomWidth = room.roomWidth || ROOM_W;
@@ -2784,7 +2839,7 @@ function updateTransition() {
         if (twoPlayerMode) { player2.y = room.height - 120; player2.vx = player2.vx < 0 ? -2 : 2; }
       }
       var names = ["", "CUEVA OLVIDADA", "", "", "", "", "", "", "", "TIENDA", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""];
-      zoneName = names[currentRoom] || "";
+      zoneName = room.zoneTitle || names[currentRoom] || "";
       zoneNameTimer = 120;
     }
     if (transTimer <= 0) { transPhase = "in"; transTimer = transIsFall ? 155 : 50; }

@@ -18,6 +18,62 @@ function drawBossDoor(roomIndex) {
   ctx.fillText(locked ? "BLOQUEADO" : "ABIERTO", x + 6, 28);
   ctx.textAlign = "left";
 }
+function drawNaturalPassages(room) {
+  (room.sideExits || []).forEach(function(exit) {
+    var open = isSideExitAvailable(exit);
+    var centerX = exit.x + exit.w / 2;
+    var centerY = exit.y + exit.h / 2;
+    var radiusX = exit.w * 0.56;
+    var radiusY = exit.h * 0.62;
+    ctx.save();
+    ctx.globalAlpha = open ? 1 : 0.72;
+    var caveDepth = ctx.createRadialGradient(centerX, centerY, 2, centerX, centerY, Math.max(radiusX, radiusY));
+    caveDepth.addColorStop(0, "rgba(2, 4, 10, 0.98)");
+    caveDepth.addColorStop(0.66, "rgba(8, 12, 24, 0.92)");
+    caveDepth.addColorStop(1, "rgba(8, 12, 24, 0)");
+    ctx.fillStyle = caveDepth;
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    var stone = ctx.createLinearGradient(exit.x, exit.y, exit.x + exit.w, exit.y + exit.h);
+    stone.addColorStop(0, "#25293a");
+    stone.addColorStop(0.52, "#454253");
+    stone.addColorStop(1, "#1a2030");
+    ctx.fillStyle = stone;
+    ctx.beginPath();
+    ctx.moveTo(exit.x - 5, exit.y + exit.h);
+    ctx.lineTo(exit.x - 3, exit.y + exit.h * 0.46);
+    ctx.lineTo(exit.x + exit.w * 0.12, exit.y + exit.h * 0.3);
+    ctx.lineTo(exit.x + exit.w * 0.2, exit.y + exit.h * 0.12);
+    ctx.lineTo(exit.x + exit.w * 0.43, exit.y + exit.h * 0.05);
+    ctx.lineTo(exit.x + exit.w * 0.62, exit.y + exit.h * 0.14);
+    ctx.lineTo(exit.x + exit.w * 0.76, exit.y + exit.h * 0.08);
+    ctx.lineTo(exit.x + exit.w * 0.92, exit.y + exit.h * 0.34);
+    ctx.lineTo(exit.x + exit.w + 5, exit.y + exit.h * 0.52);
+    ctx.lineTo(exit.x + exit.w + 5, exit.y + exit.h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "rgba(4, 7, 15, 0.96)";
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY + exit.h * 0.16, exit.w * 0.38, exit.h * 0.48, 0, Math.PI, Math.PI * 2);
+    ctx.lineTo(centerX + exit.w * 0.38, exit.y + exit.h);
+    ctx.lineTo(centerX - exit.w * 0.38, exit.y + exit.h);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = "rgba(125, 132, 151, 0.24)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(exit.x + exit.w * 0.2, exit.y + exit.h * 0.14);
+    ctx.lineTo(exit.x + exit.w * 0.29, exit.y + exit.h * 0.31);
+    ctx.lineTo(exit.x + exit.w * 0.25, exit.y + exit.h * 0.42);
+    ctx.moveTo(exit.x + exit.w * 0.75, exit.y + exit.h * 0.12);
+    ctx.lineTo(exit.x + exit.w * 0.68, exit.y + exit.h * 0.28);
+    ctx.lineTo(exit.x + exit.w * 0.78, exit.y + exit.h * 0.39);
+    ctx.stroke();
+    ctx.restore();
+  });
+}
 function drawSwordPickupCinematic() {
   var timer = swordPickupCinematicTimer;
   var reveal = Math.max(0, Math.min(1, (timer - 95) / 55));

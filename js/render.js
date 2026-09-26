@@ -71,6 +71,7 @@ function drawGameWorld(skipPlayers) {
     }
     drawPlatforms(room, r);
     drawWalls(room);
+    if (gameMode === "normal") drawNaturalPassages(room);
     if (!room.city) drawCaveLocalLighting(r, room);
     if (room.chests && Array.isArray(room.chests)) {
       room.chests.forEach(function(chest) {

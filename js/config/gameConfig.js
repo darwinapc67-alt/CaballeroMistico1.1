@@ -4,7 +4,7 @@ var DASH_SPEED = 12, DASH_DURATION = 10, DASH_COOLDOWN = 45, DASH_INV_FRAMES = 1
 var GUARD_DURATION = 120, GUARD_COOLDOWN = 240;
 /* Rooms 0-9 are the original route, room 10 is the final descent, and
    rooms 11-13 are the Guardian, Queen Larva, and Abyssal Knight arenas. */
-var WORLD_W = 43 * ROOM_W;
+var WORLD_W = 50 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
 var VERSION = "v2.75 beta";
 
@@ -207,6 +207,7 @@ var pauseSelection = 0, pauseSubState = "menu", diaryCategory = "enemies", diary
 
 var transTimer = 0, transPhase = "out", transTargetRoom = 0, transFade = 0;
 var transIsFall = false, transIsRise = false, transitionCooldown = 0;
+var transitionSpawn = null;
 var floorCollapseTimer = 0;
 var roomQuakeTimer = 0, roomQuakeStrength = 0;
 var roomAtmosphereRoom = -1, roomAtmosphereWind = false, eteriumShard = null;
@@ -874,7 +875,7 @@ function loadGame(i) {
   equippedSkin = s.equippedSkin || "";
   permanentUpgrades = s.permanentUpgrades || { vitality: 0, strength: 0 };
   bossUniqueItems = s.bossUniqueItems || { guardian: false, queen_larva: false, abyssal_knight: false, dragon: false };
-  hiddenCollectibles = s.hiddenCollectibles || { eclipse: false, root: false, crown: false };
+  hiddenCollectibles = s.hiddenCollectibles || { eclipse: false, root: false, crown: false, echo: false, highGallery: false, abyssRift: false, branchCache: false, fungusCache: false, galleryCache: false, cityCache: false };
   bossArenaState.guardian = !!(s.bossesDefeated && s.bossesDefeated.guardian);
   bossArenaState.queen_larva = !!(s.bossesDefeated && s.bossesDefeated.queen_larva);
   bossArenaState.abyssal_knight = !!(s.bossesDefeated && s.bossesDefeated.abyssal_knight);

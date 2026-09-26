@@ -177,6 +177,119 @@ function drawEteriumSkillHud() {
   ctx.restore();
 }
 
+function drawExplorationMapGraph(x, y, width, height) {
+  var columns = 8;
+  var rows = Math.ceil(rooms.length / columns);
+  var gapX = 8, gapY = 8;
+  var chamberW = Math.min(94, (width - gapX * (columns - 1)) / columns);
+  var chamberH = Math.min(38, (height - gapY * (rows - 1)) / rows);
+  var positions = [];
+  rooms.forEach(function(room, roomIndex) {
+    var row = Math.floor(roomIndex / columns);
+    var column = roomIndex % columns;
+    var direction = row % 2 === 0 ? column : columns - 1 - column;
+    positions[roomIndex] = {
+      x: x + direction * (chamberW + gapX),
+      y: y + row * (chamberH + gapY)
+    };
+  });
+
+  function nodeIsRevealed(index) {
+    var room = rooms[index];
+    return index === currentRoom || (!room.optional && index <= highestRoomReached) ||
+      (room.optional && highestRoomReached >= (room.mapRevealAt || 0));
+  }
+
+  ctx.lineCap = "round";
+  for (var connectionIndex = 0; connectionIndex < rooms.length - 1; connectionIndex++) {
+    if (rooms[connectionIndex].optional || rooms[connectionIndex + 1].optional) continue;
+    var from = positions[connectionIndex];
+    var to = positions[connectionIndex + 1];
+    ctx.strokeStyle = connectionIndex < highestRoomReached ? "#3d7180" : "#1a2938";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(from.x + chamberW / 2, from.y + chamberH / 2);
+    ctx.lineTo(to.x + chamberW / 2, to.y + chamberH / 2);
+    ctx.stroke();
+  }
+
+  rooms.forEach(function(room, roomIndex) {
+    (room.sideExits || []).forEach(function(exit) {
+      var source = positions[roomIndex];
+      var destination = positions[exit.to];
+      if (!source || !destination || !nodeIsRevealed(roomIndex)) return;
+      ctx.save();
+      ctx.setLineDash(exit.requires && !isSideExitAvailable(exit) ? [3, 4] : [7, 3]);
+      ctx.strokeStyle = exit.requires && !isSideExitAvailable(exit) ? "#9a7842" : "#55d6a5";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(source.x + chamberW / 2, source.y + chamberH / 2);
+      ctx.lineTo(destination.x + chamberW / 2, destination.y + chamberH / 2);
+      ctx.stroke();
+      ctx.restore();
+    });
+  });
+
+  rooms.forEach(function(room, roomIndex) {
+    var position = positions[roomIndex];
+    var revealed = nodeIsRevealed(roomIndex);
+    var current = roomIndex === currentRoom;
+    var nodeX = position.x, nodeY = position.y;
+    ctx.fillStyle = revealed ? (current ? "#42350e" : (room.optional ? "#102b2b" : "#101d2b")) : "#080e18";
+    ctx.fillRect(nodeX, nodeY, chamberW, chamberH);
+    ctx.strokeStyle = current ? "#ffd700" : (revealed ? (room.optional ? "#55d6a5" : "#52758a") : "#263246");
+    ctx.lineWidth = current ? 3 : (room.optional ? 2 : 1);
+    ctx.strokeRect(nodeX, nodeY, chamberW, chamberH);
+    if (!revealed) {
+      ctx.fillStyle = "#51596a";
+      ctx.font = "bold 14px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("?", nodeX + chamberW / 2, nodeY + chamberH / 2 + 5);
+      return;
+    }
+
+    var roomOrigin = room.worldX !== undefined ? room.worldX : roomIndex * ROOM_W;
+    var roomWidth = room.roomWidth || ROOM_W;
+    var roomHeight = room.height || ROOM_H;
+    var floorY = nodeY + chamberH - 7;
+    ctx.fillStyle = "#192737";
+    ctx.fillRect(nodeX + 3, nodeY + 3, chamberW - 6, chamberH - 6);
+    ctx.fillStyle = "#a97845";
+    ctx.fillRect(nodeX + 4, floorY, chamberW - 8, 3);
+    (room.platforms || []).forEach(function(platform) {
+      var platformX = nodeX + 4 + (platform.x - roomOrigin) * (chamberW - 8) / roomWidth;
+      var platformY = nodeY + 3 + platform.y * (chamberH - 10) / roomHeight;
+      var platformWidth = Math.max(2, platform.w * (chamberW - 8) / roomWidth);
+      if (platformX + platformWidth < nodeX || platformX > nodeX + chamberW) return;
+      ctx.fillStyle = platform.y > roomHeight - 100 ? "#a97845" : "#64879c";
+      ctx.fillRect(platformX, platformY, platformWidth, 2);
+    });
+    if (room.sideExits && room.sideExits.length) {
+      ctx.fillStyle = "#55d6a5";
+      room.sideExits.forEach(function() {
+        ctx.fillRect(nodeX + chamberW / 2 - 2, nodeY + chamberH - 4, 4, 4);
+      });
+    }
+    if (room.rewardPile || room.chests || room.optional) {
+      ctx.fillStyle = "#d6a649";
+      ctx.fillRect(nodeX + chamberW / 2 - 2, nodeY + chamberH / 2, 4, 4);
+    }
+    if (room.bossName) {
+      ctx.fillStyle = "#d68cff";
+      ctx.beginPath();
+      ctx.arc(nodeX + chamberW - 8, nodeY + 8, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = current ? "#ffd700" : (room.optional ? "#7fe0c2" : "#8fa7c7");
+    ctx.font = "8px monospace";
+    ctx.textAlign = "left";
+    ctx.fillText(room.optional ? (room.zoneTitle || "RAMAL").slice(0, 12) : "H" + (roomIndex + 1),
+      nodeX + 4, nodeY + 10);
+  });
+  ctx.setLineDash([]);
+  ctx.textAlign = "left";
+}
+
 function drawMapOverlay() {
   ctx.save();
   ctx.globalAlpha = mapFade;
@@ -188,117 +301,19 @@ function drawMapOverlay() {
   ctx.textAlign = "center";
   ctx.fillStyle = "#ffd700";
   ctx.font = "bold 20px monospace";
-  ctx.fillText("🗺 MAPA", canvas.width / 2, 44);
+  ctx.fillText("🗺 MAPA DE EXPLORACIÓN", canvas.width / 2, 44);
   ctx.fillStyle = "#8fa7c7";
   ctx.font = "11px monospace";
-  ctx.fillText("M: cerrar mapa", canvas.width / 2, 64);
-
-  var columns = 7, chamberW = 100, chamberH = 46, gapX = 10, gapY = 12;
-  var startX = 20, startY = 80;
-  var positions = [];
-  rooms.forEach(function(room, roomIndex) {
-    var row = Math.floor(roomIndex / columns);
-    var column = roomIndex % columns;
-    var direction = row % 2 === 0 ? column : columns - 1 - column;
-    positions[roomIndex] = {
-      x: startX + direction * (chamberW + gapX),
-      y: startY + row * (chamberH + gapY)
-    };
-  });
-
-  // Continuous corridors are drawn first so explored chambers read as one map.
-  ctx.lineWidth = 7;
-  for (var connectionIndex = 0; connectionIndex < rooms.length - 1; connectionIndex++) {
-    var from = positions[connectionIndex];
-    var to = positions[connectionIndex + 1];
-    var connectionExplored = connectionIndex < highestRoomReached;
-    ctx.strokeStyle = connectionExplored ? "#263f52" : "#111b2a";
-    ctx.beginPath();
-    ctx.moveTo(from.x + chamberW / 2, from.y + chamberH / 2);
-    ctx.lineTo(to.x + chamberW / 2, to.y + chamberH / 2);
-    ctx.stroke();
-  }
-
-  rooms.forEach(function(room, roomIndex) {
-    var position = positions[roomIndex];
-    var explored = roomIndex <= highestRoomReached;
-    var current = roomIndex === currentRoom;
-    var x = position.x, y = position.y;
-    var roomOrigin = room.worldX !== undefined ? room.worldX : roomIndex * ROOM_W;
-    var roomWidth = room.roomWidth || ROOM_W;
-    var roomHeight = room.height || ROOM_H;
-    var innerX = x + 5, innerY = y + 5, innerW = chamberW - 10, innerH = chamberH - 10;
-
-    // Chamfered outlines resemble connected Metroid-style chambers.
-    ctx.fillStyle = explored ? (current ? "#382e0f" : "#101d2b") : "#080e18";
-    ctx.beginPath();
-    ctx.moveTo(x + 8, y); ctx.lineTo(x + chamberW - 8, y);
-    ctx.lineTo(x + chamberW, y + 8); ctx.lineTo(x + chamberW, y + chamberH - 8);
-    ctx.lineTo(x + chamberW - 8, y + chamberH); ctx.lineTo(x + 8, y + chamberH);
-    ctx.lineTo(x, y + chamberH - 8); ctx.lineTo(x, y + 8); ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = current ? "#ffd700" : (explored ? "#52758a" : "#263246");
-    ctx.lineWidth = current ? 3 : 1;
-    ctx.stroke();
-    if (!explored) {
-      ctx.fillStyle = "#3d4352";
-      ctx.font = "bold 17px monospace";
-      ctx.textAlign = "center";
-      ctx.fillText("?", x + chamberW / 2, y + chamberH / 2 + 6);
-      return;
-    }
-
-    ctx.fillStyle = "#0e1a29";
-    ctx.fillRect(innerX, innerY, innerW, innerH);
-    ctx.strokeStyle = "#20384c";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(innerX, innerY, innerW, innerH);
-    (room.platforms || []).forEach(function(platform) {
-      var platformX = platform.x - roomOrigin;
-      var platformY = platform.y;
-      var platformWidth = Math.max(2, platform.w * innerW / roomWidth);
-      var platformHeight = Math.max(2, platform.h * innerH / roomHeight);
-      var drawX = innerX + platformX * innerW / roomWidth;
-      var drawY = innerY + platformY * innerH / roomHeight;
-      if (drawX + platformWidth < innerX || drawX > innerX + innerW ||
-          drawY + platformHeight < innerY || drawY > innerY + innerH) return;
-      ctx.fillStyle = platformY > roomHeight - 100 ? "#a97845" : "#64879c";
-      ctx.fillRect(drawX, drawY, platformWidth, platformHeight);
-    });
-    if (room.lockedDoor) {
-      ctx.fillStyle = "#e05a62";
-      ctx.fillRect(innerX, innerY + innerH - 12, 5, 10);
-    }
-    if (room.openDoor || room.transitionZone) {
-      ctx.fillStyle = "#55d6a5";
-      ctx.fillRect(innerX + innerW - 5, innerY + innerH - 12, 5, 10);
-    }
-    if (room.rewardPile || room.chests) {
-      ctx.fillStyle = "#d6a649";
-      ctx.fillRect(innerX + innerW * 0.48, innerY + innerH * 0.62, 8, 6);
-    }
-    if (room.bossName) {
-      ctx.fillStyle = "#d68cff";
-      ctx.beginPath();
-      ctx.moveTo(innerX + innerW - 25, innerY + innerH - 3);
-      ctx.lineTo(innerX + innerW - 19, innerY + innerH - 13);
-      ctx.lineTo(innerX + innerW - 13, innerY + innerH - 3);
-      ctx.closePath();
-      ctx.fill();
-    }
-    ctx.fillStyle = current ? "#ffd700" : "#6e8496";
-    ctx.font = "9px monospace";
-    ctx.textAlign = "left";
-    ctx.fillText("H" + (roomIndex + 1), x + 8, y + 12);
-  });
+  ctx.fillText("Línea continua: ruta principal   •   Línea discontinua: ramal / atajo   •   Dorado: habilidad requerida", canvas.width / 2, 64);
+  drawExplorationMapGraph(28, 82, canvas.width - 56, canvas.height - 130);
   ctx.textAlign = "left";
   ctx.font = "10px monospace";
-  ctx.fillStyle = "#e05a62";
-  ctx.fillText("■ puerta cerrada", 28, canvas.height - 25);
+  ctx.fillStyle = "#55d6a5";
+  ctx.fillText("■ ruta lateral", 28, canvas.height - 25);
   ctx.fillStyle = "#d6a649";
-  ctx.fillText("■ cofre", 180, canvas.height - 25);
+  ctx.fillText("■ recompensa", 155, canvas.height - 25);
   ctx.fillStyle = "#d68cff";
-  ctx.fillText("▲ jefe", 285, canvas.height - 25);
+  ctx.fillText("● jefe", 292, canvas.height - 25);
   ctx.restore();
   if (mapClosing) {
     ctx.fillStyle = "rgba(0, 0, 0, " + (1 - mapFade) + ")";
@@ -428,7 +443,7 @@ function drawInventory() {
   ctx.fillText("Fragmentos", 548, 324);
   ctx.fillText(heartFragments1 + heartFragments2 + " / 4", 700, 324);
   ctx.fillText("Secretos", 548, 354);
-  ctx.fillText(Object.keys(hiddenCollectibles).filter(function(key) { return hiddenCollectibles[key]; }).length + " / 3", 700, 354);
+  ctx.fillText(Object.keys(hiddenCollectibles).filter(function(key) { return hiddenCollectibles[key]; }).length + " / " + Object.keys(hiddenCollectibles).length, 700, 354);
   ctx.fillText("Azari", 548, 384);
   ctx.fillText(String(azari), 700, 384);
   ctx.fillStyle = "#70e8ff";
@@ -504,7 +519,8 @@ function drawInventory() {
   var descriptionIndex = inventoryHover >= 0 ? inventoryHover : inventorySelection;
   ctx.fillText(descriptions[descriptionIndex], 390, 200);
   ctx.fillStyle = "#8f8"; ctx.fillText("Coleccionables ocultos: " +
-    Object.keys(hiddenCollectibles).filter(function(key) { return hiddenCollectibles[key]; }).length + "/3", 390, 235);
+    Object.keys(hiddenCollectibles).filter(function(key) { return hiddenCollectibles[key]; }).length + "/" +
+    Object.keys(hiddenCollectibles).length, 390, 235);
   ctx.fillStyle = "#aaa"; ctx.fillText("Ranuras: usa Enter para equipar", 390, 265);
   ctx.fillText("Armadura actual: " + armorId + " | alternativa: " + (armorId === "cave" ? "vacío" : "caverna"), 390, 285);
   if (mapOpen && hasMap) {
@@ -516,61 +532,11 @@ function drawInventory() {
     ctx.textAlign = "center";
     ctx.fillStyle = "#ffd700";
     ctx.font = "bold 14px monospace";
-    ctx.fillText(translateText("🗺️ MAPA DE TODAS LAS ZONAS"), canvas.width / 2, 110);
-
-    var cardW = 101, cardH = 184, gap = 6, startX = 18, startY = 122;
-    for (var roomIndex = 0; roomIndex < rooms.length; roomIndex++) {
-      var room = rooms[roomIndex];
-      var col = roomIndex % 7, row = Math.floor(roomIndex / 7);
-      var cardX = startX + col * (cardW + gap), cardY = startY + row * (cardH + gap);
-      var selected = roomIndex === currentRoom;
-      var discovered = roomIndex <= highestRoomReached;
-      ctx.fillStyle = selected ? "rgba(93,72,12,0.75)" : (discovered ? "rgba(25,34,57,0.9)" : "rgba(8,10,18,0.95)");
-      ctx.fillRect(cardX, cardY, cardW, cardH);
-      ctx.strokeStyle = selected ? "#ffd700" : (room.bossName ? "#a85cff" : "#43516f");
-      ctx.lineWidth = selected ? 2 : 1;
-      ctx.strokeRect(cardX, cardY, cardW, cardH);
-
-      ctx.fillStyle = selected ? "#ffd700" : (discovered ? "#d5def5" : "#3d4352");
-      ctx.font = "bold 11px monospace";
-      ctx.fillText(translateText("ZONA") + " " + (roomIndex + 1), cardX + cardW / 2, cardY + 14);
-
-      var innerX = cardX + 7, innerY = cardY + 22, innerW = cardW - 14, innerH = cardH - 31;
-      if (!discovered) {
-        ctx.fillStyle = "#303542";
-        ctx.font = "bold 22px monospace";
-        ctx.fillText("?", cardX + cardW / 2, cardY + cardH / 2);
-        continue;
-      }
-      var scaleX = innerW / 800, scaleY = innerH / room.height;
-      room.platforms.forEach(function(platform) {
-        var localX = platform.x - roomIndex * ROOM_W;
-        ctx.fillStyle = platform.y > room.height - 80 ? "#9b6b3e" : "#6c8a9b";
-        ctx.fillRect(innerX + localX * scaleX, innerY + platform.y * scaleY,
-          Math.max(3, platform.w * scaleX), Math.max(2, platform.h * scaleY));
-      });
-      (room.spikes || []).forEach(function(spike) {
-        var spikeX = innerX + (spike.x - roomIndex * ROOM_W) * scaleX;
-        ctx.fillStyle = "#e44";
-        ctx.fillRect(spikeX, innerY + spike.y * scaleY, Math.max(3, spike.w * scaleX), 2);
-      });
-      (room.shops || []).forEach(function(shop) {
-        ctx.fillStyle = "#4fdbb4";
-        ctx.fillRect(innerX + (shop.npc.x - roomIndex * ROOM_W) * scaleX, innerY + shop.npc.y * scaleY - 3, 4, 5);
-      });
-      if (room.bossName) {
-        ctx.fillStyle = "#d68cff";
-        ctx.font = "bold 9px monospace";
-        ctx.fillText(translateText("JEFE"), cardX + cardW / 2, cardY + cardH - 8);
-      } else if (room.shops && room.shops.length) {
-        ctx.fillStyle = "#4fdbb4";
-        ctx.font = "9px monospace";
-        ctx.fillText(translateText("TIENDA"), cardX + cardW / 2, cardY + cardH - 8);
-      }
-    }
+    ctx.fillText(translateText("🗺️ RED DE CÁMARAS"), canvas.width / 2, 110);
+    drawExplorationMapGraph(28, 126, canvas.width - 56, 360);
     ctx.fillStyle = "#aaa";
     ctx.font = "11px monospace";
-    ctx.fillText(translateText("Dorado: zona actual  •  Morado: jefe  •  Verde: tienda  •  Rojo: peligro"), canvas.width / 2, 532);
+    ctx.fillText(translateText("Línea continua: ruta principal  •  Discontinua: atajo  •  Dorado: requiere habilidad"), canvas.width / 2, 518);
     ctx.textAlign = "left";
   }
 
