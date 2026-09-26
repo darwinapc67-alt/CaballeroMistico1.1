@@ -1065,6 +1065,76 @@ function drawIntro() {
  ctx.fillText("ENTER / ESPACIO para omitir", 400, 575);
  ctx.textAlign = "left";
 }
+function drawWakeUp() {
+  var progress = introWakeUp ? Math.min(1, introTimer / 48) : 0;
+  var wakeEase = progress * progress * (3 - 2 * progress);
+  ctx.fillStyle = "#050510";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  drawGameWorld(true);
+  if (progress < 1) {
+    ctx.fillStyle = "rgba(18, 24, 48, " + (0.34 * (1 - progress)) + ")";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    var haze = ctx.createRadialGradient(canvas.width / 2, canvas.height / 2, 90, canvas.width / 2, canvas.height / 2, 480);
+    haze.addColorStop(0, "rgba(215, 225, 255, " + (0.04 * (1 - progress)) + ")");
+    haze.addColorStop(1, "rgba(4, 5, 16, " + (0.36 * (1 - progress)) + ")");
+    ctx.fillStyle = haze;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  var screenX = player.x - Math.floor(cameraX) + player.w / 2;
+  var floorY = player.y + player.h - Math.floor(cameraY);
+  var wakePose = Object.assign({}, player, {
+    x: -player.w / 2,
+    y: -player.h / 2,
+    vx: 0,
+    vy: 0,
+    onGround: false,
+    dashing: false,
+    swordSwing: 0,
+    inv: 0,
+    anim: 0
+  });
+  ctx.save();
+  ctx.fillStyle = "rgba(3, 4, 10, 0.65)";
+  ctx.beginPath();
+  ctx.ellipse(screenX, floorY, 22 - 9 * wakeEase, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.translate(screenX, floorY - player.h / 2);
+  ctx.rotate(-Math.PI / 2 * (1 - wakeEase));
+  drawPlayerEntity(wakePose, wakeEase);
+  ctx.restore();
+
+  if (!introWakeUp) {
+    ctx.fillStyle = "rgba(5, 7, 16, 0.76)";
+    ctx.fillRect(250, 420, 300, 105);
+    ctx.strokeStyle = "rgba(180, 210, 255, 0.7)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(250, 420, 300, 105);
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#f4e8c8";
+    ctx.font = "bold 26px monospace";
+    ctx.fillText("LEVANTAR", canvas.width / 2, 460);
+    var jumpKeyNames = getControlKeys("jump").map(function(key) {
+      if (key === " ") return "ESPACIO";
+      if (key === "arrowup") return "↑";
+      if (key === "arrowdown") return "↓";
+      if (key === "arrowleft") return "←";
+      if (key === "arrowright") return "→";
+      return String(key).toUpperCase();
+    });
+    var padNames = ["A", "B", "X", "Y", "LB", "RB", "LT", "RT", "SELECT", "START", "L3", "R3", "↑", "↓", "←", "→"];
+    var jumpPadNames = getControlPads("jump").map(function(pad) {
+      var padIndex = Number(pad);
+      return padNames[padIndex] || ("BOTÓN " + pad);
+    });
+    var jumpHint = device === "touch" ? "BOTÓN SALTAR" :
+      jumpKeyNames.concat(gamepadConnected || gamepad2Connected ? jumpPadNames : []).join(" / ");
+    ctx.fillStyle = "#b9d9ef";
+    ctx.font = "14px monospace";
+    ctx.fillText(jumpHint || "SALTO", canvas.width / 2, 493);
+    ctx.textAlign = "left";
+  }
+}
 function drawDeathScreen() {
   drawGameWorld();
   ctx.fillStyle = "rgba(2, 2, 10, 0.86)";

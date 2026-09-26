@@ -221,6 +221,27 @@ function update() {
     }
     return;
   }
+  if (gameState === ST_WAKE) {
+    var wakeJumpPressed = isControlPressed("jump") ||
+      (gamepadConnected && isControlPadPressed("jump", gpButtons)) ||
+      (gamepad2Connected && isControlPadPressed("jump", gp2Buttons));
+    if (!wakeJumpPressed) wakeJumpArmed = true;
+    else if (wakeJumpArmed && !introWakeUp) {
+      introWakeUp = true;
+      introTimer = 0;
+    }
+    if (introWakeUp) {
+      introTimer++;
+      if (introTimer >= 48) {
+        introWakeUp = false;
+        introWakeUpDone = true;
+        gameState = ST_PLAYING;
+        startMusic();
+        updateUI();
+      }
+    }
+    return;
+  }
   if (achievementNotify.active) {
     achievementNotify.timer--;
     if (achievementNotify.timer <= 0) achievementNotify.active = false;
@@ -376,6 +397,7 @@ function loop() {
   if (gameState === ST_LANGUAGE) drawLanguageSelect();
   else if (gameState === ST_DEVICE) drawDeviceSelect();
   else if (gameState === ST_MENU) drawMenu();
+  else if (gameState === ST_WAKE) drawWakeUp();
   else if (gameState === ST_PAUSED) { drawGame(); drawPause(); }
   else if (gameState === ST_TRANSITION) drawTransition();
   else if (gameState === ST_INVENTORY) { drawGame(); drawInventory(); }

@@ -85,6 +85,10 @@ window.addEventListener("keydown", function(e) {
     }
     return;
   }
+  if (gameState === ST_WAKE) {
+    e.preventDefault();
+    return;
+  }
 
   if (gameState === ST_LEVEL_EDITOR) {
     if (e.key === "Escape") {
@@ -1615,6 +1619,9 @@ function beginNewGameFromDifficulty() {
   menuSubState = "slots";
   introTimer = 0;
   introAmbientCue = -1;
+  introWakeUp = false;
+  introWakeUpDone = false;
+  wakeJumpArmed = false;
   gameState = ST_INTRO;
   trackGameEvent("game_start", { game_mode: gameMode, difficulty: difficulty });
   trackGameEvent("level_start", { level: 1, room: 0 });
@@ -1624,8 +1631,16 @@ function beginNewGameFromDifficulty() {
 
 function finishIntro() {
   if (gameState !== ST_INTRO) return;
-  gameState = ST_PLAYING;
-  startMusic();
+  if (introWakeUpDone) return;
+  introTimer = 0;
+  introWakeUp = false;
+  wakeJumpArmed = false;
+  player.x = 100;
+  player.y = 530;
+  player.vx = 0;
+  player.vy = 0;
+  player.onGround = true;
+  gameState = ST_WAKE;
   updateUI();
 }
 

@@ -48,15 +48,29 @@ function drawCaveBg(rx, decor, roomH, roomWidth, roomIndex) {
   drawCaveEdgeDetails(rx, roomH, roomWidth, roomSeed, roomIndex);
   decor.forEach(function(d) {
     if (d.type === 'stalactite') {
-      ctx.fillStyle = "#1a1a2e";
+      var stalactiteGradient = ctx.createLinearGradient(d.x, d.y, d.x + d.w, d.y + d.h);
+      stalactiteGradient.addColorStop(0, "#111426");
+      stalactiteGradient.addColorStop(0.38, "#34364e");
+      stalactiteGradient.addColorStop(0.72, "#20243a");
+      stalactiteGradient.addColorStop(1, "#0c1020");
+      ctx.fillStyle = stalactiteGradient;
       ctx.beginPath();
       ctx.moveTo(d.x, d.y);
-      ctx.lineTo(d.x + d.w/2, d.y + d.h);
+      ctx.lineTo(d.x + d.w * 0.36, d.y + d.h * 0.1);
+      ctx.lineTo(d.x + d.w * 0.54, d.y + d.h * 0.58);
+      ctx.lineTo(d.x + d.w * 0.43, d.y + d.h);
+      ctx.lineTo(d.x + d.w * 0.24, d.y + d.h * 0.64);
+      ctx.lineTo(d.x + d.w * 0.08, d.y + d.h * 0.18);
       ctx.lineTo(d.x + d.w, d.y);
       ctx.closePath();
       ctx.fill();
-      ctx.fillStyle = "#2a2a3e";
-      ctx.fillRect(d.x + d.w/2 - 1, d.y, 2, d.h * 0.7);
+      ctx.strokeStyle = "rgba(126, 145, 183, 0.3)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(d.x + d.w * 0.36, d.y + 3);
+      ctx.lineTo(d.x + d.w * 0.4, d.y + d.h * 0.36);
+      ctx.lineTo(d.x + d.w * 0.51, d.y + d.h * 0.55);
+      ctx.stroke();
     } else if (d.type === 'rock') {
       ctx.fillStyle = "#151525";
       ctx.beginPath();
@@ -153,6 +167,50 @@ function drawZoneLighting(rx, roomH, roomWidth, profile) {
   glow.addColorStop(1, profile.light + "00");
   ctx.fillStyle = glow;
   ctx.fillRect(rx, 0, roomWidth, roomH);
+}
+function drawCaveLocalLighting(roomIndex, room) {
+  var roomWidth = room.roomWidth || ROOM_W;
+  var roomX = room.worldX !== undefined ? room.worldX : roomIndex * ROOM_W;
+  var roomHeight = room.height;
+  var profile = getZoneVisualProfile(roomIndex);
+  var roomSeed = Math.floor(roomX / ROOM_W);
+  ctx.save();
+  ctx.globalCompositeOperation = "screen";
+
+  var torchX = roomX + (roomSeed % 2 ? roomWidth - 105 : 105);
+  var torchY = roomHeight - 125;
+  var torchState = roomIndex === currentRoom && roomIndex === roomAtmosphereRoom
+    ? atmosphereTorches[0]
+    : null;
+  var flamePower = torchState && !torchState.lit
+    ? 0
+    : 1 + (torchState ? torchState.flicker : 0);
+  if (flamePower > 0 && roomHeight >= 560) {
+    var torchRadius = 145 + flamePower * 20;
+    var torchGlow = ctx.createRadialGradient(torchX, torchY - 4, 4, torchX, torchY - 4, torchRadius);
+    torchGlow.addColorStop(0, "rgba(255, 178, 89, 0.24)");
+    torchGlow.addColorStop(0.32, "rgba(255, 129, 56, 0.12)");
+    torchGlow.addColorStop(1, "rgba(255, 98, 39, 0)");
+    ctx.fillStyle = torchGlow;
+    ctx.fillRect(torchX - torchRadius, torchY - torchRadius, torchRadius * 2, torchRadius * 2);
+  }
+
+  for (var crystal = 0; crystal < 2; crystal++) {
+    var crystalX = roomX + (crystal === 0 ? 54 : roomWidth - 72);
+    var crystalY = roomHeight - 62 - ((roomSeed * 23 + crystal * 47) % 90);
+    var crystalRadius = 118;
+    var crystalGlow = ctx.createRadialGradient(crystalX, crystalY, 2, crystalX, crystalY, crystalRadius);
+    crystalGlow.addColorStop(0, profile.id === "boss"
+      ? "rgba(255, 104, 135, 0.23)"
+      : "rgba(93, 216, 255, 0.2)");
+    crystalGlow.addColorStop(0.38, profile.id === "boss"
+      ? "rgba(191, 63, 117, 0.1)"
+      : "rgba(54, 132, 197, 0.09)");
+    crystalGlow.addColorStop(1, "rgba(45, 114, 175, 0)");
+    ctx.fillStyle = crystalGlow;
+    ctx.fillRect(crystalX - crystalRadius, crystalY - crystalRadius, crystalRadius * 2, crystalRadius * 2);
+  }
+  ctx.restore();
 }
 function drawNormalCaveAtmosphere(rx, roomH, roomWidth, seed) {
   ctx.save();
@@ -428,25 +486,73 @@ function drawPlatforms(room, roomIndex) {
       : 0;
     ctx.save();
     if (floorDrop > 0) ctx.translate(0, floorDrop);
-    ctx.fillStyle = p.y > 500 ? profile.platform : profile.accent;
+    var stoneBase = p.y > 500 ? profile.platform : profile.accent;
+    var stoneGradient = ctx.createLinearGradient(p.x, p.y, p.x, p.y + Math.max(1, p.h));
+    stoneGradient.addColorStop(0, profile.edge);
+    stoneGradient.addColorStop(Math.min(0.18, 2 / Math.max(1, p.h)), stoneBase);
+    stoneGradient.addColorStop(0.58, stoneBase);
+    stoneGradient.addColorStop(1, "rgba(5, 8, 18, 0.94)");
+    ctx.fillStyle = stoneGradient;
     ctx.fillRect(p.x, p.y, p.w, p.h);
-    ctx.fillStyle = profile.edge;
-    ctx.fillRect(p.x, p.y, p.w, Math.min(3, p.h));
-    ctx.fillStyle = "rgba(255, 255, 255, 0.16)";
-    for (var seam = 18 + ((p.x / 7) % 17); seam < p.w - 8; seam += 37 + ((p.y / 5) % 13)) {
-      ctx.fillRect(p.x + seam, p.y + 4, 2, Math.max(2, p.h - 9));
+
+    var rockSeed = Math.floor(p.x * 13 + p.y * 7 + p.w * 3 + p.h * 11);
+    ctx.fillStyle = "rgba(225, 235, 255, 0.14)";
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y + 1);
+    ctx.lineTo(p.x + p.w * 0.12, p.y + 1);
+    for (var ridge = 1; ridge <= 8; ridge++) {
+      var ridgeX = p.x + p.w * (0.12 + ridge * 0.095);
+      var ridgeY = p.y + 0.5 + ((rockSeed + ridge * 17) % 3) * 0.55;
+      ctx.lineTo(ridgeX, ridgeY);
     }
-    ctx.strokeStyle = "rgba(12, 13, 25, 0.7)";
+    ctx.lineTo(p.x + p.w, p.y + 1);
+    ctx.lineTo(p.x + p.w, p.y + 3);
+    ctx.lineTo(p.x, p.y + 3);
+    ctx.closePath();
+    ctx.fill();
+
+    if (p.w > 18 && p.h > 8) {
+      var facetCount = Math.min(22, Math.max(1, Math.floor(p.w / 22)));
+      for (var facet = 0; facet < facetCount; facet++) {
+        var facetSeed = rockSeed + facet * 47;
+        var facetX = p.x + 4 + (facetSeed * 19 % Math.max(1, p.w - 10));
+        var facetY = p.y + 4 + (facetSeed * 11 % Math.max(1, p.h - 6));
+        var facetW = Math.min(5 + facetSeed % 13, p.x + p.w - 2 - facetX);
+        var facetH = Math.min(2 + facetSeed % Math.max(2, Math.min(7, p.h - 3)), p.y + p.h - 2 - facetY);
+        if (facetW < 2 || facetH < 1) continue;
+        ctx.fillStyle = facet % 3 === 0
+          ? "rgba(202, 218, 240, 0.14)"
+          : (facet % 3 === 1 ? "rgba(7, 11, 24, 0.22)" : "rgba(103, 137, 176, 0.13)");
+        ctx.beginPath();
+        ctx.moveTo(facetX, facetY + facetH);
+        ctx.lineTo(facetX + 2, facetY);
+        ctx.lineTo(facetX + facetW, facetY + 1);
+        ctx.lineTo(facetX + facetW - 2, facetY + facetH);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
+    ctx.strokeStyle = "rgba(8, 12, 25, 0.72)";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(p.x + p.w * 0.22, p.y + 3);
-    ctx.lineTo(p.x + p.w * 0.25, p.y + Math.min(p.h - 2, 9));
-    ctx.lineTo(p.x + p.w * 0.32, p.y + Math.min(p.h - 2, 12));
-    ctx.moveTo(p.x + p.w * 0.7, p.y + 3);
-    ctx.lineTo(p.x + p.w * 0.67, p.y + Math.min(p.h - 2, 8));
+    for (var crack = 0; p.h > 4 && p.w > 35 && crack < Math.min(4, Math.max(1, Math.floor(p.w / 110))); crack++) {
+      var crackX = p.x + 16 + ((rockSeed + crack * 67) % Math.max(1, p.w - 28));
+      var crackDepth = Math.min(p.h - 2, 5 + (rockSeed + crack * 23) % 13);
+      ctx.moveTo(crackX, p.y + 3);
+      ctx.lineTo(crackX - 2, p.y + crackDepth * 0.45);
+      ctx.lineTo(crackX + 2, p.y + crackDepth * 0.7);
+      ctx.lineTo(crackX - 1, p.y + crackDepth);
+    }
     ctx.stroke();
-    ctx.fillStyle = "#1a1a2a";
+
+    ctx.fillStyle = "rgba(5, 7, 16, 0.5)";
     ctx.fillRect(p.x, p.y + Math.max(0, p.h - 3), p.w, Math.min(3, p.h));
+    ctx.fillStyle = "rgba(205, 220, 244, 0.12)";
+    if (p.h > 10) {
+      ctx.fillRect(p.x + 2, p.y + 5, Math.max(1, p.w * 0.22), 1);
+      ctx.fillRect(p.x + p.w * 0.62, p.y + 7, Math.max(1, p.w * 0.18), 1);
+    }
     ctx.restore();
     if (isCollapsingBossFloor && floorCollapseTimer <= 120) {
       var crackProgress = Math.max(0, Math.min(1, (120 - floorCollapseTimer) / 60));
@@ -482,7 +588,11 @@ function drawWalls(room) {
       }
       return;
     }
-    ctx.fillStyle = w.breakable ? "#59483e" : "#343447";
+    var wallGradient = ctx.createLinearGradient(w.x, w.y, w.x + w.w, w.y + w.h);
+    wallGradient.addColorStop(0, w.breakable ? "#80634d" : "#53566d");
+    wallGradient.addColorStop(0.3, w.breakable ? "#59483e" : "#343447");
+    wallGradient.addColorStop(1, w.breakable ? "#302722" : "#171a2a");
+    ctx.fillStyle = wallGradient;
     ctx.fillRect(w.x, w.y, w.w, w.h);
     ctx.fillStyle = w.breakable ? "#8b7057" : "#55556b";
     ctx.fillRect(w.x, w.y, w.w, 4);
@@ -498,6 +608,20 @@ function drawWalls(room) {
     ctx.fillStyle = "rgba(12, 13, 25, 0.55)";
     for (var blockY = w.y + 45; blockY < w.y + w.h - 5; blockY += 24) {
       ctx.fillRect(w.x + 3, blockY, Math.max(2, w.w - 9), 2);
+    }
+    var wallSeed = Math.floor(w.x * 5 + w.y * 11 + w.w * 13 + w.h * 3);
+    for (var ledge = 0; ledge < Math.min(8, Math.max(2, Math.floor(w.h / 70))); ledge++) {
+      var ledgeY = w.y + 12 + ((wallSeed + ledge * 53) % Math.max(1, w.h - 22));
+      var ledgeX = w.x + 3 + ((wallSeed + ledge * 29) % Math.max(1, w.w - 10));
+      var ledgeW = Math.min(w.w - 5, 5 + (wallSeed + ledge * 17) % 19);
+      ctx.fillStyle = ledge % 2 ? "rgba(6, 9, 21, 0.26)" : "rgba(190, 205, 231, 0.12)";
+      ctx.beginPath();
+      ctx.moveTo(ledgeX, ledgeY + 4);
+      ctx.lineTo(ledgeX + 3, ledgeY);
+      ctx.lineTo(ledgeX + ledgeW, ledgeY + 1);
+      ctx.lineTo(ledgeX + ledgeW - 2, ledgeY + 5);
+      ctx.closePath();
+      ctx.fill();
     }
     if (w.breakable) {
       ctx.strokeStyle = "rgba(244, 210, 145, 0.65)";

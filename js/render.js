@@ -1,4 +1,4 @@
-function drawGameWorld() {
+function drawGameWorld(skipPlayers) {
   ctx.fillStyle = "#050510"; ctx.fillRect(0, 0, canvas.width, canvas.height);
   if (flash > 0) { ctx.fillStyle = "rgba(255,255,255," + (flash*0.3) + ")"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
   var shakeX = combatShake ? (Math.random() - 0.5) * combatShake : 0;
@@ -23,17 +23,28 @@ function drawGameWorld() {
   stalactites.forEach(function(s) {
     if (s.fallen || !s.active) return;
     if (Math.floor(s.x / ROOM_W) !== currentRoom) return;
-    var grad = ctx.createLinearGradient(s.x, s.y, s.x, s.y + s.h);
-    grad.addColorStop(0, "rgba(150,150,170,0.8)");
-    grad.addColorStop(0.5, "rgba(100,100,120,0.6)");
-    grad.addColorStop(1, "rgba(60,60,70,0.4)");
+    var grad = ctx.createLinearGradient(s.x, s.y, s.x + s.w, s.y + s.h);
+    grad.addColorStop(0, "rgba(66,75,104,0.8)");
+    grad.addColorStop(0.32, "rgba(155,164,184,0.8)");
+    grad.addColorStop(0.68, "rgba(91,102,131,0.7)");
+    grad.addColorStop(1, "rgba(33,39,60,0.6)");
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.moveTo(s.x, s.y);
+    ctx.lineTo(s.x + s.w * 0.35, s.y + s.h * 0.54);
+    ctx.lineTo(s.x + s.w * 0.43, s.y + s.h);
+    ctx.lineTo(s.x + s.w * 0.58, s.y + s.h * 0.72);
     ctx.lineTo(s.x + s.w/2, s.y + s.h);
     ctx.lineTo(s.x + s.w, s.y);
     ctx.closePath();
     ctx.fill();
+    ctx.strokeStyle = "rgba(204, 216, 238, 0.32)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(s.x + s.w * 0.22, s.y + 2);
+    ctx.lineTo(s.x + s.w * 0.38, s.y + s.h * 0.42);
+    ctx.lineTo(s.x + s.w * 0.43, s.y + s.h * 0.61);
+    ctx.stroke();
   });
 
   var camLeft = cameraX, camRight = cameraX + 800, camTop = cameraY, camBottom = cameraY + 600;
@@ -60,6 +71,7 @@ function drawGameWorld() {
     }
     drawPlatforms(room, r);
     drawWalls(room);
+    if (!room.city) drawCaveLocalLighting(r, room);
     if (room.chests && Array.isArray(room.chests)) {
       room.chests.forEach(function(chest) {
         if (chest.opened) {
@@ -261,8 +273,8 @@ function drawGameWorld() {
     ctx.closePath(); ctx.fill();
     ctx.restore();
   });
-  if (dialogueMode !== "sword_pickup") drawPlayerEntity(player);
-  if (twoPlayerMode) drawPlayerEntity(player2);
+  if (!skipPlayers && dialogueMode !== "sword_pickup") drawPlayerEntity(player);
+  if (!skipPlayers && twoPlayerMode) drawPlayerEntity(player2);
   if (customLevelActive && customLevelGoal) {
     ctx.fillStyle = customLevelGoal.type === "door" ? "#23834b" : "#ffd700";
     ctx.strokeStyle = "#fff2a3";
