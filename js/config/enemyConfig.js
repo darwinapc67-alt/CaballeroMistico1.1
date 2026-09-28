@@ -43,13 +43,13 @@ var enemies = [
   {x: 4350, y: 280, w: 24, h: 20, vx: -1.3, vy: 0, baseY: 280, range: 60, dead: false, room: 5, type: 'bat'},
   {x: 4500, y: 420, w: 24, h: 20, vx: 1.5, vy: 0, baseY: 420, range: 55, dead: false, room: 5, type: 'bat'},
   {x: 4100, y: 200, w: 24, h: 20, vx: -1.1, vy: 0, baseY: 200, range: 45, dead: false, room: 5, type: 'bat'},
-  {x: 4850, y: 1070, w: 24, h: 20, vx: 1.5, vy: 0, baseY: 1070, range: 50, dead: false, room: 6, type: 'bat'},
-  {x: 5050, y: 1010, w: 24, h: 20, vx: -1.3, vy: 0, baseY: 1010, range: 60, dead: false, room: 6, type: 'bat'},
-  {x: 5250, y: 950, w: 24, h: 20, vx: 1.6, vy: 0, baseY: 950, range: 55, dead: false, room: 6, type: 'bat'},
-  {x: 5450, y: 830, w: 24, h: 20, vx: -1.4, vy: 0, baseY: 830, range: 45, dead: false, room: 6, type: 'bat'},
-  {x: 5150, y: 710, w: 24, h: 20, vx: 1.2, vy: 0, baseY: 710, range: 50, dead: false, room: 6, type: 'bat'},
-  {x: 5000, y: 1020, w: 28, h: 22, vx: 0, vy: 0, speed: 1.8, visionRadius: 180, dead: false, room: 6, type: 'larva_mosca'},
-  {x: 5350, y: 590, w: 28, h: 22, vx: 0, vy: 0, speed: 1.8, visionRadius: 180, dead: false, room: 6, type: 'larva_mosca'},
+  {x: 4850, y: 300, w: 24, h: 20, vx: 1.5, vy: 0, baseY: 300, range: 50, dead: false, room: 6, type: 'bat'},
+  {x: 5050, y: 220, w: 24, h: 20, vx: -1.3, vy: 0, baseY: 220, range: 60, dead: false, room: 6, type: 'bat'},
+  {x: 5250, y: 350, w: 24, h: 20, vx: 1.6, vy: 0, baseY: 350, range: 55, dead: false, room: 6, type: 'bat'},
+  {x: 5450, y: 320, w: 24, h: 20, vx: -1.4, vy: 0, baseY: 320, range: 45, dead: false, room: 6, type: 'bat'},
+  {x: 5150, y: 180, w: 24, h: 20, vx: 1.2, vy: 0, baseY: 180, range: 50, dead: false, room: 6, type: 'bat'},
+  {x: 5000, y: 810, w: 28, h: 22, vx: 0, vy: 0, speed: 1.8, visionRadius: 180, dead: false, room: 6, type: 'larva_mosca'},
+  {x: 5350, y: 725, w: 28, h: 22, vx: 0, vy: 0, speed: 1.8, visionRadius: 180, dead: false, room: 6, type: 'larva_mosca'},
   {x: 7480, y: 540, w: 24, h: 20, vx: 1.2, vy: 0, baseY: 540, range: 180, speed: 1.4, dead: false, room: 9, type: 'cazador_paramo', terrestrial: true},
   {x: 8200, y: 1140, w: 24, h: 20, vx: -1.1, vy: 0, baseY: 1140, range: 110, speed: 1.3, dead: false, room: 10, type: 'cazador_paramo', terrestrial: true},
   {x: 5750, y: 350, w: 24, h: 20, vx: 1.4, vy: 0, baseY: 350, range: 55, dead: false, room: 7, type: 'bat'},
@@ -78,10 +78,10 @@ var enemies = [
   {x: 41 * ROOM_W + 180, y: 538, w: 28, h: 22, vx: 1.2, vy: 0, baseY: 538, speed: 1.5, dead: false, room: 38, type: 'larva_mosca'},
   {x: 41 * ROOM_W + 430, y: 538, w: 34, h: 48, vx: -1, vy: 0, baseY: 512, speed: 1.1, dead: false, room: 38, type: 'dark_knight', hp: 48, maxHp: 48, blockTimer: 80, dashCooldown: 100, dashTimer: 0, staysRoom: true},
   {x: 41 * ROOM_W + 650, y: 390, w: 24, h: 20, vx: -1.3, vy: 0, baseY: 390, range: 70, dead: false, room: 38, type: 'bat'},
-  {x: 24380, y: 3150, w: 32, h: 28, vx: 0, vy: 0, dead: false, room: 34, type: 'blue_sentry', shootTimer: 45, staysRoom: true},
-  {x: 24740, y: 2380, w: 32, h: 28, vx: 0, vy: 0, dead: false, room: 34, type: 'blue_sentry', shootTimer: 80, staysRoom: true},
-  {x: 24280, y: 1550, w: 32, h: 28, vx: 0, vy: 0, dead: false, room: 34, type: 'blue_sentry', shootTimer: 115, staysRoom: true},
-  {x: 24680, y: 700, w: 32, h: 28, vx: 0, vy: 0, dead: false, room: 34, type: 'blue_sentry', shootTimer: 150, staysRoom: true}
+  {x: 24380, y: 500, w: 32, h: 28, vx: 0, vy: 0, dead: false, room: 34, type: 'blue_sentry', shootTimer: 45, staysRoom: true},
+  {x: 24900, y: 380, w: 32, h: 28, vx: 0, vy: 0, dead: false, room: 34, type: 'blue_sentry', shootTimer: 80, staysRoom: true},
+  {x: 25800, y: 300, w: 32, h: 28, vx: 0, vy: 0, dead: false, room: 34, type: 'blue_sentry', shootTimer: 115, staysRoom: true},
+  {x: 26800, y: 150, w: 32, h: 28, vx: 0, vy: 0, dead: false, room: 34, type: 'blue_sentry', shootTimer: 150, staysRoom: true}
 ];
 for (var challengeRoom = 12; challengeRoom <= 18; challengeRoom++) {
   var challengeOrigin = challengeRoom * ROOM_W;

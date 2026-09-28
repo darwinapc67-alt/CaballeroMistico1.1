@@ -954,6 +954,21 @@ function rectHit(a, b) {
   return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
 }
 
+function getPlatformSurfaceY(platform, worldX) {
+  if (!platform || !platform.surface || platform.surface.length < 2) return null;
+  var localX = worldX - platform.x;
+  var points = platform.surface;
+  if (localX < points[0].x || localX > points[points.length - 1].x) return null;
+  for (var i = 0; i < points.length - 1; i++) {
+    var start = points[i];
+    var end = points[i + 1];
+    if (localX > end.x) continue;
+    var progress = (localX - start.x) / (end.x - start.x);
+    return platform.y + start.y + (end.y - start.y) * progress;
+  }
+  return platform.y + points[points.length - 1].y;
+}
+
 function genDecor(off, nStal, nRock, roomH) {
   nStal = nStal || 10; nRock = nRock || 6; roomH = roomH || 600;
   var d = [];
@@ -967,7 +982,16 @@ function genDecor(off, nStal, nRock, roomH) {
     d.push({type:'rock', x: x, y: roomH-h, w: 20+Math.random()*35, h: h});
   }
   for (var i = 0; i < 4; i++) {
-    d.push({type:'wall', x: off+Math.random()*ROOM_W, y: 80+Math.random()*250, w: 12+Math.random()*16, h: 30+Math.random()*60});
+    var wallW = 35 + Math.random() * 35;
+    var wallSide = i % 2;
+    d.push({
+      type: 'wall',
+      x: off + (wallSide ? ROOM_W - wallW : 0),
+      y: 80 + Math.random() * Math.max(60, roomH - 190),
+      w: wallW,
+      h: 55 + Math.random() * 65,
+      side: wallSide
+    });
   }
   return d;
 }

@@ -197,7 +197,8 @@ function drawExplorationMapGraph(x, y, width, height) {
   function nodeIsRevealed(index) {
     var room = rooms[index];
     return index === currentRoom || (!room.optional && index <= highestRoomReached) ||
-      (room.optional && highestRoomReached >= (room.mapRevealAt || 0));
+      (room.optional && room.sideExits && room.sideExits.length > 0 &&
+        highestRoomReached >= (room.mapRevealAt || 0));
   }
 
   ctx.lineCap = "round";
@@ -254,9 +255,26 @@ function drawExplorationMapGraph(x, y, width, height) {
     var floorY = nodeY + chamberH - 7;
     ctx.fillStyle = "#192737";
     ctx.fillRect(nodeX + 3, nodeY + 3, chamberW - 6, chamberH - 6);
-    ctx.fillStyle = "#a97845";
-    ctx.fillRect(nodeX + 4, floorY, chamberW - 8, 3);
+    var terrainPlatform = (room.platforms || []).find(function(platform) {
+      return platform.surface;
+    });
+    if (terrainPlatform) {
+      ctx.strokeStyle = "#c38e56";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      terrainPlatform.surface.forEach(function(point, pointIndex) {
+        var terrainX = nodeX + 4 + (terrainPlatform.x - roomOrigin + point.x) * (chamberW - 8) / roomWidth;
+        var terrainY = nodeY + 3 + (terrainPlatform.y + point.y) * (chamberH - 10) / roomHeight;
+        if (pointIndex === 0) ctx.moveTo(terrainX, terrainY);
+        else ctx.lineTo(terrainX, terrainY);
+      });
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = "#a97845";
+      ctx.fillRect(nodeX + 4, floorY, chamberW - 8, 3);
+    }
     (room.platforms || []).forEach(function(platform) {
+      if (platform.surface) return;
       var platformX = nodeX + 4 + (platform.x - roomOrigin) * (chamberW - 8) / roomWidth;
       var platformY = nodeY + 3 + platform.y * (chamberH - 10) / roomHeight;
       var platformWidth = Math.max(2, platform.w * (chamberW - 8) / roomWidth);

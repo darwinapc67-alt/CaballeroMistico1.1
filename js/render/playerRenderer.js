@@ -7,9 +7,12 @@ function drawPlayerEntity(p, wakeProgress) {
   }
 
   var moving = p.onGround && Math.abs(p.vx) > 0.5;
-  var runAmount = moving ? Math.min(1, Math.abs(p.vx) / 4.5) : 0;
+  var walkBlend = typeof p.walkBlend === "number"
+    ? Math.max(0, Math.min(1, p.walkBlend))
+    : (moving ? 1 : 0);
+  var runAmount = Math.min(1, Math.abs(p.vx) / 3.5) * walkBlend;
   var phase = (p.anim || 0) * Math.PI / 12;
-  var step = moving ? Math.sin(phase) * runAmount : 0;
+  var step = Math.sin(phase) * runAmount;
   var idleBreath = Math.sin(Date.now() / 430 + (p.id || 1)) * 0.55;
   var jumpPose = !p.onGround && p.vy < -1;
   var fallPose = !p.onGround && p.vy > 2;
@@ -19,8 +22,10 @@ function drawPlayerEntity(p, wakeProgress) {
   var attacking = p.swordSwing > 0 && p.hasSword && p.swordEquipped;
   var hurt = p.inv > 0;
   var cx = p.x + p.w / 2;
-  var top = p.y + (moving ? Math.sin(phase * 2) * 0.65 * runAmount : idleBreath * 0.35);
-  var bodyLean = p.dashing ? p.facing * 0.2 : (hurt ? -p.facing * (0.07 + Math.sin(Date.now() / 48) * 0.04) : 0);
+  var top = p.y + Math.sin(phase * 2) * 0.65 * runAmount + idleBreath * 0.35 * (1 - walkBlend);
+  var bodyLean = p.dashing ? p.facing * 0.2 : (hurt
+    ? -p.facing * (0.07 + Math.sin(Date.now() / 48) * 0.04)
+    : Math.sin(phase) * 0.025 * walkBlend);
   var deathProgress = gameState === ST_DEATH && playerDead && p === player
     ? Math.min(1, deathAnimTimer / 36)
     : 0;
@@ -54,11 +59,14 @@ function drawPlayerEntity(p, wakeProgress) {
     ctx.translate(cx, p.y + p.h / 2);
     ctx.rotate(bodyLean);
     ctx.translate(-cx, -(p.y + p.h / 2));
+  } else if (walkBlend > 0) {
+    ctx.translate(cx, p.y + p.h / 2);
+    ctx.rotate(bodyLean);
+    ctx.translate(-cx, -(p.y + p.h / 2));
   }
 
   var floorY = top + p.h;
   var hipY = top + 20;
-  var legSwing = step * (jumpPose || fallPose ? 0.35 : 2.3);
   var legSpread = jumpPose ? 2.4 : (fallPose ? 1.8 : 0);
   var bodyLift = jumpPose ? -1.2 : 0;
   var armSwing = step * 2;
@@ -106,7 +114,8 @@ function drawPlayerEntity(p, wakeProgress) {
     var sheathedWeapon = getWeaponConfig(p.weaponId || weaponId);
     ctx.save();
     ctx.translate(cx - p.facing * 5, top + 15 + bodyLift);
-    ctx.rotate(p.facing > 0 ? -0.48 : 0.48);
+    var swordSway = Math.sin(phase) * 0.035 * walkBlend;
+    ctx.rotate(p.facing > 0 ? -0.48 + swordSway : 0.48 - swordSway);
     ctx.fillStyle = "#4a2c22";
     ctx.fillRect(-1, -12, 3, 21);
     ctx.fillStyle = sheathedWeapon.color;
@@ -118,12 +127,12 @@ function drawPlayerEntity(p, wakeProgress) {
     ctx.restore();
   }
 
-  function drawLeg(side, stride) {
+  function drawLeg(side, stride, footLift) {
     var hipX = cx + side * 3;
     var kneeX = hipX + stride + side * legSpread;
     var kneeY = hipY + 4;
     var footX = kneeX + stride * 0.6 + side * 0.5;
-    var footY = floorY - (jumpPose ? 3 : 0);
+    var footY = floorY - (jumpPose ? 3 : footLift);
     ctx.lineCap = "square";
     ctx.lineJoin = "round";
     ctx.strokeStyle = "#172238";
@@ -149,8 +158,12 @@ function drawPlayerEntity(p, wakeProgress) {
     ctx.fillRect(footX - 2, footY, 4, 1);
   }
 
-  drawLeg(-1, -legSwing);
-  drawLeg(1, legSwing);
+  var leftLegPhase = phase;
+  var rightLegPhase = phase + Math.PI;
+  var leftFootLift = !jumpPose && !fallPose ? Math.max(0, Math.cos(leftLegPhase)) * 2.8 * walkBlend : 0;
+  var rightFootLift = !jumpPose && !fallPose ? Math.max(0, Math.cos(rightLegPhase)) * 2.8 * walkBlend : 0;
+  drawLeg(-1, Math.sin(leftLegPhase) * (jumpPose || fallPose ? 0.35 : 2.3) * runAmount, leftFootLift);
+  drawLeg(1, Math.sin(rightLegPhase) * (jumpPose || fallPose ? 0.35 : 2.3) * runAmount, rightFootLift);
 
   ctx.fillStyle = armorDark;
   ctx.beginPath();

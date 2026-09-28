@@ -29,7 +29,7 @@ var hasBrokenLarvaSword = false;
 var hiddenCollectibleData = [
   { id: "eclipse", room: 2, x: 2360, y: 420 },
   { id: "root", room: 6, x: 5480, y: 620 },
-  { id: "crown", room: 10, x: 8580, y: 1050 },
+  { id: "crown", room: 10, x: 8580, y: 620 },
   { id: "echo", room: 43, x: 43 * ROOM_W + 660, y: 520, rewardAzari: 100 },
   { id: "highGallery", room: 44, x: 44 * ROOM_W + 660, y: 520, rewardAzari: 160 },
   { id: "abyssRift", room: 45, x: 45 * ROOM_W + 660, y: 520, rewardAzari: 220 },

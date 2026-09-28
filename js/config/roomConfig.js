@@ -1,11 +1,7 @@
 var room0 = {
   height: 600,
   platforms: [
-    {x:-240, y:560, w:600, h:40}, {x:500, y:560, w:300, h:40},
-    {x:35, y:390, w:125, h:16}, {x:45, y:255, w:105, h:16},
-    {x:180, y:490, w:75, h:14}, {x:300, y:490, w:75, h:14},
-    {x:420, y:490, w:75, h:14}, {x:540, y:490, w:75, h:14},
-    {x:360, y:410, w:65, h:14}
+    {x:-240, y:560, w:600, h:40}, {x:500, y:560, w:300, h:40}
   ],
   spikes: [{x:360, y:580, w:140, h:20}],
   walls: [
@@ -49,11 +45,9 @@ var room2 = {
 var room3 = {
   height: 600,
   platforms: [
-    {x:2400, y:560, w:800, h:40}, {x:2450, y:480, w:100, h:14},
-    {x:2650, y:480, w:100, h:14}, {x:2850, y:480, w:100, h:14},
-    {x:3050, y:480, w:100, h:14}, {x:2500, y:380, w:80, h:14},
-    {x:2700, y:320, w:80, h:14}, {x:2900, y:380, w:80, h:14},
-    {x:2550, y:250, w:80, h:14}, {x:2750, y:200, w:80, h:14}
+    {x:2400, y:560, w:800, h:40},
+    {x:2470, y:450, w:220, h:110},
+    {x:2840, y:420, w:230, h:140}
   ],
   spikes: [], walls: [],
   transitionZone: null,
@@ -82,11 +76,9 @@ var room4 = {
 var room5 = {
   height: 600,
   platforms: [
-    {x:4000, y:560, w:800, h:40}, {x:4050, y:480, w:120, h:14},
-    {x:4250, y:480, w:120, h:14}, {x:4450, y:480, w:120, h:14},
-    {x:4150, y:380, w:100, h:14}, {x:4350, y:380, w:100, h:14},
-    {x:4250, y:280, w:100, h:14}, {x:4100, y:200, w:100, h:14},
-    {x:4400, y:200, w:100, h:14}
+    {x:4000, y:560, w:800, h:40},
+    {x:4070, y:450, w:180, h:110},
+    {x:4400, y:440, w:205, h:120}
   ],
   spikes: [], walls: [],
   transitionZone: {x:4750, y:460, w:50, h:100, to:6},
@@ -94,7 +86,7 @@ var room5 = {
 };
 
 var room6 = {
-  height: 1200,
+  height: 900,
   platforms: [
     {x:4800, y:1160, w:200, h:40}, {x:4850, y:1100, w:120, h:14},
     {x:5000, y:1040, w:120, h:14}, {x:5150, y:980, w:120, h:14},
@@ -109,16 +101,15 @@ var room6 = {
   ],
   spikes: [], walls: [],
   transitionZone: null,
-  decor: genDecor(4800, 8, 5, 1200)
+  decor: genDecor(4800, 8, 5, 900)
 };
 
 var room7 = {
   height: 600,
   platforms: [
-    {x:5600, y:560, w:800, h:40}, {x:5650, y:480, w:120, h:14},
-    {x:5850, y:480, w:120, h:14}, {x:6050, y:480, w:120, h:14},
-    {x:5700, y:380, w:100, h:14}, {x:5900, y:300, w:100, h:14},
-    {x:6100, y:380, w:100, h:14}
+    {x:5600, y:560, w:800, h:40},
+    {x:5660, y:450, w:210, h:110},
+    {x:6020, y:430, w:195, h:130}
   ],
   spikes: [], walls: [],
   transitionZone: null,
@@ -162,8 +153,7 @@ var room9 = {
   decor: genDecor(7200, 10, 8, 600)
 };
 
-/* The final descent was lost in an earlier regression.  Keep it as a
-   deliberately small ten-platform vertical room before the boss arenas. */
+/* The final descent is a vertical room before the boss arenas. */
 var room10 = {
   height: 1200,
   platforms: [
@@ -367,33 +357,19 @@ function createCorridorRoom(index, variant, nextRoom) {
 var room31 = createCorridorRoom(31, 1, 32);
 var room32 = createCorridorRoom(32, 2, 33);
 var room33 = createCorridorRoom(33, 3, null);
-function createVerticalRoomPlatforms(origin) {
-  var platforms = [{x: origin, y: 3460, w: 1200, h: 40}];
-  var positions = [70, 285, 500, 715, 930, 715, 500, 285];
-  for (var i = 0; i < 27; i++) {
-    platforms.push({
-      x: origin + positions[i % positions.length],
-      y: 3320 - i * 125,
-      w: 220,
-      h: 18
-    });
-  }
-  platforms.push({x: origin + 250, y: 120, w: 500, h: 18});
-  return platforms;
-}
 var room34 = {
-  height: 3500,
+  height: 1000,
   worldX: 30 * ROOM_W,
-  roomWidth: 1200,
+  roomWidth: 3700,
   verticalRoom: true,
-  openDoor: {x: 30 * ROOM_W + 18, y: 3380, w: 55, h: 80},
-  lockedDoor: {x: 30 * ROOM_W + 1120, y: 3380, w: 55, h: 80},
-  platforms: createVerticalRoomPlatforms(30 * ROOM_W),
+  openDoor: {x: 30 * ROOM_W + 18, y: 0, w: 55, h: 80},
+  lockedDoor: {x: 30 * ROOM_W + 1120, y: 0, w: 55, h: 80},
+  platforms: [],
   spikes: [],
   walls: [],
   transitionZone: null,
   noDoor: true,
-  decor: genDecor(30 * ROOM_W, 12, 6, 3500)
+  decor: genDecor(30 * ROOM_W, 12, 6, 1000)
 };
 var room35 = {
   height: 900,
@@ -496,139 +472,138 @@ rooms[42] = room39;
 room35.bossName = null;
 rooms[38].bossName = null;
 
-room0.sideExits = [{
-  x: 724, y: 455, w: 58, h: 105, to: 43,
-  spawnX: 43 * ROOM_W + 90, spawnY: 520,
-  mapRevealAt: 0
-}];
-room3.platforms.push(
-  {x: 3 * ROOM_W + 82, y: 320, w: 138, h: 16},
-  {x: 3 * ROOM_W + 258, y: 252, w: 96, h: 16},
-  {x: 3 * ROOM_W + 418, y: 292, w: 156, h: 16}
-);
-rooms[3].sideExits = [{
-  x: 3 * ROOM_W + 722, y: 455, w: 58, h: 105, to: 46,
-  spawnX: 46 * ROOM_W + 90, spawnY: 520,
-  mapRevealAt: 3
-}];
-room5.platforms.push(
-  {x: 5 * ROOM_W + 142, y: 368, w: 178, h: 18},
-  {x: 5 * ROOM_W + 365, y: 302, w: 110, h: 16},
-  {x: 5 * ROOM_W + 524, y: 382, w: 184, h: 18}
-);
-rooms[5].sideExits = [{
-  x: 5 * ROOM_W + 20, y: 455, w: 58, h: 105, to: 46,
-  spawnX: 46 * ROOM_W + 680, spawnY: 520,
-  mapRevealAt: 5
-}];
-room7.platforms.push(
-  {x: 7 * ROOM_W + 92, y: 365, w: 132, h: 16},
-  {x: 7 * ROOM_W + 260, y: 285, w: 112, h: 16},
-  {x: 7 * ROOM_W + 438, y: 342, w: 168, h: 16}
-);
-rooms[7].sideExits = [{
-  x: 7 * ROOM_W + 722, y: 455, w: 58, h: 105, to: 47,
-  spawnX: 47 * ROOM_W + 90, spawnY: 520,
-  mapRevealAt: 7
-}];
-rooms[9].sideExits = [{
-  x: 9 * ROOM_W + 20, y: 455, w: 58, h: 105, to: 47,
-  spawnX: 47 * ROOM_W + 680, spawnY: 520,
-  mapRevealAt: 9
-}];
-interludeRooms[2].platforms.push(
-  {x: 14 * ROOM_W + 485, y: 315, w: 110, h: 16}
-);
-interludeRooms[2].sideExits = [{
-  x: 14 * ROOM_W + 670, y: 10, w: 52, h: 35, to: 44,
-  spawnX: 44 * ROOM_W + 90, spawnY: 520, requires: "doubleJump",
-  title: "ALTURA", mapRevealAt: 14
-}];
-rooms[18].platforms.push({x: 18 * ROOM_W + 485, y: 315, w: 110, h: 16});
-rooms[18].sideExits = [{
-  x: 18 * ROOM_W + 670, y: 10, w: 52, h: 35, to: 48,
-  spawnX: 48 * ROOM_W + 90, spawnY: 520, requires: "doubleJump",
-  mapRevealAt: 18
-}];
-cityRooms[4].sideExits = [{
-  x: 28 * ROOM_W + 340, y: 165, w: 54, h: 70, to: 45,
-  spawnX: 45 * ROOM_W + 90, spawnY: 520, requires: "dash",
-  mapRevealAt: 28
-}];
-cityRooms[4].platforms.push(
-  {x: 28 * ROOM_W + 155, y: 425, w: 120, h: 18},
-  {x: 28 * ROOM_W + 285, y: 335, w: 92, h: 18},
-  {x: 28 * ROOM_W + 320, y: 235, w: 95, h: 18}
-);
-rooms[24].sideExits = [{
-  x: 24 * ROOM_W + 722, y: 455, w: 58, h: 105, to: 49,
-  spawnX: 49 * ROOM_W + 90, spawnY: 520, requires: "dash",
-  mapRevealAt: 24
-}];
-rooms[26].sideExits = [{
-  x: 26 * ROOM_W + 20, y: 455, w: 58, h: 105, to: 49,
-  spawnX: 49 * ROOM_W + 680, spawnY: 520,
-  mapRevealAt: 26
-}];
-
-function createOptionalCaveRoom(index, title, exitRoom, exitX, exitY, rewardAmount, variant) {
+function createOptionalCaveRoom(index, title, variant) {
   var origin = index * ROOM_W;
-  var platformShapes = [
-    [[45, 458, 166, 17], [260, 383, 98, 15], [405, 302, 168, 18], [628, 414, 120, 16]],
-    [[76, 452, 125, 16], [246, 373, 174, 17], [462, 286, 98, 15], [592, 395, 152, 17], [160, 238, 90, 14], [505, 195, 122, 15]],
-    [[45, 468, 150, 16], [226, 390, 106, 15], [388, 322, 184, 17], [610, 430, 130, 16], [176, 247, 110, 14], [505, 208, 100, 14]]
-  ];
-  var platforms = [{x: origin, y: 560, w: ROOM_W, h: 40}];
-  platformShapes[variant].forEach(function(shape) {
-    platforms.push({x: origin + shape[0], y: shape[1], w: shape[2], h: shape[3]});
-  });
   return {
     height: 600,
-    platforms: platforms,
+    platforms: [],
     spikes: variant === 2 ? [{x: origin + 270, y: 540, w: 120, h: 20}] : [],
     walls: [],
     optional: true,
     zoneTitle: title,
     visualProfile: variant === 2 ? "abyss" : "crystal",
-    sideExits: [{
-      x: origin + 18, y: 455, w: 56, h: 105, to: exitRoom,
-      spawnX: exitX, spawnY: exitY
-    }],
     decor: genDecor(origin, 8 + variant, 5, 600)
   };
 }
 
 rooms.push(
-  createOptionalCaveRoom(43, "GRUTA DEL ECO", 0, 650, 520, 100, 0),
-  createOptionalCaveRoom(44, "GALERÍA ALTA", 14, 14 * ROOM_W + 545, 285, 160, 1),
-  createOptionalCaveRoom(45, "GRIETA DEL ABISMO", 28, 28 * ROOM_W + 338, 205, 220, 2),
-  createOptionalCaveRoom(46, "BIFURCACIÓN DEL ECO", 3, 3 * ROOM_W + 690, 520, 130, 0),
-  createOptionalCaveRoom(47, "PASO DE LOS HONGOS", 7, 7 * ROOM_W + 90, 520, 150, 1),
-  createOptionalCaveRoom(48, "GALERÍA DE LAS ALTURAS", 18, 18 * ROOM_W + 545, 285, 180, 1),
-  createOptionalCaveRoom(49, "GRIETA DE LA CIUDAD", 24, 24 * ROOM_W + 690, 520, 240, 2)
+  createOptionalCaveRoom(43, "GRUTA DEL ECO", 0),
+  createOptionalCaveRoom(44, "GALERÍA ALTA", 1),
+  createOptionalCaveRoom(45, "GRIETA DEL ABISMO", 2),
+  createOptionalCaveRoom(46, "BIFURCACIÓN DEL ECO", 0),
+  createOptionalCaveRoom(47, "PASO DE LOS HONGOS", 1),
+  createOptionalCaveRoom(48, "GALERÍA DE LAS ALTURAS", 1),
+  createOptionalCaveRoom(49, "GRIETA DE LA CIUDAD", 2)
 );
-rooms[43].mapRevealAt = 0;
-rooms[44].mapRevealAt = 14;
-rooms[45].mapRevealAt = 28;
-rooms[46].mapRevealAt = 3;
-rooms[47].mapRevealAt = 7;
-rooms[48].mapRevealAt = 18;
-rooms[49].mapRevealAt = 24;
-rooms[45].sideExits[0].spawnX = 28 * ROOM_W + 100;
-rooms[45].sideExits[0].spawnY = 520;
-rooms[46].sideExits.push({
-  x: 46 * ROOM_W + 728, y: 455, w: 56, h: 105, to: 5,
-  spawnX: 5 * ROOM_W + 90, spawnY: 520
+for (var optionalRoomIndex = 43; optionalRoomIndex < rooms.length; optionalRoomIndex++) {
+  var optionalRoom = rooms[optionalRoomIndex];
+  var optionalOrigin = optionalRoomIndex * ROOM_W;
+  optionalRoom.walls.push(
+    {x: optionalOrigin, y: 0, w: 18, h: 450},
+    {x: optionalOrigin, y: 560, w: 18, h: 40},
+    {x: optionalOrigin + 782, y: 0, w: 18, h: 450},
+    {x: optionalOrigin + 782, y: 560, w: 18, h: 40}
+  );
+}
+
+var caveFloorProfiles = {
+  0: [[-240, 560], [0, 560], [160, 550], [330, 575], [470, 588], [630, 558], [800, 560]],
+  1: [[0, 560], [160, 552], [330, 540], [490, 560], [650, 580], [800, 560]],
+  2: [[0, 560], [150, 578], [300, 590], [470, 565], [640, 548], [800, 560]],
+  3: [[0, 560], [170, 548], [340, 532], [500, 553], [660, 580], [800, 560]],
+  4: [[0, 560], [150, 578], [315, 590], [475, 566], [640, 542], [800, 560]],
+  5: [[0, 560], [170, 552], [330, 540], [490, 555], [650, 582], [800, 560]],
+  6: [[0, 860], [130, 852], [260, 820], [390, 790], [520, 760], [650, 720], [800, 660]],
+  7: [[0, 560], [155, 570], [320, 578], [480, 564], [645, 548], [800, 560]],
+  8: [[0, 560], [160, 550], [325, 544], [490, 555], [650, 570], [800, 560]],
+  9: [[0, 560], [165, 568], [330, 577], [495, 564], [650, 549], [800, 560]],
+  10: [[0, 560], [150, 595], [300, 645], [450, 670], [590, 620], [700, 590], [800, 560]],
+  11: [[0, 560], [170, 552], [340, 547], [500, 557], [660, 570], [800, 560]],
+  12: [[0, 560], [140, 580], [300, 585], [450, 562], [620, 548], [800, 560]],
+  13: [[0, 560], [150, 540], [320, 535], [490, 558], [640, 578], [800, 560]],
+  14: [[0, 560], [200, 580], [400, 574], [550, 545], [700, 552], [800, 560]],
+  15: [[0, 560], [120, 550], [280, 568], [450, 588], [620, 570], [800, 560]],
+  16: [[0, 560], [180, 580], [330, 585], [530, 564], [680, 545], [800, 560]],
+  17: [[0, 560], [160, 545], [300, 538], [450, 555], [610, 580], [800, 560]],
+  18: [[0, 560], [160, 576], [320, 585], [470, 562], [620, 542], [800, 560]],
+  20: [[0, 560], [160, 556], [325, 548], [490, 557], [655, 570], [800, 560]],
+  34: [[0, 560], [160, 570], [325, 578], [490, 562], [655, 548], [800, 560]],
+  35: [[0, 560], [160, 551], [325, 545], [490, 558], [655, 572], [800, 560]],
+  36: [[0, 560], [165, 568], [330, 577], [495, 562], [660, 548], [800, 560]],
+  37: [[0, 960], [250, 960], [500, 930], [750, 880], [1000, 800], [1250, 740], [1500, 720], [1750, 730], [2000, 700], [2250, 660], [2500, 620], [2750, 580], [3000, 550], [3250, 430], [3500, 300], [3700, 190]],
+  40: [[0, 560], [160, 552], [325, 546], [490, 558], [655, 572], [800, 560]],
+  41: [[0, 560], [165, 570], [330, 578], [495, 562], [660, 548], [800, 560]],
+  43: [[0, 560], [160, 552], [325, 545], [490, 558], [655, 572], [800, 560]],
+  44: [[0, 560], [165, 570], [330, 578], [495, 562], [660, 548], [800, 560]],
+  45: [[0, 560], [160, 551], [325, 545], [490, 558], [655, 573], [800, 560]],
+  46: [[0, 560], [165, 569], [330, 577], [495, 562], [660, 548], [800, 560]],
+  47: [[0, 560], [160, 552], [325, 546], [490, 558], [655, 572], [800, 560]],
+  48: [[0, 560], [165, 570], [330, 578], [495, 562], [660, 548], [800, 560]],
+  49: [[0, 560], [160, 551], [325, 545], [490, 558], [655, 573], [800, 560]]
+};
+
+function createCaveFloorPlatform(roomIndex) {
+  var room = rooms[roomIndex];
+  var profile = caveFloorProfiles[roomIndex];
+  var profileStart = profile[0][0];
+  var origin = (room.worldX !== undefined ? room.worldX : roomIndex * ROOM_W) + profileStart;
+  var profileEnd = profile[profile.length - 1][0];
+  var surface = [];
+  var segment = 0;
+  for (var sampleX = profileStart; sampleX < profileEnd; sampleX += 16) {
+    while (segment < profile.length - 2 && sampleX > profile[segment + 1][0]) segment++;
+    var p0 = profile[Math.max(0, segment - 1)];
+    var p1 = profile[segment];
+    var p2 = profile[segment + 1];
+    var p3 = profile[Math.min(profile.length - 1, segment + 2)];
+    var t = (sampleX - p1[0]) / (p2[0] - p1[0]);
+    var t2 = t * t;
+    var t3 = t2 * t;
+    var y = 0.5 * (
+      2 * p1[1] +
+      (-p0[1] + p2[1]) * t +
+      (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 +
+      (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3
+    );
+    surface.push({x: sampleX - profileStart, y: y});
+  }
+  surface.push({x: profileEnd - profileStart, y: profile[profile.length - 1][1]});
+  return {
+    x: origin,
+    y: 0,
+    w: profileEnd - profileStart,
+    h: room.height,
+    surface: surface
+  };
+}
+
+Object.keys(caveFloorProfiles).forEach(function(indexKey) {
+  var roomIndex = Number(indexKey);
+  var room = rooms[roomIndex];
+  if (!room) return;
+  room.platforms = [createCaveFloorPlatform(roomIndex)];
 });
-rooms[47].sideExits.push({
-  x: 47 * ROOM_W + 728, y: 455, w: 56, h: 105, to: 9,
-  spawnX: 9 * ROOM_W + 90, spawnY: 520
-});
-rooms[48].sideExits.push({
-  x: 48 * ROOM_W + 728, y: 455, w: 56, h: 105, to: 16,
-  spawnX: 16 * ROOM_W + 90, spawnY: 520
-});
-rooms[49].sideExits.push({
-  x: 49 * ROOM_W + 728, y: 455, w: 56, h: 105, to: 26,
-  spawnX: 26 * ROOM_W + 90, spawnY: 520
+
+rooms.forEach(function(room) {
+  room.platforms.forEach(function(platform) {
+    if (!platform.surface) return;
+    room.spikes.forEach(function(spike) {
+      var surfaceY = getPlatformSurfaceY(platform, spike.x + spike.w / 2);
+      if (surfaceY !== null) spike.y = surfaceY - spike.h;
+    });
+    (room.chests || []).forEach(function(chest) {
+      var surfaceY = getPlatformSurfaceY(platform, chest.x + 13);
+      if (surfaceY !== null) chest.y = surfaceY - 22;
+    });
+    if (room.healingStone) {
+      var stoneSurfaceY = getPlatformSurfaceY(platform, room.healingStone.x + room.healingStone.w / 2);
+      if (stoneSurfaceY !== null) room.healingStone.y = stoneSurfaceY - room.healingStone.h;
+    }
+    ["openDoor", "lockedDoor"].forEach(function(doorName) {
+      var door = room[doorName];
+      if (!door) return;
+      var doorSurfaceY = getPlatformSurfaceY(platform, door.x + door.w / 2);
+      if (doorSurfaceY !== null) door.y = doorSurfaceY - door.h;
+    });
+  });
 });

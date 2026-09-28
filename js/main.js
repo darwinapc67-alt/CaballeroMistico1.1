@@ -110,14 +110,13 @@ function resetAll() {
     checkpointState.bombs = bombs;
     if (device === "touch") setupTouchControls();
   } else {
-    room0.platforms = [
-      {x:-240, y:560, w:600, h:40}, {x:500, y:560, w:300, h:40},
-      {x:35, y:390, w:125, h:16}, {x:45, y:255, w:105, h:16},
-      {x:180, y:490, w:75, h:14}, {x:300, y:490, w:75, h:14},
-      {x:420, y:490, w:75, h:14}, {x:540, y:490, w:75, h:14},
-      {x:360, y:410, w:65, h:14}
-    ];
-    room0.spikes = [{x:360, y:580, w:140, h:20}];
+    room0.platforms = [createCaveFloorPlatform(0)];
+    room0.spikes = [{
+      x: 360,
+      y: getPlatformSurfaceY(room0.platforms[0], 430) - 20,
+      w: 140,
+      h: 20
+    }];
     room0.walls = [
       {x:0, y:0, w:20, h:430},
       {x:0, y:430, w:20, h:130, breakable: true, requiresSword: true, broken: false},

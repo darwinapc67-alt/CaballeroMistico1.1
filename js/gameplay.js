@@ -351,7 +351,7 @@ function updateRoomAtmosphere() {
 
 function resetPlayer() {
   player.x = 100; player.y = 400; player.vx = 0; player.vy = 0;
-  player.jumpsLeft = hasDoubleJump ? 2 : 1; player.facing = 1; player.inv = 0; player.autoWalk = 0;
+  player.jumpsLeft = hasDoubleJump ? 2 : 1; player.facing = 1; player.inv = 0; player.anim = 0; player.walkBlend = 0; player.autoWalk = 0;
   player.jumpHeld = false;
   player.maxJumps = hasDoubleJump ? 2 : 1;
   player.frozen = false;
@@ -369,7 +369,7 @@ function resetPlayer() {
   hitFlash = 0; needsRespawn = false;
   if (twoPlayerMode) {
     player2.x = 140; player2.y = 400; player2.vx = 0; player2.vy = 0;
-    player2.jumpsLeft = hasDoubleJump ? 2 : 1; player2.facing = 1; player2.inv = 0; player2.autoWalk = 0;
+    player2.jumpsLeft = hasDoubleJump ? 2 : 1; player2.facing = 1; player2.inv = 0; player2.anim = 0; player2.walkBlend = 0; player2.autoWalk = 0;
     player2.jumpHeld = false;
     player2.maxJumps = hasDoubleJump ? 2 : 1;
     player2.frozen = false;
@@ -596,9 +596,16 @@ function updateHealingHearts() {
     var heartRoom = rooms[heart.room];
     var landingY = heartRoom.height - heart.h;
     heartRoom.platforms.forEach(function(platform) {
+      if (platform.surface) return;
       var overlapsX = heart.x < platform.x + platform.w && heart.x + heart.w > platform.x;
       var crossedTop = previousBottom <= platform.y && heart.y + heart.h >= platform.y;
       if (overlapsX && crossedTop && platform.y < landingY) landingY = platform.y - heart.h;
+    });
+    heartRoom.platforms.forEach(function(platform) {
+      var surfaceY = getPlatformSurfaceY(platform, heart.x + heart.w / 2);
+      if (surfaceY !== null && previousBottom <= surfaceY && heart.y + heart.h >= surfaceY) {
+        landingY = Math.min(landingY, surfaceY - heart.h);
+      }
     });
     if (heart.y >= landingY) {
       heart.y = landingY;
@@ -1370,6 +1377,13 @@ function updateEnemies() {
         }
       }
     }
+    if (gameMode === "normal" && !e.boss && enemyRoom &&
+        (e.terrestrial || e.type === "dark_knight" || e.type === "acid_slime")) {
+      enemyRoom.platforms.forEach(function(platform) {
+        var surfaceY = getPlatformSurfaceY(platform, e.x + e.w / 2);
+        if (surfaceY !== null) e.y = surfaceY - e.h;
+      });
+    }
     if (e.room === currentRoom && player.inv <= 0 && !player.frozen && rectHit(player, e)) {
       var dmg = e.infiniteDamage || (e.type === 'dark_knight' && e.dashTimer > 0 ? 2 : (e.type === 'larva_mosca' ? 2 : 1));
       playerTakeDamage(player, e.boss ? 1 : dmg, e.boss);
@@ -1496,9 +1510,16 @@ function updateAzariDrops() {
     drop.x += drop.vx; drop.y += drop.vy; drop.life--;
     var landingY = dropRoom.height - drop.h;
     dropRoom.platforms.forEach(function(platform) {
+      if (platform.surface) return;
       var overlapsX = drop.x < platform.x + platform.w && drop.x + drop.w > platform.x;
       var crossedTop = previousBottom <= platform.y && drop.y + drop.h >= platform.y;
       if (overlapsX && crossedTop && platform.y < landingY) landingY = platform.y - drop.h;
+    });
+    dropRoom.platforms.forEach(function(platform) {
+      var surfaceY = getPlatformSurfaceY(platform, drop.x + drop.w / 2);
+      if (surfaceY !== null && previousBottom <= surfaceY && drop.y + drop.h >= surfaceY) {
+        landingY = Math.min(landingY, surfaceY - drop.h);
+      }
     });
     if (drop.y >= landingY) {
       drop.y = landingY;
@@ -1574,9 +1595,16 @@ function updateBombs() {
     bomb.life--;
     var landingY = room.height - bomb.h;
     room.platforms.forEach(function(platform) {
+      if (platform.surface) return;
       var overlapsX = bomb.x < platform.x + platform.w && bomb.x + bomb.w > platform.x;
       if (overlapsX && previousBottom <= platform.y && bomb.y + bomb.h >= platform.y) {
         landingY = Math.min(landingY, platform.y - bomb.h);
+      }
+    });
+    room.platforms.forEach(function(platform) {
+      var surfaceY = getPlatformSurfaceY(platform, bomb.x + bomb.w / 2);
+      if (surfaceY !== null && previousBottom <= surfaceY && bomb.y + bomb.h >= surfaceY) {
+        landingY = Math.min(landingY, surfaceY - bomb.h);
       }
     });
     if (bomb.y >= landingY) {
@@ -1881,9 +1909,8 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
 
     p.vy += GRAVITY; if (p.vy > 12) p.vy = 12;
   }
+  var previousPlayerX = p.x;
   p.x += p.vx; p.y += p.vy;
-  if (p.onGround && Math.abs(p.vx) > 0.5 && !p.blocking && p.swordSwing <= 0) p.anim = (p.anim + 1) % 24;
-  else p.anim = 0;
   if (p.attackLungeTimer > 0) checkSwordHitEnemiesFor(p);
   p.wallContact = 0;
   if (gameMode === "infinite" && currentRoom === 0) {
@@ -1943,12 +1970,31 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   }
   if (p.y + p.h > room.height) {
     var hasFloor = false;
+    var floorLandingY = null;
     for (var i = 0; i < room.platforms.length; i++) {
       var pl = room.platforms[i];
-      if (pl.y + pl.h >= room.height - 5 && rectHit(p, pl)) { hasFloor = true; break; }
+      if (pl.y + pl.h < room.height - 5 || !rectHit(p, pl)) continue;
+      var surfaceY = getPlatformSurfaceY(pl, p.x + p.w / 2);
+      if (surfaceY !== null) {
+        hasFloor = true;
+        floorLandingY = surfaceY;
+        break;
+      }
+      if (!pl.surface) { hasFloor = true; break; }
     }
     if (hasFloor) {
-      p.y = room.height - p.h; p.vy = 0; p.onGround = true; p.jumpsLeft = p.maxJumps;
+      p.y = floorLandingY === null ? room.height - p.h : floorLandingY - p.h;
+      p.vy = 0; p.onGround = true; p.jumpsLeft = p.maxJumps;
+    }
+  }
+  if (gameMode === "normal" && p === player && p.y > room.height - 8 &&
+      room.sideExits && room.sideExits.length) {
+    for (var dropExitIndex = 0; dropExitIndex < room.sideExits.length; dropExitIndex++) {
+      var dropExit = room.sideExits[dropExitIndex];
+      if (dropExit.activation !== "drop" || !isSideExitAvailable(dropExit) ||
+          p.x + p.w <= dropExit.x || p.x >= dropExit.x + dropExit.w) continue;
+      startFallThroughTransition(dropExit.to, {x: dropExit.spawnX, y: dropExit.spawnY});
+      return;
     }
   }
   if (p.y > room.height + 80) {
@@ -1976,8 +2022,14 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     if (currentRoom === 33) { sfxFall(); startFallThroughTransition(37); return; }
     if (rooms[currentRoom].verticalRoom) {
       var lowerRoomOrigin = rooms[currentRoom].worldX !== undefined ? rooms[currentRoom].worldX : currentRoom * ROOM_W;
-      p.x = Math.max(lowerRoomOrigin + 30, Math.min(lowerRoomOrigin + ROOM_W - p.w - 30, p.x));
-      p.y = room.height - p.h - 40;
+      var lowerRoomWidth = rooms[currentRoom].roomWidth || ROOM_W;
+      p.x = Math.max(lowerRoomOrigin + 30, Math.min(lowerRoomOrigin + lowerRoomWidth - p.w - 30, p.x));
+      var lowerSurfaceY = null;
+      room.platforms.forEach(function(platform) {
+        var surfaceY = getPlatformSurfaceY(platform, p.x + p.w / 2);
+        if (surfaceY !== null) lowerSurfaceY = surfaceY;
+      });
+      p.y = lowerSurfaceY === null ? room.height - p.h - 40 : lowerSurfaceY - p.h;
       p.vx = 0;
       p.vy = 0;
       p.onGround = true;
@@ -1994,6 +2046,26 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   var touchingSpikes = false;
 
   room.platforms.forEach(function(pl) {
+    if (pl.surface) {
+      if (gameMode !== "normal") return;
+      var surfaceY = getPlatformSurfaceY(pl, p.x + p.w / 2);
+      if (surfaceY === null) return;
+      var previousBottom = p.y + p.h - p.vy;
+      if (p.vy >= 0 && p.y + p.h >= surfaceY &&
+          (wasOnGround || previousBottom <= surfaceY + 12)) {
+        p.y = surfaceY - p.h;
+        p.vy = 0;
+        p.onGround = true;
+        p.jumpsLeft = p.maxJumps;
+      } else if (p.vy < 0 && p.y + p.h > surfaceY) {
+        var previousSurfaceY = getPlatformSurfaceY(pl, previousPlayerX + p.w / 2);
+        if (previousSurfaceY !== null && surfaceY < previousSurfaceY) {
+          p.x = previousPlayerX;
+          p.vx = 0;
+        }
+      }
+      return;
+    }
     if (rectHit(p, pl)) {
       if (p.vy >= 0 && p.y + p.h - p.vy <= pl.y + 10) {
         if (!wasOnGround && p.vy > 2) {
@@ -2026,6 +2098,12 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       else if (p.vx < 0) { p.x = w.x + w.w; p.vx = 0; p.wallContact = -1; }
     }
   });
+  var walking = p.onGround && Math.abs(p.vx) > 0.45 && !p.blocking && p.swordSwing <= 0 && !p.dashing;
+  p.walkBlend = Math.max(0, Math.min(1, (typeof p.walkBlend === "number" ? p.walkBlend : 0) +
+    (walking ? 0.2 : -0.16)));
+  if (walking || p.walkBlend > 0.05) {
+    p.anim = ((p.anim || 0) + (walking ? Math.min(1.2, Math.abs(p.vx) / 3.5) : 0.35)) % 24;
+  }
   if (wasOnGround && !p.onGround) {
     p.jumpsLeft = Math.max(0, p.maxJumps - 1);
   }
@@ -2202,6 +2280,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   if (gameMode === "normal" && p === player && transitionCooldown <= 0 && room.sideExits) {
     for (var sideExitIndex = 0; sideExitIndex < room.sideExits.length; sideExitIndex++) {
       var sideExit = room.sideExits[sideExitIndex];
+      if (sideExit.activation === "drop") continue;
       if (!rectHit(p, sideExit)) continue;
       if (!isSideExitAvailable(sideExit)) {
         if (interactPressed) {
@@ -2616,16 +2695,16 @@ function tryInteractFor(p) {
   }
 }
 
-function startFallThroughTransition(toRoom) {
+function startFallThroughTransition(toRoom, destinationSpawn) {
   if (gameState === ST_TRANSITION) return;
   gameState = ST_TRANSITION;
   transPhase = "out";
   transTimer = 35;
   transTargetRoom = toRoom;
+  transitionSpawn = destinationSpawn || null;
   transFade = 0;
   transIsFall = true;
   transIsRise = false;
-  transitionSpawn = null;
   player.vx = 0; player.vy = 0;
   if (twoPlayerMode) { player2.vx = 0; player2.vy = 0; }
 }
@@ -2798,11 +2877,30 @@ function updateTransition() {
       cameraX = Math.max(0, Math.min(transitionRoomOrigin, WORLD_W - canvas.width));
       targetCamX = cameraX;
       if (!room.optional && currentRoom % 5 === 0) {
-        checkpointState = { room: currentRoom, px: currentRoom * ROOM_W + 100, py: room.height - 120, hp: player.hp, maxHp: player.maxHp, azari: azari, hasSword: hasSword, swordEquipped: swordEquipped, weaponId: weaponId, unlockedWeapons: unlockedWeapons.slice(), hasBow: hasBow, arrows: arrows, bombs: bombs, hasMap: hasMap, hasAzariCharm: hasAzariCharm, hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, azariBagLevel: azariBagLevel, hasOldKey: hasOldKey, doorUnlocked: doorUnlocked, rewardAzariCollected: rewardAzariCollected, hasLantern: hasLantern, lanternLevel: lanternLevel, hasDash: hasDash, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: JSON.parse(JSON.stringify(combatSkills)), blessingSlots: blessingSlots, equippedBlessings: equippedBlessings.slice(), armorId: armorId, armorLevel: armorLevel, permanentUpgrades: JSON.parse(JSON.stringify(permanentUpgrades)), bossUniqueItems: JSON.parse(JSON.stringify(bossUniqueItems)), hiddenCollectibles: JSON.parse(JSON.stringify(hiddenCollectibles)) };
+        var checkpointX = transitionRoomOrigin + 100;
+        var checkpointSurfaceY = null;
+        room.platforms.forEach(function(platform) {
+          var surfaceY = getPlatformSurfaceY(platform, checkpointX + player.w / 2);
+          if (surfaceY !== null) checkpointSurfaceY = surfaceY;
+        });
+        var checkpointY = checkpointSurfaceY === null ? room.height - 120 : checkpointSurfaceY - player.h;
+        checkpointState = { room: currentRoom, px: checkpointX, py: checkpointY, hp: player.hp, maxHp: player.maxHp, azari: azari, hasSword: hasSword, swordEquipped: swordEquipped, weaponId: weaponId, unlockedWeapons: unlockedWeapons.slice(), hasBow: hasBow, arrows: arrows, bombs: bombs, hasMap: hasMap, hasAzariCharm: hasAzariCharm, hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, azariBagLevel: azariBagLevel, hasOldKey: hasOldKey, doorUnlocked: doorUnlocked, rewardAzariCollected: rewardAzariCollected, hasLantern: hasLantern, lanternLevel: lanternLevel, hasDash: hasDash, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: JSON.parse(JSON.stringify(combatSkills)), blessingSlots: blessingSlots, equippedBlessings: equippedBlessings.slice(), armorId: armorId, armorLevel: armorLevel, permanentUpgrades: JSON.parse(JSON.stringify(permanentUpgrades)), bossUniqueItems: JSON.parse(JSON.stringify(bossUniqueItems)), hiddenCollectibles: JSON.parse(JSON.stringify(hiddenCollectibles)) };
         if (activeSlot >= 0) saveGame(activeSlot);
         spawnFloatText(player.x, player.y - 35, "PUNTO DE GUARDADO", "#64e6ae");
       }
-      if (transIsFall) {
+      if (transIsFall && transitionSpawn) {
+        player.x = transitionSpawn.x;
+        player.y = transitionSpawn.y;
+        player.vx = 0;
+        player.vy = 2;
+        if (twoPlayerMode) {
+          player2.x = transitionSpawn.x + 34;
+          player2.y = transitionSpawn.y;
+          player2.vx = 0;
+          player2.vy = 2;
+        }
+        transitionSpawn = null;
+      } else if (transIsFall) {
         var fallOrigin = room.worldX !== undefined ? room.worldX : currentRoom * ROOM_W;
         player.x = fallOrigin + ROOM_W / 2 - player.w / 2 - 20;
         player.y = 80; player.vx = 0; player.vy = 2;
@@ -2834,9 +2932,22 @@ function updateTransition() {
           player.x = roomOrigin + 30;
           if (twoPlayerMode) player2.x = roomOrigin + 60;
         }
-        player.y = room.height - 120;
+        var playerSurfaceY = null;
+        room.platforms.forEach(function(platform) {
+          var surfaceY = getPlatformSurfaceY(platform, player.x + player.w / 2);
+          if (surfaceY !== null) playerSurfaceY = surfaceY;
+        });
+        player.y = playerSurfaceY === null ? room.height - 120 : playerSurfaceY - player.h;
         player.vx = player.vx < 0 ? -2 : 2;
-        if (twoPlayerMode) { player2.y = room.height - 120; player2.vx = player2.vx < 0 ? -2 : 2; }
+        if (twoPlayerMode) {
+          var player2SurfaceY = null;
+          room.platforms.forEach(function(platform) {
+            var surfaceY = getPlatformSurfaceY(platform, player2.x + player2.w / 2);
+            if (surfaceY !== null) player2SurfaceY = surfaceY;
+          });
+          player2.y = player2SurfaceY === null ? room.height - 120 : player2SurfaceY - player2.h;
+          player2.vx = player2.vx < 0 ? -2 : 2;
+        }
       }
       var names = ["", "CUEVA OLVIDADA", "", "", "", "", "", "", "", "TIENDA", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""];
       zoneName = room.zoneTitle || names[currentRoom] || "";
@@ -2849,9 +2960,24 @@ function updateTransition() {
       player.vy += GRAVITY; if (player.vy > 8) player.vy = 8;
       player.y += player.vy;
       if (twoPlayerMode) { player2.vy += GRAVITY; if (player2.vy > 8) player2.vy = 8; player2.y += player2.vy; }
-      var landingY = rooms[currentRoom].height - 120;
-      if (player.y >= landingY) { player.y = landingY; player.vy = 0; }
-      if (twoPlayerMode && player2.y >= landingY) { player2.y = landingY; player2.vy = 0; }
+      var fallRoom = rooms[currentRoom];
+      [player, twoPlayerMode ? player2 : null].forEach(function(fallingPlayer) {
+        if (!fallingPlayer) return;
+        var landingY = fallRoom.height - fallingPlayer.h;
+        fallRoom.platforms.forEach(function(platform) {
+          var surfaceY = getPlatformSurfaceY(platform, fallingPlayer.x + fallingPlayer.w / 2);
+          if (surfaceY !== null) landingY = surfaceY - fallingPlayer.h;
+          else if (!platform.surface && platform.y + platform.h >= fallRoom.height - 5 &&
+              fallingPlayer.x + fallingPlayer.w > platform.x &&
+              fallingPlayer.x < platform.x + platform.w) {
+            landingY = Math.min(landingY, platform.y - fallingPlayer.h);
+          }
+        });
+        if (fallingPlayer.y >= landingY) {
+          fallingPlayer.y = landingY;
+          fallingPlayer.vy = 0;
+        }
+      });
     } else {
       player.x += player.vx;
       if (twoPlayerMode) player2.x += player2.vx;
