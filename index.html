@@ -22,7 +22,13 @@
     >
 
     <meta name="theme-color" content="#050510">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Caballero Místico">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link
         rel="canonical"
         href="https://caballeromistico.com/"
@@ -98,7 +104,7 @@
     }
     </script>
 
-    <link rel="stylesheet" href="style.css?v=13">
+    <link rel="stylesheet" href="style.css?v=14">
 
     <!-- Google AdSense -->
     <script
@@ -179,6 +185,13 @@
         </span>
     </div>
 
+    <section id="pwaInstall" aria-label="Instalar Caballero Místico">
+        <button id="pwaInstallButton" type="button" hidden>
+            📲 Instalar Caballero Místico
+        </button>
+        <p id="pwaInstallHelp" role="status" hidden></p>
+    </section>
+
     <!-- Publicidad: queda fuera del canvas y separado de los controles. -->
     <div
         id="gameAd"
@@ -213,7 +226,7 @@
 
 
     <!-- Anuncios -->
-    <script src="js/ads.js?v=3"></script>
+    <script src="js/ads.js?v=4"></script>
 
 
     <!-- Sistemas del juego -->
@@ -235,6 +248,7 @@
     <!-- Entrada y ejecución -->
     <script src="js/input.js?v=246"></script>
     <script src="js/main.js?v=210"></script>
+    <script src="js/pwa.js?v=1"></script>
 
 </body>
 </html>

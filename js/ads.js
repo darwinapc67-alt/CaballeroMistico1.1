@@ -1,16 +1,36 @@
 var adRequestInProgress = false;
+var displayAdRetryTimer = null;
+var displayAdRetryCount = 0;
+var displayAdInitialized = false;
 
 function initializeDisplayAd() {
+  if (displayAdInitialized) return;
   if (!window.adsbygoogle) {
-    window.setTimeout(initializeDisplayAd, 1000);
+    if (navigator.onLine && displayAdRetryCount < 5 && !displayAdRetryTimer) {
+      displayAdRetryCount++;
+      displayAdRetryTimer = window.setTimeout(function() {
+        displayAdRetryTimer = null;
+        initializeDisplayAd();
+      }, 1000);
+    }
     return;
+  }
+  if (displayAdRetryTimer) {
+    window.clearTimeout(displayAdRetryTimer);
+    displayAdRetryTimer = null;
   }
   try {
     (window.adsbygoogle = window.adsbygoogle || []).push({});
+    displayAdInitialized = true;
   } catch (error) {
     showAdMessage("No se pudo cargar el anuncio.");
   }
 }
+
+window.addEventListener("online", function() {
+  displayAdRetryCount = 0;
+  initializeDisplayAd();
+});
 
 function requestRewardedAd(rewardType, onComplete) {
   if (adRequestInProgress) return;

@@ -85,6 +85,41 @@
       font-size: 13px;
       font-family: monospace;
     }
+    #pwaInstall {
+      width: min(100%, 800px);
+      margin: 10px auto 0;
+      text-align: center;
+      font-family: monospace;
+    }
+    #pwaInstallButton {
+      padding: 10px 16px;
+      border: 1px solid #6cc;
+      border-radius: 6px;
+      background: #101c2b;
+      color: #b9f3ff;
+      font: bold 13px monospace;
+      cursor: pointer;
+    }
+    #pwaInstallButton:hover,
+    #pwaInstallButton:focus-visible {
+      background: #172b43;
+      outline: 2px solid #9de8ff;
+      outline-offset: 2px;
+    }
+    #pwaInstallHelp {
+      width: fit-content;
+      max-width: min(92vw, 600px);
+      margin: 0 auto;
+      padding: 10px 14px;
+      border: 1px solid #31536a;
+      border-radius: 6px;
+      background: #10182b;
+      color: #b9ddec;
+      font: 12px/1.5 monospace;
+    }
+    #pwaInstallButton[hidden],
+    #pwaInstallHelp[hidden] { display: none; }
+    body.is-offline #gameAd { display: none; }
     body.touch-device #ui { display: none; }
     #fullscreenButton {
       display: none;
