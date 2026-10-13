@@ -1,9 +1,9 @@
 {
-  "id": "./",
+  "id": "./jugar/",
   "name": "Caballero Místico",
   "short_name": "Caballero Místico",
   "description": "RPG de acción y aventuras. Explora mazmorras, derrota enemigos y jefes, consigue mejoras y juega sin conexión.",
-  "start_url": "./?source=pwa",
+  "start_url": "./jugar/?source=pwa",
   "scope": "./",
   "display": "standalone",
   "orientation": "landscape",

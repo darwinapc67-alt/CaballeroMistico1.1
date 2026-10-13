@@ -381,20 +381,6 @@ function resetPlayer() {
 
 }
 
-function revivePlayerFromReward() {
-  if (gameState !== ST_DEATH || hardcoreGameOver || !playerDead) return false;
-  adRewardedRevive = false;
-  player.hp = Math.max(1, Math.ceil(player.maxHp / 2));
-  player.frozen = false;
-  playerDead = false;
-  player.inv = 90;
-  deathTimer = 0;
-  deathAnimTimer = 0;
-  gameState = ST_PLAYING;
-  showAdMessage("¡Has vuelto al combate!");
-  return true;
-}
-
 function saveHealingStoneCheckpoint() {
   checkpointState = {
     room: currentRoom,
@@ -818,8 +804,7 @@ function executeAdminCommand(rawCommand) {
 function collectAzari(amount) {
   var previousAzari = azari;
   var maxAzari = azariBagLevel === 0 ? 999 : [999, 1999, 2999, 4999, 7499, 9999][azariBagLevel];
-  var rewardAmount = adAzariBonusTimer > 0 ? amount * 2 : amount;
-  azari = Math.min(maxAzari, azari + Math.max(0, rewardAmount));
+  azari = Math.min(maxAzari, azari + Math.max(0, amount));
   trackEarnVirtualCurrency(azari - previousAzari, "pickup");
 }
 
@@ -2768,7 +2753,6 @@ function startTransition(toRoom, direction, destinationSpawn) {
   if (twoPlayerMode) player2.autoWalk = 50;
   if (direction === "back") { player.vx = -2; if (twoPlayerMode) player2.vx = -2; }
   else { player.vx = 2; if (twoPlayerMode) player2.vx = 2; }
-  if (!destinationSpawn) requestInterstitialAd("zone");
 }
 
 function startBossDialogue(roomIndex) {

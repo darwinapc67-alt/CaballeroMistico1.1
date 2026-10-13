@@ -185,12 +185,6 @@ function getGameSpeedLabel() {
 var difficultySelection = 1, difficulty = "normal";
 var gameMode = "normal", modeSelection = 0;
 var infiniteWave = 0, infiniteSpawnTimer = 0;
-var adMenuSelection = 0, adMessage = "", adMessageTimer = 0;
-var adRewardedRevive = false, adAzariBonusTimer = 0, adRequestInProgress = false;
-var adLastInterstitialAt = 0, adInterstitialCooldown = 90000;
-// Configure this with the GPT ad unit path from Google Ad Manager.
-var GAM_AD_UNIT_PATH = "";
-var GAM_ENABLE_TEST_REWARDS = true;
 var modeOptions = [
   { id: "normal", name: "MODO NORMAL", desc: "Recorre la historia y derrota a los jefes." },
   { id: "hardcore", name: "MODO HARDCORE", desc: "Tras tres derrotas, la partida vuelve a empezar desde cero." },

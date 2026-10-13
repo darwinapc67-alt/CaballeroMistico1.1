@@ -166,8 +166,6 @@ function resetAll() {
 function update() {
   if (shopAnim > 0) shopAnim--;
   if (shopGreetingTimer > 0) shopGreetingTimer--;
-  if (adMessageTimer > 0) adMessageTimer--;
-  if (adAzariBonusTimer > 0) adAzariBonusTimer--;
   if (shopExitCooldown > 0) shopExitCooldown--;
   if (mapOpen && !mapClosing) mapFade = Math.min(1, mapFade + 0.12);
   if (mapClosing) {

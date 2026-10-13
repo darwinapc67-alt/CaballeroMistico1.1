@@ -12,21 +12,6 @@
       overflow-x: hidden;
       overflow-y: auto;
     }
-    .guideContent {
-      width: min(800px, calc(100% - 32px));
-      margin: 18px auto;
-      padding: 20px;
-      border: 1px solid #202044;
-      border-radius: 10px;
-      background: #08081a;
-      color: #aaa;
-      text-align: center;
-    }
-    .guideContent h2 {
-      margin: 0 0 14px;
-      color: #f3d36a;
-      font-size: 22px;
-    }
     .guideLinks {
       display: flex;
       flex-wrap: wrap;
@@ -60,25 +45,23 @@
       border-radius: 6px;
       image-rendering: pixelated;
     }
-    #gameAd {
+    .gameIntro {
       width: min(100%, 800px);
-      min-height: 90px;
-      margin: 18px auto 0;
-      overflow: hidden;
-      text-align: center;
+      margin: 14px auto;
+      color: #c5d0e0;
+      text-align: left;
+      font-size: 14px;
+      line-height: 1.6;
     }
-    #gameAd::before {
-      content: "PUBLICIDAD";
-      display: block;
-      margin-bottom: 5px;
-      color: #596174;
-      font: 10px monospace;
-      letter-spacing: .08em;
+    .gameIntro h1 {
+      margin: 8px 0 4px;
+      color: #f3d36a;
+      font-size: clamp(20px, 4vw, 28px);
     }
-    #gameAd ins {
-      display: block;
-      min-height: 90px;
-    }
+    .gameIntro p { margin: 4px 0; }
+    .gameIntro a,
+    .gameFooter a { color: #9de8ff; }
+    .gameFooter { width: min(100%, 800px); }
     #ui {
       margin-top: 10px;
       text-align: center;
@@ -119,7 +102,6 @@
     }
     #pwaInstallButton[hidden],
     #pwaInstallHelp[hidden] { display: none; }
-    body.is-offline #gameAd { display: none; }
     body.touch-device #ui { display: none; }
     #fullscreenButton {
       display: none;

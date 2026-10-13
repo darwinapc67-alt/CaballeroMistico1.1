@@ -1,35 +1,45 @@
 "use strict";
 
 // Bump this value when publishing a new app-shell version.
-const CACHE_NAME = "caballero-mistico-shell-v1";
+const CACHE_NAME = "caballero-mistico-shell-v2";
 const SHELL_FILES = [
   "index.html",
-  "style.css?v=14",
+  "jugar/index.html",
+  "style.css?v=15",
+  "content.css?v=1",
   "manifest.json",
   "icons/icon-192.png",
   "icons/icon-512.png",
   "icons/apple-touch-icon.png",
   "js/analytics.js?v=4",
-  "js/config/gameConfig.js?v=256",
+  "como-jugar/index.html",
+  "jefes/index.html",
+  "enemigos/index.html",
+  "bendiciones/index.html",
+  "modo-infinito/index.html",
+  "acerca-de/index.html",
+  "contacto/index.html",
+  "privacidad/index.html",
+  "terminos/index.html",
+  "js/config/gameConfig.js?v=257",
   "js/config/weaponConfig.js?v=5",
-  "js/config/playerConfig.js?v=226",
+  "js/config/playerConfig.js?v=227",
   "js/config/itemConfig.js?v=230",
   "js/config/blessingConfig.js?v=225",
   "js/config/bossConfig.js?v=226",
-  "js/config/roomConfig.js?v=233",
+  "js/config/roomConfig.js?v=237",
   "js/config/enemyConfig.js?v=227",
-  "js/ads.js?v=4",
   "js/audio.js?v=11",
-  "js/gameplay.js?v=259",
-  "js/render/backgroundRenderer.js?v=206",
-  "js/render/roomRenderer.js?v=205",
+  "js/gameplay.js?v=264",
+  "js/render/backgroundRenderer.js?v=207",
+  "js/render/roomRenderer.js?v=206",
   "js/render/effectsRenderer.js?v=203",
   "js/render/enemyRenderer.js?v=206",
-  "js/render/playerRenderer.js?v=219",
-  "js/render.js?v=214",
-  "js/render/uiRenderer.js?v=271",
-  "js/input.js?v=246",
-  "js/main.js?v=210",
+  "js/render/playerRenderer.js?v=220",
+  "js/render.js?v=216",
+  "js/render/uiRenderer.js?v=273",
+  "js/input.js?v=247",
+  "js/main.js?v=214",
   "js/pwa.js?v=1"
 ];
 
@@ -80,10 +90,13 @@ self.addEventListener("fetch", event => {
         const cachedPage = await caches.match(request);
         if (cachedPage) return cachedPage;
         const appEntry = new URL(self.registration.scope);
-        if (requestUrl.pathname === appEntry.pathname ||
-            requestUrl.pathname === new URL("index.html", self.registration.scope).pathname) {
-          const cachedHome = await caches.match(new URL("index.html", self.registration.scope).href);
-          if (cachedHome) return cachedHome;
+        if (requestUrl.pathname.startsWith(appEntry.pathname)) {
+          const relativePath = requestUrl.pathname.slice(appEntry.pathname.length).replace(/\/+$/, "");
+          const cachedPath = !relativePath || relativePath.endsWith(".html")
+            ? (relativePath || "index.html")
+            : relativePath + "/index.html";
+          const cachedDocument = await caches.match(new URL(cachedPath, appEntry).href);
+          if (cachedDocument) return cachedDocument;
         }
         return Response.error();
       }

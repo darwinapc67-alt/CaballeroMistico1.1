@@ -387,7 +387,6 @@ window.addEventListener("keydown", function(e) {
 
   if (bossVictory.active && (confirm || e.key === " " || k === "x" || k === "e")) {
     bossVictory.active = false;
-    requestInterstitialAd("boss");
     e.preventDefault();
     return;
   }
@@ -401,7 +400,7 @@ window.addEventListener("keydown", function(e) {
       e.preventDefault();
       return;
     }
-    var deathOptions = 3;
+    var deathOptions = 2;
     if (deathMenuInputDelay > 0) {
       e.preventDefault();
       return;
@@ -411,20 +410,10 @@ window.addEventListener("keydown", function(e) {
     if (confirm && !e.repeat && Date.now() >= deathMenuReadyAt) {
       if (deathChoice === 0) {
         restoreCheckpoint(true);
-      } else if (deathChoice === 1) {
-        if (adRewardedRevive) {
-          revivePlayerFromReward();
-        } else {
-          requestRewardedAd("revive", function(granted) {
-            if (granted) revivePlayerFromReward();
-          });
-        }
       } else {
-        requestInterstitialAd("death_menu", function() {
-          resetAll();
-          gameState = ST_MENU;
-          menuSubState = "slots";
-        });
+        resetAll();
+        gameState = ST_MENU;
+        menuSubState = "slots";
       }
       e.preventDefault();
     }
@@ -793,8 +782,8 @@ window.addEventListener("keydown", function(e) {
       e.preventDefault();
       return;
     }
-    if (up || k === "w") { pauseSelection = (pauseSelection - 1 + 8) % 8; e.preventDefault(); return; }
-    if (down || k === "s") { pauseSelection = (pauseSelection + 1) % 8; e.preventDefault(); return; }
+    if (up || k === "w") { pauseSelection = (pauseSelection - 1 + 7) % 7; e.preventDefault(); return; }
+    if (down || k === "s") { pauseSelection = (pauseSelection + 1) % 7; e.preventDefault(); return; }
     if (confirm) {
       if (pauseSelection === 0) gameState = ST_PLAYING;
       if (pauseSelection === 1) pauseSubState = "diary";
@@ -817,7 +806,6 @@ window.addEventListener("keydown", function(e) {
       if (pauseSelection === 4) pauseSubState = "audio";
       if (pauseSelection === 5) pauseSubState = "settings";
       if (pauseSelection === 6) { if (activeSlot >= 0) saveGame(activeSlot); gameState = ST_MENU; menuSubState = "slots"; }
-      if (pauseSelection === 7) requestRewardedAd("random");
       e.preventDefault();
       return;
     }
@@ -1607,7 +1595,7 @@ function processGamepadInput() {
       return;
     }
     if (shopOpen) { shopOpen = false; shopMenuOpen = false; shopConfirm = -1; shopExitCooldown = 30; keys["e"] = false; player.x = shopPreviousX; player.y = shopPreviousY; return; }
-    if (gameState === ST_PLAYING) { gameState = ST_PAUSED; pauseSubState = "menu"; pauseSelection = 0; sfxPause(); requestInterstitialAd("pause"); return; }
+    if (gameState === ST_PLAYING) { gameState = ST_PAUSED; pauseSubState = "menu"; pauseSelection = 0; sfxPause(); return; }
     else if (gameState === ST_PAUSED) { if (pauseSubState === "diary" || pauseSubState === "controls" || pauseSubState === "controls_keys" || pauseSubState === "controls_touch" || pauseSubState === "audio") pauseSubState = "menu"; else gameState = ST_PLAYING; return; }
     else if (gameState === ST_INVENTORY) { inventoryOpen = false; mapOpen = false; gameState = ST_PLAYING; return; }
   }

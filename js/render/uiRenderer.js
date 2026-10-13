@@ -1144,7 +1144,7 @@ function drawDeathScreen() {
   ctx.fillStyle = "#aebbd0";
   ctx.font = "11px monospace";
   ctx.fillText("Tiempo: " + formatTime(stats.playTime) + "  •  Enemigos: " + stats.enemiesKilled + "  •  Derrotas: " + stats.deaths, canvas.width / 2, 242);
-  var deathOptions = ["Volver al último punto de guardado", "🎁 " + (adRewardedRevive ? "Revivir ahora" : "Ver anuncio para revivir"), "Ir al menú principal"];
+  var deathOptions = ["Volver al último punto de guardado", "Ir al menú principal"];
   deathOptions.forEach(function(option, index) {
     var y = 325 + index * 54;
     ctx.fillStyle = deathChoice === index ? "rgba(100, 220, 200, 0.2)" : "rgba(0,0,0,0.25)";
@@ -1575,7 +1575,6 @@ function drawPause() {
     twoPlayerMode ? "👤  " + translateText("Quitar J2") : "👥  " + translateText("Agregar J2"),
     "🎮  " + translateText("Controles"), "🔊  " + translateText("MÚSICA Y SONIDO"), "⚙️  " + translateText("⚙️ Configuración"), "🚪  " + translateText("Salir al Menú")
   ];
-  opts.push("💰  Ver anuncio • recompensa");
   for (var i = 0; i < opts.length; i++) {
     var y = 200 + i * 40;
     var isSel = (i === pauseSelection);

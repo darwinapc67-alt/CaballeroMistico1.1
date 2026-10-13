@@ -10,4 +10,8 @@
   <url><loc>https://caballeromistico.com/enemigos/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://caballeromistico.com/bendiciones/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://caballeromistico.com/modo-infinito/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://caballeromistico.com/acerca-de/</loc><changefreq>yearly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://caballeromistico.com/contacto/</loc><changefreq>yearly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://caballeromistico.com/privacidad/</loc><changefreq>yearly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://caballeromistico.com/terminos/</loc><changefreq>yearly</changefreq><priority>0.5</priority></url>
 </urlset>
