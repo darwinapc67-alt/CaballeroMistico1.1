@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <base href="/">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
+
+    <meta name="robots" content="noindex, follow">
+    <title>Jugar Caballero Místico — RPG de acción para navegador</title>
+
+    <meta
+        name="description"
+        content="Juega Caballero Místico gratis en tu navegador. Explora mazmorras, derrota enemigos y jefes y mejora tu equipo en la campaña o el modo infinito."
+    >
+
+    <meta name="author" content="Caballero Místico">
+
+    <meta name="theme-color" content="#050510">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Caballero Místico">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link
+        rel="canonical"
+        href="https://caballeromistico.com/jugar/"
+    >
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="es_ES">
+    <meta property="og:site_name" content="Caballero Místico">
+
+    <meta
+        property="og:title"
+        content="Jugar Caballero Místico — RPG de acción para navegador"
+    >
+
+    <meta
+        property="og:description"
+        content="Juega gratis desde tu navegador. Explora mazmorras, mejora tu equipo y supera el modo infinito."
+    >
+
+    <meta
+        property="og:url"
+        content="https://caballeromistico.com/jugar/"
+    >
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary">
+
+    <meta
+        name="twitter:title"
+        content="Jugar Caballero Místico — RPG de acción para navegador"
+    >
+
+    <meta
+        name="twitter:description"
+        content="Juega Caballero Místico gratis desde PC, celular o tablet."
+    >
+
+    <!-- Datos estructurados: videojuego -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "VideoGame",
+        "name": "Caballero Místico",
+        "description": "RPG de acción y aventuras para navegador con mazmorras, enemigos, jefes, bendiciones, mejoras, bombas y modo infinito.",
+        "url": "https://caballeromistico.com/jugar/",
+        "genre": [
+            "Action",
+            "Adventure",
+            "Platformer",
+            "RPG"
+        ],
+        "gamePlatform": [
+            "Web Browser",
+            "Mobile Web"
+        ],
+        "applicationCategory": "Game",
+        "operatingSystem": "Any",
+        "isAccessibleForFree": true,
+        "inLanguage": "es"
+    }
+    </script>
+
+    <link rel="stylesheet" href="style.css?v=15">
+
+    <!-- Google tag (gtag.js) -->
+    <script
+        async
+        src="https://www.googletagmanager.com/gtag/js?id=G-QS45Y0FSGS">
+    </script>
+
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+        gtag('config', 'G-QS45Y0FSGS');
+    </script>
+    <script src="js/analytics.js?v=4"></script>
+
+</head>
+
+<body>
+    <header class="gameIntro">
+        <p><a href="/">← Volver a Caballero Místico</a></p>
+        <h1>Jugar Caballero Místico</h1>
+        <p>Elige una partida con el teclado, el mando o los controles táctiles. Consulta la <a href="/como-jugar/">guía de controles</a> si necesitas ayuda.</p>
+    </header>
+
+    <canvas
+        id="gameCanvas"
+        width="800"
+        height="600"
+        aria-label="Juego Caballero Místico">
+    </canvas>
+
+    <!-- Controles del juego -->
+    <div id="ui">
+        <span id="ctrlText">
+            <kbd>A</kbd>
+            <kbd>D</kbd>
+            Mover •
+            <kbd>ESPACIO</kbd>
+            Saltar •
+            <kbd>ESC</kbd>
+            Menú
+        </span>
+    </div>
+
+    <section id="pwaInstall" aria-label="Instalar Caballero Místico">
+        <button id="pwaInstallButton" type="button" hidden>
+            📲 Instalar Caballero Místico
+        </button>
+        <p id="pwaInstallHelp" role="status" hidden></p>
+    </section>
+
+    <footer class="siteFooter gameFooter">
+        <nav aria-label="Información del sitio">
+            <a href="/">Volver a la página principal</a>
+            <a href="/como-jugar/">Guía de controles</a>
+            <a href="/privacidad/">Privacidad</a>
+            <a href="/terminos/">Términos de uso</a>
+        </nav>
+    </footer>
+    <!-- Configuración del juego -->
+    <script src="js/config/gameConfig.js?v=257"></script>
+    <script src="js/config/weaponConfig.js?v=5"></script>
+    <script src="js/config/playerConfig.js?v=227"></script>
+    <script src="js/config/itemConfig.js?v=230"></script>
+    <script src="js/config/blessingConfig.js?v=225"></script>
+    <script src="js/config/bossConfig.js?v=226"></script>
+    <script src="js/config/roomConfig.js?v=237"></script>
+    <script src="js/config/enemyConfig.js?v=227"></script>
+
+
+    <!-- Sistemas del juego -->
+    <script src="js/audio.js?v=11"></script>
+
+    <script src="js/gameplay.js?v=264"></script>
+
+
+    <!-- Renderizado -->
+    <script src="js/render/backgroundRenderer.js?v=207"></script>
+    <script src="js/render/roomRenderer.js?v=206"></script>
+    <script src="js/render/effectsRenderer.js?v=203"></script>
+    <script src="js/render/enemyRenderer.js?v=206"></script>
+    <script src="js/render/playerRenderer.js?v=220"></script>
+    <script src="js/render.js?v=216"></script>
+    <script src="js/render/uiRenderer.js?v=273"></script>
+
+
+    <!-- Entrada y ejecución -->
+    <script src="js/input.js?v=247"></script>
+    <script src="js/main.js?v=214"></script>
+    <script src="js/pwa.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+:root {
+  color-scheme: dark;
+  --content-bg: #080b12;
+  --content-panel: #101622;
+  --content-border: #263247;
+  --content-text: #e3e8f0;
+  --content-muted: #b2bdcc;
+  --content-link: #9de8ff;
+  --content-accent: #f3d36a;
+}
+
+body.contentPage {
+  display: block;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: var(--content-bg);
+  color: var(--content-text);
+  font: 16px/1.7 system-ui, "Segoe UI", sans-serif;
+  text-align: left;
+}
+
+.siteHeader,
+.contentMain,
+.siteFooter {
+  width: min(100% - 32px, 850px);
+  margin-inline: auto;
+}
+
+.siteHeader {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--content-border);
+}
+
+.siteBrand {
+  display: inline-block;
+  margin-bottom: 12px;
+  color: var(--content-accent);
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.siteNav,
+.siteFooter nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+
+.siteNav a,
+.siteFooter a,
+.contentMain a {
+  color: var(--content-link);
+  text-underline-offset: 3px;
+}
+
+.siteNav a,
+.siteFooter a {
+  font-size: 0.92rem;
+}
+
+.contentMain {
+  padding-block: 30px 48px;
+}
+
+.contentMain h1,
+.contentMain h2,
+.contentMain h3 {
+  color: var(--content-accent);
+  line-height: 1.3;
+}
+
+.contentMain h1 {
+  margin: 0 0 12px;
+  font-size: clamp(2rem, 5vw, 2.8rem);
+}
+
+.contentMain h2 {
+  margin: 2rem 0 0.5rem;
+  font-size: 1.45rem;
+}
+
+.contentMain h3 {
+  margin: 1.4rem 0 0.35rem;
+  font-size: 1.12rem;
+}
+
+.contentMain p,
+.contentMain li {
+  color: var(--content-muted);
+}
+
+.contentMain li + li {
+  margin-top: 0.35rem;
+}
+
+.contentMain .lead {
+  color: var(--content-text);
+  font-size: 1.12rem;
+}
+
+.contentMain .contentCard {
+  margin-block: 18px;
+  padding: 16px 18px;
+  border: 1px solid var(--content-border);
+  border-radius: 10px;
+  background: var(--content-panel);
+}
+
+.contentMain .contentCard h2,
+.contentMain .contentCard h3 {
+  margin-top: 0;
+}
+
+.contentMain table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-block: 16px;
+}
+
+.contentMain th,
+.contentMain td {
+  padding: 10px 12px;
+  border: 1px solid var(--content-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.contentMain th {
+  color: var(--content-text);
+  background: var(--content-panel);
+}
+
+.siteFooter {
+  padding: 22px 0 30px;
+  border-top: 1px solid var(--content-border);
+}
+
+.siteFooter p {
+  max-width: 75ch;
+  margin: 16px 0 0;
+  color: var(--content-muted);
+  font-size: 0.9rem;
+}
+
+.guideLinks a {
+  text-align: center;
+}
+
+.siteFooter nav a {
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  .siteHeader,
+  .contentMain,
+  .siteFooter {
+    width: min(100% - 24px, 850px);
+  }
+
+  .contentMain table {
+    font-size: 0.9rem;
+  }
+
+  .contentMain th,
+  .contentMain td {
+    padding: 8px;
+  }
+}
