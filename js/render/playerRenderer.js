@@ -335,13 +335,38 @@ function drawPlayerEntity(p, wakeProgress) {
   if (attacking) {
     var weapon = getWeaponConfig(p.weaponId || weaponId);
     var easedAttack = attackProgress * attackProgress * (3 - 2 * attackProgress);
-    var swingAngle = p.facing > 0 ? -1.25 + easedAttack * 2.15 : Math.PI + 1.25 - easedAttack * 2.15;
-    if (p.vy < -2) swingAngle = -Math.PI / 2;
-    else if (p.vy > 2) swingAngle = Math.PI / 2;
-    var handX = cx + p.facing * 6;
+    var swingOffset = -0.42 + easedAttack * 0.68;
+    var swingAngle = p.facing * (Math.PI / 2 + swingOffset);
+    if (p.attackType === "down" || p.attackDirection === "down") swingAngle = Math.PI;
+    else if (p.attackDirection === "up") swingAngle = 0;
+    var attackReach = attackProgress < 0.2
+      ? -3 * attackProgress / 0.2
+      : attackProgress < 0.55
+        ? -3 + 16 * (attackProgress - 0.2) / 0.35
+        : 13 * (1 - (attackProgress - 0.55) / 0.45);
+    var handX = cx + p.facing * (6 + attackReach);
     var handY = torsoTop + 8;
     ctx.save();
     ctx.translate(handX, handY);
+    if (attackProgress > 0.18 && attackProgress < 0.7 && p.attackDirection !== "up" && p.attackDirection !== "down") {
+      var trailProgress = (attackProgress - 0.18) / 0.52;
+      var trailAlpha = ctx.globalAlpha;
+      ctx.globalAlpha *= Math.sin(trailProgress * Math.PI) * 0.65;
+      ctx.strokeStyle = weapon.color;
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(p.facing * 2, -7);
+      ctx.quadraticCurveTo(p.facing * 18, -3, p.facing * 34, 1);
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(255,255,255,0.9)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(p.facing * 5, -7);
+      ctx.quadraticCurveTo(p.facing * 19, -3, p.facing * 31, 0);
+      ctx.stroke();
+      ctx.globalAlpha = trailAlpha;
+    }
     ctx.rotate(swingAngle);
     ctx.shadowColor = weapon.color;
     ctx.shadowBlur = p.attackType === "charged" ? 8 : 3;
