@@ -1706,7 +1706,9 @@ function setupTouchControls() {
   joystick.addEventListener("pointerdown", function(event) {
     event.preventDefault();
     joystickPointer = event.pointerId;
-    if (joystick.setPointerCapture) joystick.setPointerCapture(event.pointerId);
+    if (joystick.setPointerCapture) {
+      try { joystick.setPointerCapture(event.pointerId); } catch (_) {}
+    }
     moveJoystick(event);
   });
   joystick.addEventListener("pointermove", function(event) {
@@ -1733,7 +1735,9 @@ function setupTouchControls() {
       if (gameState === ST_PAUSED && pauseSubState === "controls_touch") return;
       if (buttonPointer !== null) return;
       buttonPointer = event.pointerId;
-      if (button.setPointerCapture) button.setPointerCapture(event.pointerId);
+      if (button.setPointerCapture) {
+        try { button.setPointerCapture(event.pointerId); } catch (_) {}
+      }
       button.classList.add("pressed");
       if (key === "delete") {
         var deleteKey = gameState === ST_MENU && menuSubState === "confirm_delete" ? "Enter" : "Delete";

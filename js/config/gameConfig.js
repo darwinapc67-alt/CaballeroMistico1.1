@@ -280,6 +280,24 @@ function getControlKeys(id) {
   return binding ? (Array.isArray(binding.key) ? binding.key : [binding.key]) : [];
 }
 function isControlPressed(id) {
+  if (typeof device !== "undefined" && device === "touch") {
+    var touchKeys = {
+      moveLeft: ["a"],
+      moveRight: ["d"],
+      jump: [" "],
+      attack: ["x"],
+      shoot: ["z"],
+      interact: ["e"],
+      block: ["c"],
+      dash: ["shift"],
+      bomb: ["b"]
+    };
+    if (touchKeys[id]) {
+      return touchKeys[id].some(function(key) {
+        return !!keys[key];
+      });
+    }
+  }
   return getControlKeys(id).some(function(key) {
     if (keys[key]) return true;
     return typeof key === "string" && key.length === 1 && !!keys["key" + key];
