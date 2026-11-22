@@ -2408,6 +2408,28 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     if (p.x > arenaRight) { p.x = arenaRight; p.vx = 0; }
   }
 
+  if (currentRoom === 23) {
+    var ardorisRoom = rooms[23];
+    var ardorisOrigin = ardorisRoom.worldX !== undefined ? ardorisRoom.worldX : 23 * ROOM_W;
+    var ardorisWidth = ardorisRoom.roomWidth || ROOM_W;
+    var cityBoundaryWall = ardorisRoom.walls.find(function(wall) {
+      return wall.x + wall.w === ardorisOrigin + ardorisWidth;
+    });
+    if (cityBoundaryWall && p.x + p.w > cityBoundaryWall.x) {
+      p.x = cityBoundaryWall.x - p.w;
+      p.vx = 0;
+    }
+  }
+  if (currentRoom === 50 || currentRoom === 51) {
+    var linkedRoom = rooms[currentRoom];
+    var linkedOrigin = linkedRoom.worldX !== undefined ? linkedRoom.worldX : currentRoom * ROOM_W;
+    var linkedWidth = linkedRoom.roomWidth || ROOM_W;
+    var linkedLeft = linkedOrigin + 40;
+    var linkedRight = linkedOrigin + linkedWidth - p.w - 40;
+    if (p.x < linkedLeft) { p.x = linkedLeft; p.vx = 0; }
+    if (p.x > linkedRight) { p.x = linkedRight; p.vx = 0; }
+  }
+
   var newRoom = Math.floor(p.x / ROOM_W);
   if (newRoom < 0) newRoom = 0;
   if (gameMode === "infinite" || gameMode === "custom") newRoom = 0;
@@ -2659,11 +2681,14 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       }
     }
     var roomBoss = enemies.find ? enemies.find(function(enemy) { return enemy.boss && enemy.room === currentRoom; }) : null;
-    if (room.transitionZone &&
-        (room.transitionZone.requiresBoss || room.transitionZone.floorCollapse || currentRoom === 23) &&
-        rectHit(p, room.transitionZone) && (!roomBoss || roomBoss.dead)) {
-      if (room.floorCollapse) startFallThroughTransition(room.transitionZone.to);
-      else startTransition(room.transitionZone.to, room.transitionZone.to < currentRoom ? "back" : "forward");
+    var roomTransitionZones = Array.isArray(room.transitionZones) ? room.transitionZones.slice() : [];
+    if (room.transitionZone) roomTransitionZones.unshift(room.transitionZone);
+    for (var transitionZoneIndex = 0; transitionZoneIndex < roomTransitionZones.length; transitionZoneIndex++) {
+      var exitZone = roomTransitionZones[transitionZoneIndex];
+      if (!(exitZone.requiresBoss || exitZone.floorCollapse || currentRoom === 23) ||
+          !rectHit(p, exitZone) || (roomBoss && !roomBoss.dead)) continue;
+      if (room.floorCollapse) startFallThroughTransition(exitZone.to);
+      else startTransition(exitZone.to, exitZone.to < currentRoom ? "back" : "forward");
       return;
     }
   }

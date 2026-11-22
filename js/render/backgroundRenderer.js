@@ -1,4 +1,7 @@
 function getZoneVisualProfile(roomIndex) {
+  if (rooms[roomIndex] && rooms[roomIndex].visualProfile === "brumalis") {
+    return { id: "brumalis", top: "#a9c5cc", middle: "#49636a", bottom: "#111b20", light: "#d8eff2", accent: "#6d929b", platform: "#3d565d", edge: "#a1c2c8", particle: "#d4eef0" };
+  }
   if ((roomIndex >= 0 && roomIndex <= 23) || roomIndex === 50) {
     return { id: "ardoris", top: "#8fb4a4", middle: "#34534a", bottom: "#09130f", light: "#c7e6c1", accent: "#6e8052", platform: "#4a4b3d", edge: "#8b8061", particle: "#c6d0a5" };
   }

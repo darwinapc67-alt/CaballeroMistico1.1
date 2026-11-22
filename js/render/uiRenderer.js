@@ -202,8 +202,10 @@ function drawExplorationMapGraph(x, y, width, height) {
   }
 
   ctx.lineCap = "round";
+  var drawnConnections = {};
   for (var connectionIndex = 0; connectionIndex < rooms.length - 1; connectionIndex++) {
     if (rooms[connectionIndex].optional || rooms[connectionIndex + 1].optional) continue;
+    if (rooms[connectionIndex].suppressNextRoomConnection) continue;
     var from = positions[connectionIndex];
     var to = positions[connectionIndex + 1];
     ctx.strokeStyle = connectionIndex < highestRoomReached ? "#3d7180" : "#1a2938";
@@ -212,7 +214,33 @@ function drawExplorationMapGraph(x, y, width, height) {
     ctx.moveTo(from.x + chamberW / 2, from.y + chamberH / 2);
     ctx.lineTo(to.x + chamberW / 2, to.y + chamberH / 2);
     ctx.stroke();
+    drawnConnections[connectionIndex + ":" + (connectionIndex + 1)] = true;
   }
+
+  rooms.forEach(function(room, roomIndex) {
+    var transitionZones = Array.isArray(room.transitionZones) ? room.transitionZones.slice() : [];
+    if (room.transitionZone) transitionZones.unshift(room.transitionZone);
+    transitionZones.forEach(function(exit) {
+      if (exit.to === roomIndex + 1 || !positions[roomIndex] || !positions[exit.to] ||
+          !nodeIsRevealed(roomIndex) || !nodeIsRevealed(exit.to)) return;
+      var first = Math.min(roomIndex, exit.to);
+      var second = Math.max(roomIndex, exit.to);
+      var connectionKey = first + ":" + second;
+      if (drawnConnections[connectionKey]) return;
+      var from = positions[roomIndex];
+      var to = positions[exit.to];
+      ctx.save();
+      ctx.setLineDash([7, 3]);
+      ctx.strokeStyle = "#55d6a5";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(from.x + chamberW / 2, from.y + chamberH / 2);
+      ctx.lineTo(to.x + chamberW / 2, to.y + chamberH / 2);
+      ctx.stroke();
+      ctx.restore();
+      drawnConnections[connectionKey] = true;
+    });
+  });
 
   rooms.forEach(function(room, roomIndex) {
     (room.sideExits || []).forEach(function(exit) {

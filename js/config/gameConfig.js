@@ -3,7 +3,7 @@ var ROOM_W = 800, ROOM_H = 600, GRAVITY = 0.6;
 var DASH_SPEED = 12, DASH_DURATION = 10, DASH_COOLDOWN = 45, DASH_INV_FRAMES = 12;
 var GUARD_DURATION = 120, GUARD_COOLDOWN = 240, SHIELD_PARRY_WINDOW = 12, SHIELD_PARRY_COOLDOWN = 45;
 /* Rooms 0-10 cover the original route; later regions and arenas are composed below. */
-var WORLD_W = 51 * ROOM_W;
+var WORLD_W = 52 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
 var VERSION = "v2.75 beta";
 

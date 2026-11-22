@@ -462,6 +462,7 @@ var room39 = {
 
 shiftRoomGeometry(room13, 3 * ROOM_W);
 room13.transitionZone = {x: 23 * ROOM_W + 750, y: 460, w: 32, h: 100, to: 50};
+room13.suppressNextRoomConnection = true;
 cityRooms.forEach(function(room) { shiftRoomGeometry(room, 3 * ROOM_W); });
 shiftRoomGeometry(room30, 3 * ROOM_W);
 shiftRoomGeometry(room31, 3 * ROOM_W);
@@ -528,12 +529,35 @@ rooms.push({
   height: 600,
   platforms: [{x: ardorisShopOrigin, y: 560, w: ROOM_W, h: 40}],
   spikes: [],
-  walls: [],
-  transitionZone: {x: ardorisShopOrigin + 750, y: 460, w: 32, h: 100, to: 23, requiresBoss: true},
+  walls: [
+    {x: ardorisShopOrigin, y: 0, w: 18, h: 600},
+    {x: ardorisShopOrigin + ROOM_W - 18, y: 0, w: 18, h: 600}
+  ],
+  transitionZone: {x: ardorisShopOrigin + 18, y: 460, w: 32, h: 100, to: 23, requiresBoss: true},
+  transitionZones: [
+    {x: ardorisShopOrigin + 750, y: 460, w: 32, h: 100, to: 51, requiresBoss: true}
+  ],
   shopDoor: {x: ardorisShopOrigin + 372, y: 475, w: 55, h: 85},
   shops: [{id: 0, npc: {x: ardorisShopOrigin + 330, y: 525, w: 20, h: 35}, label: ""}],
   zoneTitle: "TIENDA DE ARDORIS",
   decor: genDecor(ardorisShopOrigin, 10, 5, 600)
+});
+
+var brumalisOrigin = 51 * ROOM_W;
+rooms.push({
+  worldX: brumalisOrigin,
+  roomWidth: ROOM_W,
+  height: 600,
+  platforms: [{x: brumalisOrigin, y: 560, w: ROOM_W, h: 40}],
+  spikes: [],
+  walls: [
+    {x: brumalisOrigin, y: 0, w: 18, h: 600},
+    {x: brumalisOrigin + ROOM_W - 18, y: 0, w: 18, h: 600}
+  ],
+  transitionZone: {x: brumalisOrigin + 18, y: 460, w: 32, h: 100, to: 50, requiresBoss: true},
+  zoneTitle: "BRUMALIS",
+  visualProfile: "brumalis",
+  decor: genDecor(brumalisOrigin, 10, 5, 600)
 });
 
 var caveFloorProfiles = {

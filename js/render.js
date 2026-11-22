@@ -108,7 +108,12 @@ function drawGameWorld(skipPlayers) {
     if (r === 1 && currentRoom === 1 && gameMode === "normal") drawJumpTutorialHint();
     if (r === 13 && room.pedestal) drawPedestal(room.pedestal, hasSword);
     if (r === 18 && room.shieldPickup) drawShieldPedestal(room.shieldPickup);
-    if (room.transitionZone && !room.noDoor && !(r === 10 && room.transitionZone.sharedBoundary) && !room.secretRoom) drawTransitionZone(room.transitionZone);
+    var roomTransitionZones = Array.isArray(room.transitionZones) ? room.transitionZones.slice() : [];
+    if (room.transitionZone) roomTransitionZones.unshift(room.transitionZone);
+    roomTransitionZones.forEach(function(transitionZone) {
+      if (room.noDoor || (r === 10 && transitionZone.sharedBoundary) || room.secretRoom) return;
+      drawTransitionZone(transitionZone);
+    });
     if (r === 37 && room.lockedDoor) {
       var door = room.lockedDoor;
       ctx.fillStyle = doorUnlocked ? "#23834b" : "#a83232";
