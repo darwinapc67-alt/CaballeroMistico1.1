@@ -192,7 +192,7 @@ var room13 = {
   platforms: [{x:16000, y:560, w:800, h:40}],
   spikes: [], walls: [{x:16782, y:0, w:18, h:600}],
   transitionZone: null,
-  decor: genDecor(16000, 10, 5, 600), bossName: "CABALLERO ABISMAL"
+  decor: genDecor(16000, 10, 5, 600)
 };
 
 function createInterludeRoom(index, name, variant) {
@@ -461,7 +461,7 @@ var room39 = {
 };
 
 shiftRoomGeometry(room13, 3 * ROOM_W);
-room13.transitionZone = {x: 23 * ROOM_W + 750, y: 460, w: 32, h: 100, to: 50, requiresBoss: true};
+room13.transitionZone = {x: 23 * ROOM_W + 750, y: 460, w: 32, h: 100, to: 50};
 cityRooms.forEach(function(room) { shiftRoomGeometry(room, 3 * ROOM_W); });
 shiftRoomGeometry(room30, 3 * ROOM_W);
 shiftRoomGeometry(room31, 3 * ROOM_W);

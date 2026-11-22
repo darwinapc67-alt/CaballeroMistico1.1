@@ -105,7 +105,12 @@ enemies = enemies.filter(function(enemy) {
   return typeof enemy.room !== "number" || enemy.room >= 14;
 });
 enemies.forEach(function(enemy) {
-  if (enemy.room >= 18 && enemy.room <= 22) enemy.disabled = true;
+  if (enemy.room >= 18 && enemy.room <= 22 && enemy.type !== "abyssal_knight") enemy.disabled = true;
+  if (enemy.type === "abyssal_knight") {
+    enemy.room = -1;
+    enemy.x = -enemy.w;
+    enemy.y = 0;
+  }
 });
 [
   {room: 19, x: 360, speed: 0.75, attackSpeed: 4, windupFrames: 72, attackRange: 94, attackCooldown: 170},

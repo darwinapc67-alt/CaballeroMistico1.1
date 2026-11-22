@@ -1,9 +1,8 @@
 var canvas, ctx;
 var ROOM_W = 800, ROOM_H = 600, GRAVITY = 0.6;
 var DASH_SPEED = 12, DASH_DURATION = 10, DASH_COOLDOWN = 45, DASH_INV_FRAMES = 12;
-var GUARD_DURATION = 120, GUARD_COOLDOWN = 240, SHIELD_PARRY_WINDOW = 8;
-/* Rooms 0-9 are the original route, room 10 is the final descent, and
-   rooms 11-13 are the Guardian, Queen Larva, and Abyssal Knight arenas. */
+var GUARD_DURATION = 120, GUARD_COOLDOWN = 240, SHIELD_PARRY_WINDOW = 12, SHIELD_PARRY_COOLDOWN = 45;
+/* Rooms 0-10 cover the original route; later regions and arenas are composed below. */
 var WORLD_W = 51 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
 var VERSION = "v2.75 beta";
@@ -876,13 +875,13 @@ function loadGame(i) {
   if (unlockedWeapons.indexOf(DEFAULT_WEAPON_ID) < 0) unlockedWeapons.unshift(DEFAULT_WEAPON_ID);
   weaponId = isWeaponUnlocked(weaponId) ? weaponId : DEFAULT_WEAPON_ID;
   player.hasSword = hasSword; player.swordEquipped = swordEquipped; player.weaponId = weaponId;
-  player.blocking = false; player.parryTimer = 0; player.shieldButtonHeld = false;
+  player.blocking = false; player.parryTimer = 0; player.parryCooldown = 0; player.shieldButtonHeld = false;
   hasBow = s.hasBow || false; arrows = s.arrows || 0; bombs = Math.max(0, Number(s.bombs) || 0);
   azari = s.azari || 0; eterium = Math.max(0, Number(s.eterium) || 0); hasEteriumSkill = !!s.hasEteriumSkill; eteriumSkillLevel = Math.max(0, Math.min(3, Number(s.eteriumSkillLevel) || (hasEteriumSkill ? 1 : 0))); hasMap = s.hasMap || false;
   player.hp = s.hp !== undefined ? s.hp : 10;
   player.maxHp = s.maxHp !== undefined ? s.maxHp : 10;
   twoPlayerMode = s.twoPlayer || false;
-  player2.blocking = false; player2.parryTimer = 0; player2.shieldButtonHeld = false;
+  player2.blocking = false; player2.parryTimer = 0; player2.parryCooldown = 0; player2.shieldButtonHeld = false;
   heartFragments1 = s.heartFragments1 || 0;
   heartFragments2 = s.heartFragments2 || 0;
   heartFragmentsBought1 = s.heartFragmentsBought1 || 0;

@@ -472,7 +472,7 @@ function resetPlayer() {
   player.frozen = false;
   player.swordSwing = 0; player.swordCooldown = 0; player.bowCooldown = 0; player.attackHeld = false; player.attackCharge = 0; player.attackCharged = false; player.attackDown = false; player.attackType = ""; player.attackDirection = "forward";
   player.swordSheathed = true; player.swordSheathTimer = 0;
-  player.blocking = false; player.parryTimer = 0; player.shieldButtonHeld = false;
+  player.blocking = false; player.parryTimer = 0; player.parryCooldown = 0; player.shieldButtonHeld = false;
   player.dashTimer = 0; player.dashCooldown = 0; player.dashDir = 1; player.dashVx = 0; player.dashVy = 0; player.dashing = false; player.swordDashTimer = 0; player.swordDashDirection = "forward"; player.attackLungeTimer = 0; player.attackLungeVx = 0; player.attackLungeVy = 0; player.attackLungeHits = []; player.recoilTimer = 0;
   playerDead = false;
   deathTimer = 0;
@@ -490,7 +490,7 @@ function resetPlayer() {
     player2.frozen = false;
     player2.swordSwing = 0; player2.swordCooldown = 0; player2.bowCooldown = 0; player2.attackHeld = false; player2.attackCharge = 0; player2.attackCharged = false; player2.attackDown = false; player2.attackType = ""; player2.attackDirection = "forward"; player2.weaponId = weaponId;
     player2.swordSheathed = true; player2.swordSheathTimer = 0;
-    player2.blocking = false; player2.parryTimer = 0; player2.shieldButtonHeld = false;
+    player2.blocking = false; player2.parryTimer = 0; player2.parryCooldown = 0; player2.shieldButtonHeld = false;
     player2.dashTimer = 0; player2.dashCooldown = 0; player2.dashDir = 1; player2.dashVx = 0; player2.dashVy = 0; player2.dashing = false; player2.swordDashTimer = 0; player2.swordDashDirection = "forward"; player2.attackLungeTimer = 0; player2.attackLungeVx = 0; player2.attackLungeVy = 0; player2.attackLungeHits = []; player2.recoilTimer = 0;
   }
 
@@ -645,8 +645,8 @@ function restoreCheckpoint(preserveInfiniteProgress) {
     player2.weaponId = weaponId;
     player.maxJumps = hasDoubleJump ? 2 : 1; player.jumpsLeft = player.maxJumps;
     player.frozen = false; player.vx = 0; player.vy = 0; player.blocking = false;
-    player.parryTimer = 0; player.shieldButtonHeld = false; playerDead = false;
-    player2.blocking = false; player2.parryTimer = 0; player2.shieldButtonHeld = false;
+    player.parryTimer = 0; player.parryCooldown = 0; player.shieldButtonHeld = false; playerDead = false;
+    player2.blocking = false; player2.parryTimer = 0; player2.parryCooldown = 0; player2.shieldButtonHeld = false;
     if (gameMode !== "infinite" || !preserveInfiniteProgress) consecutiveDeaths = 0;
     cameraX = currentRoom * ROOM_W; targetCamX = cameraX; cameraY = 0; targetCamY = 0;
     resetDeathState();
@@ -2092,6 +2092,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   var blockJustPressed = blockPressed && !p.shieldButtonHeld;
   p.shieldButtonHeld = !!blockPressed;
   if (p.parryTimer > 0) p.parryTimer--;
+  if (p.parryCooldown > 0) p.parryCooldown--;
   if (p.frozen) p.parryTimer = 0;
   if (hasStoneGuard) {
     p.parryTimer = 0;
@@ -2114,7 +2115,10 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       p.blocking = false;
     }
   } else {
-    if (hasShield && blockJustPressed && !p.frozen) p.parryTimer = SHIELD_PARRY_WINDOW;
+    if (hasShield && blockJustPressed && !p.frozen && p.parryCooldown <= 0) {
+      p.parryTimer = SHIELD_PARRY_WINDOW;
+      p.parryCooldown = SHIELD_PARRY_COOLDOWN;
+    }
     p.blocking = hasShield && p.parryTimer > 0 && !p.frozen;
   }
   if (playerDead && p === player) {
@@ -2924,6 +2928,7 @@ function tryInteractFor(p) {
       room.shieldPickup.taken = true;
       player.shieldButtonHeld = isControlPressed("block");
       player.parryTimer = 0;
+      player.parryCooldown = 0;
       if (checkpointState) checkpointState.hasShield = true;
       if (activeSlot >= 0) saveGame(activeSlot);
       spawnParticles(shieldPickup.x + shieldPickup.w / 2, shieldPickup.y + shieldPickup.h / 2, "#a86a36", 18, 3);

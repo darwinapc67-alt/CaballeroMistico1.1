@@ -140,8 +140,8 @@ function resetAll() {
   bossIntroTimer = 0;
   achievements = { firstEnemy: false, firstBoss: false, enemies50: false, enemies100: false };
   achievementNotify = { active: false, timer: 0, title: "" };
-  player.guardTimer = 0; player.guardCooldown = 0; player.blocking = false; player.parryTimer = 0; player.shieldButtonHeld = false;
-  player2.guardTimer = 0; player2.guardCooldown = 0; player2.blocking = false; player2.parryTimer = 0; player2.shieldButtonHeld = false;
+  player.guardTimer = 0; player.guardCooldown = 0; player.blocking = false; player.parryTimer = 0; player.parryCooldown = 0; player.shieldButtonHeld = false;
+  player2.guardTimer = 0; player2.guardCooldown = 0; player2.blocking = false; player2.parryTimer = 0; player2.parryCooldown = 0; player2.shieldButtonHeld = false;
   bossDoorSoundRoom = -1;
   bossDialogueSeen = {};
   bossDialogueLines = [];
