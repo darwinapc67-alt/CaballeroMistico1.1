@@ -93,7 +93,7 @@ function resetAll() {
   room9.transitionZone = {x:7960, y:460, w:40, h:100, to:10};
   room10.transitionZone = {x:8000, y:500, w:40, h:100, to:9, sharedBoundary: true};
   room11.transitionZone = {x:9540, y:460, w:40, h:100, to:12, requiresBoss: true};
-  rooms[19].transitionZone = {x:15940, y:460, w:40, h:100, to:20, requiresBoss: true};
+  rooms[19].transitionZone = {x:15940, y:460, w:40, h:100, to:20};
   rooms[20].transitionZone = null;
   room36.transitionZone = {x: 39 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 37};
   room37.transitionZone = {x: 40 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 38};

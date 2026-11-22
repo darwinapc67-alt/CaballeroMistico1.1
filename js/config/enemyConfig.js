@@ -9,14 +9,19 @@ var bestiaryInfo = {
 };
 var bestiary = { bat: { discovered: false, count: 0 }, kamikaze_bat: { discovered: false, count: 0 }, acid_slime: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 }, cazador_paramo: { discovered: false, count: 0 }, dark_knight: { discovered: false, count: 0 }, blue_sentry: { discovered: false, count: 0 } };
 
+var queenLarvaReserve = {
+  x: 15540, y: 470, w: 78, h: 90, vx: 0, vy: 0, dead: false, room: 19, type: "queen_larva",
+  boss: true, bossName: "REINA LARVA", hp: 340, maxHp: 340, aiTimer: 90, attackTimer: 70, phase: 1, enraged: false
+};
+
 var enemies = [
   {x: 9630, y: 520, w: 24, h: 20, vx: 1.2, vy: 0, baseY: 520, range: 180, speed: 1.2, dead: false, room: 12, type: 'cazador_paramo', terrestrial: true},
   {x: 10420, y: 520, w: 24, h: 20, vx: -1.4, vy: 0, baseY: 520, range: 180, speed: 1.4, dead: false, room: 13, type: 'cazador_paramo', terrestrial: true},
-  {x: 14 * ROOM_W + 450, y: 270, w: 24, h: 20, vx: 1.2, vy: 0, baseY: 270, homeX: 14 * ROOM_W + 450, range: 48, speed: 1.2, diveSpeed: 4.5, visionRadius: 320, attackCooldown: 105, warningFrames: 54, batState: "flight", batTimer: 0, hp: 3, maxHp: 3, combatBat: true, dead: false, room: 14, type: "bat", staysRoom: true},
+  {x: 14 * ROOM_W + 450, y: 270, w: 24, h: 20, vx: 1.2, vy: 0, baseY: 270, homeX: 14 * ROOM_W + 450, range: 48, speed: 1.2, diveSpeed: 4.5, diveFrames: 80, visionRadius: 320, attackCooldown: 105, warningFrames: 54, batState: "flight", batTimer: 0, hp: 3, maxHp: 3, combatBat: true, dead: false, room: 14, type: "bat", staysRoom: true},
   {x: 15 * ROOM_W + 560, y: 512, w: 34, h: 48, vx: -0.9, vy: 0, baseY: 512, speed: 0.9, dead: false, room: 15, type: "dark_knight", hp: 24, maxHp: 24, blockTimer: 110, dashCooldown: 190, dashTimer: 0, contactDamage: true, staysRoom: true},
-  {x: 16 * ROOM_W + 430, y: 245, w: 24, h: 20, vx: -1.2, vy: 0, baseY: 245, homeX: 16 * ROOM_W + 430, range: 64, speed: 1.2, diveSpeed: 4.8, visionRadius: 340, attackCooldown: 135, warningFrames: 54, batState: "flight", batTimer: 0, hp: 3, maxHp: 3, combatBat: true, dead: false, room: 16, type: "bat", staysRoom: true},
+  {x: 16 * ROOM_W + 430, y: 245, w: 24, h: 20, vx: -1.2, vy: 0, baseY: 245, homeX: 16 * ROOM_W + 430, range: 64, speed: 1.2, diveSpeed: 4.8, diveFrames: 80, visionRadius: 340, attackCooldown: 135, warningFrames: 54, batState: "flight", batTimer: 0, hp: 3, maxHp: 3, combatBat: true, dead: false, room: 16, type: "bat", staysRoom: true},
   {x: 17 * ROOM_W + 205, y: 512, w: 34, h: 48, vx: 1, vy: 0, baseY: 512, speed: 1, dead: false, room: 17, type: "dark_knight", hp: 24, maxHp: 24, blockTimer: 130, dashCooldown: 210, dashTimer: 0, contactDamage: true, staysRoom: true},
-  {x: 17 * ROOM_W + 580, y: 250, w: 24, h: 20, vx: -1.2, vy: 0, baseY: 250, homeX: 17 * ROOM_W + 580, range: 54, speed: 1.2, diveSpeed: 4.8, visionRadius: 350, attackCooldown: 155, warningFrames: 54, batState: "flight", batTimer: 0, hp: 3, maxHp: 3, combatBat: true, dead: false, room: 17, type: "bat", staysRoom: true},
+  {x: 17 * ROOM_W + 580, y: 250, w: 24, h: 20, vx: -1.2, vy: 0, baseY: 250, homeX: 17 * ROOM_W + 580, range: 54, speed: 1.2, diveSpeed: 4.8, diveFrames: 80, visionRadius: 350, attackCooldown: 155, warningFrames: 54, batState: "flight", batTimer: 0, hp: 3, maxHp: 3, combatBat: true, dead: false, room: 17, type: "bat", staysRoom: true},
   {x: 14390, y: 520, w: 34, h: 48, vx: -1, vy: 0, baseY: 512, speed: 1.25, dead: false, room: 18, type: 'dark_knight', hp: 48, maxHp: 48, blockTimer: 90, dashCooldown: 110, dashTimer: 0, staysRoom: true},
   {x: 150, y: 350, w: 24, h: 20, vx: 1.5, vy: 0, baseY: 350, range: 60, dead: false, room: 0, type: 'bat'},
   {x: 350, y: 400, w: 24, h: 20, vx: -1.2, vy: 0, baseY: 400, range: 50, dead: false, room: 0, type: 'bat'},
@@ -40,8 +45,6 @@ var enemies = [
   {x:7450, y:250, w:24, h:20, vx: -1.4, vy: 0, baseY: 250, range: 70, dead: false, room: 9, type: 'bat'},
   {x:39 * ROOM_W + 540, y:770, w:70, h:90, vx: 0, vy: 0, dead: false, room: 39, preserveRoom: true, type: 'guardian',
     boss: true, bossName: "GUARDIÁN DE LA CUEVA", hp: 240, maxHp: 240, aiTimer: 80, attackTimer: 60, phase: 1, enraged: false},
-  {x:15540, y:470, w:78, h:90, vx: 0, vy: 0, dead: false, room: 19, type: 'queen_larva',
-    boss: true, bossName: "REINA LARVA", hp: 340, maxHp: 340, aiTimer: 90, attackTimer: 70, phase: 1, enraged: false},
   {x:16340, y:460, w:60, h:100, vx: 0, vy: 0, dead: false, room: 20, type: 'abyssal_knight',
     boss: true, bossName: "CABALLERO ABISMAL", hp: 440, maxHp: 440, aiTimer: 70, attackTimer: 50, phase: 1, enraged: false},
   {x: 42 * ROOM_W + 360, y: 560, w: 110, h: 120, vx: 0, vy: 0, dead: false, room: 42, preserveRoom: true, type: 'dragon',

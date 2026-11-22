@@ -1399,10 +1399,36 @@ function damageCombatBatOnContact(enemy, target, hitKey) {
   startCombatBatRecovery(enemy);
 }
 
+function canDamageOnEnemyContact(enemy) {
+  return !enemy.boss && (enemy.contactDamage === true || enemy.type === "dark_knight");
+}
+
+function damageOnEnemyContact(enemy, target, hitKey, damage) {
+  if (!rectHit(target, enemy)) {
+    enemy[hitKey] = false;
+    return;
+  }
+  if (enemy[hitKey]) return;
+  enemy[hitKey] = true;
+  if (target.inv > 0 || target.frozen) return;
+  playerTakeDamage(target, damage, enemy.boss);
+}
+
+function damageKamikazeBatOnContact(enemy, target) {
+  if (!enemy.launched || enemy.attackHit || target.inv > 0 || target.frozen ||
+      !rectHit(target, enemy)) return;
+  enemy.attackHit = true;
+  playerTakeDamage(target, enemy.infiniteDamage || 1);
+}
+
 function updateEnemies() {
   if (gameState !== ST_PLAYING) return;
   enemies.forEach(function(e) {
     if (e.dead) return;
+    if (e.room !== currentRoom) {
+      e.contactHitPlayer = false;
+      e.contactHitPlayer2 = false;
+    }
     if (gameMode === "custom" && !e.customEnemy) return;
     if (gameMode === "infinite" && e.room === 0 && !e.infiniteEnemy && !e.boss) return;
     if (e.boss && e.room !== currentRoom) return;
@@ -1450,6 +1476,7 @@ function updateEnemies() {
         e.vx = kamikazeDx / kamikazeLength * e.speed;
         e.vy = kamikazeDy / kamikazeLength * e.speed;
         e.launched = true;
+        e.attackHit = false;
         spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#d66b9b", 8, 2);
       }
       if (e.launched) {
@@ -1570,19 +1597,20 @@ function updateEnemies() {
         if (surfaceY !== null) e.y = surfaceY - e.h;
       });
     }
-    var isArdorisCombatRoom = e.room >= 14 && e.room <= 17;
     if (e.room === currentRoom && e.combatBat) {
       damageCombatBatOnContact(e, player, "diveHitPlayer");
       if (twoPlayerMode) damageCombatBatOnContact(e, player2, "diveHitPlayer2");
-    } else if (e.room === currentRoom && (!isArdorisCombatRoom || e.contactDamage) &&
-        player.inv <= 0 && !player.frozen && rectHit(player, e)) {
+    } else if (e.room === currentRoom && e.type === "kamikaze_bat") {
+      damageKamikazeBatOnContact(e, player);
+      if (twoPlayerMode) damageKamikazeBatOnContact(e, player2);
+    } else if (e.room === currentRoom && canDamageOnEnemyContact(e)) {
       var dmg = e.infiniteDamage || (e.type === 'dark_knight' && e.dashTimer > 0 ? 2 : (e.type === 'larva_mosca' ? 2 : 1));
-      playerTakeDamage(player, e.boss ? 1 : dmg, e.boss);
+      damageOnEnemyContact(e, player, "contactHitPlayer", e.boss ? 1 : dmg);
     }
-    if (e.room === currentRoom && (!isArdorisCombatRoom || e.contactDamage) && twoPlayerMode &&
-        player2.inv <= 0 && !player2.frozen && rectHit(player2, e)) {
+    if (e.room === currentRoom && !e.combatBat && e.type !== "kamikaze_bat" &&
+        canDamageOnEnemyContact(e) && twoPlayerMode) {
       var dmg2 = e.infiniteDamage || (e.type === 'larva_mosca' ? 2 : 1);
-      playerTakeDamage(player2, e.boss ? 1 : dmg2, e.boss);
+      damageOnEnemyContact(e, player2, "contactHitPlayer2", e.boss ? 1 : dmg2);
     }
   });
 }

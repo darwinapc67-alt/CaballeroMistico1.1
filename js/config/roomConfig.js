@@ -184,7 +184,7 @@ var room12 = {
     x:15982, y:0, w:18, h:600, breakable: true, requiresSword: true, broken: false
   }],
   transitionZone: {x:15940, y:460, w:40, h:100, to:20},
-  decor: genDecor(15200, 8, 4, 600), bossName: "REINA LARVA"
+  decor: genDecor(15200, 8, 4, 600)
 };
 
 var room13 = {
