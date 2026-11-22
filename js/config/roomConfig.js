@@ -1,12 +1,11 @@
 var room0 = {
   height: 600,
-  platforms: [
-    {x:-240, y:560, w:600, h:40}, {x:500, y:560, w:300, h:40}
-  ],
-  spikes: [{x:360, y:580, w:140, h:20}],
+  platforms: [],
+  spikes: [],
+  entrance: {x:220, y:0, w:200, h:210},
   walls: [
     {x:0, y:0, w:20, h:430},
-    {x:0, y:430, w:20, h:130, breakable: true, requiresSword: true, broken: false},
+    {x:0, y:430, w:20, h:130, breakable: true, requiresSword: true, broken: false, material:"stone"},
     {x:0, y:560, w:20, h:40}
   ],
   chests: [{x:-205, y:520, rewardAzari: true, rewardAmount: 125, opened: false}],
@@ -18,9 +17,10 @@ var room0 = {
 var room1 = {
   height: 600,
   platforms: [
-    {x:800, y:560, w:800, h:40}, {x:950, y:480, w:80, h:14},
-    {x:1350, y:480, w:80, h:14}, {x:1050, y:380, w:80, h:14},
-    {x:1250, y:300, w:80, h:14}
+    {x:800, y:560, w:800, h:40},
+    {x:850, y:480, w:150, h:16, natural: true},
+    {x:1060, y:400, w:140, h:16, natural: true},
+    {x:1260, y:480, w:120, h:16, natural: true}
   ],
   spikes: [], walls: [],
   transitionZone: null,

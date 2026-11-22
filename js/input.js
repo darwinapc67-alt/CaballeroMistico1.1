@@ -1623,11 +1623,16 @@ function finishIntro() {
   introTimer = 0;
   introWakeUp = false;
   wakeJumpArmed = false;
-  player.x = 100;
-  player.y = 530;
+  player.x = 320;
+  player.y = -player.h - 12;
   player.vx = 0;
   player.vy = 0;
-  player.onGround = true;
+  player.onGround = false;
+  player.frozen = false;
+  ardorisEntranceTimer = 0;
+  ardorisImpactTimer = 0;
+  cameraX = targetCamX = 0;
+  cameraY = targetCamY = 0;
   gameState = ST_WAKE;
   updateUI();
 }

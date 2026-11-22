@@ -124,7 +124,7 @@ for (var acidRoom = 0; acidRoom <= 9; acidRoom++) {
   });
 }
 var earlyEncounterPlan = {
-  0: {bat: 1},
+  0: {},
   1: {},
   2: {bat: 1},
   3: {bat: 1, acid_slime: 1},

@@ -1765,8 +1765,9 @@ function finishFloorCollapse() {
   spawnFloatText(player.x, player.y - 30, "HAS CAÍDO A LA HABITACIÓN 41", "#8cf5ff");
 }
 
-function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed, interactPressed, shootPressed, blockPressed, dashPressed, downPressed, bombPressed, upPressed, attackDirection) {
-  if (gameState !== ST_PLAYING) return;
+function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed, interactPressed, shootPressed, blockPressed, dashPressed, downPressed, bombPressed, upPressed, attackDirection, cinematicMotion) {
+  if (gameState !== ST_PLAYING &&
+      !(cinematicMotion && gameState === ST_WAKE && p === player && currentRoom === 0)) return;
   if (bombPressed && !p.bombHeld) {
     p.bombHeld = true;
   } else if (!bombPressed) {
@@ -1908,7 +1909,8 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   }
 
   var left = 0, right = WORLD_W;
-  if (currentRoom === 0 && room0.walls[1] && room0.walls[1].breakable && room0.walls[1].broken) left = -240;
+  if (currentRoom === 0 && room0.walls[1] &&
+      room0.walls[1].breakable && room0.walls[1].broken) left = -240;
   if (gameMode === "custom") { left = 16; right = 576; }
   if (p.x < left + 5) { p.x = left + 5; p.vx = 0; }
   if (p.x + p.w > right - 5) { p.x = right - 5 - p.w; p.vx = 0; }
@@ -2967,7 +2969,7 @@ function updateTransition() {
       if (twoPlayerMode) player2.x += player2.vx;
     }
     if (transTimer <= 0) {
-      gameState = ST_PLAYING; player.autoWalk = 0; player.vx = 0;
+      player.autoWalk = 0; player.vx = 0;
       if (twoPlayerMode) { player2.autoWalk = 0; player2.vx = 0; }
       if (transIsFall || transIsRise) {
         var cameraOrigin = rooms[currentRoom].worldX !== undefined ? rooms[currentRoom].worldX : currentRoom * ROOM_W;
@@ -2975,6 +2977,7 @@ function updateTransition() {
         targetCamX = cameraX;
       }
       transIsFall = false; transIsRise = false; transitionCooldown = 45;
+      gameState = ST_PLAYING;
       startBossDialogue(currentRoom);
     }
   }

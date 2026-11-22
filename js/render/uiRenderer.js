@@ -1049,7 +1049,47 @@ function drawIntro() {
  ctx.fillText("ENTER / ESPACIO para omitir", 400, 575);
  ctx.textAlign = "left";
 }
+function drawArdorisEntranceCinematic() {
+  var timer = ardorisEntranceTimer;
+  var screenX = player.x - Math.floor(cameraX) + player.w / 2;
+  var floorY = player.y + player.h - Math.floor(cameraY);
+  var impactElapsed = ardorisImpactTimer > 0 ? timer - ardorisImpactTimer : -1;
+  var lying = impactElapsed >= 0 && impactElapsed < 120;
+  var rising = impactElapsed >= 120 && impactElapsed < 200;
+  var wakeEase = rising ? Math.max(0, Math.min(1, (impactElapsed - 120) / 80)) : (lying ? 0 : 1);
+  wakeEase = wakeEase * wakeEase * (3 - 2 * wakeEase);
+
+  ctx.save();
+  ctx.fillStyle = "rgba(3, 5, 8, 0.58)";
+  ctx.beginPath();
+  ctx.ellipse(screenX, floorY + 2, lying ? 26 : 18, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  var pose = Object.assign({}, player, {
+    x: -player.w / 2,
+    y: -player.h / 2,
+    vx: 0,
+    vy: 0,
+    dashing: false,
+    swordSwing: 0,
+    inv: 0,
+    anim: 0
+  });
+  ctx.translate(screenX, lying ? floorY - 4 : floorY - player.h / 2);
+  if (lying) ctx.rotate(-Math.PI / 2);
+  else if (rising) ctx.rotate(-Math.PI / 2 * (1 - wakeEase));
+  drawPlayerEntity(pose, lying ? 0 : wakeEase);
+  ctx.restore();
+
+}
 function drawWakeUp() {
+  if (currentRoom === 0) {
+    ctx.fillStyle = "#050510";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    drawGameWorld(true);
+    drawArdorisEntranceCinematic();
+    return;
+  }
   var progress = introWakeUp ? Math.min(1, introTimer / 48) : 0;
   var wakeEase = progress * progress * (3 - 2 * progress);
   ctx.fillStyle = "#050510";

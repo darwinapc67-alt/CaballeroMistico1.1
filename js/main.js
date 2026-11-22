@@ -1,4 +1,7 @@
 function resetAll() {
+  ardorisEntranceTimer = 0;
+  ardorisEntranceSeen = false;
+  ardorisImpactTimer = 0;
   enemies = enemies.filter(function(enemy) {
     return !enemy.infiniteEnemy && !enemy.customEnemy;
   });
@@ -111,15 +114,10 @@ function resetAll() {
     if (device === "touch") setupTouchControls();
   } else {
     room0.platforms = [createCaveFloorPlatform(0)];
-    room0.spikes = [{
-      x: 360,
-      y: getPlatformSurfaceY(room0.platforms[0], 430) - 20,
-      w: 140,
-      h: 20
-    }];
+    room0.spikes = [];
     room0.walls = [
       {x:0, y:0, w:20, h:430},
-      {x:0, y:430, w:20, h:130, breakable: true, requiresSword: true, broken: false},
+      {x:0, y:430, w:20, h:130, breakable: true, requiresSword: true, broken: false, material:"stone"},
       {x:0, y:560, w:20, h:40}
     ];
   }
@@ -219,22 +217,57 @@ function update() {
     return;
   }
   if (gameState === ST_WAKE) {
-    var wakeJumpPressed = isControlPressed("jump") ||
-      (gamepadConnected && isControlPadPressed("jump", gpButtons)) ||
-      (gamepad2Connected && isControlPadPressed("jump", gp2Buttons));
-    if (!wakeJumpPressed) wakeJumpArmed = true;
-    else if (wakeJumpArmed && !introWakeUp) {
-      introWakeUp = true;
-      introTimer = 0;
-    }
-    if (introWakeUp) {
-      introTimer++;
-      if (introTimer >= 48) {
-        introWakeUp = false;
+    if (currentRoom === 0) {
+      ardorisEntranceTimer++;
+      ardorisEntranceSeen = true;
+      player.blocking = false;
+      player.swordSwing = 0;
+      if (ardorisImpactTimer === 0) {
+        player.frozen = false;
+        updateGenericPlayer(
+          player, false, false, false, false, false, false,
+          false, false, false, false, false, "", true
+        );
+        if (ardorisEntranceTimer > 3 && player.onGround) {
+          ardorisImpactTimer = ardorisEntranceTimer;
+          player.frozen = true;
+          combatShake = Math.max(combatShake, 5);
+        }
+      } else if (ardorisEntranceTimer < ardorisImpactTimer + 200) {
+        player.frozen = true;
+        player.onGround = true;
+        player.vx = 0;
+        player.vy = 0;
+      } else if (ardorisEntranceTimer >= ardorisImpactTimer + 260) {
+        player.frozen = false;
+        player.onGround = true;
         introWakeUpDone = true;
         gameState = ST_PLAYING;
         startMusic();
         updateUI();
+      }
+      if (gameState === ST_WAKE) {
+        cameraX = targetCamX = 0;
+        cameraY = targetCamY = 0;
+      }
+    } else {
+      var wakeJumpPressed = isControlPressed("jump") ||
+        (gamepadConnected && isControlPadPressed("jump", gpButtons)) ||
+        (gamepad2Connected && isControlPadPressed("jump", gp2Buttons));
+      if (!wakeJumpPressed) wakeJumpArmed = true;
+      else if (wakeJumpArmed && !introWakeUp) {
+        introWakeUp = true;
+        introTimer = 0;
+      }
+      if (introWakeUp) {
+        introTimer++;
+        if (introTimer >= 48) {
+          introWakeUp = false;
+          introWakeUpDone = true;
+          gameState = ST_PLAYING;
+          startMusic();
+          updateUI();
+        }
       }
     }
     return;
@@ -340,7 +373,8 @@ function update() {
       var roomWidth = room.roomWidth || ROOM_W;
       targetCamX = Math.max(room.worldX, Math.min(targetCamX, room.worldX + roomWidth - canvas.width));
     } else {
-      targetCamX = Math.max(currentRoom === 0 && room0.walls[1] && room0.walls[1].broken ? -240 : 0,
+      targetCamX = Math.max(currentRoom === 0 && room0.walls[1] &&
+        room0.walls[1].broken ? -240 : 0,
         Math.min(targetCamX, WORLD_W - canvas.width));
     }
     var diff = targetCamX - cameraX;
@@ -400,6 +434,11 @@ function loop() {
   else if (gameState === ST_INVENTORY) { drawGame(); drawInventory(); }
   else if (gameState === ST_DIALOGUE) {
     drawGame();
+    if (hitFlash > 0) {
+      var hitAlpha = hitFlash > 30 ? (60 - hitFlash) / 30 : hitFlash / 30;
+      ctx.fillStyle = "rgba(0, 0, 0, " + hitAlpha + ")";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
     if (dialogueMode === "sword_pickup") drawSwordPickupCinematic();
     else if (dialogueMode === "floor_collapse") drawFloorCollapse();
     else drawBossDialogue();

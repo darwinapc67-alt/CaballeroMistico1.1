@@ -16,6 +16,9 @@ var introWakeUpDone = false;
 var wakeJumpArmed = false;
 
 var swordPickupCinematicTimer = 0;
+var ardorisEntranceTimer = 0;
+var ardorisEntranceSeen = false;
+var ardorisImpactTimer = 0;
 
 var isMobileBrowser = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
   (navigator.maxTouchPoints > 0 && window.innerWidth <= 900);

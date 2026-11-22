@@ -1,4 +1,7 @@
 function getZoneVisualProfile(roomIndex) {
+  if (roomIndex === 0) {
+    return { id: "ardoris", top: "#8fb4a4", middle: "#34534a", bottom: "#09130f", light: "#c7e6c1", accent: "#6e8052", platform: "#4a4b3d", edge: "#8b8061", particle: "#c6d0a5" };
+  }
   if (rooms[roomIndex] && rooms[roomIndex].optional) {
     if (rooms[roomIndex].visualProfile === "abyss") {
       return { id: "abyss", top: "#070d1b", middle: "#101d32", bottom: "#03060f", light: "#3b8cff", accent: "#426fa8", platform: "#1d3049", edge: "#4e89bd", particle: "#82c8ff" };
@@ -36,6 +39,43 @@ function drawCaveBg(rx, decor, roomH, roomWidth, roomIndex) {
   backGradient.addColorStop(1, "rgba(0, 0, 0, 0.3)");
   ctx.fillStyle = backGradient;
   ctx.fillRect(rx, 0, roomWidth, roomH);
+  if (roomIndex === 0) {
+    var entranceCenter = rx + 320;
+    ctx.fillStyle = "#668a73";
+    ctx.fillRect(rx - 40, 0, 300, 540);
+    ctx.fillStyle = "#d7c68f";
+    ctx.globalAlpha = 0.28;
+    ctx.beginPath();
+    ctx.arc(rx + 110, 110, 82, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#263f31";
+    for (var exteriorPlant = 0; exteriorPlant < 4; exteriorPlant++) {
+      var exteriorX = rx + 18 + exteriorPlant * 58;
+      ctx.beginPath();
+      ctx.moveTo(exteriorX, 560);
+      ctx.quadraticCurveTo(exteriorX - 12, 525, exteriorX - 22, 480);
+      ctx.quadraticCurveTo(exteriorX - 4, 500, exteriorX + 6, 548);
+      ctx.quadraticCurveTo(exteriorX + 14, 490, exteriorX + 28, 470);
+      ctx.quadraticCurveTo(exteriorX + 20, 530, exteriorX + 12, 560);
+      ctx.closePath();
+      ctx.fill();
+    }
+    var exteriorGlow = ctx.createRadialGradient(entranceCenter, -20, 20, entranceCenter, 50, 300);
+    exteriorGlow.addColorStop(0, "rgba(211, 237, 194, 0.68)");
+    exteriorGlow.addColorStop(0.25, "rgba(157, 205, 169, 0.32)");
+    exteriorGlow.addColorStop(1, "rgba(115, 165, 145, 0)");
+    ctx.fillStyle = exteriorGlow;
+    ctx.fillRect(entranceCenter - 300, -20, 600, 360);
+    ctx.fillStyle = "rgba(191, 224, 188, 0.12)";
+    ctx.beginPath();
+    ctx.moveTo(entranceCenter - 72, 0);
+    ctx.lineTo(entranceCenter + 58, 0);
+    ctx.lineTo(entranceCenter + 150, 310);
+    ctx.lineTo(entranceCenter - 145, 310);
+    ctx.closePath();
+    ctx.fill();
+  }
   drawCaveBackRelief(rx, roomH, roomWidth, roomSeed);
   drawZoneBackdropDetails(rx, roomH, roomWidth, roomIndex, roomSeed, profile);
   if (gameMode === "normal") drawNormalCaveAtmosphere(rx, roomH, roomWidth, roomSeed, profile);
@@ -239,6 +279,28 @@ function drawCaveLocalLighting(roomIndex, room) {
 }
 function drawNormalCaveAtmosphere(rx, roomH, roomWidth, seed, profile) {
   ctx.save();
+  if (profile.id === "ardoris") {
+    var mossCount = Math.ceil(roomWidth / 220);
+    ctx.globalAlpha = 0.34;
+    for (var moss = 0; moss < mossCount; moss++) {
+      var mossX = rx + 35 + moss * 220 + ((seed * 29 + moss * 41) % 70);
+      var mossY = roomH - 30 - ((seed + moss) % 3) * 10;
+      ctx.fillStyle = moss % 2 ? "#66815a" : "#4f7052";
+      ctx.beginPath();
+      ctx.ellipse(mossX, mossY, 18 + moss % 3 * 5, 5 + moss % 2 * 2, -0.08, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#7d9567";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(mossX - 12, mossY - 2);
+      ctx.quadraticCurveTo(mossX - 28, mossY - 24, mossX - 36, mossY - 42);
+      ctx.moveTo(mossX + 8, mossY - 3);
+      ctx.quadraticCurveTo(mossX + 24, mossY - 20, mossX + 31, mossY - 34);
+      ctx.stroke();
+    }
+    ctx.restore();
+    return;
+  }
   if (profile.id === "marsh") {
     var rootCount = Math.ceil(roomWidth / 260);
     ctx.globalAlpha = 0.28;
@@ -679,11 +741,12 @@ function drawPlatforms(room, roomIndex) {
 }
 function drawWalls(room) {
   room.walls.forEach(function(w) {
+    var stoneBreakable = w.breakable && w.material === "stone";
     if (w.broken) {
       var breakAge = frameCounter - (w.brokenAt || 0);
       if (breakAge >= 0 && breakAge < 18) {
         ctx.globalAlpha = 1 - breakAge / 18;
-        ctx.fillStyle = "#8b7057";
+        ctx.fillStyle = stoneBreakable ? "#858c91" : "#8b7057";
         for (var fragment = 0; fragment < 5; fragment++) {
           var fragmentX = w.x + ((fragment * 13) % Math.max(4, w.w - 4));
           var fragmentY = w.y + ((fragment * 37 + breakAge * (fragment + 1) * 2) % Math.max(8, w.h - 8));
@@ -694,16 +757,18 @@ function drawWalls(room) {
       return;
     }
     var wallGradient = ctx.createLinearGradient(w.x, w.y, w.x + w.w, w.y + w.h);
-    wallGradient.addColorStop(0, w.breakable ? "#80634d" : "#53566d");
-    wallGradient.addColorStop(0.3, w.breakable ? "#59483e" : "#343447");
-    wallGradient.addColorStop(1, w.breakable ? "#302722" : "#171a2a");
+    wallGradient.addColorStop(0, w.breakable ? (stoneBreakable ? "#68747a" : "#80634d") : "#53566d");
+    wallGradient.addColorStop(0.3, w.breakable ? (stoneBreakable ? "#454c55" : "#59483e") : "#343447");
+    wallGradient.addColorStop(1, w.breakable ? (stoneBreakable ? "#242b34" : "#302722") : "#171a2a");
     ctx.fillStyle = wallGradient;
     ctx.fillRect(w.x, w.y, w.w, w.h);
-    ctx.fillStyle = w.breakable ? "#8b7057" : "#55556b";
+    ctx.fillStyle = w.breakable ? (stoneBreakable ? "#748087" : "#8b7057") : "#55556b";
     ctx.fillRect(w.x, w.y, w.w, 4);
-    ctx.fillStyle = w.breakable ? "#302722" : "#1b1b2b";
+    ctx.fillStyle = w.breakable ? (stoneBreakable ? "#242b34" : "#302722") : "#1b1b2b";
     ctx.fillRect(w.x + w.w - 4, w.y, 4, w.h);
-    ctx.strokeStyle = w.breakable ? "rgba(226, 188, 125, 0.42)" : "rgba(105, 106, 132, 0.35)";
+    ctx.strokeStyle = w.breakable
+      ? (stoneBreakable ? "rgba(176, 195, 205, 0.38)" : "rgba(226, 188, 125, 0.42)")
+      : "rgba(105, 106, 132, 0.35)";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(w.x + 6, w.y + 12);
@@ -729,7 +794,7 @@ function drawWalls(room) {
       ctx.fill();
     }
     if (w.breakable) {
-      ctx.strokeStyle = "rgba(244, 210, 145, 0.65)";
+      ctx.strokeStyle = stoneBreakable ? "rgba(174, 193, 205, 0.55)" : "rgba(244, 210, 145, 0.65)";
       ctx.beginPath();
       ctx.moveTo(w.x + 4, w.y + 42);
       ctx.lineTo(w.x + w.w - 5, w.y + 86);
