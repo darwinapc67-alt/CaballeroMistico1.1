@@ -177,7 +177,7 @@ function drawGameWorld(skipPlayers) {
       ctx.fillText("230 AZARI", pileX, pileY - 70);
       ctx.textAlign = "left";
     }
-    if (room.bossName) drawBossDoor(r);
+    if (room.bossName || r === 23) drawBossDoor(r);
     if (r === 9) drawHealingStone();
     if (r === 50) drawShopNPC(room, r);
   }

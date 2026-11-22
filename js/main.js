@@ -155,6 +155,10 @@ function resetAll() {
       e.hp = e.maxHp; e.phase = 1; e.enraged = false; e.action = "";
       e.actionTimer = 0; e.attackTimer = e.type === "abyssal_knight" ? 50 : 70;
       e.deathTimer = 0; e.attackHit = false; e.phaseNotice = 0;
+      if (e.type === "ardoris_elite") {
+        e.x = e.homeX; e.y = e.homeY;
+        e.attackTimer = 90; e.attackIndex = 0; e.attackDirection = 1; e.waveSpawned = false;
+      }
     }
     e.vy = 0;
     if (e.type === "kamikaze_bat") {

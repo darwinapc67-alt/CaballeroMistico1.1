@@ -8,6 +8,7 @@ var bestiaryInfo = {
   blue_sentry: { name: "Centinela Azul", desc: "Entidad flotante que dispara rayos azules y puede recibirlos de vuelta con la Espada Mística." }
 };
 var bestiary = { bat: { discovered: false, count: 0 }, kamikaze_bat: { discovered: false, count: 0 }, acid_slime: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 }, cazador_paramo: { discovered: false, count: 0 }, dark_knight: { discovered: false, count: 0 }, blue_sentry: { discovered: false, count: 0 } };
+var ARDORIS_ELITE_HP = 1500;
 
 var queenLarvaReserve = {
   x: 15540, y: 470, w: 78, h: 90, vx: 0, vy: 0, dead: false, room: 19, type: "queen_larva",
@@ -127,6 +128,15 @@ enemies.forEach(function(enemy) {
     hp: 24, maxHp: 24, dead: false, room: spec.room, type: "cazador_paramo",
     terrestrial: true, staysRoom: true
   });
+});
+enemies.push({
+  x: 23 * ROOM_W + 330, y: 450, w: 142, h: 110, vx: 0, vy: 0,
+  homeX: 23 * ROOM_W + 330, homeY: 450,
+  dead: false, room: 23, type: "ardoris_elite", boss: true,
+  bossName: "ESCARABAJO DE CAPARAZÓN",
+  hp: ARDORIS_ELITE_HP, maxHp: ARDORIS_ELITE_HP,
+  action: "", actionTimer: 0, attackTimer: 90, attackIndex: 0,
+  attackDirection: 1, attackHit: false, waveSpawned: false, phase: 1, staysRoom: true
 });
 enemies.forEach(function(e) {
   e.canRoam = !e.boss && e.type !== "kamikaze_bat" && !e.combatBat;

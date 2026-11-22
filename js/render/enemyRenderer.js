@@ -8,7 +8,7 @@ function drawEnemies() {
     if (e.y + e.h < camTop - 50 || e.y > camBottom + 50) return;
     ctx.save();
     var zoneProfile = getZoneVisualProfile(currentRoom);
-    var zoneAura = zoneProfile.id === "ardoris" && currentRoom >= 14 && currentRoom <= 22
+    var zoneAura = zoneProfile.id === "ardoris" && currentRoom >= 14 && currentRoom <= 23
       ? "rgba(126, 220, 137, 0.18)"
       : (zoneProfile.id === "marsh" ? "rgba(126, 220, 137, 0.18)" :
       (zoneProfile.id === "abyss" ? "rgba(83, 157, 255, 0.18)" :
@@ -23,15 +23,19 @@ function drawEnemies() {
       ctx.globalAlpha = 0.45 + (e.hitFlash % 2) * 0.25;
     }
     if (e.boss) {
-      var bossColor = e.type === "guardian" ? "#b77b45" : (e.type === "queen_larva" ? "#9b4c9b" : (e.type === "dragon" ? "#b94632" : "#415f98"));
+      var bossColor = e.type === "guardian" ? "#b77b45" : (e.type === "queen_larva" ? "#9b4c9b" :
+        (e.type === "dragon" ? "#b94632" : (e.type === "ardoris_elite" ? "#416745" : "#415f98")));
       var attackPulse = e.actionTimer > 0 ? Math.sin(e.actionTimer * 0.7) * 4 : 0;
-      var bossBob = e.action === "jump" ? Math.sin(e.actionTimer * 0.35) * 5 : attackPulse * 0.35;
-      var phaseColor = e.phase === 3 ? "#ff315a" : (e.phase === 2 ? "#ffb347" : "#8cf");
+      var bossBob = e.type === "ardoris_elite"
+        ? (!e.action ? Math.sin(Date.now() / 430) * 1.2 : 0)
+        : (e.action === "jump" ? Math.sin(e.actionTimer * 0.35) * 5 : attackPulse * 0.35);
+      var phaseColor = e.type === "ardoris_elite" ? "#a6ef78" :
+        (e.phase === 3 ? "#ff315a" : (e.phase === 2 ? "#ffb347" : "#8cf"));
       ctx.globalAlpha = 0.16 + (e.phase || 1) * 0.04;
       ctx.fillStyle = phaseColor;
       ctx.beginPath(); ctx.arc(e.x + e.w / 2, e.y + e.h / 2, 48 + (e.phase || 1) * 8, 0, Math.PI * 2); ctx.fill();
       ctx.globalAlpha = 1;
-      ctx.fillStyle = "rgba(255,80,80,0.18)";
+      ctx.fillStyle = e.type === "ardoris_elite" ? "rgba(105, 166, 87, 0.2)" : "rgba(255,80,80,0.18)";
       ctx.fillRect(e.x - 8, e.y - 8, e.w + 16, e.h + 16);
       ctx.fillStyle = bossColor;
       ctx.fillRect(e.x, e.y + 14 + bossBob, e.w, e.h - 14);
@@ -62,6 +66,124 @@ function drawEnemies() {
         ctx.fillStyle = "#ffd36a";
         ctx.fillRect(e.x + 20, e.y + 12, 7, 5);
         ctx.fillRect(e.x + e.w - 27, e.y + 12, 7, 5);
+      } else if (e.type === "ardoris_elite") {
+        ctx.save();
+        ctx.translate(0, bossBob);
+        var eliteFacing = e.attackDirection || 1;
+        var eliteCenter = e.x + e.w / 2;
+        ctx.strokeStyle = "#253c27";
+        ctx.lineWidth = 7;
+        for (var leg = 0; leg < 3; leg++) {
+          var legY = e.y + 56 + leg * 9;
+          var legStartX = eliteCenter + (leg - 1) * 25;
+          ctx.beginPath();
+          ctx.moveTo(legStartX, legY);
+          ctx.lineTo(legStartX + eliteFacing * (22 + leg * 3), e.y + 84 + leg * 4);
+          ctx.lineTo(legStartX + eliteFacing * (31 + leg * 3), e.y + e.h - bossBob);
+          ctx.stroke();
+        }
+        ctx.fillStyle = "#315b38";
+        ctx.beginPath();
+        ctx.ellipse(eliteCenter - eliteFacing * 8, e.y + 49, 51, 35, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#91b978";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(eliteCenter - eliteFacing * 8, e.y + 49, 51, 35, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = "#50794b";
+        for (var plate = 0; plate < 4; plate++) {
+          ctx.beginPath();
+          ctx.moveTo(eliteCenter - 43 + plate * 25, e.y + 39);
+          ctx.lineTo(eliteCenter - 31 + plate * 25, e.y + 20);
+          ctx.lineTo(eliteCenter - 15 + plate * 25, e.y + 40);
+          ctx.lineTo(eliteCenter - 29 + plate * 25, e.y + 61);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = "#789b60";
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+        ctx.fillStyle = "#66804a";
+        ctx.beginPath();
+        ctx.ellipse(eliteCenter + eliteFacing * 43, e.y + 49, 24, 21, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#ffca62";
+        ctx.fillRect(eliteCenter + eliteFacing * 48 - 3, e.y + 41, 5, 5);
+        ctx.fillRect(eliteCenter + eliteFacing * 48 - 3, e.y + 53, 5, 5);
+        ctx.strokeStyle = "#263b27";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(eliteCenter + eliteFacing * 57, e.y + 58);
+        ctx.lineTo(eliteCenter + eliteFacing * 68, e.y + 69);
+        ctx.moveTo(eliteCenter + eliteFacing * 57, e.y + 42);
+        ctx.lineTo(eliteCenter + eliteFacing * 68, e.y + 31);
+        ctx.stroke();
+        var slashWarning = e.action === "elite_slash_windup";
+        var bladeGlow = slashWarning ? 0.8 + Math.sin(Date.now() / 65) * 0.2 : 0.3;
+        ctx.shadowColor = "#e7ff9a";
+        ctx.shadowBlur = slashWarning ? 18 : 4;
+        ctx.strokeStyle = "rgba(190, 245, 120, " + bladeGlow + ")";
+        ctx.lineWidth = slashWarning ? 11 : 4;
+        ctx.beginPath();
+        ctx.moveTo(eliteCenter + eliteFacing * 34, e.y + 56);
+        ctx.lineTo(eliteCenter + eliteFacing * 80, e.y + 52);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = "#d7e9ae";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(eliteCenter + eliteFacing * 34, e.y + 56);
+        ctx.lineTo(eliteCenter + eliteFacing * 80, e.y + 52);
+        ctx.stroke();
+        if (slashWarning) {
+          ctx.fillStyle = "#efffb2";
+          ctx.beginPath();
+          ctx.arc(eliteCenter + eliteFacing * 80, e.y + 52, 7 + Math.sin(Date.now() / 65) * 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.font = "bold 18px monospace";
+          ctx.textAlign = "center";
+          ctx.fillText("!", eliteCenter + eliteFacing * 72, e.y + 29);
+          ctx.textAlign = "left";
+        } else if (e.action === "elite_charge_windup") {
+          ctx.strokeStyle = "#d5ef91";
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(eliteCenter, e.y + e.h + 8);
+          ctx.lineTo(eliteCenter + eliteFacing * 86, e.y + e.h + 8);
+          ctx.lineTo(eliteCenter + eliteFacing * 72, e.y + e.h + 1);
+          ctx.moveTo(eliteCenter + eliteFacing * 86, e.y + e.h + 8);
+          ctx.lineTo(eliteCenter + eliteFacing * 72, e.y + e.h + 15);
+          ctx.stroke();
+        } else if (e.action === "elite_slam_windup") {
+          ctx.strokeStyle = "rgba(166, 239, 120, 0.8)";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.ellipse(eliteCenter, e.y + e.h, 36 + Math.sin(Date.now() / 80) * 6, 8, 0, 0, Math.PI * 2);
+          ctx.stroke();
+        } else if (e.action === "elite_slash") {
+          ctx.strokeStyle = "#e3ffae";
+          ctx.lineWidth = 8;
+          ctx.beginPath();
+          ctx.moveTo(eliteCenter + eliteFacing * 35, e.y + 72);
+          ctx.lineTo(eliteCenter + eliteFacing * 102, e.y + 35);
+          ctx.stroke();
+        } else if (e.action === "elite_charge") {
+          ctx.strokeStyle = "rgba(181, 236, 127, 0.65)";
+          ctx.lineWidth = 5;
+          ctx.beginPath();
+          ctx.moveTo(e.x + e.w / 2 - eliteFacing * 18, e.y + 63);
+          ctx.lineTo(e.x + e.w / 2 - eliteFacing * 63, e.y + 63);
+          ctx.stroke();
+        } else if (e.action === "elite_slam") {
+          ctx.strokeStyle = "#c5f18e";
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(eliteCenter - 22, e.y + 70);
+          ctx.lineTo(eliteCenter + 22, e.y + 70);
+          ctx.stroke();
+        }
+        ctx.restore();
       } else {
         ctx.fillStyle = "#d9e4ff"; ctx.fillRect(e.x + e.w - 5, e.y + 28 + bossBob, 28, 5);
         ctx.fillStyle = "#26385f"; ctx.fillRect(e.x - 5, e.y + 25, 10, 48);
@@ -77,8 +199,11 @@ function drawEnemies() {
         ctx.strokeStyle = phaseColor; ctx.lineWidth = 2;
         ctx.strokeRect(e.x - 14, e.y - 14, e.w + 28, e.h + 28);
       }
-      ctx.fillStyle = "#f44"; ctx.fillRect(e.x, e.y - 14, e.w * Math.max(0, e.hp / e.maxHp), 5);
-      ctx.strokeStyle = "#fff"; ctx.lineWidth = 1; ctx.strokeRect(e.x, e.y - 14, e.w, 5);
+      if (typeof e.hp === "number" && isFinite(e.hp) && typeof e.maxHp === "number" &&
+          isFinite(e.maxHp) && e.maxHp > 0) {
+        ctx.fillStyle = "#f44"; ctx.fillRect(e.x, e.y - 14, e.w * Math.max(0, e.hp / e.maxHp), 5);
+        ctx.strokeStyle = "#fff"; ctx.lineWidth = 1; ctx.strokeRect(e.x, e.y - 14, e.w, 5);
+      }
     } else if (e.type === 'blue_sentry') {
       var sentryPulse = 0.75 + Math.sin(Date.now() / 120) * 0.2;
       ctx.fillStyle = "rgba(35, 190, 255, " + (sentryPulse * 0.35) + ")";

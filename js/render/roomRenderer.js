@@ -1,11 +1,39 @@
 function drawBossDoor(roomIndex) {
   var room = rooms[roomIndex];
-  if (!room.bossName) return;
   var boss = null;
   enemies.forEach(function(e) {
     if (e.boss && e.room === roomIndex && !e.disabled) boss = e;
   });
   var locked = boss && !boss.dead;
+  var eliteArena = roomIndex === 23 && boss && boss.type === "ardoris_elite";
+  if (!room.bossName && !eliteArena) return;
+  if (eliteArena) {
+    if (!locked) return;
+    var arenaOrigin = room.worldX !== undefined ? room.worldX : roomIndex * ROOM_W;
+    var arenaWidth = room.roomWidth || ROOM_W;
+    [arenaOrigin + 22, arenaOrigin + arenaWidth - 40].forEach(function(gateX) {
+      ctx.fillStyle = "rgba(30, 50, 34, 0.96)";
+      ctx.fillRect(gateX, 40, 18, room.height - 80);
+      ctx.strokeStyle = "#a6ef78";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(gateX, 40, 18, room.height - 80);
+      ctx.strokeStyle = "rgba(166, 239, 120, 0.72)";
+      ctx.lineWidth = 3;
+      for (var barY = 58; barY < room.height - 54; barY += 24) {
+        ctx.beginPath();
+        ctx.moveTo(gateX + 2, barY);
+        ctx.lineTo(gateX + 16, barY + 10);
+        ctx.stroke();
+      }
+      ctx.fillStyle = "#a6ef78";
+      ctx.font = "bold 11px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("BLOQUEADO", gateX + 9, 28);
+    });
+    ctx.textAlign = "left";
+    return;
+  }
+  if (!room.bossName) return;
   var x = roomIndex * ROOM_W + ROOM_W - 18;
   ctx.fillStyle = locked ? "rgba(126, 19, 52, 0.9)" : "rgba(25, 126, 91, 0.75)";
   ctx.fillRect(x, 40, 12, room.height - 80);

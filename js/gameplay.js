@@ -154,12 +154,21 @@ function useEteriumSkill() {
   var affected = 0;
   enemies.forEach(function(enemy) {
     if (enemy.dead || enemy.disabled || enemy.room !== currentRoom || !isEnemyVulnerable(enemy)) return;
-    enemy.hp = Math.max(0, enemy.hp - damage);
+    if (enemy.boss) {
+      if (applyBossDamage(enemy, damage)) {
+        registerCombatImpact(enemy, damage, false);
+        spawnParticles(enemy.x + enemy.w / 2, enemy.y + enemy.h / 2, "#55dcff", 8, 3);
+        spawnFloatText(enemy.x, enemy.y - 18, "-" + damage, "#70e8ff");
+      } else {
+        showPendingBossHit(enemy);
+      }
+    } else {
+      enemy.hp = Math.max(0, enemy.hp - damage);
+      registerCombatImpact(enemy, damage, false);
+      spawnParticles(enemy.x + enemy.w / 2, enemy.y + enemy.h / 2, "#55dcff", 8, 3);
+      spawnFloatText(enemy.x, enemy.y - 18, "-" + damage, "#70e8ff");
+    }
     affected++;
-    registerCombatImpact(enemy, damage, false);
-    spawnParticles(enemy.x + enemy.w / 2, enemy.y + enemy.h / 2, "#55dcff", 8, 3);
-    spawnFloatText(enemy.x, enemy.y - 18, "-" + damage, "#70e8ff");
-    if (enemy.hp <= 0 && enemy.boss) defeatBoss(enemy);
   });
   eteriumSkillCooldown = eteriumSkillLevel === 1 ? 2400 : (eteriumSkillLevel === 2 ? 1800 : 1500);
   var skillX = player.x + player.w / 2;
@@ -970,6 +979,24 @@ function bossPhaseFor(e) {
   return e.hp <= e.maxHp / 3 ? 3 : (e.hp <= e.maxHp * 2 / 3 ? 2 : 1);
 }
 
+function bossHasConfiguredHealth(e) {
+  return typeof e.hp === "number" && isFinite(e.hp) &&
+    typeof e.maxHp === "number" && isFinite(e.maxHp) && e.maxHp > 0;
+}
+
+function applyBossDamage(e, damage) {
+  if (!bossHasConfiguredHealth(e)) return false;
+  e.hp = Math.max(0, e.hp - damage);
+  if (e.hp <= 0) defeatBoss(e);
+  return true;
+}
+
+function showPendingBossHit(e) {
+  e.hitFlash = 6;
+  spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#a8d87d", 8, 3);
+  sfxHit();
+}
+
 function announceBossPhase(e, phase) {
   e.phase = phase;
   e.enraged = phase > 1;
@@ -987,13 +1014,34 @@ function bossMeleeHit(e, damage, reach) {
   if (twoPlayerMode && rectHit(player2, hitbox)) { playerTakeDamage(player2, damage, true); e.attackHit = true; }
 }
 
+function ardorisEliteHit(e, hitbox) {
+  if (e.attackHit) return;
+  var targets = twoPlayerMode ? [player, player2] : [player];
+  var hit = false;
+  targets.forEach(function(target) {
+    if (rectHit(target, hitbox)) {
+      playerTakeDamage(target, 1, true);
+      hit = true;
+    }
+  });
+  if (hit) e.attackHit = true;
+}
+
+function finishArdorisEliteAttack(e) {
+  e.action = "elite_recovery";
+  e.actionTimer = 42;
+  e.attackHit = false;
+  e.waveSpawned = false;
+  e.vx = 0;
+}
+
 function updateBoss(e, room) {
   var target = bossTarget(e);
   var arenaLeft = e.room * ROOM_W + 35, arenaRight = arenaLeft + ROOM_W - 70;
   var floorY = room.height - 40 - e.h;
   e.aiTimer = (e.aiTimer || 0) - 1;
   e.attackTimer = (e.attackTimer || 0) - 1;
-  var phase = bossPhaseFor(e);
+  var phase = bossHasConfiguredHealth(e) ? bossPhaseFor(e) : (e.phase || 1);
   if (phase > (e.phase || 1)) announceBossPhase(e, phase);
   if (e.phaseNotice > 0) e.phaseNotice--;
   if (e.type === "guardian") {
@@ -1115,6 +1163,102 @@ function updateBoss(e, room) {
     if (e.x > arenaRight) e.x = arenaRight;
     e.y = floorY;
     e.vy = 0;
+  } else if (e.type === "ardoris_elite") {
+    e.y = floorY;
+    e.vy = 0;
+    var eliteLeft = e.room * ROOM_W + 35;
+    var eliteRight = e.room * ROOM_W + ROOM_W - 35 - e.w;
+    if (e.actionTimer > 0) {
+      if (e.action === "elite_slash_windup") {
+        e.actionTimer--;
+        if (e.actionTimer <= 0) {
+          e.action = "elite_slash";
+          e.actionTimer = 9;
+          e.attackHit = false;
+          sfxAttack();
+        }
+      } else if (e.action === "elite_slash") {
+        if (e.actionTimer === 4) {
+          var slashBox = e.attackDirection > 0
+            ? {x: e.x + e.w - 8, y: e.y + 20, w: 105, h: e.h - 32}
+            : {x: e.x - 97, y: e.y + 20, w: 105, h: e.h - 32};
+          ardorisEliteHit(e, slashBox);
+        }
+        e.actionTimer--;
+        if (e.actionTimer <= 0) finishArdorisEliteAttack(e);
+      } else if (e.action === "elite_charge_windup") {
+        e.actionTimer--;
+        if (e.actionTimer <= 0) {
+          e.action = "elite_charge";
+          e.actionTimer = 26;
+          e.attackHit = false;
+          sfxBossVoice();
+        }
+      } else if (e.action === "elite_charge") {
+        e.x += e.attackDirection * 15.5;
+        if (e.x <= eliteLeft || e.x >= eliteRight) {
+          e.x = Math.max(eliteLeft, Math.min(eliteRight, e.x));
+          e.actionTimer = 0;
+        } else {
+          ardorisEliteHit(e, {
+            x: e.x + 14, y: e.y + e.h - 18, w: e.w - 28, h: 16
+          });
+          e.actionTimer--;
+        }
+        if (e.actionTimer <= 0) finishArdorisEliteAttack(e);
+      } else if (e.action === "elite_slam_windup") {
+        e.actionTimer--;
+        if (e.actionTimer <= 0) {
+          e.action = "elite_slam";
+          e.actionTimer = 9;
+          e.waveSpawned = false;
+          sfxStalactiteFall();
+        }
+      } else if (e.action === "elite_slam") {
+        if (e.actionTimer === 5 && !e.waveSpawned) {
+          var waveWidth = 40;
+          bossProjectiles.push({
+            x: e.attackDirection > 0 ? e.x + e.w - 6 : e.x - waveWidth + 6,
+            y: e.y + e.h - 13, w: waveWidth, h: 12,
+            vx: e.attackDirection * 7, vy: 0, gravity: 0, damage: 1,
+            life: 120, room: e.room, kind: "ardoris_shockwave",
+            color: "#a6ef78", homing: false, owner: e
+          });
+          e.waveSpawned = true;
+        }
+        e.actionTimer--;
+        if (e.actionTimer <= 0) finishArdorisEliteAttack(e);
+      } else if (e.action === "elite_recovery") {
+        e.actionTimer--;
+        if (e.actionTimer <= 0) {
+          e.action = "";
+          e.attackTimer = 42;
+          e.attackHit = false;
+        }
+      }
+    } else if (e.attackTimer <= 0) {
+      e.attackDirection = target.player.x + target.player.w / 2 < e.x + e.w / 2 ? -1 : 1;
+      e.attackHit = false;
+      var eliteAttack = e.attackIndex % 3;
+      e.attackIndex = (e.attackIndex + 1) % 3;
+      if (eliteAttack === 0) {
+        e.action = "elite_slash_windup";
+        e.actionTimer = 48;
+        sfxBossVoice();
+      } else if (eliteAttack === 1) {
+        e.action = "elite_charge_windup";
+        e.actionTimer = 44;
+        sfxBossVoice();
+      } else {
+        e.action = "elite_slam_windup";
+        e.actionTimer = 50;
+        sfxStalactiteFall();
+      }
+    } else {
+      var eliteWalkDirection = target.player.x < e.x ? -1 : 1;
+      e.x += eliteWalkDirection * 0.55;
+      e.x = Math.max(eliteLeft, Math.min(eliteRight, e.x));
+    }
   } else if (e.type === "dragon") {
     e.y = floorY;
     e.vy = 0;
@@ -1844,10 +1988,13 @@ function updateArrows() {
       if (!e.dead && !e.disabled && e.room === currentRoom && isEnemyVulnerable(e) && rectHit(arrow, e)) {
         if (e.boss) {
           var arrowDamage = arrow.damage || 1;
-          e.hp -= arrowDamage; hitEnemy = true;
-          spawnFloatText(e.x, e.y - 10, "-" + arrowDamage, "#ffd700");
-          spawnParticles(e.x + e.w/2, e.y + e.h/2, "#7af", 8, 3);
-          if (e.hp <= 0) defeatBoss(e);
+          if (applyBossDamage(e, arrowDamage)) {
+            spawnFloatText(e.x, e.y - 10, "-" + arrowDamage, "#ffd700");
+            spawnParticles(e.x + e.w/2, e.y + e.h/2, "#7af", 8, 3);
+          } else {
+            showPendingBossHit(e);
+          }
+          hitEnemy = true;
         } else {
           defeatRegularEnemy(e);
           hitEnemy = true;
@@ -1868,9 +2015,8 @@ function explodeBomb(bomb) {
     var dy = enemy.y + enemy.h / 2 - bomb.y;
     if (Math.sqrt(dx * dx + dy * dy) > radius) return;
     if (enemy.boss) {
-      enemy.hp -= 3;
-      spawnFloatText(enemy.x, enemy.y - 10, "-3", "#ff9d4d");
-      if (enemy.hp <= 0) defeatBoss(enemy);
+      if (applyBossDamage(enemy, 3)) spawnFloatText(enemy.x, enemy.y - 10, "-3", "#ff9d4d");
+      else showPendingBossHit(enemy);
     } else {
       defeatRegularEnemy(enemy);
     }
@@ -1932,6 +2078,19 @@ function defeatBoss(e) {
     sfxEnemyDie(); sfxCoin();
     bossProjectiles = bossProjectiles.filter(function(p) { return p.room !== e.room; });
     bossVictory = { active: true, timer: 180, type: e.type, reward: "Recompensa de ronda", ability: "Poder aumentado", zone: "Coliseo infinito" };
+    return;
+  }
+  if (e.type === "ardoris_elite") {
+    e.deathTimer = 90;
+    bossDeathEffects.push({
+      x: e.x + e.w / 2, y: e.y + e.h / 2, w: e.w, h: e.h,
+      room: e.room, type: e.type, color: "#a6ef78", life: 90, maxLife: 90, radius: 8
+    });
+    collectAzari(130);
+    spawnParticles(e.x + e.w / 2, e.y + e.h / 2, "#a6ef78", 40, 7);
+    spawnFloatText(player.x, player.y - 40, "+130 AZARI", "#a6ef78");
+    sfxEnemyDie(); sfxCoin(); startMusic();
+    if (activeSlot >= 0) saveGame(activeSlot);
     return;
   }
   bossArenaState[e.type] = true;
@@ -2238,11 +2397,13 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   if (p.x + p.w > right - 5) { p.x = right - 5 - p.w; p.vx = 0; }
 
   var activeArenaBoss = getActiveBoss(currentRoom);
-  if (activeArenaBoss && rooms[currentRoom].bossName) {
+  if (activeArenaBoss && (rooms[currentRoom].bossName ||
+      (currentRoom === 23 && activeArenaBoss.type === "ardoris_elite"))) {
     var arenaOrigin = rooms[currentRoom].worldX !== undefined ? rooms[currentRoom].worldX : currentRoom * ROOM_W;
     var arenaWidth = rooms[currentRoom].roomWidth || ROOM_W;
-    var arenaLeft = arenaOrigin + 20;
-    var arenaRight = arenaOrigin + arenaWidth - p.w - 20;
+    var arenaInset = activeArenaBoss.type === "ardoris_elite" ? 40 : 20;
+    var arenaLeft = arenaOrigin + arenaInset;
+    var arenaRight = arenaOrigin + arenaWidth - p.w - arenaInset;
     if (p.x < arenaLeft) { p.x = arenaLeft; p.vx = 0; }
     if (p.x > arenaRight) { p.x = arenaRight; p.vx = 0; }
   }
@@ -2260,7 +2421,10 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     zoneName = rooms[currentRoom].zoneTitle || names[currentRoom] || "";
     zoneNameTimer = 120;
     p.inv = 30;
-    if (rooms[currentRoom].bossName && bossDoorSoundRoom !== currentRoom) {
+    var arrivingBoss = getActiveBoss(currentRoom);
+    if ((rooms[currentRoom].bossName ||
+        (currentRoom === 23 && arrivingBoss && arrivingBoss.type === "ardoris_elite")) &&
+        bossDoorSoundRoom !== currentRoom) {
       bossDoorSoundRoom = currentRoom;
       sfxBossDoorsLock();
       spawnFloatText(p.x, p.y - 34, "¡Las puertas se bloquean!", "#ff526f");
@@ -2495,7 +2659,8 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       }
     }
     var roomBoss = enemies.find ? enemies.find(function(enemy) { return enemy.boss && enemy.room === currentRoom; }) : null;
-    if (room.transitionZone && (room.transitionZone.requiresBoss || room.transitionZone.floorCollapse) &&
+    if (room.transitionZone &&
+        (room.transitionZone.requiresBoss || room.transitionZone.floorCollapse || currentRoom === 23) &&
         rectHit(p, room.transitionZone) && (!roomBoss || roomBoss.dead)) {
       if (room.floorCollapse) startFallThroughTransition(room.transitionZone.to);
       else startTransition(room.transitionZone.to, room.transitionZone.to < currentRoom ? "back" : "forward");
@@ -2838,10 +3003,9 @@ function checkSwordHitEnemiesFor(p) {
         if (p.attackType === "down") swordDamage = Math.round(swordDamage * 1.25);
         if (combatSkills.combo && p.attackType === "normal") swordDamage += 1;
         if (criticalHit && p.attackType !== "charged") swordDamage = Math.round(swordDamage * 1.75);
-        e.hp -= swordDamage;
-        registerCombatImpact(e, swordDamage, criticalHit);
+        if (applyBossDamage(e, swordDamage)) registerCombatImpact(e, swordDamage, criticalHit);
+        else showPendingBossHit(e);
         applyWeaponEffect(p, e, weapon);
-        if (e.hp <= 0) defeatBoss(e);
         return;
       }
       if (e.type === "bat" || e.type === "kamikaze_bat") {

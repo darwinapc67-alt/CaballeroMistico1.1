@@ -13,6 +13,15 @@ function drawBossProjectiles() {
       ctx.shadowBlur = 0;
       ctx.fillStyle = "#d9fbff";
       ctx.fillRect(b.x + 4, b.y + 4, b.w - 8, b.h - 8);
+    } else if (b.kind === "ardoris_shockwave") {
+      ctx.shadowColor = "#a6ef78";
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.ellipse(b.x + b.w / 2, b.y + b.h / 2, b.w / 2, b.h / 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#e5ffc1";
+      ctx.fillRect(b.x + b.w * 0.2, b.y + 3, b.w * 0.6, 3);
     } else {
       ctx.beginPath(); ctx.arc(b.x + b.w / 2, b.y + b.h / 2, Math.max(b.w, b.h) / 2, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "rgba(255,255,255,0.45)"; ctx.fillRect(b.x + 2, b.y + 2, 3, 3);
