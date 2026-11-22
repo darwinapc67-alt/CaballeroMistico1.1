@@ -514,7 +514,6 @@ var azariDrops = [];
 var deathParticles = [];
 var acidPuddles = [];
 var altars = [
-  {id: "altar_room9", x: 6880, y: 440, w: 48, h: 40, room: 8, activated: false, azariCost: 10, eteriumCost: 1},
   {id: "altar_after_queen", x: 20 * ROOM_W + 400, y: 520, w: 48, h: 40, room: 20, activated: false, azariCost: 20, eteriumCost: 2}
 ];
 var lastActivatedAltarId = null;

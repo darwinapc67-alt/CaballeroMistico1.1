@@ -606,7 +606,6 @@ Object.keys(caveFloorProfiles).forEach(function(indexKey) {
   if (!room) return;
   var routePlatforms = roomIndex >= 1 && roomIndex <= 13
     ? room.platforms.filter(function(platform, platformIndex) {
-      if (roomIndex === 10 && platformIndex === 0) return true;
       if (platformIndex === 0 && platform.w >= ROOM_W) return false;
       return platform.y < room.height - 60;
     })
