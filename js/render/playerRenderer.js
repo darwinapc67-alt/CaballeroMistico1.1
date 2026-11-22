@@ -1,3 +1,45 @@
+function drawWoodenShield(x, y, width, height, facing) {
+  ctx.save();
+  ctx.translate(x, y);
+  if (facing < 0) ctx.scale(-1, 1);
+  ctx.fillStyle = "#49301d";
+  ctx.strokeStyle = "#2d1d12";
+  ctx.lineWidth = Math.max(1, width * 0.06);
+  ctx.beginPath();
+  ctx.moveTo(-width / 2, -height / 2);
+  ctx.quadraticCurveTo(0, -height / 2 - height * 0.08, width / 2, -height / 2);
+  ctx.lineTo(width / 2, height * 0.12);
+  ctx.quadraticCurveTo(width * 0.4, height * 0.37, 0, height / 2);
+  ctx.quadraticCurveTo(-width * 0.4, height * 0.37, -width / 2, height * 0.12);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#916037";
+  ctx.beginPath();
+  ctx.moveTo(-width * 0.39, -height * 0.37);
+  ctx.quadraticCurveTo(0, -height * 0.44, width * 0.39, -height * 0.37);
+  ctx.lineTo(width * 0.37, height * 0.1);
+  ctx.quadraticCurveTo(width * 0.3, height * 0.31, 0, height * 0.4);
+  ctx.quadraticCurveTo(-width * 0.3, height * 0.31, -width * 0.37, height * 0.1);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = "#bd8750";
+  ctx.lineWidth = Math.max(1, width * 0.045);
+  ctx.beginPath();
+  ctx.moveTo(-width * 0.2, -height * 0.28);
+  ctx.quadraticCurveTo(-width * 0.1, 0, -width * 0.12, height * 0.22);
+  ctx.moveTo(0, -height * 0.31);
+  ctx.lineTo(0, height * 0.31);
+  ctx.moveTo(width * 0.2, -height * 0.28);
+  ctx.quadraticCurveTo(width * 0.1, 0, width * 0.12, height * 0.22);
+  ctx.stroke();
+  ctx.fillStyle = "#d4a36a";
+  ctx.beginPath();
+  ctx.arc(0, -height * 0.02, Math.max(1.5, width * 0.09), 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 function drawPlayerEntity(p, wakeProgress) {
   var wakingPose = typeof wakeProgress === "number";
   if (wakingPose) wakeProgress = Math.max(0, Math.min(1, wakeProgress));
@@ -388,7 +430,9 @@ function drawPlayerEntity(p, wakeProgress) {
     ctx.restore();
   }
 
-  if (p.blocking) {
+  if (p.blocking && hasShield) {
+    drawWoodenShield(cx + p.facing * 13, top + 16, 20, 28, p.facing);
+  } else if (p.blocking) {
     ctx.strokeStyle = "#9de8ff";
     ctx.lineWidth = 2;
     ctx.globalAlpha *= 0.85;

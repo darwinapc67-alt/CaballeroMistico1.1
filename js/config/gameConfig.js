@@ -1,7 +1,7 @@
 var canvas, ctx;
 var ROOM_W = 800, ROOM_H = 600, GRAVITY = 0.6;
 var DASH_SPEED = 12, DASH_DURATION = 10, DASH_COOLDOWN = 45, DASH_INV_FRAMES = 12;
-var GUARD_DURATION = 120, GUARD_COOLDOWN = 240;
+var GUARD_DURATION = 120, GUARD_COOLDOWN = 240, SHIELD_PARRY_WINDOW = 8;
 /* Rooms 0-9 are the original route, room 10 is the final descent, and
    rooms 11-13 are the Guardian, Queen Larva, and Abyssal Knight arenas. */
 var WORLD_W = 51 * ROOM_W;
@@ -226,7 +226,7 @@ var controlActions = [
   { id: "attack", label: "Atacar", key: ["x"], pad: [2] },
   { id: "shoot", label: "Disparar", key: ["z"], pad: [1] },
   { id: "interact", label: "Interactuar", key: ["e"], pad: [3] },
-  { id: "block", label: "Bloquear", key: ["c"], pad: [6] },
+  { id: "block", label: "Escudo", key: ["c"], pad: [6] },
   { id: "dash", label: "Dash", key: ["shift"], pad: [5] }
 ];
 var controlsConfigSelection = 0, controlsConfigActionSelection = 0, controlsConfigDevice = "pc", controlsConfigListening = false, controlsConfigSlot = 0;
@@ -789,7 +789,7 @@ function saveGame(i) {
   var s = getSaves();
   s.slots[i] = {
     room: currentRoom, px: player.x, py: player.y,
-    twoPlayer: twoPlayerMode, hasSword: hasSword, swordEquipped: swordEquipped, weaponId: weaponId, unlockedWeapons: unlockedWeapons.slice(), hasBow: hasBow, arrows: arrows, bombs: bombs,
+    twoPlayer: twoPlayerMode, hasSword: hasSword, hasShield: hasShield, swordEquipped: swordEquipped, weaponId: weaponId, unlockedWeapons: unlockedWeapons.slice(), hasBow: hasBow, arrows: arrows, bombs: bombs,
     enemiesKilled: enemies.map(function(e){ return e.dead; }),
     azari: azari, eterium: eterium, hasEteriumSkill: hasEteriumSkill, eteriumSkillLevel: eteriumSkillLevel, hasMap: hasMap, hp: player.hp, maxHp: player.maxHp,
     highestRoomReached: highestRoomReached,
@@ -858,6 +858,8 @@ function loadGame(i) {
   targetCamX = currentRoom * ROOM_W; cameraX = targetCamX;
   player.x = s.px; player.y = s.py; player.vx = 0; player.vy = 0;
   hasSword = s.hasSword || false; swordEquipped = s.swordEquipped || false;
+  hasShield = s.hasShield || false;
+  if (rooms[18].shieldPickup) rooms[18].shieldPickup.taken = hasShield;
   weaponId = normalizeWeaponId(s.weaponId || DEFAULT_WEAPON_ID);
   unlockedWeapons = Array.isArray(s.unlockedWeapons) ? s.unlockedWeapons.filter(function(id) { return WEAPON_CONFIG[id]; }) : [DEFAULT_WEAPON_ID];
   weaponLevels = s.weaponLevels || weaponLevels;
@@ -865,11 +867,13 @@ function loadGame(i) {
   if (unlockedWeapons.indexOf(DEFAULT_WEAPON_ID) < 0) unlockedWeapons.unshift(DEFAULT_WEAPON_ID);
   weaponId = isWeaponUnlocked(weaponId) ? weaponId : DEFAULT_WEAPON_ID;
   player.hasSword = hasSword; player.swordEquipped = swordEquipped; player.weaponId = weaponId;
+  player.blocking = false; player.parryTimer = 0; player.shieldButtonHeld = false;
   hasBow = s.hasBow || false; arrows = s.arrows || 0; bombs = Math.max(0, Number(s.bombs) || 0);
   azari = s.azari || 0; eterium = Math.max(0, Number(s.eterium) || 0); hasEteriumSkill = !!s.hasEteriumSkill; eteriumSkillLevel = Math.max(0, Math.min(3, Number(s.eteriumSkillLevel) || (hasEteriumSkill ? 1 : 0))); hasMap = s.hasMap || false;
   player.hp = s.hp !== undefined ? s.hp : 10;
   player.maxHp = s.maxHp !== undefined ? s.maxHp : 10;
   twoPlayerMode = s.twoPlayer || false;
+  player2.blocking = false; player2.parryTimer = 0; player2.shieldButtonHeld = false;
   heartFragments1 = s.heartFragments1 || 0;
   heartFragments2 = s.heartFragments2 || 0;
   heartFragmentsBought1 = s.heartFragmentsBought1 || 0;
@@ -911,7 +915,6 @@ function loadGame(i) {
   bossZonesUnlocked.dragon = bossArenaState.dragon;
   rooms[11].transitionZone = bossArenaState.guardian ? {x: 9540, y: 460, w: 40, h: 100, to: 12, requiresBoss: true} : null;
   rooms[19].transitionZone = {x: 15940, y: 460, w: 40, h: 100, to: 20};
-  rooms[20].transitionZone = bossArenaState.abyssal_knight ? {x: 16730, y: 460, w: 40, h: 100, to: 21, requiresBoss: true} : null;
   room36.transitionZone = {x: 39 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 37};
   room37.transitionZone = {x: 40 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 38};
   room38.transitionZone = {x: 41 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 39};
@@ -934,9 +937,10 @@ function loadGame(i) {
   });
   if (s.stats) stats = { playTime: s.stats.playTime || 0, enemiesKilled: s.stats.enemiesKilled || 0, roomsVisited: s.stats.roomsVisited || 1, jumps: s.stats.jumps || 0, attacks: s.stats.attacks || 0, deaths: s.stats.deaths || 0 };
   if (s.enemiesKilled) {
-    s.enemiesKilled.forEach(function(dead, idx){ if (enemies[idx]) enemies[idx].dead = dead; });
+    s.enemiesKilled.forEach(function(dead, idx){ if (enemies[idx]) enemies[idx].dead = enemies[idx].disabled || dead; });
   }
   enemies.forEach(function(e) {
+    if (e.disabled) e.dead = true;
     if (e.boss && bossArenaState[e.type]) { e.dead = true; e.hp = 0; }
   });
   return true;

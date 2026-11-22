@@ -1,9 +1,16 @@
 function playerTakeDamage(p, dmg, isBossDamage) {
   if (gameState !== ST_PLAYING || floorCollapseTimer > 0 || playerDead || p.inv > 0 || p.frozen || (adminImmortal && p === player)) return;
-  if (p.blocking) {
+  if (p.blocking && p.guardTimer > 0) {
     p.inv = 8;
     spawnParticles(p.x + p.w/2, p.y + p.h/2, "#9de8ff", 8, 2);
     spawnFloatText(p.x, p.y - 18, "¡BLOQUEADO!", "#9de8ff");
+    return;
+  }
+  if (hasShield && p.parryTimer > 0) {
+    p.parryTimer = 0;
+    p.inv = 8;
+    spawnParticles(p.x + p.w/2, p.y + p.h/2, "#a86a36", 10, 2.5);
+    spawnFloatText(p.x, p.y - 18, "¡PARADA!", "#f3ca74");
     return;
   }
 
@@ -97,7 +104,7 @@ function spawnAcidPuddle(enemy) {
 }
 
 function defeatRegularEnemy(enemy) {
-  if (enemy.dead) return;
+  if (enemy.dead || enemy.disabled) return;
   enemy.dead = true;
   enemy.hp = 0;
   stats.enemiesKilled++;
@@ -146,7 +153,7 @@ function useEteriumSkill() {
   var damage = eteriumSkillLevel * 5;
   var affected = 0;
   enemies.forEach(function(enemy) {
-    if (enemy.dead || enemy.room !== currentRoom || !isEnemyVulnerable(enemy)) return;
+    if (enemy.dead || enemy.disabled || enemy.room !== currentRoom || !isEnemyVulnerable(enemy)) return;
     enemy.hp = Math.max(0, enemy.hp - damage);
     affected++;
     registerCombatImpact(enemy, damage, false);
@@ -465,7 +472,7 @@ function resetPlayer() {
   player.frozen = false;
   player.swordSwing = 0; player.swordCooldown = 0; player.bowCooldown = 0; player.attackHeld = false; player.attackCharge = 0; player.attackCharged = false; player.attackDown = false; player.attackType = ""; player.attackDirection = "forward";
   player.swordSheathed = true; player.swordSheathTimer = 0;
-  player.blocking = false;
+  player.blocking = false; player.parryTimer = 0; player.shieldButtonHeld = false;
   player.dashTimer = 0; player.dashCooldown = 0; player.dashDir = 1; player.dashVx = 0; player.dashVy = 0; player.dashing = false; player.swordDashTimer = 0; player.swordDashDirection = "forward"; player.attackLungeTimer = 0; player.attackLungeVx = 0; player.attackLungeVy = 0; player.attackLungeHits = []; player.recoilTimer = 0;
   playerDead = false;
   deathTimer = 0;
@@ -483,7 +490,7 @@ function resetPlayer() {
     player2.frozen = false;
     player2.swordSwing = 0; player2.swordCooldown = 0; player2.bowCooldown = 0; player2.attackHeld = false; player2.attackCharge = 0; player2.attackCharged = false; player2.attackDown = false; player2.attackType = ""; player2.attackDirection = "forward"; player2.weaponId = weaponId;
     player2.swordSheathed = true; player2.swordSheathTimer = 0;
-    player2.blocking = false;
+    player2.blocking = false; player2.parryTimer = 0; player2.shieldButtonHeld = false;
     player2.dashTimer = 0; player2.dashCooldown = 0; player2.dashDir = 1; player2.dashVx = 0; player2.dashVy = 0; player2.dashing = false; player2.swordDashTimer = 0; player2.swordDashDirection = "forward"; player2.attackLungeTimer = 0; player2.attackLungeVx = 0; player2.attackLungeVy = 0; player2.attackLungeHits = []; player2.recoilTimer = 0;
   }
 
@@ -498,6 +505,7 @@ function saveHealingStoneCheckpoint() {
     maxHp: player.maxHp,
     azari: azari,
     hasSword: hasSword,
+    hasShield: hasShield,
     swordEquipped: swordEquipped,
     weaponId: weaponId,
     unlockedWeapons: unlockedWeapons.slice(),
@@ -545,13 +553,14 @@ function restoreCheckpoint(preserveInfiniteProgress) {
       unlockedWeapons: unlockedWeapons.slice(),
       swordLevel: swordLevel
     };
+    var currentShieldState = hasShield;
     var infiniteState = gameMode === "infinite" && preserveInfiniteProgress ? {
       hasSword: hasSword, swordEquipped: swordEquipped, weaponId: weaponId, unlockedWeapons: unlockedWeapons.slice(), hasBow: hasBow, arrows: arrows, bombs: bombs,
       hasDash: hasDash, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel, weaponLevels: JSON.parse(JSON.stringify(weaponLevels)),
       bowLevel: bowLevel, combatSkills: JSON.parse(JSON.stringify(combatSkills)),
       infiniteWave: infiniteWave
     } : null;
-    var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, weaponId: DEFAULT_WEAPON_ID, unlockedWeapons: [DEFAULT_WEAPON_ID], hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasAzariMagnet: false, hasAzariBag: false, azariBagLevel: 0, hasOldKey: false, doorUnlocked: false, rewardAzariCollected: false, hasLantern: false, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, blessingSlots: 2, equippedBlessings: [], armorId: "vacío", armorLevel: 0, permanentUpgrades: { vitality: 0, strength: 0 }, bossUniqueItems: { guardian: false, queen_larva: false, abyssal_knight: false }, hiddenCollectibles: { eclipse: false, root: false, crown: false, echo: false, highGallery: false, abyssRift: false, branchCache: false, fungusCache: false, galleryCache: false, cityCache: false } };
+    var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, hasShield: false, swordEquipped: false, weaponId: DEFAULT_WEAPON_ID, unlockedWeapons: [DEFAULT_WEAPON_ID], hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasAzariMagnet: false, hasAzariBag: false, azariBagLevel: 0, hasOldKey: false, doorUnlocked: false, rewardAzariCollected: false, hasLantern: false, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, blessingSlots: 2, equippedBlessings: [], armorId: "vacío", armorLevel: 0, permanentUpgrades: { vitality: 0, strength: 0 }, bossUniqueItems: { guardian: false, queen_larva: false, abyssal_knight: false }, hiddenCollectibles: { eclipse: false, root: false, crown: false, echo: false, highGallery: false, abyssRift: false, branchCache: false, fungusCache: false, galleryCache: false, cityCache: false } };
     currentRoom = cp.room; player.x = cp.px; player.y = cp.py;
     player.hp = cp.hp; player.maxHp = cp.maxHp;
     azari = gameMode === "infinite" && preserveInfiniteProgress ? azari : cp.azari;
@@ -559,6 +568,8 @@ function restoreCheckpoint(preserveInfiniteProgress) {
     hasEteriumSkill = hasEteriumSkill || !!cp.hasEteriumSkill;
     eteriumSkillLevel = Math.max(eteriumSkillLevel, Math.min(3, Number(cp.eteriumSkillLevel) || (hasEteriumSkill ? 1 : 0)));
     hasSword = !!cp.hasSword || currentSwordState.hasSword;
+    hasShield = !!cp.hasShield || currentShieldState;
+    if (rooms[18].shieldPickup) rooms[18].shieldPickup.taken = hasShield;
     swordEquipped = hasSword && (!!cp.swordEquipped || currentSwordState.swordEquipped);
     weaponId = normalizeWeaponId(cp.weaponId || currentSwordState.weaponId);
     unlockedWeapons = Array.isArray(cp.unlockedWeapons) ? cp.unlockedWeapons.filter(function(id) { return WEAPON_CONFIG[id]; }) : [DEFAULT_WEAPON_ID];
@@ -633,7 +644,9 @@ function restoreCheckpoint(preserveInfiniteProgress) {
     player.hasSword = hasSword; player.swordEquipped = swordEquipped; player.weaponId = weaponId;
     player2.weaponId = weaponId;
     player.maxJumps = hasDoubleJump ? 2 : 1; player.jumpsLeft = player.maxJumps;
-    player.frozen = false; player.vx = 0; player.vy = 0; playerDead = false;
+    player.frozen = false; player.vx = 0; player.vy = 0; player.blocking = false;
+    player.parryTimer = 0; player.shieldButtonHeld = false; playerDead = false;
+    player2.blocking = false; player2.parryTimer = 0; player2.shieldButtonHeld = false;
     if (gameMode !== "infinite" || !preserveInfiniteProgress) consecutiveDeaths = 0;
     cameraX = currentRoom * ROOM_W; targetCamX = cameraX; cameraY = 0; targetCamY = 0;
     resetDeathState();
@@ -1391,6 +1404,66 @@ function updateCombatBat(enemy, room, left, right) {
   }
 }
 
+function updateParryTrainingHunter(enemy, left, right) {
+  if (enemy.room !== currentRoom) return;
+  var target = player;
+  if (twoPlayerMode) {
+    var playerDistance = Math.abs(player.x + player.w / 2 - (enemy.x + enemy.w / 2));
+    var player2Distance = Math.abs(player2.x + player2.w / 2 - (enemy.x + enemy.w / 2));
+    if (player.frozen || (!player2.frozen && player2Distance < playerDistance)) target = player2;
+  }
+  if (target.frozen) return;
+
+  var distance = target.x + target.w / 2 - (enemy.x + enemy.w / 2);
+  if (enemy.parryState === "approach") {
+    enemy.attackCooldown = Math.max(0, enemy.attackCooldown - 1);
+    if (Math.abs(distance) <= enemy.attackRange && enemy.attackCooldown === 0) {
+      enemy.parryState = "windup";
+      enemy.attackTimer = enemy.windupFrames;
+      enemy.attackDirection = distance < 0 ? -1 : 1;
+      enemy.vx = enemy.attackDirection;
+    } else {
+      enemy.vx = Math.abs(distance) > 42 ? Math.sign(distance) * enemy.speed : 0;
+      enemy.x += enemy.vx;
+    }
+  } else if (enemy.parryState === "windup") {
+    enemy.attackTimer--;
+    if (enemy.attackTimer <= 0) {
+      enemy.parryState = "strike";
+      enemy.attackTimer = enemy.attackFrames;
+      enemy.attackHitPlayer = false;
+      enemy.attackHitPlayer2 = false;
+    }
+  } else if (enemy.parryState === "strike") {
+    enemy.x += enemy.attackDirection * enemy.attackSpeed;
+    var attackBox = {
+      x: enemy.attackDirection > 0 ? enemy.x + enemy.w - 2 : enemy.x - 54,
+      y: enemy.y - 5, w: 56, h: enemy.h + 16
+    };
+    if (!enemy.attackHitPlayer && rectHit(player, attackBox)) {
+      enemy.attackHitPlayer = true;
+      playerTakeDamage(player, 1);
+    }
+    if (twoPlayerMode && !enemy.attackHitPlayer2 && rectHit(player2, attackBox)) {
+      enemy.attackHitPlayer2 = true;
+      playerTakeDamage(player2, 1);
+    }
+    enemy.attackTimer--;
+    if (enemy.attackTimer <= 0) {
+      enemy.parryState = "recovery";
+      enemy.attackTimer = enemy.recoveryFrames;
+      enemy.vx = 0;
+    }
+  } else {
+    enemy.attackTimer--;
+    if (enemy.attackTimer <= 0) {
+      enemy.parryState = "approach";
+      enemy.attackCooldown = enemy.nextAttackCooldown || 120;
+    }
+  }
+  enemy.x = Math.max(left + 24, Math.min(right - enemy.w - 24, enemy.x));
+}
+
 function damageCombatBatOnContact(enemy, target, hitKey) {
   if (enemy.batState !== "dive" || enemy[hitKey] || target.inv > 0 || target.frozen ||
       !rectHit(target, enemy)) return;
@@ -1424,7 +1497,7 @@ function damageKamikazeBatOnContact(enemy, target) {
 function updateEnemies() {
   if (gameState !== ST_PLAYING) return;
   enemies.forEach(function(e) {
-    if (e.dead) return;
+    if (e.dead || e.disabled) return;
     if (e.room !== currentRoom) {
       e.contactHitPlayer = false;
       e.contactHitPlayer2 = false;
@@ -1515,19 +1588,23 @@ function updateEnemies() {
       e.blocking = e.blockTimer > 35 && e.blockTimer < 70;
       if (e.blockTimer <= 0) e.blockTimer = 150 + Math.floor(Math.random() * 90);
     } else if (e.type === 'cazador_paramo') {
-      var hunterLeft = left + 25, hunterRight = right - 25 - e.w;
-      var hunterTarget = player.x + player.w / 2;
-      var hunterDistance = Math.abs(hunterTarget - (e.x + e.w / 2));
-      if (hunterDistance < 220 && !player.frozen) {
-        e.vx = hunterTarget < e.x + e.w / 2 ? -e.speed : e.speed;
-      } else if (!e.canRoam && (e.x <= hunterLeft || e.x >= hunterRight)) {
-        e.vx *= -1;
-      }
-      e.x += e.vx;
-      e.y = e.baseY;
-      if (!e.canRoam) {
-        if (e.x < hunterLeft) { e.x = hunterLeft; e.vx = Math.abs(e.vx); }
-        if (e.x > hunterRight) { e.x = hunterRight; e.vx = -Math.abs(e.vx); }
+      if (e.parryTraining) {
+        updateParryTrainingHunter(e, left, right);
+      } else {
+        var hunterLeft = left + 25, hunterRight = right - 25 - e.w;
+        var hunterTarget = player.x + player.w / 2;
+        var hunterDistance = Math.abs(hunterTarget - (e.x + e.w / 2));
+        if (hunterDistance < 220 && !player.frozen) {
+          e.vx = hunterTarget < e.x + e.w / 2 ? -e.speed : e.speed;
+        } else if (!e.canRoam && (e.x <= hunterLeft || e.x >= hunterRight)) {
+          e.vx *= -1;
+        }
+        e.x += e.vx;
+        e.y = e.baseY;
+        if (!e.canRoam) {
+          if (e.x < hunterLeft) { e.x = hunterLeft; e.vx = Math.abs(e.vx); }
+          if (e.x > hunterRight) { e.x = hunterRight; e.vx = -Math.abs(e.vx); }
+        }
       }
     } else if (e.type === 'acid_slime') {
       var slimeLeft = left + 20;
@@ -1617,7 +1694,7 @@ function updateEnemies() {
 
 function getActiveBoss(roomIndex) {
   return enemies.find ? enemies.find(function(enemy) {
-    return enemy.boss && enemy.room === roomIndex && !enemy.dead;
+    return enemy.boss && enemy.room === roomIndex && !enemy.dead && !enemy.disabled;
   }) : null;
 }
 
@@ -1764,7 +1841,7 @@ function updateArrows() {
     arrow.life--;
     var hitEnemy = false;
     enemies.forEach(function(e) {
-      if (!e.dead && e.room === currentRoom && isEnemyVulnerable(e) && rectHit(arrow, e)) {
+      if (!e.dead && !e.disabled && e.room === currentRoom && isEnemyVulnerable(e) && rectHit(arrow, e)) {
         if (e.boss) {
           var arrowDamage = arrow.damage || 1;
           e.hp -= arrowDamage; hitEnemy = true;
@@ -1786,7 +1863,7 @@ function updateArrows() {
 function explodeBomb(bomb) {
   var radius = 92;
   enemies.forEach(function(enemy) {
-    if (enemy.dead || enemy.room !== currentRoom || !isEnemyVulnerable(enemy)) return;
+    if (enemy.dead || enemy.disabled || enemy.room !== currentRoom || !isEnemyVulnerable(enemy)) return;
     var dx = enemy.x + enemy.w / 2 - bomb.x;
     var dy = enemy.y + enemy.h / 2 - bomb.y;
     if (Math.sqrt(dx * dx + dy * dy) > radius) return;
@@ -2012,7 +2089,12 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   }
   p.maxJumps = hasDoubleJump ? 2 : 1;
   var hasStoneGuard = p.id === 1 && bossAbilities.guardian;
+  var blockJustPressed = blockPressed && !p.shieldButtonHeld;
+  p.shieldButtonHeld = !!blockPressed;
+  if (p.parryTimer > 0) p.parryTimer--;
+  if (p.frozen) p.parryTimer = 0;
   if (hasStoneGuard) {
+    p.parryTimer = 0;
     if (p.guardCooldown > 0) p.guardCooldown = Math.max(0, p.guardCooldown - 1);
     if (p.guardTimer > 0) {
       p.guardTimer--;
@@ -2032,7 +2114,8 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       p.blocking = false;
     }
   } else {
-    p.blocking = !!blockPressed && !p.frozen;
+    if (hasShield && blockJustPressed && !p.frozen) p.parryTimer = SHIELD_PARRY_WINDOW;
+    p.blocking = hasShield && p.parryTimer > 0 && !p.frozen;
   }
   if (playerDead && p === player) {
     deathTimer--;
@@ -2725,7 +2808,7 @@ function checkSwordHitEnemiesFor(p) {
     }
   });
   enemies.forEach(function(e, enemyIndex) {
-    if (e.dead || e.room !== currentRoom || !isEnemyVulnerable(e)) return;
+    if (e.dead || e.disabled || e.room !== currentRoom || !isEnemyVulnerable(e)) return;
     var hit = false;
     for (var i = 0; i < swingBoxes.length; i++) {
       if (rectHit(swingBoxes[i], e)) { hit = true; break; }
@@ -2834,6 +2917,21 @@ function checkSwordHitEnemiesFor(p) {
 
 function tryInteractFor(p) {
   var room = rooms[currentRoom];
+  if (p === player && currentRoom === 18 && room.shieldPickup && !room.shieldPickup.taken && !hasShield) {
+    var shieldPickup = room.shieldPickup.shield;
+    if (rectHit(p, {x: shieldPickup.x - 42, y: shieldPickup.y - 42, w: shieldPickup.w + 84, h: shieldPickup.h + 84})) {
+      hasShield = true;
+      room.shieldPickup.taken = true;
+      player.shieldButtonHeld = isControlPressed("block");
+      player.parryTimer = 0;
+      if (checkpointState) checkpointState.hasShield = true;
+      if (activeSlot >= 0) saveGame(activeSlot);
+      spawnParticles(shieldPickup.x + shieldPickup.w / 2, shieldPickup.y + shieldPickup.h / 2, "#a86a36", 18, 3);
+      spawnFloatText(p.x, p.y - 28, "ESCUDO DE MADERA • PARRY [" + getControlKeyLabel("block") + "]", "#d9a36b");
+      sfxDiscovery();
+      return;
+    }
+  }
   for (var altarIndex = 0; altarIndex < altars.length; altarIndex++) {
     var altar = altars[altarIndex];
     if (altar.room !== currentRoom || !rectHit(p, altar)) continue;
@@ -3119,7 +3217,7 @@ function updateTransition() {
           if (surfaceY !== null) checkpointSurfaceY = surfaceY;
         });
         var checkpointY = checkpointSurfaceY === null ? room.height - 120 : checkpointSurfaceY - player.h;
-        checkpointState = { room: currentRoom, px: checkpointX, py: checkpointY, hp: player.hp, maxHp: player.maxHp, azari: azari, hasSword: hasSword, swordEquipped: swordEquipped, weaponId: weaponId, unlockedWeapons: unlockedWeapons.slice(), hasBow: hasBow, arrows: arrows, bombs: bombs, hasMap: hasMap, hasAzariCharm: hasAzariCharm, hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, azariBagLevel: azariBagLevel, hasOldKey: hasOldKey, doorUnlocked: doorUnlocked, rewardAzariCollected: rewardAzariCollected, hasLantern: hasLantern, lanternLevel: lanternLevel, hasDash: hasDash, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: JSON.parse(JSON.stringify(combatSkills)), blessingSlots: blessingSlots, equippedBlessings: equippedBlessings.slice(), armorId: armorId, armorLevel: armorLevel, permanentUpgrades: JSON.parse(JSON.stringify(permanentUpgrades)), bossUniqueItems: JSON.parse(JSON.stringify(bossUniqueItems)), hiddenCollectibles: JSON.parse(JSON.stringify(hiddenCollectibles)) };
+        checkpointState = { room: currentRoom, px: checkpointX, py: checkpointY, hp: player.hp, maxHp: player.maxHp, azari: azari, hasSword: hasSword, hasShield: hasShield, swordEquipped: swordEquipped, weaponId: weaponId, unlockedWeapons: unlockedWeapons.slice(), hasBow: hasBow, arrows: arrows, bombs: bombs, hasMap: hasMap, hasAzariCharm: hasAzariCharm, hasAzariMagnet: hasAzariMagnet, hasAzariBag: hasAzariBag, azariBagLevel: azariBagLevel, hasOldKey: hasOldKey, doorUnlocked: doorUnlocked, rewardAzariCollected: rewardAzariCollected, hasLantern: hasLantern, lanternLevel: lanternLevel, hasDash: hasDash, hasDoubleJump: hasDoubleJump, swordLevel: swordLevel, bowLevel: bowLevel, arrowType: arrowType, combatSkills: JSON.parse(JSON.stringify(combatSkills)), blessingSlots: blessingSlots, equippedBlessings: equippedBlessings.slice(), armorId: armorId, armorLevel: armorLevel, permanentUpgrades: JSON.parse(JSON.stringify(permanentUpgrades)), bossUniqueItems: JSON.parse(JSON.stringify(bossUniqueItems)), hiddenCollectibles: JSON.parse(JSON.stringify(hiddenCollectibles)) };
         if (activeSlot >= 0) saveGame(activeSlot);
         spawnFloatText(player.x, player.y - 35, "PUNTO DE GUARDADO", "#64e6ae");
       }

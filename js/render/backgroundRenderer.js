@@ -1,5 +1,5 @@
 function getZoneVisualProfile(roomIndex) {
-  if ((roomIndex >= 0 && roomIndex <= 17) || roomIndex === 50) {
+  if ((roomIndex >= 0 && roomIndex <= 22) || roomIndex === 50) {
     return { id: "ardoris", top: "#8fb4a4", middle: "#34534a", bottom: "#09130f", light: "#c7e6c1", accent: "#6e8052", platform: "#4a4b3d", edge: "#8b8061", particle: "#c6d0a5" };
   }
   if (rooms[roomIndex] && rooms[roomIndex].optional) {

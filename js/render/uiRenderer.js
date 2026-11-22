@@ -897,7 +897,7 @@ function drawGame() {
     ctx.textAlign = "left"; ctx.globalAlpha = 1;
   }
   var activeBoss = null;
-  enemies.forEach(function(e) { if (e.boss && e.room === currentRoom && !e.dead) activeBoss = e; });
+  enemies.forEach(function(e) { if (e.boss && e.room === currentRoom && !e.dead && !e.disabled) activeBoss = e; });
   if (activeBoss && bossIntroTimer <= 0) {
     ctx.textAlign = "center";
     var displayName = bossDiaryInfo[activeBoss.type] ? bossDiaryInfo[activeBoss.type].name : activeBoss.bossName;

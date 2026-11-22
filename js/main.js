@@ -44,7 +44,8 @@ function resetAll() {
   inventoryHover = -1;
   resetPlayer();
   currentRoom = 0; cameraX = 0; targetCamX = 0; cameraY = 0; targetCamY = 0;
-  hasSword = false; swordEquipped = false;
+  hasSword = false; hasShield = false; swordEquipped = false;
+  if (rooms[18].shieldPickup) rooms[18].shieldPickup.taken = false;
   weaponId = DEFAULT_WEAPON_ID;
   unlockedWeapons = [DEFAULT_WEAPON_ID];
   weaponLevels = {};
@@ -85,7 +86,7 @@ function resetAll() {
   infiniteWave = 0; infiniteSpawnTimer = 60;
   highestRoomReached = 0;
   tutorialStep = 0; tutorialTimer = 240;
-  checkpointState = { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, swordEquipped: false, weaponId: DEFAULT_WEAPON_ID, unlockedWeapons: [DEFAULT_WEAPON_ID], hasBow: false, arrows: 0, bombs: 0, hasMap: false, hasAzariCharm: false, hasLantern: false, lanternLevel: 0, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, hiddenCollectibles: { eclipse: false, root: false, crown: false, echo: false, highGallery: false, abyssRift: false, branchCache: false, fungusCache: false, galleryCache: false, cityCache: false } };
+  checkpointState = { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, hasShield: false, swordEquipped: false, weaponId: DEFAULT_WEAPON_ID, unlockedWeapons: [DEFAULT_WEAPON_ID], hasBow: false, arrows: 0, bombs: 0, hasMap: false, hasAzariCharm: false, hasLantern: false, lanternLevel: 0, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, hiddenCollectibles: { eclipse: false, root: false, crown: false, echo: false, highGallery: false, abyssRift: false, branchCache: false, fungusCache: false, galleryCache: false, cityCache: false } };
   room0.transitionZone = null; room1.transitionZone = null; room2.transitionZone = null;
   room3.transitionZone = null; room4.transitionZone = null;
   room5.transitionZone = {x:4750, y:460, w:50, h:100, to:6};
@@ -94,7 +95,6 @@ function resetAll() {
   room10.transitionZone = {x:8000, y:500, w:40, h:100, to:9, sharedBoundary: true};
   room11.transitionZone = {x:9540, y:460, w:40, h:100, to:12, requiresBoss: true};
   rooms[19].transitionZone = {x:15940, y:460, w:40, h:100, to:20};
-  rooms[20].transitionZone = null;
   room36.transitionZone = {x: 39 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 37};
   room37.transitionZone = {x: 40 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 38};
   room38.transitionZone = {x: 41 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 39};
@@ -140,8 +140,8 @@ function resetAll() {
   bossIntroTimer = 0;
   achievements = { firstEnemy: false, firstBoss: false, enemies50: false, enemies100: false };
   achievementNotify = { active: false, timer: 0, title: "" };
-  player.guardTimer = 0; player.guardCooldown = 0; player.blocking = false;
-  player2.guardTimer = 0; player2.guardCooldown = 0; player2.blocking = false;
+  player.guardTimer = 0; player.guardCooldown = 0; player.blocking = false; player.parryTimer = 0; player.shieldButtonHeld = false;
+  player2.guardTimer = 0; player2.guardCooldown = 0; player2.blocking = false; player2.parryTimer = 0; player2.shieldButtonHeld = false;
   bossDoorSoundRoom = -1;
   bossDialogueSeen = {};
   bossDialogueLines = [];

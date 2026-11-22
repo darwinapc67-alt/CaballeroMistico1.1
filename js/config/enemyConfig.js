@@ -104,6 +104,25 @@ for (var acidRoom = 0; acidRoom <= 9; acidRoom++) {
 enemies = enemies.filter(function(enemy) {
   return typeof enemy.room !== "number" || enemy.room >= 14;
 });
+enemies.forEach(function(enemy) {
+  if (enemy.room >= 18 && enemy.room <= 22) enemy.disabled = true;
+});
+[
+  {room: 19, x: 360, speed: 0.75, attackSpeed: 4, windupFrames: 72, attackRange: 94, attackCooldown: 170},
+  {room: 20, x: 460, speed: 0.85, attackSpeed: 4.8, windupFrames: 60, attackRange: 102, attackCooldown: 150},
+  {room: 21, x: 500, speed: 0.95, attackSpeed: 5.4, windupFrames: 48, attackRange: 112, attackCooldown: 130},
+  {room: 22, x: 540, speed: 1.05, attackSpeed: 6, windupFrames: 36, attackRange: 122, attackCooldown: 110}
+].forEach(function(spec) {
+  enemies.push({
+    x: spec.room * ROOM_W + spec.x, y: 538, w: 26, h: 22, vx: 0, vy: 0, baseY: 538,
+    speed: spec.speed, attackSpeed: spec.attackSpeed, windupFrames: spec.windupFrames,
+    attackRange: spec.attackRange, attackCooldown: spec.attackCooldown, nextAttackCooldown: spec.attackCooldown, attackTimer: 0,
+    attackFrames: 10, recoveryFrames: 54, parryTraining: true, parryState: "approach",
+    attackDirection: 1, attackHitPlayer: false, attackHitPlayer2: false,
+    hp: 24, maxHp: 24, dead: false, room: spec.room, type: "cazador_paramo",
+    terrestrial: true, staysRoom: true
+  });
+});
 enemies.forEach(function(e) {
   e.canRoam = !e.boss && e.type !== "kamikaze_bat" && !e.combatBat;
 });

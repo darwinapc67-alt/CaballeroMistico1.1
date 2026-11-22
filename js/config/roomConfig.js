@@ -224,6 +224,11 @@ interludeRooms[1].pedestal = {
   glow: 0,
   taken: false
 };
+interludeRooms[6].shieldPickup = {
+  stone: {x: 14670, y: 545, w: 80, h: 40},
+  shield: {x: 14695, y: 492, w: 30, h: 45},
+  taken: false
+};
 
 function createCityRoom(index, district, features) {
   var off = index * ROOM_W;
@@ -308,6 +313,8 @@ var bossApproachRooms = [
   createBossApproachRoom(21, 1),
   createBossApproachRoom(22, 2)
 ];
+bossApproachRooms[1].spikes = [];
+bossApproachRooms[2].spikes = [];
 
 cityRooms[cityRooms.length - 1].transitionZone = {x: 29 * ROOM_W + 750, y: 460, w: 40, h: 100, to: 30};
 cityRooms[cityRooms.length - 1].platforms = [{x: 29 * ROOM_W, y: 560, w: ROOM_W, h: 40}];

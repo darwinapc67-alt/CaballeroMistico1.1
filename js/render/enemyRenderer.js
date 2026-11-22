@@ -1,14 +1,14 @@
 function drawEnemies() {
   var camLeft = cameraX, camRight = cameraX + 800, camTop = cameraY, camBottom = cameraY + 600;
   enemies.forEach(function(e) {
-    if (e.dead || (!e.canRoam && e.room !== currentRoom)) return;
+    if (e.dead || e.disabled || (!e.canRoam && e.room !== currentRoom)) return;
     if (gameMode === "custom" && !e.customEnemy) return;
     if (gameMode === "infinite" && e.room === 0 && !e.infiniteEnemy && !e.boss) return;
     if (e.x + e.w < camLeft - 50 || e.x > camRight + 50) return;
     if (e.y + e.h < camTop - 50 || e.y > camBottom + 50) return;
     ctx.save();
     var zoneProfile = getZoneVisualProfile(currentRoom);
-    var zoneAura = zoneProfile.id === "ardoris" && currentRoom >= 14 && currentRoom <= 17
+    var zoneAura = zoneProfile.id === "ardoris" && currentRoom >= 14 && currentRoom <= 22
       ? "rgba(126, 220, 137, 0.18)"
       : (zoneProfile.id === "marsh" ? "rgba(126, 220, 137, 0.18)" :
       (zoneProfile.id === "abyss" ? "rgba(83, 157, 255, 0.18)" :
@@ -137,6 +137,34 @@ function drawEnemies() {
       ctx.fillStyle = "#292b30";
       ctx.fillRect(e.x + 3, e.y + 17, 5, 5);
       ctx.fillRect(e.x + e.w - 8, e.y + 17, 5, 5);
+      if (e.parryTraining && e.parryState === "windup") {
+        var warningPulse = 0.55 + Math.sin(Date.now() / 70) * 0.25;
+        ctx.save();
+        ctx.globalAlpha *= warningPulse;
+        ctx.strokeStyle = "#ffd36a";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(e.x + e.w / 2, e.y + e.h / 2, 21, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(e.x + e.w / 2, e.y + e.h / 2);
+        ctx.lineTo(e.x + e.w / 2 + e.attackDirection * 30, e.y + e.h / 2);
+        ctx.stroke();
+        ctx.fillStyle = "#24190e";
+        ctx.fillRect(e.x - 20, e.y - 20, e.w + 40, 14);
+        ctx.fillStyle = "#ffe09a";
+        ctx.font = "bold 9px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("[" + getControlKeyLabel("block") + "]", e.x + e.w / 2, e.y - 10);
+        ctx.restore();
+      } else if (e.parryTraining && e.parryState === "strike") {
+        ctx.strokeStyle = "#ffd36a";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(e.x + e.w / 2, e.y + 8);
+        ctx.lineTo(e.x + e.w / 2 + e.attackDirection * 42, e.y + 17);
+        ctx.stroke();
+      }
     } else if (e.type === 'acid_slime') {
       var slimePulse = Math.sin(Date.now() / 180) * 2;
       ctx.fillStyle = "rgba(126, 239, 55, 0.25)";
