@@ -282,6 +282,12 @@ function getControlKeys(id) {
   var binding = getControlBinding(id);
   return binding ? (Array.isArray(binding.key) ? binding.key : [binding.key]) : [];
 }
+function getControlKeyLabel(id) {
+  var key = getControlKeys(id).filter(function(value) {
+    return value !== undefined && value !== null && String(value).length > 0;
+  })[0];
+  return key === " " ? "ESPACIO" : (key === undefined ? "—" : String(key).toUpperCase());
+}
 function isControlPressed(id) {
   if (typeof device !== "undefined" && device === "touch") {
     var touchKeys = {

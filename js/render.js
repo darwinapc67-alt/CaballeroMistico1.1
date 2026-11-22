@@ -105,7 +105,8 @@ function drawGameWorld(skipPlayers) {
     }
     drawSpikes(room);
     if (room.city) drawCityHouses(room, r);
-    if (r === 1) drawPedestal();
+    if (r === 1 && currentRoom === 1 && gameMode === "normal") drawJumpTutorialHint();
+    if (r === 1 && room.pedestal) drawPedestal();
     if (room.transitionZone && !room.noDoor && !(r === 10 && room.transitionZone.sharedBoundary) && !room.secretRoom) drawTransitionZone(room.transitionZone);
     if (r === 37 && room.lockedDoor) {
       var door = room.lockedDoor;

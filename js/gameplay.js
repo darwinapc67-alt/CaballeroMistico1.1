@@ -2639,7 +2639,7 @@ function tryInteractFor(p) {
     }
 
   }
-  if (currentRoom === 1 && !room1.pedestal.taken) {
+  if (currentRoom === 1 && room1.pedestal && !room1.pedestal.taken) {
     var ped = room1.pedestal;
     var dx = (p.x + p.w/2) - (ped.glass.x + ped.glass.w/2);
     var dy = (p.y + p.h/2) - (ped.glass.y + ped.glass.h/2);

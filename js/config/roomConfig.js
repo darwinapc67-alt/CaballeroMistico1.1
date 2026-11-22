@@ -18,14 +18,10 @@ var room1 = {
   height: 600,
   platforms: [
     {x:800, y:560, w:800, h:40},
-    {x:850, y:480, w:150, h:16, natural: true},
-    {x:1060, y:400, w:140, h:16, natural: true},
-    {x:1260, y:480, w:120, h:16, natural: true}
+    {x:1120, y:480, w:88, h:68, natural: true}
   ],
   spikes: [], walls: [],
   transitionZone: null,
-  pedestal: { stone:{x:1130, y:520, w:100, h:40}, glass:{x:1145, y:440, w:70, h:80},
-    sword:{x:1167, y:455, w:6, h:48}, taken:false, glow:0 },
   decor: genDecor(800, 10, 6, 600)
 };
 

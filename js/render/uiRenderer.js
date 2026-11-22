@@ -1201,7 +1201,7 @@ function drawDeathScreen() {
   ctx.textAlign = "left";
 }
 function drawTutorial() {
-  if (gameState !== ST_PLAYING || tutorialTimer <= 0 || tutorialStep >= 6) return;
+  if (gameState !== ST_PLAYING || currentRoom === 1 || tutorialTimer <= 0 || tutorialStep >= 6) return;
   var messages = [
     "Encuentra la espada...",
     "ESPACIO: saltar",

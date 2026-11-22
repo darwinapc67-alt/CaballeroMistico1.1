@@ -186,6 +186,26 @@ function drawHouseInterior() {
     (nearbyObject ? "E inspeccionar objeto  •  A/D mover" : "Acércate a los objetos para inspeccionarlos"), canvas.width / 2, 490);
   ctx.textAlign = "left";
 }
+function drawJumpTutorialHint() {
+  var keyLabel = getControlKeyLabel("jump");
+  var hintX = 825;
+  var hintY = 462;
+  var hintWidth = 155;
+  var hintHeight = 48;
+
+  ctx.fillStyle = "rgba(12, 19, 22, 0.88)";
+  ctx.fillRect(hintX, hintY, hintWidth, hintHeight);
+  ctx.strokeStyle = "rgba(143, 180, 138, 0.82)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(hintX, hintY, hintWidth, hintHeight);
+  ctx.fillStyle = "#d8e6c6";
+  ctx.font = "bold 11px monospace";
+  ctx.fillText("SALTA", hintX + 10, hintY + 17);
+  ctx.fillStyle = "#f0d58a";
+  ctx.font = "bold 13px monospace";
+  ctx.fillText("↑  " + keyLabel, hintX + 10, hintY + 36);
+}
+
 function drawPedestal() {
   var ped = room1.pedestal;
   ctx.fillStyle = "#4a4a5a";

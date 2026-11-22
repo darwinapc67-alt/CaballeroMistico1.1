@@ -136,7 +136,6 @@ function resetAll() {
   bossDialogueIndex = 0;
   bossProjectiles = [];
   bossDeathEffects = [];
-  room1.pedestal.taken = false; room1.pedestal.glow = 0;
   if (room9.healingStone) room9.healingStone.active = true;
   enemies.forEach(function(e){
     e.dead = false;
