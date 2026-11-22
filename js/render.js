@@ -177,7 +177,8 @@ function drawGameWorld(skipPlayers) {
       ctx.textAlign = "left";
     }
     if (room.bossName) drawBossDoor(r);
-    if (r === 9) { drawShopNPC(); drawHealingStone(); }
+    if (r === 9) drawHealingStone();
+    if (r === 50) drawShopNPC(room, r);
   }
   drawAltars();
   atmosphereRocks.forEach(function(rock) {

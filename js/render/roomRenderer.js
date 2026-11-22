@@ -73,11 +73,18 @@ function drawJumpCourseFall() {
       ctx.stroke();
     }
   } else {
-    var progress = (12 - state.timer) / 12;
-    ctx.fillStyle = "rgba(178, 210, 233, " + (0.32 * (1 - progress)) + ")";
-    ctx.beginPath();
-    ctx.arc(centerX, centerY + 10, 12 + progress * 24, 0, Math.PI * 2);
-    ctx.fill();
+    var fadeProgress = (6 - state.timer) / 6;
+    var fadeAlpha = state.phase === "fade_out"
+      ? fadeProgress * 0.85
+      : (1 - fadeProgress) * 0.85;
+    ctx.fillStyle = "rgba(0, 0, 0, " + fadeAlpha + ")";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (state.phase === "fade_in") {
+      ctx.fillStyle = "rgba(178, 210, 233, " + (0.18 * (1 - fadeProgress)) + ")";
+      ctx.beginPath();
+      ctx.arc(centerX, centerY + 10, 12 + fadeProgress * 24, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 }
 function drawBossDialogue() {
@@ -340,32 +347,33 @@ function drawPedestal(ped, alreadyHasSword) {
   }
 
 }
-function drawShopNPC() {
-  var room = rooms[currentRoom];
+function drawShopNPC(room, roomIndex) {
   if (!room.shops || !room.shops.length) return;
-  var houseX = 7360, houseY = 430, houseW = 320;
-  ctx.fillStyle = "#26263a";
+  var roomOrigin = room.worldX !== undefined ? room.worldX : roomIndex * ROOM_W;
+  var profile = getZoneVisualProfile(roomIndex);
+  var houseX = roomOrigin + 240, houseY = 430, houseW = 320;
+  ctx.fillStyle = profile.platform;
   ctx.fillRect(houseX, houseY + 25, houseW, 95);
-  ctx.fillStyle = "#44334d";
+  ctx.fillStyle = profile.accent;
   ctx.beginPath();
   ctx.moveTo(houseX - 18, houseY + 28);
   ctx.lineTo(houseX + houseW / 2, houseY - 38);
   ctx.lineTo(houseX + houseW + 18, houseY + 28);
   ctx.closePath(); ctx.fill();
-  ctx.fillStyle = "#111122";
+  ctx.fillStyle = "#15221a";
   ctx.fillRect(houseX + 30, houseY + 62, 34, 28);
   ctx.fillRect(houseX + houseW - 64, houseY + 62, 34, 28);
   var door = room.shopDoor;
-  ctx.fillStyle = "#5a351d";
+  ctx.fillStyle = "#38503a";
   ctx.fillRect(door.x, door.y, door.w, door.h);
-  ctx.fillStyle = "#8b542b";
+  ctx.fillStyle = profile.edge;
   ctx.fillRect(door.x + 5, door.y + 5, door.w - 10, 5);
-  ctx.fillStyle = "#d4af37";
+  ctx.fillStyle = profile.light;
   ctx.fillRect(door.x + door.w - 13, door.y + door.h / 2, 5, 5);
-  ctx.fillStyle = "#d4af37";
+  ctx.fillStyle = profile.light;
   ctx.font = "bold 13px monospace";
   ctx.textAlign = "center";
-  ctx.fillText("CASA DE COMERCIO", houseX + houseW / 2, houseY + 18);
+  ctx.fillText("TIENDA DE ARDORIS", houseX + houseW / 2, houseY + 18);
   ctx.textAlign = "left";
 }
 function drawHealingStone() {

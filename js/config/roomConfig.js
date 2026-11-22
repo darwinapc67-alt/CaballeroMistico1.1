@@ -140,10 +140,6 @@ var room9 = {
   ],
   spikes: [], walls: [],
   transitionZone: {x:7960, y:460, w:40, h:100, to:10},
-  shopDoor: {x:7485, y:475, w:55, h:85},
-  shops: [
-    { id: 0, npc: {x:7400, y:525, w:20, h:35}, label: "" }
-  ],
   healingStone: {x: 7250, y: 520, w: 50, h: 40, active: true},
   chests: [{x:7200 + 690, y:500, legendary: true, opened: false}],
   jumpCourse: {gaps: [{x:400, w:240}], fallY: 720, startX: 60},
@@ -458,6 +454,7 @@ var room39 = {
 };
 
 shiftRoomGeometry(room13, 3 * ROOM_W);
+room13.transitionZone = {x: 23 * ROOM_W + 750, y: 460, w: 32, h: 100, to: 50, requiresBoss: true};
 cityRooms.forEach(function(room) { shiftRoomGeometry(room, 3 * ROOM_W); });
 shiftRoomGeometry(room30, 3 * ROOM_W);
 shiftRoomGeometry(room31, 3 * ROOM_W);
@@ -517,6 +514,20 @@ for (var optionalRoomIndex = 43; optionalRoomIndex < rooms.length; optionalRoomI
     {x: optionalOrigin + 782, y: 560, w: 18, h: 40}
   );
 }
+var ardorisShopOrigin = 50 * ROOM_W;
+rooms.push({
+  worldX: ardorisShopOrigin,
+  roomWidth: ROOM_W,
+  height: 600,
+  platforms: [{x: ardorisShopOrigin, y: 560, w: ROOM_W, h: 40}],
+  spikes: [],
+  walls: [],
+  transitionZone: {x: ardorisShopOrigin + 750, y: 460, w: 32, h: 100, to: 23, requiresBoss: true},
+  shopDoor: {x: ardorisShopOrigin + 372, y: 475, w: 55, h: 85},
+  shops: [{id: 0, npc: {x: ardorisShopOrigin + 330, y: 525, w: 20, h: 35}, label: ""}],
+  zoneTitle: "TIENDA DE ARDORIS",
+  decor: genDecor(ardorisShopOrigin, 10, 5, 600)
+});
 
 var caveFloorProfiles = {
   0: [[-240, 560], [0, 560], [160, 550], [330, 575], [470, 588], [630, 558], [800, 560]],

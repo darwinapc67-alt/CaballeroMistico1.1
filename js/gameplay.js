@@ -265,7 +265,7 @@ function startJumpCourseFall(p, room) {
     roomIndex: currentRoom,
     checkpoint: {x: checkpoint.x, y: checkpoint.y},
     phase: "fall",
-    timer: 12
+    timer: 18
   };
   p.frozen = true;
   p.onGround = false;
@@ -285,6 +285,12 @@ function updateJumpCourseFall() {
     p.y += p.vy;
     state.timer--;
     if (state.timer <= 0) {
+      state.phase = "fade_out";
+      state.timer = 6;
+    }
+  } else if (state.phase === "fade_out") {
+    state.timer--;
+    if (state.timer <= 0) {
       p.x = state.checkpoint.x;
       p.y = state.checkpoint.y;
       p.vx = 0;
@@ -292,8 +298,13 @@ function updateJumpCourseFall() {
       p.onGround = true;
       p.jumpsLeft = p.maxJumps;
       p.inv = Math.max(p.inv, 24);
-      state.phase = "return";
-      state.timer = 12;
+      state.phase = "fade_in";
+      state.timer = 6;
+      cameraY = Math.max(0, Math.min(
+        p.y + p.h / 2 - canvas.height * 0.55,
+        Math.max(0, room.height - canvas.height)
+      ));
+      targetCamY = cameraY;
     }
   } else {
     state.timer--;
@@ -2025,7 +2036,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     trackLevelChange(currentRoom, newRoom);
     currentRoom = newRoom;
     stats.roomsVisited++;
-    var names = ["", "CUEVA OLVIDADA", "", "", "", "", "", "", "", "TIENDA", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""];
+    var names = ["", "CUEVA OLVIDADA", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""];
     zoneName = rooms[currentRoom].zoneTitle || names[currentRoom] || "";
     zoneNameTimer = 120;
     p.inv = 30;
@@ -2076,6 +2087,11 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     }
   }
   if (p.y > room.height + 80) {
+    if (gameMode === "normal" && room.jumpCourse && !p.onGround &&
+        isPlayerOverJumpCourseGap(p, room)) {
+      startJumpCourseFall(p, room);
+      return;
+    }
     if (floorCollapseTimer > 0) return;
     if (gameMode === "custom") {
       var customRoomStart = getCustomRoomStart(customRooms[customRoomIndex], customRoomIndex > 0);
@@ -3036,7 +3052,7 @@ function updateTransition() {
           player2.vx = player2.vx < 0 ? -2 : 2;
         }
       }
-      var names = ["", "CUEVA OLVIDADA", "", "", "", "", "", "", "", "TIENDA", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""];
+      var names = ["", "CUEVA OLVIDADA", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""];
       zoneName = room.zoneTitle || names[currentRoom] || "";
       zoneNameTimer = 120;
     }

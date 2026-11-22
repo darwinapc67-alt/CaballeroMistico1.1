@@ -4,7 +4,7 @@ var DASH_SPEED = 12, DASH_DURATION = 10, DASH_COOLDOWN = 45, DASH_INV_FRAMES = 1
 var GUARD_DURATION = 120, GUARD_COOLDOWN = 240;
 /* Rooms 0-9 are the original route, room 10 is the final descent, and
    rooms 11-13 are the Guardian, Queen Larva, and Abyssal Knight arenas. */
-var WORLD_W = 50 * ROOM_W;
+var WORLD_W = 51 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
 var VERSION = "v2.75 beta";
 
