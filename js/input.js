@@ -1144,10 +1144,12 @@ function scanGamepads() {
     if (firstIndex < 0 && gamepadConnected) {
       gamepadConnected = false; gamepadIndex = -1;
       gpButtons = {}; gpAxes = {x:0,y:0};
+      gpCaptureButtons = {}; prevGPCaptureButtons = {};
     }
     if (secondIndex < 0 && gamepad2Connected) {
       gamepad2Connected = false; gamepad2Index = -1;
       gp2Buttons = {}; gp2Axes = {x:0,y:0};
+      gp2CaptureButtons = {}; prevGP2CaptureButtons = {};
     }
     if (firstIndex < 0 && secondIndex < 0) {
       updateUI();
@@ -1155,16 +1157,24 @@ function scanGamepads() {
   } catch(e) {}
 }
 
-function pollSingleGamepad(index, previousButtons, buttons, axes) {
+function pollSingleGamepad(index, previousButtons, buttons, axes, previousCaptureButtons) {
   var pads = navigator.getGamepads ? navigator.getGamepads() : [];
   var gp = pads[index];
-  if (!gp) return { buttons: {}, axes: { x: 0, y: 0 } };
+  if (!gp) return { buttons: {}, captureButtons: {}, axes: { x: 0, y: 0 } };
   var nextButtons = {};
-  for (var i = 0; i < gp.buttons.length; i++) nextButtons[i] = gp.buttons[i].pressed;
+  var nextCaptureButtons = {};
+  for (var i = 0; i < gp.buttons.length; i++) {
+    var button = gp.buttons[i];
+    var analogValue = Number(button.value) || 0;
+    nextButtons[i] = !!button.pressed;
+    nextCaptureButtons[i] = !!button.pressed ||
+      (previousCaptureButtons && previousCaptureButtons[i] ? analogValue > 0.25 : analogValue >= 0.5);
+  }
   var ax = gp.axes[0] || 0;
   var ay = gp.axes[1] || 0;
   return {
     buttons: nextButtons,
+    captureButtons: nextCaptureButtons,
     axes: { x: Math.abs(ax) < 0.25 ? 0 : ax, y: Math.abs(ay) < 0.25 ? 0 : ay }
   };
 }
@@ -1172,14 +1182,25 @@ function pollSingleGamepad(index, previousButtons, buttons, axes) {
 function pollGamepad() {
   if (gamepadConnected && gamepadIndex >= 0) {
     prevGPButtons = gpButtons;
-    var first = pollSingleGamepad(gamepadIndex, prevGPButtons, gpButtons, gpAxes);
-    gpButtons = first.buttons; gpAxes = first.axes;
+    prevGPCaptureButtons = gpCaptureButtons;
+    var first = pollSingleGamepad(gamepadIndex, prevGPButtons, gpButtons, gpAxes, prevGPCaptureButtons);
+    gpButtons = first.buttons; gpCaptureButtons = first.captureButtons; gpAxes = first.axes;
   }
   if (gamepad2Connected && gamepad2Index >= 0) {
     prevGP2Buttons = gp2Buttons;
-    var second = pollSingleGamepad(gamepad2Index, prevGP2Buttons, gp2Buttons, gp2Axes);
-    gp2Buttons = second.buttons; gp2Axes = second.axes;
+    prevGP2CaptureButtons = gp2CaptureButtons;
+    var second = pollSingleGamepad(gamepad2Index, prevGP2Buttons, gp2Buttons, gp2Axes, prevGP2CaptureButtons);
+    gp2Buttons = second.buttons; gp2CaptureButtons = second.captureButtons; gp2Axes = second.axes;
   }
+}
+
+function getNewlyPressedPadCaptureIndex() {
+  for (var i = 0; i < 32; i++) {
+    var pressedOnFirst = gpCaptureButtons[i] && !prevGPCaptureButtons[i];
+    var pressedOnSecond = gp2CaptureButtons[i] && !prevGP2CaptureButtons[i];
+    if (pressedOnFirst || pressedOnSecond) return i;
+  }
+  return -1;
 }
 
 function processGamepadInput() {
@@ -1352,15 +1373,13 @@ function processGamepadInput() {
       if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { controlsConfigActionSelection = (controlsConfigActionSelection + 1) % controlActions.length; gamepadMenuAxisLock = 1; }
       if (btn14) controlsConfigSlot = (controlsConfigSlot + 3) % 4;
       if (btn15) controlsConfigSlot = (controlsConfigSlot + 1) % 4;
-      if (controlsConfigListening) {
-        for (var padIndex = 0; padIndex < 32; padIndex++) {
-          if (gpButtons[padIndex] && !prevGPButtons[padIndex]) {
-            var padBinding = controlActions[controlsConfigActionSelection].pad;
-            padBinding[controlsConfigSlot] = padIndex;
-            saveControlBindings();
-            controlsConfigListening = false;
-            break;
-          }
+      if (controlsConfigListening && controlsConfigDevice === "play") {
+        var padIndex = getNewlyPressedPadCaptureIndex();
+        if (padIndex >= 0) {
+          var padBinding = controlActions[controlsConfigActionSelection].pad;
+          padBinding[controlsConfigSlot] = padIndex;
+          saveControlBindings();
+          controlsConfigListening = false;
         }
       } else if (btn0) {
         controlsConfigListening = true;
@@ -1476,14 +1495,12 @@ function processGamepadInput() {
     if (btn14) controlsConfigSlot = (controlsConfigSlot + 3) % 4;
     if (btn15) controlsConfigSlot = (controlsConfigSlot + 1) % 4;
     if (controlsConfigListening) {
-      for (var controlsPadIndex = 0; controlsPadIndex < 32; controlsPadIndex++) {
-        if (gpButtons[controlsPadIndex] && !prevGPButtons[controlsPadIndex]) {
-          if (pauseSubState === "controls_pad") {
-            controlActions[controlsConfigActionSelection].pad[controlsConfigSlot] = controlsPadIndex;
-          }
+      if (pauseSubState === "controls_pad") {
+        var controlsPadIndex = getNewlyPressedPadCaptureIndex();
+        if (controlsPadIndex >= 0) {
+          controlActions[controlsConfigActionSelection].pad[controlsConfigSlot] = controlsPadIndex;
           saveControlBindings();
           controlsConfigListening = false;
-          break;
         }
       }
     } else if (btn0) controlsConfigListening = true;

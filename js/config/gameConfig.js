@@ -217,7 +217,9 @@ var ambientTimer = 0;
 var gamepadConnected = false, gamepadIndex = -1;
 var gamepad2Connected = false, gamepad2Index = -1;
 var gpButtons = {}, prevGPButtons = {}, gpAxes = { x: 0, y: 0 };
+var gpCaptureButtons = {}, prevGPCaptureButtons = {};
 var gp2Buttons = {}, prevGP2Buttons = {}, gp2Axes = { x: 0, y: 0 };
+var gp2CaptureButtons = {}, prevGP2CaptureButtons = {};
 var gamepadMenuAxisLock = 0;
 var controlActions = [
   { id: "moveLeft", label: "Mover izquierda", key: ["a"], pad: [14] },
@@ -316,6 +318,13 @@ function isControlPressed(id) {
 function getControlPads(id) {
   var binding = getControlBinding(id);
   return binding ? (Array.isArray(binding.pad) ? binding.pad : [binding.pad]) : [];
+}
+function getControlPadLabel(pad) {
+  var labels = ["A", "B", "X", "Y", "L1", "R1", "L2", "R2", "SELECT", "START", "L3", "R3", "↑", "↓", "←", "→"];
+  var index = Number(pad);
+  return index >= 0 && index < labels.length && index === Math.floor(index)
+    ? labels[index]
+    : "BOTÓN " + pad;
 }
 function isControlPadPressed(id, buttons) {
   return getControlPads(id).some(function(pad) { return !!buttons[pad]; });

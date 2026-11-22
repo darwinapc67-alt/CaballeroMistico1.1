@@ -1484,10 +1484,10 @@ function drawMenu() {
         ctx.font = "10px monospace";
         ctx.fillText("[" + (slot + 1) + "]", slotX, y - 7);
         var displayedKey = (actionKeys[slot] === " " ? "ESPACIO" : String(actionKeys[slot] === undefined ? "—" : actionKeys[slot]).toUpperCase());
-        var displayedPad = actionPads[slot] === undefined ? "—" : actionPads[slot];
+        var displayedPad = actionPads[slot] === undefined ? "—" : getControlPadLabel(actionPads[slot]);
         ctx.fillStyle = slotSelected ? "#fff" : "#aaa";
         ctx.font = "10px monospace";
-        ctx.fillText(controlsConfigDevice === "play" ? "B:" + displayedPad : displayedKey, slotX, y + 5);
+        ctx.fillText(controlsConfigDevice === "play" ? displayedPad : displayedKey, slotX, y + 5);
       }
     });
     ctx.fillStyle = controlsConfigListening ? "#ffd700" : "#666"; ctx.font = "12px monospace";
@@ -1767,7 +1767,7 @@ function drawControlBindings() {
       ctx.fillText("RANURA " + (slot + 1), slotX, y - 10);
       ctx.fillStyle = slotSelected ? "#fff" : (isPadEditor ? "#8bd" : "#f3d36a");
       ctx.font = "10px monospace";
-      ctx.fillText(isPadEditor ? "B:" + value : String(value).toUpperCase(), slotX, y + 2);
+      ctx.fillText(isPadEditor ? (value === "—" ? value : getControlPadLabel(value)) : String(value).toUpperCase(), slotX, y + 2);
     }
   });
   ctx.fillStyle = controlsConfigListening ? "#ffd700" : "#8bd"; ctx.font = "12px monospace";
