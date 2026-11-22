@@ -258,6 +258,12 @@ function isPlayerOverJumpCourseGap(p, room) {
   });
 }
 
+function shouldStartJumpCourseFall(p, room, ignoreGrounded) {
+  var course = room.jumpCourse;
+  if (gameMode !== "normal" || !course || (!ignoreGrounded && p.onGround) || p.y <= course.fallY) return false;
+  return (currentRoom >= 7 && currentRoom <= 12) || isPlayerOverJumpCourseGap(p, room);
+}
+
 function startJumpCourseFall(p, room) {
   var checkpoint = getJumpCourseCheckpoint(p, room);
   jumpCourseFallState = {
@@ -2087,8 +2093,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     }
   }
   if (p.y > room.height + 80) {
-    if (gameMode === "normal" && room.jumpCourse && !p.onGround &&
-        isPlayerOverJumpCourseGap(p, room)) {
+    if (shouldStartJumpCourseFall(p, room, true)) {
       startJumpCourseFall(p, room);
       return;
     }
@@ -2197,7 +2202,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     var checkpointIndex = p === player ? 0 : 1;
     if (p.onGround && p.inv <= 0 && p.y <= course.maxCheckpointY) {
       course.checkpoints[checkpointIndex] = {x: getJumpCourseCheckpointX(p, room), y: p.y};
-    } else if (!p.onGround && p.y > course.fallY && isPlayerOverJumpCourseGap(p, room)) {
+    } else if (shouldStartJumpCourseFall(p, room)) {
       startJumpCourseFall(p, room);
       return;
     }
