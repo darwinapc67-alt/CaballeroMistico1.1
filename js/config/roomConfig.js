@@ -28,10 +28,12 @@ var room1 = {
 var room2 = {
   height: 600,
   platforms: [
-    {x:1600, y:560, w:800, h:40}, {x:1650, y:480, w:70, h:14},
-    {x:1750, y:410, w:70, h:14}, {x:1650, y:280, w:70, h:14},
-    {x:1750, y:200, w:70, h:14}, {x:1650, y:130, w:70, h:14},
-    {x:1600, y:80, w:200, h:40}
+    {x:1600, y:560, w:800, h:40},
+    {x:1670, y:500, w:100, h:14},
+    {x:1810, y:460, w:100, h:14},
+    {x:1950, y:480, w:100, h:14},
+    {x:2090, y:440, w:100, h:14},
+    {x:2230, y:470, w:100, h:14}
   ],
   spikes: [], walls: [],
   transitionZone: null,
@@ -42,8 +44,10 @@ var room3 = {
   height: 600,
   platforms: [
     {x:2400, y:560, w:800, h:40},
-    {x:2470, y:450, w:220, h:110},
-    {x:2840, y:420, w:230, h:140}
+    {x:2500, y:480, w:100, h:14},
+    {x:2660, y:410, w:100, h:14},
+    {x:2820, y:465, w:100, h:14},
+    {x:2980, y:390, w:100, h:14}
   ],
   spikes: [], walls: [],
   transitionZone: null,
@@ -53,17 +57,14 @@ var room3 = {
 var room4 = {
   height: 600,
   platforms: [
-    {x:3200, y:560, w:800, h:40}, {x:3250, y:480, w:90, h:14},
-    {x:3400, y:420, w:90, h:14}, {x:3550, y:360, w:90, h:14},
-    {x:3700, y:300, w:90, h:14}, {x:3300, y:250, w:80, h:14},
-    {x:3500, y:200, w:80, h:14}, {x:3750, y:420, w:80, h:14},
-    {x:3350, y:350, w:80, h:14},
-    {x:3835, y:470, w:130, h:14}, {x:3860, y:390, w:100, h:14}
+    {x:3200, y:560, w:800, h:40},
+    {x:3290, y:490, w:100, h:14},
+    {x:3450, y:410, w:100, h:14},
+    {x:3610, y:470, w:100, h:14},
+    {x:3770, y:390, w:100, h:14}
   ],
-  spikes: [{x:3600, y:560, w:200, h:20}],
-  walls: [
-    {x:3200 + 590, y:120, w:22, h:440, breakable: true, requiresSword: true, broken: false}
-  ],
+  spikes: [],
+  walls: [],
   chests: [{x:3200 + 690, y:500, legendary: true, opened: false}],
   transitionZone: null,
   decor: genDecor(3200, 10, 6, 600)
@@ -73,8 +74,11 @@ var room5 = {
   height: 600,
   platforms: [
     {x:4000, y:560, w:800, h:40},
-    {x:4070, y:450, w:180, h:110},
-    {x:4400, y:440, w:205, h:120}
+    {x:4080, y:500, w:100, h:14},
+    {x:4220, y:450, w:90, h:14},
+    {x:4360, y:400, w:90, h:14},
+    {x:4500, y:455, w:90, h:14},
+    {x:4640, y:390, w:100, h:14}
   ],
   spikes: [], walls: [],
   transitionZone: {x:4750, y:460, w:50, h:100, to:6},
@@ -84,16 +88,12 @@ var room5 = {
 var room6 = {
   height: 900,
   platforms: [
-    {x:4800, y:1160, w:200, h:40}, {x:4850, y:1100, w:120, h:14},
-    {x:5000, y:1040, w:120, h:14}, {x:5150, y:980, w:120, h:14},
-    {x:4950, y:920, w:120, h:14}, {x:5200, y:860, w:120, h:14},
-    {x:5050, y:800, w:120, h:14}, {x:5300, y:740, w:120, h:14},
-    {x:5100, y:680, w:120, h:14}, {x:5350, y:620, w:120, h:14},
-    {x:5150, y:560, w:120, h:14}, {x:5400, y:500, w:120, h:14},
-    {x:5200, y:440, w:120, h:14}, {x:5450, y:380, w:120, h:14},
-    {x:5250, y:320, w:120, h:14}, {x:5400, y:260, w:120, h:14},
-    {x:5200, y:200, w:120, h:14}, {x:5450, y:140, w:120, h:14},
-    {x:5250, y:80, w:200, h:40}
+    {x:4860, y:790, w:110, h:14},
+    {x:4990, y:740, w:110, h:14},
+    {x:5130, y:680, w:100, h:14},
+    {x:5250, y:640, w:100, h:14},
+    {x:5390, y:560, w:100, h:14},
+    {x:5510, y:500, w:90, h:14}
   ],
   spikes: [], walls: [],
   transitionZone: null,
@@ -577,7 +577,7 @@ Object.keys(caveFloorProfiles).forEach(function(indexKey) {
   var roomIndex = Number(indexKey);
   var room = rooms[roomIndex];
   if (!room) return;
-  var routePlatforms = roomIndex === 1 || roomIndex === 2
+  var routePlatforms = roomIndex >= 1 && roomIndex <= 6
     ? room.platforms.filter(function(platform) { return platform.y < room.height - 60; })
     : [];
   room.platforms = [createCaveFloorPlatform(roomIndex)].concat(routePlatforms);
