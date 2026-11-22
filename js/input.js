@@ -49,23 +49,22 @@ window.addEventListener("keydown", function(e) {
     return;
   }
   if (gameState === ST_MENU && menuSubState === "controls_config") {
-    if (e.key === "Escape") {
-      controlsConfigListening = false;
-      menuSubState = "settings";
-      e.preventDefault();
-      return;
-    }
     if (controlsConfigListening) {
-      if (e.key !== "Enter" && e.key !== "Escape") {
+      if (e.key === "Escape") {
+        controlsConfigListening = false;
+      } else if (controlsConfigDevice !== "play" && e.key !== "Enter") {
         var selectedBinding = getControlBinding(controlActions[controlsConfigActionSelection].id);
-        if (controlsConfigDevice === "play") {
-          selectedBinding.pad[controlsConfigSlot] = Number(e.which || e.keyCode);
-        } else if (selectedBinding.key.indexOf(normalizedKey) < 0) {
+        if (selectedBinding.key.indexOf(normalizedKey) < 0) {
           selectedBinding.key[controlsConfigSlot] = normalizedKey;
         }
         saveControlBindings();
         controlsConfigListening = false;
       }
+      e.preventDefault();
+      return;
+    }
+    if (e.key === "Escape") {
+      menuSubState = "controls_category";
       e.preventDefault();
       return;
     }
@@ -268,7 +267,20 @@ window.addEventListener("keydown", function(e) {
       e.preventDefault();
       return;
     } else if (gameState === ST_PAUSED) {
-      if (pauseSubState === "diary" || pauseSubState === "settings") pauseSubState = "menu";
+      if (pauseSubState === "controls_pad" || pauseSubState === "controls_keys") {
+        if (controlsConfigListening) controlsConfigListening = false;
+        else pauseSubState = "controls";
+      } else if (pauseSubState === "controls_touch") {
+        saveTouchLayout();
+        if (controlsFromMain) {
+          controlsFromMain = false;
+          gameState = ST_MENU;
+          menuSubState = "controls_category";
+        } else {
+          pauseSubState = "controls";
+        }
+        updateTouchMenuButton();
+      } else if (pauseSubState === "diary" || pauseSubState === "settings") pauseSubState = "menu";
       else if (pauseSubState === "controls" || pauseSubState === "audio") pauseSubState = "menu";
       else gameState = ST_PLAYING;
       e.preventDefault();
@@ -700,16 +712,9 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (pauseSubState === "controls_pad") {
-      if (e.key === "Escape") {
-        controlsConfigListening = false;
-        pauseSubState = "controls";
-      } else if (controlsConfigListening) {
-        if (e.key !== "Enter") {
-          var pausePadBinding = controlActions[controlsConfigActionSelection].pad;
-          pausePadBinding[controlsConfigSlot] = e.which || e.keyCode;
-          saveControlBindings();
-          controlsConfigListening = false;
-        }
+      if (controlsConfigListening) {
+        e.preventDefault();
+        return;
       } else if (up || k === "w") {
         controlsConfigActionSelection = (controlsConfigActionSelection - 1 + controlActions.length) % controlActions.length;
       } else if (down || k === "s") {
@@ -725,10 +730,7 @@ window.addEventListener("keydown", function(e) {
       return;
     }
     if (pauseSubState === "controls_keys") {
-      if (e.key === "Escape") {
-        controlsConfigListening = false;
-        pauseSubState = "controls";
-      } else if (controlsConfigListening) {
+      if (controlsConfigListening) {
         if (e.key !== "Enter") {
           var pauseKeyBinding = controlActions[controlsConfigActionSelection].key;
           pauseKeyBinding[controlsConfigSlot] = normalizedKey;
@@ -755,11 +757,11 @@ window.addEventListener("keydown", function(e) {
         if (controlsFromMain) {
           controlsFromMain = false;
           gameState = ST_MENU;
-          menuSubState = "settings";
+          menuSubState = "controls_category";
         } else {
           pauseSubState = "controls";
         }
-            updateTouchMenuButton();
+        updateTouchMenuButton();
       } else if (up || k === "w") {
         touchEditSelection = (touchEditSelection + 3) % 4;
       } else if (down || k === "s") {
@@ -1212,6 +1214,8 @@ function processGamepadInput() {
   var btn13 = (gpButtons[13] && !prevGPButtons[13]) || (gp2Buttons[13] && !prevGP2Buttons[13]);
   var btn14 = (gpButtons[14] && !prevGPButtons[14]) || (gp2Buttons[14] && !prevGP2Buttons[14]);
   var btn15 = (gpButtons[15] && !prevGPButtons[15]) || (gp2Buttons[15] && !prevGP2Buttons[15]);
+  var btn16 = (gpButtons[16] && !prevGPButtons[16]) || (gp2Buttons[16] && !prevGP2Buttons[16]);
+  var controlsCancel = btn9 || btn16;
   if (shopOpen && shopId === 0) {
     if (btn9) {
       shopOpen = false; shopMenuOpen = false; shopConfirm = -1; shopExitCooldown = 30;
@@ -1349,9 +1353,9 @@ function processGamepadInput() {
   if (gameState === ST_MENU) {
     if (device !== "play") return;
     if (menuSubState === "controls_category") {
-      if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
-      if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { controlsConfigSelection = (controlsConfigSelection + 2) % 3; gamepadMenuAxisLock = 1; }
-      if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { controlsConfigSelection = (controlsConfigSelection + 1) % 3; gamepadMenuAxisLock = 1; }
+      if (controlsCancel) { menuSubState = "settings"; return; }
+      if (btn12) controlsConfigSelection = (controlsConfigSelection + 2) % 3;
+      if (btn13) controlsConfigSelection = (controlsConfigSelection + 1) % 3;
       if (btn0) {
         controlsConfigDevice = ["play", "pc", "touch"][controlsConfigSelection];
         controlsConfigSlot = 0;
@@ -1368,12 +1372,12 @@ function processGamepadInput() {
       return;
     }
     if (menuSubState === "controls_config") {
-      if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
-      if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { controlsConfigActionSelection = (controlsConfigActionSelection - 1 + controlActions.length) % controlActions.length; gamepadMenuAxisLock = 1; }
-      if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { controlsConfigActionSelection = (controlsConfigActionSelection + 1) % controlActions.length; gamepadMenuAxisLock = 1; }
-      if (btn14) controlsConfigSlot = (controlsConfigSlot + 3) % 4;
-      if (btn15) controlsConfigSlot = (controlsConfigSlot + 1) % 4;
-      if (controlsConfigListening && controlsConfigDevice === "play") {
+      if (controlsConfigListening) {
+        if (controlsCancel) {
+          controlsConfigListening = false;
+          return;
+        }
+        if (controlsConfigDevice !== "play") return;
         var padIndex = getNewlyPressedPadCaptureIndex();
         if (padIndex >= 0) {
           var padBinding = controlActions[controlsConfigActionSelection].pad;
@@ -1381,9 +1385,14 @@ function processGamepadInput() {
           saveControlBindings();
           controlsConfigListening = false;
         }
-      } else if (btn0) {
-        controlsConfigListening = true;
+        return;
       }
+      if (controlsCancel) { menuSubState = "controls_category"; return; }
+      if (btn12) controlsConfigActionSelection = (controlsConfigActionSelection - 1 + controlActions.length) % controlActions.length;
+      if (btn13) controlsConfigActionSelection = (controlsConfigActionSelection + 1) % controlActions.length;
+      if (btn14) controlsConfigSlot = (controlsConfigSlot + 3) % 4;
+      if (btn15) controlsConfigSlot = (controlsConfigSlot + 1) % 4;
+      if (btn0) controlsConfigListening = true;
       return;
     }
     if (menuSubState === "settings") {
@@ -1477,9 +1486,9 @@ function processGamepadInput() {
     return;
   }
   if (gameState === ST_PAUSED && pauseSubState === "controls") {
-    if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
-    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { controlsConfigSelection = (controlsConfigSelection + 2) % 3; gamepadMenuAxisLock = 1; }
-    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { controlsConfigSelection = (controlsConfigSelection + 1) % 3; gamepadMenuAxisLock = 1; }
+    if (controlsCancel) { pauseSubState = "menu"; return; }
+    if (btn12) controlsConfigSelection = (controlsConfigSelection + 2) % 3;
+    if (btn13) controlsConfigSelection = (controlsConfigSelection + 1) % 3;
     if (btn0) {
       controlsConfigSlot = 0;
       if (controlsConfigSelection === 0) { controlsConfigDevice = "play"; pauseSubState = "controls_pad"; }
@@ -1489,12 +1498,11 @@ function processGamepadInput() {
     return;
   }
   if (gameState === ST_PAUSED && (pauseSubState === "controls_keys" || pauseSubState === "controls_pad")) {
-    if (Math.abs(gpAxes.y) < 0.5) gamepadMenuAxisLock = 0;
-    if (btn12 || (gpAxes.y < -0.5 && gamepadMenuAxisLock === 0)) { controlsConfigActionSelection = (controlsConfigActionSelection - 1 + controlActions.length) % controlActions.length; gamepadMenuAxisLock = 1; }
-    if (btn13 || (gpAxes.y > 0.5 && gamepadMenuAxisLock === 0)) { controlsConfigActionSelection = (controlsConfigActionSelection + 1) % controlActions.length; gamepadMenuAxisLock = 1; }
-    if (btn14) controlsConfigSlot = (controlsConfigSlot + 3) % 4;
-    if (btn15) controlsConfigSlot = (controlsConfigSlot + 1) % 4;
     if (controlsConfigListening) {
+      if (controlsCancel) {
+        controlsConfigListening = false;
+        return;
+      }
       if (pauseSubState === "controls_pad") {
         var controlsPadIndex = getNewlyPressedPadCaptureIndex();
         if (controlsPadIndex >= 0) {
@@ -1503,11 +1511,29 @@ function processGamepadInput() {
           controlsConfigListening = false;
         }
       }
-    } else if (btn0) controlsConfigListening = true;
-    if (btn9) pauseSubState = "controls";
+      return;
+    }
+    if (controlsCancel) { pauseSubState = "controls"; return; }
+    if (btn12) controlsConfigActionSelection = (controlsConfigActionSelection - 1 + controlActions.length) % controlActions.length;
+    if (btn13) controlsConfigActionSelection = (controlsConfigActionSelection + 1) % controlActions.length;
+    if (btn14) controlsConfigSlot = (controlsConfigSlot + 3) % 4;
+    if (btn15) controlsConfigSlot = (controlsConfigSlot + 1) % 4;
+    if (btn0) controlsConfigListening = true;
     return;
   }
   if (gameState === ST_PAUSED && pauseSubState === "controls_touch") {
+    if (controlsCancel) {
+      saveTouchLayout();
+      if (controlsFromMain) {
+        controlsFromMain = false;
+        gameState = ST_MENU;
+        menuSubState = "controls_category";
+      } else {
+        pauseSubState = "controls";
+      }
+      updateTouchMenuButton();
+      return;
+    }
     if (btn12) touchEditSelection = (touchEditSelection + 3) % 4;
     if (btn13) touchEditSelection = (touchEditSelection + 1) % 4;
     var touchPadDirection = btn14 ? -1 : (btn15 ? 1 : 0);
@@ -1519,7 +1545,6 @@ function processGamepadInput() {
       applyTouchLayout();
       saveTouchLayout();
     }
-    if (btn9) pauseSubState = "controls";
     return;
   }
   if (gameState === ST_PAUSED && pauseSubState === "settings") {
@@ -1743,6 +1768,9 @@ function setupTouchControls() {
   controls.querySelectorAll(".touchActions button").forEach(function(button) {
     var key = button.getAttribute("data-key");
     var buttonPointer = null;
+    var isTouchEditorBack = function() {
+      return key === "delete" && gameState === ST_PAUSED && pauseSubState === "controls_touch";
+    };
     var getVirtualKey = function() {
       if (gameState === ST_MENU || gameState === ST_LEVEL_EDITOR) {
         if (key === "a") return "ArrowUp";
@@ -1754,7 +1782,7 @@ function setupTouchControls() {
     var press = function(event) {
       event.preventDefault();
       event.stopPropagation();
-      if (gameState === ST_PAUSED && pauseSubState === "controls_touch") return;
+      if (gameState === ST_PAUSED && pauseSubState === "controls_touch" && !isTouchEditorBack()) return;
       if (buttonPointer !== null) return;
       buttonPointer = event.pointerId;
       if (button.setPointerCapture) {
@@ -1762,6 +1790,10 @@ function setupTouchControls() {
       }
       button.classList.add("pressed");
       if (key === "delete") {
+        if (isTouchEditorBack()) {
+          window.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape", code: "Escape"}));
+          return;
+        }
         var deleteKey = gameState === ST_MENU && menuSubState === "confirm_delete" ? "Enter" : "Delete";
         window.dispatchEvent(new KeyboardEvent("keydown", {key: deleteKey, code: deleteKey}));
         return;
@@ -1776,7 +1808,7 @@ function setupTouchControls() {
       }
     };
     var release = function(event) {
-      if (gameState === ST_PAUSED && pauseSubState === "controls_touch") return;
+      if (gameState === ST_PAUSED && pauseSubState === "controls_touch" && !isTouchEditorBack()) return;
       if (buttonPointer !== event.pointerId) return;
       event.preventDefault();
       event.stopPropagation();
@@ -1922,7 +1954,7 @@ function setupTouchControls() {
       if (controlsFromMain) {
         controlsFromMain = false;
         gameState = ST_MENU;
-        menuSubState = "settings";
+        menuSubState = "controls_category";
       } else {
         pauseSubState = "controls";
       }
@@ -1956,7 +1988,11 @@ function getTouchControlsSignature() {
 function updateTouchMenuButton() {
   var button = document.querySelector("#touchControls .touchDelete");
   if (!button) return;
-  button.style.display = gameState === ST_MENU && menuSubState === "slots" ? "block" : "none";
+  var touchEditorOpen = gameState === ST_PAUSED && pauseSubState === "controls_touch";
+  var deleteMenuOpen = gameState === ST_MENU && menuSubState === "slots";
+  button.style.display = deleteMenuOpen || touchEditorOpen ? "block" : "none";
+  button.textContent = touchEditorOpen ? "↩" : "🗑";
+  button.setAttribute("aria-label", touchEditorOpen ? "Volver al menú de controles" : "Borrar partida");
   var resizeControls = document.querySelector("#touchControls .touchResizeControls");
   if (resizeControls) {
     resizeControls.style.display = gameState === ST_PAUSED && pauseSubState === "controls_touch" ? "flex" : "none";

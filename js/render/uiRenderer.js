@@ -1496,7 +1496,7 @@ function drawMenu() {
     ctx.fillStyle = "#ffd700"; ctx.font = "bold 25px monospace";
     ctx.fillText("🎮 CAMBIAR CONTROLES (" + (controlsConfigDevice === "play" ? "CONTROL" : "PC") + ")", canvas.width / 2, 85);
     ctx.fillStyle = "#888"; ctx.font = "12px monospace";
-    ctx.fillText("Cada acción puede tener hasta 4 teclas • ←/→ elegir ranura • Ranura " + (controlsConfigSlot + 1) + " de 4", canvas.width / 2, 115);
+    ctx.fillText("Cada acción puede tener hasta 4 " + (controlsConfigDevice === "play" ? "botones" : "teclas") + " • ←/→ elegir ranura • Ranura " + (controlsConfigSlot + 1) + " de 4", canvas.width / 2, 115);
     controlActions.forEach(function(action, index) {
       var y = 155 + index * 40, selected = controlsConfigActionSelection === index;
       ctx.fillStyle = selected ? "rgba(100,200,255,0.18)" : "rgba(255,255,255,0.03)";
@@ -1525,7 +1525,12 @@ function drawMenu() {
       }
     });
     ctx.fillStyle = controlsConfigListening ? "#ffd700" : "#666"; ctx.font = "12px monospace";
-    ctx.fillText(controlsConfigListening ? "PULSA LA NUEVA TECLA..." : "Ranura " + (controlsConfigSlot + 1) + " de 4 • ENTER Cambiar • ESC Volver", canvas.width / 2, 510);
+    var configControlsHint = controlsConfigListening
+      ? (controlsConfigDevice === "play" ? "PULSA EL NUEVO BOTÓN • OPTIONS CANCELAR" : "PULSA LA NUEVA TECLA • ESC CANCELAR")
+      : (controlsConfigDevice === "play"
+        ? "CRUCETA: NAVEGAR • ←/→ RANURA • × CAMBIAR • OPTIONS VOLVER"
+        : "Ranura " + (controlsConfigSlot + 1) + " de 4 • ENTER Cambiar • ESC Volver");
+    ctx.fillText(configControlsHint, canvas.width / 2, 510);
   }
   if (menuSubState === "controls_category") {
     ctx.fillStyle = "rgba(0,0,0,0.94)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1539,7 +1544,7 @@ function drawMenu() {
       ctx.fillText((selected ? "▶ " : "  ") + label, canvas.width / 2, y + 5);
     });
     ctx.fillStyle = "#666"; ctx.font = "12px monospace";
-    ctx.fillText("↑/↓ Elegir • ENTER Entrar • ESC Volver", canvas.width / 2, 500);
+    ctx.fillText(device === "play" ? "CRUCETA Elegir • × Entrar • OPTIONS Volver" : "↑/↓ Elegir • ENTER Entrar • ESC Volver", canvas.width / 2, 500);
   }
   ctx.textAlign = "left";
 }
@@ -1759,7 +1764,7 @@ function drawControls() {
     ctx.fillText((selected ? "▶ " : "  ") + option, canvas.width / 2, y + 6);
   });
   ctx.fillStyle = "#666"; ctx.font = "12px monospace";
-  ctx.fillText("↑/↓ Elegir  •  ENTER Seleccionar  •  ESC Volver", canvas.width / 2, 450);
+  ctx.fillText(device === "play" ? "CRUCETA Elegir  •  × Seleccionar  •  OPTIONS Volver" : "↑/↓ Elegir  •  ENTER Seleccionar  •  ESC Volver", canvas.width / 2, 450);
   ctx.textAlign = "left";
 }
 
@@ -1772,7 +1777,7 @@ function drawControlBindings() {
   var deviceLabel = isPadEditor ? "CONTROL" : (isTouchEditor ? "TABLET / CELULAR" : "PC");
   ctx.fillText("🎮  CONTROLES " + deviceLabel, canvas.width/2, 70);
   ctx.fillStyle = "#446"; ctx.font = "14px monospace";
-  ctx.fillText("Acción: ↑/↓   Ranura: ←/→   (máximo 4 botones o teclas)", canvas.width/2, 102);
+  ctx.fillText((isPadEditor ? "CRUCETA ↑/↓" : "↑/↓") + " Acción   ←/→ Ranura   (máximo 4 " + (isPadEditor ? "botones" : "teclas") + ")", canvas.width/2, 102);
   ctx.fillStyle = "#6cc"; ctx.font = "bold 17px monospace";
   ctx.fillText(isPadEditor ? "BOTÓN DEL CONTROL" : "TECLA", canvas.width / 2, 137);
   controlActions.forEach(function(action, index) {
@@ -1805,7 +1810,12 @@ function drawControlBindings() {
     }
   });
   ctx.fillStyle = controlsConfigListening ? "#ffd700" : "#8bd"; ctx.font = "12px monospace";
-  ctx.fillText(controlsConfigListening ? "PULSA EL NUEVO BOTÓN..." : "Ranura " + (controlsConfigSlot + 1) + " de 4  •  ENTER Cambiar  •  ESC Volver", canvas.width/2, 505);
+  var pauseControlsHint = controlsConfigListening
+    ? (isPadEditor ? "PULSA EL NUEVO BOTÓN • OPTIONS CANCELAR" : "PULSA LA NUEVA TECLA • ESC CANCELAR")
+    : (isPadEditor
+      ? "CRUCETA: NAVEGAR • ←/→ RANURA • × CAMBIAR • OPTIONS VOLVER"
+      : "Ranura " + (controlsConfigSlot + 1) + " de 4 • ENTER Cambiar • ESC Volver");
+  ctx.fillText(pauseControlsHint, canvas.width/2, 505);
   ctx.textAlign = "left";
 }
 
@@ -1834,7 +1844,7 @@ function drawTouchControlsEditor() {
   ctx.fillText("Joystick: arriba/abajo elegir • izquierda/derecha ajustar", canvas.width / 2, 415);
   ctx.fillText("Selecciona Joystick o Tamaño de botones antes del gesto de dos dedos", canvas.width / 2, 435);
   ctx.fillText("Separa dedos para agrandar • júntalos para reducir", canvas.width / 2, 455);
-  ctx.fillText("Arrastra botones • ESC: guardar y volver", canvas.width / 2, 475);
+  ctx.fillText("Arrastra botones • ↩ o ESC: guardar y volver", canvas.width / 2, 475);
   ctx.textAlign = "left";
 }
 function drawTransition() {
