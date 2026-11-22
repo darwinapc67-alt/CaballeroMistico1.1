@@ -101,44 +101,44 @@ var room6 = {
 };
 
 var room7 = {
-  height: 600,
+  height: 900,
   platforms: [
     {x:5600, y:560, w:800, h:40},
-    {x:5660, y:450, w:210, h:110},
-    {x:6020, y:430, w:195, h:130}
+    {x:5800, y:470, w:110, h:16},
+    {x:5960, y:410, w:120, h:16},
+    {x:6120, y:470, w:120, h:16}
   ],
   spikes: [], walls: [],
   transitionZone: null,
+  jumpCourse: {gaps: [{x:220, w:320}], fallY: 720, startX: 60},
   decor: genDecor(5600, 6, 8, 600)
 };
 
 var room8 = {
-  height: 600,
+  height: 900,
   platforms: [
-    {x:6400, y:560, w:800, h:40}, {x:6450, y:480, w:120, h:14},
-    {x:6650, y:480, w:120, h:14}, {x:6850, y:480, w:120, h:14},
-    {x:6500, y:380, w:100, h:14}, {x:6700, y:300, w:100, h:14},
-    {x:6900, y:380, w:100, h:14}
+    {x:6400, y:560, w:800, h:40},
+    {x:6500, y:480, w:110, h:16},
+    {x:6680, y:400, w:110, h:16},
+    {x:6860, y:330, w:110, h:16},
+    {x:7040, y:430, w:110, h:16}
   ],
   spikes: [], walls: [],
   transitionZone: null,
+  jumpCourse: {gaps: [{x:180, w:440}], fallY: 720, startX: 60},
   decor: genDecor(6400, 6, 8, 600)
 };
 
 var room9 = {
-  height: 600,
+  height: 900,
   platforms: [
     {x:7200, y:560, w:800, h:40},
-    {x:7300, y:400, w:100, h:14}, {x:7500, y:350, w:100, h:14},
-    {x:7700, y:400, w:100, h:14}, {x:7400, y:280, w:80, h:14},
-    {x:7600, y:250, w:80, h:14}, {x:7800, y:280, w:80, h:14},
-    {x:7865, y:470, w:90, h:14}, {x:7880, y:390, w:70, h:14}
+    {x:7500, y:470, w:100, h:16},
+    {x:7650, y:390, w:110, h:16},
+    {x:7800, y:330, w:100, h:16},
+    {x:7840, y:460, w:100, h:16}
   ],
-  spikes: [], walls: [{
-    x:7980, y:0, w:20, h:600, breakable: true, requiresSword: true, broken: false
-  }, {
-    x:7200 + 645, y:120, w:22, h:440, breakable: true, requiresSword: true, broken: false
-  }],
+  spikes: [], walls: [],
   transitionZone: {x:7960, y:460, w:40, h:100, to:10},
   shopDoor: {x:7485, y:475, w:55, h:85},
   shops: [
@@ -146,6 +146,7 @@ var room9 = {
   ],
   healingStone: {x: 7250, y: 520, w: 50, h: 40, active: true},
   chests: [{x:7200 + 690, y:500, legendary: true, opened: false}],
+  jumpCourse: {gaps: [{x:400, w:240}], fallY: 720, startX: 60},
   decor: genDecor(7200, 10, 8, 600)
 };
 
@@ -161,15 +162,21 @@ var room10 = {
     {x:8340, y:210, w:120, h:14}, {x:8500, y:80, w:200, h:40}
   ],
   spikes: [], walls: [],   transitionZone: {x:8000, y:500, w:40, h:100, to:9, sharedBoundary: true},
+  jumpCourse: {gaps: [{x:100, w:700}], fallY: 1020, startX: 70, startPlatformX: 60},
   decor: genDecor(8000, 8, 5, 1200)
 };
 
 var room11 = {
-  height: 600,
+  height: 900,
   platforms: [
-    {x:8800, y:560, w:800, h:40}
+    {x:8800, y:560, w:800, h:40},
+    {x:8990, y:470, w:110, h:16},
+    {x:9160, y:390, w:110, h:16},
+    {x:9330, y:320, w:110, h:16},
+    {x:9460, y:420, w:110, h:16}
   ],
   spikes: [], walls: [],
+  jumpCourse: {gaps: [{x:160, w:500}], fallY: 720, startX: 60},
   transitionZone: {x:9540, y:460, w:40, h:100, to:12},
   decor: genDecor(8800, 6, 5, 600)
 };
@@ -212,6 +219,15 @@ var interludeRooms = [
   createInterludeRoom(17, "", 5),
   createInterludeRoom(18, "", 6)
 ];
+interludeRooms[0].height = 900;
+interludeRooms[0].jumpCourse = {gaps: [{x:160, w:500}], fallY: 720, startX: 60};
+interludeRooms[1].pedestal = {
+  stone: {x: 10830, y: 510, w: 100, h: 50},
+  glass: {x: 10845, y: 444, w: 70, h: 65},
+  sword: {x: 10865, y: 420, w: 30, h: 45},
+  glow: 0,
+  taken: false
+};
 
 function createCityRoom(index, district, features) {
   var off = index * ROOM_W;
@@ -577,10 +593,79 @@ Object.keys(caveFloorProfiles).forEach(function(indexKey) {
   var roomIndex = Number(indexKey);
   var room = rooms[roomIndex];
   if (!room) return;
-  var routePlatforms = roomIndex >= 1 && roomIndex <= 6
-    ? room.platforms.filter(function(platform) { return platform.y < room.height - 60; })
+  var routePlatforms = roomIndex >= 1 && roomIndex <= 13
+    ? room.platforms.filter(function(platform, platformIndex) {
+      if (roomIndex === 10 && platformIndex === 0) return true;
+      if (platformIndex === 0 && platform.w >= ROOM_W) return false;
+      return platform.y < room.height - 60;
+    })
     : [];
-  room.platforms = [createCaveFloorPlatform(roomIndex)].concat(routePlatforms);
+  var floor = createCaveFloorPlatform(roomIndex);
+  var floorPlatforms = [floor];
+  if (room.jumpCourse && room.jumpCourse.gaps) {
+    function floorHeightAt(localX) {
+      var points = floor.surface;
+      for (var pointIndex = 0; pointIndex < points.length - 1; pointIndex++) {
+        var start = points[pointIndex];
+        var end = points[pointIndex + 1];
+        if (localX > end.x) continue;
+        var progress = (localX - start.x) / (end.x - start.x);
+        return start.y + (end.y - start.y) * progress;
+      }
+      return points[points.length - 1].y;
+    }
+    function makeFloorSegment(startX, endX) {
+      var points = [{x: 0, y: floorHeightAt(startX)}];
+      floor.surface.forEach(function(point) {
+        if (point.x > startX && point.x < endX) {
+          points.push({x: point.x - startX, y: point.y});
+        }
+      });
+      points.push({x: endX - startX, y: floorHeightAt(endX)});
+      return {
+        x: floor.x + startX,
+        y: floor.y,
+        w: endX - startX,
+        h: floor.h,
+        surface: points
+      };
+    }
+    var gapCursor = 0;
+    floorPlatforms = [];
+    room.jumpCourse.gaps.slice().sort(function(a, b) { return a.x - b.x; }).forEach(function(gap) {
+      var gapStart = Math.max(0, Math.min(floor.w, gap.x));
+      var gapEnd = Math.max(gapStart, Math.min(floor.w, gap.x + gap.w));
+      if (gapStart > gapCursor) floorPlatforms.push(makeFloorSegment(gapCursor, gapStart));
+      gapCursor = Math.max(gapCursor, gapEnd);
+    });
+    if (gapCursor < floor.w) floorPlatforms.push(makeFloorSegment(gapCursor, floor.w));
+  }
+  room.platforms = floorPlatforms.concat(routePlatforms);
+  if (room.jumpCourse) {
+    var course = room.jumpCourse;
+    var origin = room.worldX !== undefined ? room.worldX : roomIndex * ROOM_W;
+    var startX = origin + course.startX;
+    var startY = null;
+    if (typeof course.startPlatformX === "number") {
+      var startPlatform = routePlatforms.find(function(platform) {
+        return platform.x === origin + course.startPlatformX;
+      });
+      if (startPlatform) startY = startPlatform.y - player.h;
+    } else {
+      room.platforms.forEach(function(platform) {
+        var surfaceY = getPlatformSurfaceY(platform, startX + player.w / 2);
+        if (surfaceY !== null) startY = surfaceY - player.h;
+      });
+    }
+    if (startY === null) startY = room.height - player.h - 10;
+    course.fallY = typeof course.fallY === "number" ? course.fallY : room.height - 180;
+    course.maxCheckpointY = room.height - 120;
+    course.start = {x: startX, y: startY};
+    course.checkpoints = [
+      {x: startX, y: startY},
+      {x: startX + 34, y: startY}
+    ];
+  }
 });
 
 rooms.forEach(function(room) {

@@ -19,11 +19,13 @@ function drawBossDoor(roomIndex) {
   ctx.textAlign = "left";
 }
 function drawSwordPickupCinematic() {
+  var ped = rooms[13].pedestal;
+  if (!ped) return;
   var timer = swordPickupCinematicTimer;
   var reveal = Math.max(0, Math.min(1, (timer - 95) / 55));
   if (reveal > 0) {
-    var pedestalX = room1.pedestal.stone.x + room1.pedestal.stone.w / 2 - cameraX;
-    var pedestalY = room1.pedestal.stone.y - cameraY;
+    var pedestalX = ped.stone.x + ped.stone.w / 2 - cameraX;
+    var pedestalY = ped.stone.y - cameraY;
     var knightX = pedestalX - 82;
     var knightY = pedestalY - 30;
     drawPlayerEntity({
@@ -52,6 +54,30 @@ function drawSwordPickupCinematic() {
     ctx.textAlign = "center"; ctx.fillStyle = "#ffd700"; ctx.font = "bold 22px monospace";
     ctx.fillText("Has recuperado tu poder", canvas.width / 2, canvas.height - 52);
     ctx.textAlign = "left";
+  }
+}
+function drawJumpCourseFall() {
+  var state = jumpCourseFallState;
+  if (!state) return;
+  var p = state.player;
+  var centerX = p.x + p.w / 2 - cameraX;
+  var centerY = p.y + p.h / 2 - cameraY;
+  if (state.phase === "fall") {
+    ctx.strokeStyle = "rgba(205, 221, 239, 0.55)";
+    ctx.lineWidth = 2;
+    for (var streak = 0; streak < 3; streak++) {
+      var offset = (streak - 1) * 13;
+      ctx.beginPath();
+      ctx.moveTo(centerX + offset + 5, centerY + 10);
+      ctx.lineTo(centerX + offset - 2, centerY + 28);
+      ctx.stroke();
+    }
+  } else {
+    var progress = (12 - state.timer) / 12;
+    ctx.fillStyle = "rgba(178, 210, 233, " + (0.32 * (1 - progress)) + ")";
+    ctx.beginPath();
+    ctx.arc(centerX, centerY + 10, 12 + progress * 24, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 function drawBossDialogue() {
@@ -206,8 +232,8 @@ function drawJumpTutorialHint() {
   ctx.fillText("↑  " + keyLabel, hintX + 10, hintY + 36);
 }
 
-function drawPedestal() {
-  var ped = room1.pedestal;
+function drawPedestal(ped, alreadyHasSword) {
+  if (!ped) return;
   ctx.fillStyle = "#4a4a5a";
   ctx.fillRect(ped.stone.x, ped.stone.y, ped.stone.w, ped.stone.h);
   ctx.fillStyle = "#5a5a6a";
@@ -222,7 +248,7 @@ function drawPedestal() {
   ctx.lineTo(ped.stone.x + 61, ped.stone.y + 17);
   ctx.lineTo(ped.stone.x + 67, ped.stone.y + 34);
   ctx.stroke();
-  if (!ped.taken) {
+  if (!ped.taken && !alreadyHasSword) {
     ped.glow += 0.05;
     var glowAlpha = 0.15 + Math.sin(ped.glow) * 0.1;
     ctx.fillStyle = "rgba(255, 215, 0, " + glowAlpha + ")";

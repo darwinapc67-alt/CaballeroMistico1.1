@@ -8,6 +8,18 @@ function resetAll() {
   brightnessBoost = 1;
   transIsFall = false; transitionCooldown = 0; transitionSpawn = null;
   floorCollapseTimer = 0;
+  jumpCourseFallState = null;
+  rooms.forEach(function(room) {
+    if (!room.jumpCourse) return;
+    room.jumpCourse.checkpoints = [
+      {x: room.jumpCourse.start.x, y: room.jumpCourse.start.y},
+      {x: room.jumpCourse.start.x + 34, y: room.jumpCourse.start.y}
+    ];
+  });
+  if (rooms[13].pedestal) {
+    rooms[13].pedestal.taken = false;
+    rooms[13].pedestal.glow = 0;
+  }
   eterium = 0;
   hasEteriumSkill = false;
   eteriumSkillLevel = 0;
@@ -293,6 +305,7 @@ function update() {
   if (gameState === ST_DIALOGUE) {
     if (dialogueMode === "sword_pickup") updateSwordPickupCinematic();
     else if (dialogueMode === "floor_collapse") updateFloorCollapse();
+    else if (dialogueMode === "jump_course_fall") updateJumpCourseFall();
     return;
   }
   if (gameState === ST_HOUSE) {
@@ -440,6 +453,7 @@ function loop() {
     }
     if (dialogueMode === "sword_pickup") drawSwordPickupCinematic();
     else if (dialogueMode === "floor_collapse") drawFloorCollapse();
+    else if (dialogueMode === "jump_course_fall") drawJumpCourseFall();
     else drawBossDialogue();
   }
   else if (gameState === ST_HOUSE) drawHouseInterior();

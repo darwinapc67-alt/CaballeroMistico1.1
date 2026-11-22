@@ -16,6 +16,7 @@ var introWakeUpDone = false;
 var wakeJumpArmed = false;
 
 var swordPickupCinematicTimer = 0;
+var jumpCourseFallState = null;
 var ardorisEntranceTimer = 0;
 var ardorisEntranceSeen = false;
 var ardorisImpactTimer = 0;

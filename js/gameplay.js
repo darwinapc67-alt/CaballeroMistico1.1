@@ -201,9 +201,12 @@ function updateSwordPickupCinematic() {
   if (swordPickupCinematicTimer === 1) sfxTransition();
   if (swordPickupCinematicTimer === 72) sfxSwordRelease();
   if (swordPickupCinematicTimer === 96) {
-    room1.pedestal.taken = true;
-    spawnParticles(1180, 470, "#fff", 30, 5);
-    spawnParticles(1180, 470, "#ffd700", 24, 4);
+    var pedestal = rooms[13].pedestal;
+    pedestal.taken = true;
+    var swordX = pedestal.stone.x + pedestal.stone.w / 2;
+    var swordY = pedestal.stone.y - 40;
+    spawnParticles(swordX, swordY, "#fff", 30, 5);
+    spawnParticles(swordX, swordY, "#ffd700", 24, 4);
     combatShake = 4;
   }
   for (var i = particles.length - 1; i >= 0; i--) {
@@ -215,10 +218,98 @@ function updateSwordPickupCinematic() {
     hasSword = true; swordEquipped = true;
     player.hasSword = true; player.swordEquipped = true; player.frozen = false;
     if (twoPlayerMode) { player2.hasSword = true; player2.swordEquipped = true; }
-    spawnFloatText(1180, 400, "Has recuperado tu poder", "#ffd700");
-    spawnFloatText(1180, 420, "Presiona X/J o CTRL para atacar", "#aaa");
-    dialogueMode = "boss"; swordPickupCinematicTimer = 0; gameState = ST_PLAYING; updateUI();
+    spawnFloatText(rooms[13].pedestal.stone.x, rooms[13].pedestal.stone.y - 90, "Has recuperado tu poder", "#ffd700");
+    spawnFloatText(rooms[13].pedestal.stone.x, rooms[13].pedestal.stone.y - 70, "Presiona X/J o CTRL para atacar", "#aaa");
+    dialogueMode = ""; swordPickupCinematicTimer = 0; gameState = ST_PLAYING; updateUI();
   }
+}
+
+function getJumpCourseCheckpoint(p, room) {
+  var course = room.jumpCourse;
+  var checkpointIndex = p === player ? 0 : 1;
+  return course.checkpoints[checkpointIndex] || course.start;
+}
+
+function getJumpCourseCheckpointX(p, room) {
+  var playerBottom = p.y + p.h;
+  for (var i = 0; i < room.platforms.length; i++) {
+    var platform = room.platforms[i];
+    if (platform.surface) {
+      var surfaceY = getPlatformSurfaceY(platform, p.x + p.w / 2);
+      if (surfaceY === null || Math.abs(playerBottom - surfaceY) > 3) continue;
+      var left = platform.x + platform.surface[0].x;
+      var right = platform.x + platform.surface[platform.surface.length - 1].x;
+      return Math.max(left + 8, Math.min(p.x, right - p.w - 8));
+    }
+    if (Math.abs(playerBottom - platform.y) <= 3 &&
+        p.x + p.w > platform.x && p.x < platform.x + platform.w) {
+      return Math.max(platform.x + 8, Math.min(p.x, platform.x + platform.w - p.w - 8));
+    }
+  }
+  return p.x;
+}
+
+function isPlayerOverJumpCourseGap(p, room) {
+  var course = room.jumpCourse;
+  var origin = room.worldX !== undefined ? room.worldX : currentRoom * ROOM_W;
+  var playerCenterX = p.x + p.w / 2;
+  return course.gaps.some(function(gap) {
+    return playerCenterX >= origin + gap.x && playerCenterX <= origin + gap.x + gap.w;
+  });
+}
+
+function startJumpCourseFall(p, room) {
+  var checkpoint = getJumpCourseCheckpoint(p, room);
+  jumpCourseFallState = {
+    player: p,
+    roomIndex: currentRoom,
+    checkpoint: {x: checkpoint.x, y: checkpoint.y},
+    phase: "fall",
+    timer: 12
+  };
+  p.frozen = true;
+  p.onGround = false;
+  p.vx = 0;
+  if (p.vy < 2) p.vy = 2;
+  dialogueMode = "jump_course_fall";
+  gameState = ST_DIALOGUE;
+}
+
+function updateJumpCourseFall() {
+  var state = jumpCourseFallState;
+  if (!state) return;
+  var p = state.player;
+  var room = rooms[state.roomIndex];
+  if (state.phase === "fall") {
+    p.vy = Math.min(p.vy + GRAVITY, 14);
+    p.y += p.vy;
+    state.timer--;
+    if (state.timer <= 0) {
+      p.x = state.checkpoint.x;
+      p.y = state.checkpoint.y;
+      p.vx = 0;
+      p.vy = 0;
+      p.onGround = true;
+      p.jumpsLeft = p.maxJumps;
+      p.inv = Math.max(p.inv, 24);
+      state.phase = "return";
+      state.timer = 12;
+    }
+  } else {
+    state.timer--;
+    if (state.timer <= 0) {
+      p.frozen = false;
+      gameState = ST_PLAYING;
+      dialogueMode = "";
+      jumpCourseFallState = null;
+    }
+  }
+  var targetY = Math.max(0, Math.min(
+    p.y + p.h / 2 - canvas.height * 0.55,
+    Math.max(0, room.height - canvas.height)
+  ));
+  cameraY += (targetY - cameraY) * 0.3;
+  if (Math.abs(targetY - cameraY) < 0.5) cameraY = targetY;
 }
 
 function startRoomAtmosphere(roomIndex) {
@@ -2085,6 +2176,16 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       else if (p.vx < 0) { p.x = w.x + w.w; p.vx = 0; p.wallContact = -1; }
     }
   });
+  if (gameMode === "normal" && room.jumpCourse) {
+    var course = room.jumpCourse;
+    var checkpointIndex = p === player ? 0 : 1;
+    if (p.onGround && p.inv <= 0 && p.y <= course.maxCheckpointY) {
+      course.checkpoints[checkpointIndex] = {x: getJumpCourseCheckpointX(p, room), y: p.y};
+    } else if (!p.onGround && p.y > course.fallY && isPlayerOverJumpCourseGap(p, room)) {
+      startJumpCourseFall(p, room);
+      return;
+    }
+  }
   var walking = p.onGround && Math.abs(p.vx) > 0.45 && !p.blocking && p.swordSwing <= 0 && !p.dashing;
   p.walkBlend = Math.max(0, Math.min(1, (typeof p.walkBlend === "number" ? p.walkBlend : 0) +
     (walking ? 0.2 : -0.16)));
@@ -2639,8 +2740,8 @@ function tryInteractFor(p) {
     }
 
   }
-  if (currentRoom === 1 && room1.pedestal && !room1.pedestal.taken) {
-    var ped = room1.pedestal;
+  if (currentRoom === 13 && room.pedestal && !room.pedestal.taken && !hasSword) {
+    var ped = room.pedestal;
     var dx = (p.x + p.w/2) - (ped.glass.x + ped.glass.w/2);
     var dy = (p.y + p.h/2) - (ped.glass.y + ped.glass.h/2);
     if (Math.sqrt(dx*dx + dy*dy) < 70) {
