@@ -38,7 +38,7 @@ function drawCaveBg(rx, decor, roomH, roomWidth, roomIndex) {
   ctx.fillRect(rx, 0, roomWidth, roomH);
   drawCaveBackRelief(rx, roomH, roomWidth, roomSeed);
   drawZoneBackdropDetails(rx, roomH, roomWidth, roomIndex, roomSeed, profile);
-  if (gameMode === "normal") drawNormalCaveAtmosphere(rx, roomH, roomWidth, roomSeed);
+  if (gameMode === "normal") drawNormalCaveAtmosphere(rx, roomH, roomWidth, roomSeed, profile);
   for (var i = 0; i < 20; i++) {
     var sx = rx + (i * 137) % roomWidth, sy = (i * 89) % roomH;
     ctx.globalAlpha = 0.1 + Math.sin(Date.now()/2000 + i) * 0.05;
@@ -237,14 +237,46 @@ function drawCaveLocalLighting(roomIndex, room) {
   }
   ctx.restore();
 }
-function drawNormalCaveAtmosphere(rx, roomH, roomWidth, seed) {
+function drawNormalCaveAtmosphere(rx, roomH, roomWidth, seed, profile) {
   ctx.save();
+  if (profile.id === "marsh") {
+    var rootCount = Math.ceil(roomWidth / 260);
+    ctx.globalAlpha = 0.28;
+    for (var root = 0; root < rootCount; root++) {
+      var rootX = rx + 70 + root * 260 + ((seed * 19 + root * 37) % 55);
+      var rootLength = 70 + ((seed * 13 + root * 29) % 75);
+      ctx.strokeStyle = root % 2 ? "#45634d" : "#536b4e";
+      ctx.lineWidth = 4 + root % 2;
+      ctx.beginPath();
+      ctx.moveTo(rootX, 0);
+      ctx.bezierCurveTo(rootX - 18, rootLength * 0.35, rootX + 18, rootLength * 0.66, rootX + 2, rootLength);
+      ctx.stroke();
+      ctx.fillStyle = "#71835b";
+      ctx.beginPath();
+      ctx.ellipse(rootX + 5, rootLength - 5, 7, 3, -0.35, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 0.16;
+    for (var mist = 0; mist < 3; mist++) {
+      var mistX = rx + mist * roomWidth / 3;
+      var mistY = roomH * (0.56 + mist * 0.035);
+      var mistGradient = ctx.createLinearGradient(mistX, mistY - 45, mistX, mistY + 55);
+      mistGradient.addColorStop(0, "rgba(107, 170, 112, 0)");
+      mistGradient.addColorStop(0.5, "rgba(107, 170, 112, 0.55)");
+      mistGradient.addColorStop(1, "rgba(107, 170, 112, 0)");
+      ctx.fillStyle = mistGradient;
+      ctx.fillRect(mistX, mistY - 45, roomWidth / 3 + 30, 100);
+    }
+    ctx.restore();
+    return;
+  }
+
   var tileWidth = 240;
   var tileCount = Math.ceil(roomWidth / tileWidth) + 1;
 
-  ctx.globalAlpha = 0.62;
-  for (var stal = 0; stal < tileCount * 2; stal++) {
-    var stalX = rx + 42 + stal * 113 + (seed % 5) * 7;
+  ctx.globalAlpha = 0.48;
+  for (var stal = 0; stal < tileCount; stal++) {
+    var stalX = rx + 65 + stal * tileWidth + ((seed * 11 + stal * 23) % 90);
     var stalH = 18 + ((seed * 11 + stal * 17) % 42);
     ctx.fillStyle = stal % 2 ? "#1b1b31" : "#23233b";
     ctx.beginPath();
@@ -260,8 +292,8 @@ function drawNormalCaveAtmosphere(rx, roomH, roomWidth, seed) {
   }
 
   // Wall crystals and purple plants use small local halos instead of heavy lighting.
-  for (var crystal = 0; crystal < tileCount; crystal++) {
-    var crystalX = rx + 74 + crystal * 197 + ((seed * 13) % 24);
+  for (var crystal = 0; crystal < Math.max(1, Math.floor(tileCount / 2)); crystal++) {
+    var crystalX = rx + 110 + crystal * tileWidth * 1.6 + ((seed * 13 + crystal * 17) % 48);
     var crystalY = Math.min(roomH - 80, 150 + ((seed + crystal * 2) % 3) * 64);
     var crystalGlow = ctx.createRadialGradient(crystalX, crystalY, 2, crystalX, crystalY, 30);
     crystalGlow.addColorStop(0, "rgba(93, 216, 255, 0.22)");
@@ -278,6 +310,7 @@ function drawNormalCaveAtmosphere(rx, roomH, roomWidth, seed) {
     ctx.fillStyle = "#a8efff";
     ctx.fillRect(crystalX - 2, crystalY - 10, 3, 7);
 
+    if (crystal % 2 !== seed % 2) continue;
     var plantX = crystalX + 45;
     var plantY = roomH - 28 - ((seed + crystal) % 2) * 8;
     ctx.fillStyle = "rgba(177, 71, 255, 0.18)";

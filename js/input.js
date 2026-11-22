@@ -1729,6 +1729,7 @@ function setupTouchControls() {
     };
     var press = function(event) {
       event.preventDefault();
+      event.stopPropagation();
       if (gameState === ST_PAUSED && pauseSubState === "controls_touch") return;
       if (buttonPointer !== null) return;
       buttonPointer = event.pointerId;
@@ -1743,16 +1744,21 @@ function setupTouchControls() {
         window.dispatchEvent(new KeyboardEvent("keydown", {key: "Escape", code: "Escape"}));
         return;
       }
-      window.dispatchEvent(new KeyboardEvent("keydown", {key: getVirtualKey(), code: getVirtualKey() === " " ? "Space" : getVirtualKey()}));
       keys[key] = true;
+      if (gameState !== ST_PLAYING) {
+        window.dispatchEvent(new KeyboardEvent("keydown", {key: getVirtualKey(), code: getVirtualKey() === " " ? "Space" : getVirtualKey()}));
+      }
     };
     var release = function(event) {
       if (gameState === ST_PAUSED && pauseSubState === "controls_touch") return;
       if (buttonPointer !== event.pointerId) return;
       event.preventDefault();
+      event.stopPropagation();
       buttonPointer = null;
       button.classList.remove("pressed");
-      window.dispatchEvent(new KeyboardEvent("keyup", {key: getVirtualKey(), code: getVirtualKey() === " " ? "Space" : getVirtualKey()}));
+      if (gameState !== ST_PLAYING) {
+        window.dispatchEvent(new KeyboardEvent("keyup", {key: getVirtualKey(), code: getVirtualKey() === " " ? "Space" : getVirtualKey()}));
+      }
       if (key !== "escape") keys[key] = false;
     };
     button.addEventListener("pointerdown", press);

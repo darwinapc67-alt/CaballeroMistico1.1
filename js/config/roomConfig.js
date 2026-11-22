@@ -581,7 +581,10 @@ Object.keys(caveFloorProfiles).forEach(function(indexKey) {
   var roomIndex = Number(indexKey);
   var room = rooms[roomIndex];
   if (!room) return;
-  room.platforms = [createCaveFloorPlatform(roomIndex)];
+  var routePlatforms = roomIndex === 1 || roomIndex === 2
+    ? room.platforms.filter(function(platform) { return platform.y < room.height - 60; })
+    : [];
+  room.platforms = [createCaveFloorPlatform(roomIndex)].concat(routePlatforms);
 });
 
 rooms.forEach(function(room) {

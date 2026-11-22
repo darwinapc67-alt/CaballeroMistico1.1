@@ -123,6 +123,28 @@ for (var acidRoom = 0; acidRoom <= 9; acidRoom++) {
     hp: 4, maxHp: 4, dead: false, room: acidRoom, type: "acid_slime", staysRoom: true
   });
 }
+var earlyEncounterPlan = {
+  0: {bat: 1},
+  1: {},
+  2: {bat: 1},
+  3: {bat: 1, acid_slime: 1},
+  4: {bat: 2, kamikaze_bat: 1},
+  5: {},
+  6: {bat: 2, larva_mosca: 1},
+  7: {},
+  8: {bat: 1, kamikaze_bat: 1},
+  9: {bat: 1, cazador_paramo: 1}
+};
+var earlyEncounterCounts = {};
+enemies = enemies.filter(function(enemy) {
+  if (typeof enemy.room !== "number" || enemy.room < 0 || enemy.room > 9 || enemy.boss) return true;
+  var allowedTypes = earlyEncounterPlan[enemy.room] || {};
+  var key = enemy.room + ":" + enemy.type;
+  var currentCount = earlyEncounterCounts[key] || 0;
+  if (currentCount >= (allowedTypes[enemy.type] || 0)) return false;
+  earlyEncounterCounts[key] = currentCount + 1;
+  return true;
+});
 enemies.forEach(function(e) {
   e.canRoam = !e.boss && e.type !== "kamikaze_bat";
 });
