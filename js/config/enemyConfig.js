@@ -12,10 +12,11 @@ var bestiary = { bat: { discovered: false, count: 0 }, kamikaze_bat: { discovere
 var enemies = [
   {x: 9630, y: 520, w: 24, h: 20, vx: 1.2, vy: 0, baseY: 520, range: 180, speed: 1.2, dead: false, room: 12, type: 'cazador_paramo', terrestrial: true},
   {x: 10420, y: 520, w: 24, h: 20, vx: -1.4, vy: 0, baseY: 520, range: 180, speed: 1.4, dead: false, room: 13, type: 'cazador_paramo', terrestrial: true},
-  {x: 11230, y: 520, w: 34, h: 48, vx: -1, vy: 0, baseY: 512, speed: 1.1, dead: false, room: 14, type: 'dark_knight', hp: 48, maxHp: 48, blockTimer: 80, dashCooldown: 100, dashTimer: 0, staysRoom: true},
-  {x: 12020, y: 520, w: 34, h: 48, vx: 1, vy: 0, baseY: 512, speed: 1.2, dead: false, room: 15, type: 'dark_knight', hp: 48, maxHp: 48, blockTimer: 120, dashCooldown: 140, dashTimer: 0, staysRoom: true},
-  {x: 12810, y: 520, w: 34, h: 48, vx: -1, vy: 0, baseY: 512, speed: 1.15, dead: false, room: 16, type: 'dark_knight', hp: 48, maxHp: 48, blockTimer: 60, dashCooldown: 120, dashTimer: 0, staysRoom: true},
-  {x: 13600, y: 520, w: 34, h: 48, vx: 1, vy: 0, baseY: 512, speed: 1.3, dead: false, room: 17, type: 'dark_knight', hp: 48, maxHp: 48, blockTimer: 100, dashCooldown: 160, dashTimer: 0, staysRoom: true},
+  {x: 14 * ROOM_W + 450, y: 270, w: 24, h: 20, vx: 1.2, vy: 0, baseY: 270, homeX: 14 * ROOM_W + 450, range: 48, speed: 1.2, diveSpeed: 4.5, visionRadius: 320, attackCooldown: 105, warningFrames: 54, batState: "flight", batTimer: 0, hp: 3, maxHp: 3, combatBat: true, dead: false, room: 14, type: "bat", staysRoom: true},
+  {x: 15 * ROOM_W + 560, y: 512, w: 34, h: 48, vx: -0.9, vy: 0, baseY: 512, speed: 0.9, dead: false, room: 15, type: "dark_knight", hp: 24, maxHp: 24, blockTimer: 110, dashCooldown: 190, dashTimer: 0, contactDamage: true, staysRoom: true},
+  {x: 16 * ROOM_W + 430, y: 245, w: 24, h: 20, vx: -1.2, vy: 0, baseY: 245, homeX: 16 * ROOM_W + 430, range: 64, speed: 1.2, diveSpeed: 4.8, visionRadius: 340, attackCooldown: 135, warningFrames: 54, batState: "flight", batTimer: 0, hp: 3, maxHp: 3, combatBat: true, dead: false, room: 16, type: "bat", staysRoom: true},
+  {x: 17 * ROOM_W + 205, y: 512, w: 34, h: 48, vx: 1, vy: 0, baseY: 512, speed: 1, dead: false, room: 17, type: "dark_knight", hp: 24, maxHp: 24, blockTimer: 130, dashCooldown: 210, dashTimer: 0, contactDamage: true, staysRoom: true},
+  {x: 17 * ROOM_W + 580, y: 250, w: 24, h: 20, vx: -1.2, vy: 0, baseY: 250, homeX: 17 * ROOM_W + 580, range: 54, speed: 1.2, diveSpeed: 4.8, visionRadius: 350, attackCooldown: 155, warningFrames: 54, batState: "flight", batTimer: 0, hp: 3, maxHp: 3, combatBat: true, dead: false, room: 17, type: "bat", staysRoom: true},
   {x: 14390, y: 520, w: 34, h: 48, vx: -1, vy: 0, baseY: 512, speed: 1.25, dead: false, room: 18, type: 'dark_knight', hp: 48, maxHp: 48, blockTimer: 90, dashCooldown: 110, dashTimer: 0, staysRoom: true},
   {x: 150, y: 350, w: 24, h: 20, vx: 1.5, vy: 0, baseY: 350, range: 60, dead: false, room: 0, type: 'bat'},
   {x: 350, y: 400, w: 24, h: 20, vx: -1.2, vy: 0, baseY: 400, range: 50, dead: false, room: 0, type: 'bat'},
@@ -57,6 +58,7 @@ var enemies = [
   {x: 26800, y: 150, w: 32, h: 28, vx: 0, vy: 0, dead: false, room: 34, type: 'blue_sentry', shootTimer: 150, staysRoom: true}
 ];
 for (var challengeRoom = 12; challengeRoom <= 18; challengeRoom++) {
+  if (challengeRoom >= 14 && challengeRoom <= 17) continue;
   var challengeOrigin = challengeRoom * ROOM_W;
   enemies.push(
     {x: challengeOrigin + 260, y: 230, w: 24, h: 20, vx: challengeRoom % 2 ? 1.3 : -1.3, vy: 0,
@@ -100,5 +102,5 @@ enemies = enemies.filter(function(enemy) {
   return typeof enemy.room !== "number" || enemy.room >= 14;
 });
 enemies.forEach(function(e) {
-  e.canRoam = !e.boss && e.type !== "kamikaze_bat";
+  e.canRoam = !e.boss && e.type !== "kamikaze_bat" && !e.combatBat;
 });

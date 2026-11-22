@@ -8,10 +8,12 @@ function drawEnemies() {
     if (e.y + e.h < camTop - 50 || e.y > camBottom + 50) return;
     ctx.save();
     var zoneProfile = getZoneVisualProfile(currentRoom);
-    var zoneAura = zoneProfile.id === "marsh" ? "rgba(126, 220, 137, 0.18)" :
+    var zoneAura = zoneProfile.id === "ardoris" && currentRoom >= 14 && currentRoom <= 17
+      ? "rgba(126, 220, 137, 0.18)"
+      : (zoneProfile.id === "marsh" ? "rgba(126, 220, 137, 0.18)" :
       (zoneProfile.id === "abyss" ? "rgba(83, 157, 255, 0.18)" :
       (zoneProfile.id === "boss" ? "rgba(236, 76, 116, 0.18)" :
-      (zoneProfile.id === "city" ? "rgba(255, 194, 94, 0.12)" : "rgba(94, 214, 255, 0.14)")));
+      (zoneProfile.id === "city" ? "rgba(255, 194, 94, 0.12)" : "rgba(94, 214, 255, 0.14)"))));
     ctx.fillStyle = zoneAura;
     ctx.beginPath();
     ctx.arc(e.x + e.w / 2, e.y + e.h / 2, Math.max(e.w, e.h) * 0.9, 0, Math.PI * 2);
@@ -234,6 +236,31 @@ function drawEnemies() {
       ctx.fillStyle = "#ff2244";
       ctx.fillRect(e.x + 5, e.y + 6, 4, 4);
       ctx.fillRect(e.x + 14, e.y + 6, 4, 4);
+    }
+    if (e.combatBat && e.batState === "warning") {
+      var warningPulse = 0.55 + Math.sin(Date.now() / 90) * 0.25;
+      ctx.globalAlpha = warningPulse;
+      ctx.strokeStyle = "#ffe889";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(e.x + e.w / 2, e.y + e.h / 2, 20, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(e.x + e.w / 2, e.y + e.h / 2);
+      ctx.lineTo(e.diveTargetX, e.diveTargetY);
+      ctx.stroke();
+      ctx.fillStyle = "#fff3ad";
+      ctx.font = "bold 16px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("!", e.x + e.w / 2, e.y - 7);
+      ctx.textAlign = "left";
+      ctx.globalAlpha = 1;
+    } else if (e.combatBat && e.batState === "recovery") {
+      ctx.strokeStyle = "rgba(191, 255, 173, 0.9)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(e.x + e.w / 2, e.y + e.h / 2, 17, 0, Math.PI * 2);
+      ctx.stroke();
     }
     if (e.hitFlash > 0) {
       ctx.fillStyle = "#fff";

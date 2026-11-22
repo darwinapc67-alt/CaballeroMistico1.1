@@ -146,7 +146,7 @@ function useEteriumSkill() {
   var damage = eteriumSkillLevel * 5;
   var affected = 0;
   enemies.forEach(function(enemy) {
-    if (enemy.dead || enemy.room !== currentRoom) return;
+    if (enemy.dead || enemy.room !== currentRoom || !isEnemyVulnerable(enemy)) return;
     enemy.hp = Math.max(0, enemy.hp - damage);
     affected++;
     registerCombatImpact(enemy, damage, false);
@@ -1308,6 +1308,97 @@ function killEnemyOnSpikes(enemy) {
   defeatRegularEnemy(enemy);
 }
 
+function isEnemyVulnerable(enemy) {
+  return !enemy.combatBat || enemy.batState === "recovery";
+}
+
+function startCombatBatRecovery(enemy) {
+  enemy.batState = "recovery";
+  enemy.batTimer = enemy.recoveryFrames || 72;
+  enemy.vx = 0;
+  enemy.vy = 0;
+}
+
+function updateCombatBat(enemy, room, left, right) {
+  if (enemy.room !== currentRoom) return;
+  var target = player;
+  if (twoPlayerMode && !player2.frozen) {
+    var playerDistance = Math.abs(player.x + player.w / 2 - (enemy.x + enemy.w / 2));
+    var player2Distance = Math.abs(player2.x + player2.w / 2 - (enemy.x + enemy.w / 2));
+    if (player.frozen || player2Distance < playerDistance) target = player2;
+  }
+
+  if (enemy.batState === "warning") {
+    enemy.batTimer--;
+    if (enemy.batTimer <= 0) {
+      var dx = enemy.diveTargetX - (enemy.x + enemy.w / 2);
+      var dy = enemy.diveTargetY - (enemy.y + enemy.h / 2);
+      var length = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+      var diveSpeed = enemy.diveSpeed || 4.5;
+      enemy.vx = dx / length * diveSpeed;
+      enemy.vy = dy / length * diveSpeed;
+      enemy.batState = "dive";
+      enemy.batTimer = enemy.diveFrames || 36;
+      enemy.diveHitPlayer = false;
+      enemy.diveHitPlayer2 = false;
+    }
+    return;
+  }
+
+  if (enemy.batState === "dive") {
+    enemy.x += enemy.vx;
+    enemy.y += enemy.vy;
+    enemy.batTimer--;
+    if (enemy.batTimer <= 0 || enemy.x < left + 24 || enemy.x + enemy.w > right - 24 ||
+        enemy.y < 24 || enemy.y + enemy.h > room.height - 40) {
+      enemy.x = Math.max(left + 24, Math.min(right - enemy.w - 24, enemy.x));
+      enemy.y = Math.max(24, Math.min(room.height - enemy.h - 40, enemy.y));
+      startCombatBatRecovery(enemy);
+    }
+    return;
+  }
+
+  if (enemy.batState === "recovery") {
+    enemy.y += (enemy.baseY - enemy.y) * 0.08;
+    enemy.batTimer--;
+    if (enemy.batTimer <= 0) {
+      enemy.batState = "flight";
+      enemy.attackCooldown = enemy.nextAttackCooldown || 135;
+      enemy.vx = enemy.x < enemy.homeX ? enemy.speed : -enemy.speed;
+    }
+    return;
+  }
+
+  enemy.batState = "flight";
+  enemy.attackCooldown = Math.max(0, enemy.attackCooldown - 1);
+  enemy.x += enemy.vx;
+  var patrolLeft = Math.max(left + 24, enemy.homeX - enemy.range);
+  var patrolRight = Math.min(right - enemy.w - 24, enemy.homeX + enemy.range);
+  if (enemy.x < patrolLeft) { enemy.x = patrolLeft; enemy.vx = Math.abs(enemy.speed); }
+  if (enemy.x > patrolRight) { enemy.x = patrolRight; enemy.vx = -Math.abs(enemy.speed); }
+  enemy.y = enemy.baseY + Math.sin(frameCounter / 16 + enemy.homeX * 0.01) * 7;
+
+  var dxToTarget = target.x + target.w / 2 - (enemy.x + enemy.w / 2);
+  var dyToTarget = target.y + target.h / 2 - (enemy.y + enemy.h / 2);
+  var distanceToTarget = Math.sqrt(dxToTarget * dxToTarget + dyToTarget * dyToTarget);
+  if (enemy.attackCooldown <= 0 && !target.frozen && distanceToTarget <= enemy.visionRadius) {
+    enemy.batState = "warning";
+    enemy.batTimer = enemy.warningFrames || 54;
+    enemy.diveTargetX = target.x + target.w / 2;
+    enemy.diveTargetY = target.y + target.h / 2;
+    enemy.vx = 0;
+    enemy.vy = 0;
+  }
+}
+
+function damageCombatBatOnContact(enemy, target, hitKey) {
+  if (enemy.batState !== "dive" || enemy[hitKey] || target.inv > 0 || target.frozen ||
+      !rectHit(target, enemy)) return;
+  enemy[hitKey] = true;
+  playerTakeDamage(target, 1);
+  startCombatBatRecovery(enemy);
+}
+
 function updateEnemies() {
   if (gameState !== ST_PLAYING) return;
   enemies.forEach(function(e) {
@@ -1372,6 +1463,8 @@ function updateEnemies() {
     var left = e.room * ROOM_W, right = left + ROOM_W;
     if (e.boss) {
       updateBoss(e, room);
+    } else if (e.combatBat) {
+      updateCombatBat(e, room, left, right);
     } else if (e.type === 'dark_knight') {
       if (e.blockTimer > 0) e.blockTimer--;
       if (e.dashCooldown > 0) e.dashCooldown--;
@@ -1477,11 +1570,17 @@ function updateEnemies() {
         if (surfaceY !== null) e.y = surfaceY - e.h;
       });
     }
-    if (e.room === currentRoom && player.inv <= 0 && !player.frozen && rectHit(player, e)) {
+    var isArdorisCombatRoom = e.room >= 14 && e.room <= 17;
+    if (e.room === currentRoom && e.combatBat) {
+      damageCombatBatOnContact(e, player, "diveHitPlayer");
+      if (twoPlayerMode) damageCombatBatOnContact(e, player2, "diveHitPlayer2");
+    } else if (e.room === currentRoom && (!isArdorisCombatRoom || e.contactDamage) &&
+        player.inv <= 0 && !player.frozen && rectHit(player, e)) {
       var dmg = e.infiniteDamage || (e.type === 'dark_knight' && e.dashTimer > 0 ? 2 : (e.type === 'larva_mosca' ? 2 : 1));
       playerTakeDamage(player, e.boss ? 1 : dmg, e.boss);
     }
-    if (e.room === currentRoom && twoPlayerMode && player2.inv <= 0 && !player2.frozen && rectHit(player2, e)) {
+    if (e.room === currentRoom && (!isArdorisCombatRoom || e.contactDamage) && twoPlayerMode &&
+        player2.inv <= 0 && !player2.frozen && rectHit(player2, e)) {
       var dmg2 = e.infiniteDamage || (e.type === 'larva_mosca' ? 2 : 1);
       playerTakeDamage(player2, e.boss ? 1 : dmg2, e.boss);
     }
@@ -1637,7 +1736,7 @@ function updateArrows() {
     arrow.life--;
     var hitEnemy = false;
     enemies.forEach(function(e) {
-      if (!e.dead && e.room === currentRoom && rectHit(arrow, e)) {
+      if (!e.dead && e.room === currentRoom && isEnemyVulnerable(e) && rectHit(arrow, e)) {
         if (e.boss) {
           var arrowDamage = arrow.damage || 1;
           e.hp -= arrowDamage; hitEnemy = true;
@@ -1659,7 +1758,7 @@ function updateArrows() {
 function explodeBomb(bomb) {
   var radius = 92;
   enemies.forEach(function(enemy) {
-    if (enemy.dead || enemy.room !== currentRoom) return;
+    if (enemy.dead || enemy.room !== currentRoom || !isEnemyVulnerable(enemy)) return;
     var dx = enemy.x + enemy.w / 2 - bomb.x;
     var dy = enemy.y + enemy.h / 2 - bomb.y;
     if (Math.sqrt(dx * dx + dy * dy) > radius) return;
@@ -2598,7 +2697,7 @@ function checkSwordHitEnemiesFor(p) {
     }
   });
   enemies.forEach(function(e, enemyIndex) {
-    if (e.dead || e.room !== currentRoom) return;
+    if (e.dead || e.room !== currentRoom || !isEnemyVulnerable(e)) return;
     var hit = false;
     for (var i = 0; i < swingBoxes.length; i++) {
       if (rectHit(swingBoxes[i], e)) { hit = true; break; }
