@@ -133,7 +133,7 @@ enemies.push({
   x: 23 * ROOM_W + 330, y: 450, w: 142, h: 110, vx: 0, vy: 0,
   homeX: 23 * ROOM_W + 330, homeY: 450,
   dead: false, room: 23, type: "ardoris_elite", boss: true,
-  bossName: "ESCARABAJO DE CAPARAZÓN",
+  bossName: "VESPEX",
   hp: ARDORIS_ELITE_HP, maxHp: ARDORIS_ELITE_HP,
   action: "", actionTimer: 0, attackTimer: 90, attackIndex: 0,
   attackDirection: 1, attackHit: false, waveSpawned: false, phase: 1, staysRoom: true
