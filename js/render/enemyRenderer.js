@@ -26,8 +26,9 @@ function drawEnemies() {
       var bossColor = e.type === "guardian" ? "#b77b45" : (e.type === "queen_larva" ? "#9b4c9b" :
         (e.type === "dragon" ? "#b94632" : (e.type === "ardoris_elite" ? "#416745" : "#415f98")));
       var attackPulse = e.actionTimer > 0 ? Math.sin(e.actionTimer * 0.7) * 4 : 0;
+      var eliteSlamImpact = e.type === "ardoris_elite" && e.action === "elite_slam" && e.actionTimer <= 4;
       var bossBob = e.type === "ardoris_elite"
-        ? (!e.action ? Math.sin(Date.now() / 430) * 1.2 : 0)
+        ? (!e.action ? Math.sin(Date.now() / 430) * 1.2 : (eliteSlamImpact ? 2 : 0))
         : (e.action === "jump" ? Math.sin(e.actionTimer * 0.35) * 5 : attackPulse * 0.35);
       var phaseColor = e.type === "ardoris_elite" ? "#a6ef78" :
         (e.phase === 3 ? "#ff315a" : (e.phase === 2 ? "#ffb347" : "#8cf"));
@@ -121,23 +122,30 @@ function drawEnemies() {
         ctx.stroke();
         var slashWarning = e.action === "elite_slash_windup";
         var slamWindup = e.action === "elite_slam_windup";
+        var slamStrike = e.action === "elite_slam";
         var energyWindup = e.action === "elite_energy_windup";
-        var bladeTipY = slamWindup ? e.y + 8 + Math.sin(Date.now() / 70) * 3 : e.y + 52;
+        var slamProgress = Math.max(0, Math.min(1, (9 - e.actionTimer) / 4));
+        var bladeTipY = slamWindup
+          ? e.y + 8 + Math.sin(Date.now() / 70) * 3
+          : (slamStrike ? e.y + 12 + slamProgress * (e.h - 14) : e.y + 52);
+        var bladeStartX = eliteCenter + eliteFacing * (slamStrike ? 30 : 34);
+        var bladeStartY = e.y + (slamStrike ? 38 : 56);
+        var bladeTipX = eliteCenter + eliteFacing * (slamStrike ? 58 : 80);
         var bladeGlow = slashWarning || slamWindup ? 0.8 + Math.sin(Date.now() / 65) * 0.2 : 0.3;
         ctx.shadowColor = "#e7ff9a";
         ctx.shadowBlur = slashWarning || slamWindup ? 18 : 4;
         ctx.strokeStyle = "rgba(190, 245, 120, " + bladeGlow + ")";
         ctx.lineWidth = slashWarning ? 11 : (slamWindup ? 8 : 4);
         ctx.beginPath();
-        ctx.moveTo(eliteCenter + eliteFacing * 34, e.y + 56);
-        ctx.lineTo(eliteCenter + eliteFacing * 80, bladeTipY);
+        ctx.moveTo(bladeStartX, bladeStartY);
+        ctx.lineTo(bladeTipX, bladeTipY);
         ctx.stroke();
         ctx.shadowBlur = 0;
         ctx.strokeStyle = "#d7e9ae";
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(eliteCenter + eliteFacing * 34, e.y + 56);
-        ctx.lineTo(eliteCenter + eliteFacing * 80, bladeTipY);
+        ctx.moveTo(bladeStartX, bladeStartY);
+        ctx.lineTo(bladeTipX, bladeTipY);
         ctx.stroke();
         if (slashWarning) {
           ctx.fillStyle = "#efffb2";
@@ -206,11 +214,16 @@ function drawEnemies() {
           ctx.lineTo(e.x + e.w / 2 - eliteFacing * 63, e.y + 63);
           ctx.stroke();
         } else if (e.action === "elite_slam") {
-          ctx.strokeStyle = "#c5f18e";
-          ctx.lineWidth = 4;
+          ctx.strokeStyle = eliteSlamImpact ? "#efffb2" : "#c5f18e";
+          ctx.lineWidth = eliteSlamImpact ? 6 : 4;
           ctx.beginPath();
-          ctx.moveTo(eliteCenter - 22, e.y + 70);
-          ctx.lineTo(eliteCenter + 22, e.y + 70);
+          ctx.moveTo(bladeTipX - eliteFacing * 12, e.y + e.h - 2);
+          ctx.lineTo(bladeTipX + eliteFacing * 28, e.y + e.h - 2);
+          if (eliteSlamImpact) {
+            ctx.moveTo(bladeTipX + eliteFacing * 4, e.y + e.h - 2);
+            ctx.lineTo(bladeTipX + eliteFacing * 15, e.y + e.h - 13);
+            ctx.arc(bladeTipX, e.y + e.h - 4, 7, 0, Math.PI * 2);
+          }
           ctx.stroke();
         }
         ctx.restore();
