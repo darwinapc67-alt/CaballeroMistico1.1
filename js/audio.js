@@ -120,18 +120,58 @@ var MUSIC_FALLBACK_THEMES = {
   infinite: {root: 130.81, scale: [0, 2, 3, 7, 8], waveform: "square"}
 };
 var MUSIC_FALLBACK_MOTIFS = {
-  menu: [[0, 2, 4, 2, 1, 3, 2, 0], [0, 3, 4, 1, 2, 4, 3, 0], [0, 1, 3, 4, 2, 3, 1, 0]],
-  exploration: [[0, 2, 4, 3, 2, 1, 3, 0], [0, 3, 4, 2, 1, 4, 2, 0], [0, 1, 3, 4, 2, 3, 1, 0]],
-  danger: [[0, 2, 1, 4, 3, 2, 1, 0], [0, 3, 2, 4, 1, 3, 2, 0], [0, 4, 2, 3, 1, 4, 2, 1]],
-  combat: [[0, 2, 4, 1, 3, 2, 4, 0], [0, 3, 1, 4, 2, 3, 4, 1], [0, 4, 2, 1, 3, 4, 2, 0]],
-  elite: [[0, 3, 2, 4, 1, 3, 0, 2], [0, 4, 1, 3, 2, 4, 1, 0], [0, 2, 4, 1, 3, 0, 4, 2]],
-  boss: [[0, 4, 2, 1, 3, 0, 4, 1], [0, 3, 1, 4, 2, 0, 3, 1], [0, 4, 1, 3, 0, 2, 4, 1]],
-  safe: [[0, 2, 3, 4, 2, 1, 3, 0], [0, 3, 1, 4, 2, 3, 1, 0], [0, 1, 4, 3, 2, 4, 1, 0]],
-  infinite: [[0, 3, 4, 2, 3, 1, 4, 0], [0, 2, 4, 1, 3, 4, 2, 1], [0, 4, 3, 1, 2, 4, 1, 0]]
+  menu: [[0, -1, 2, 4, -1, 3, 2, -1], [2, 3, -1, 4, 3, -1, 1, 0], [4, -1, 3, 2, 1, -1, 2, 0]],
+  exploration: [[0, -1, 2, 4, 2, -1, 3, 1], [2, 3, -1, 4, 3, -1, 1, 0], [4, -1, 3, 2, -1, 1, 2, -1]],
+  danger: [[0, 4, -1, 2, 3, -1, 1, 4], [2, -1, 3, 4, -1, 1, 4, 2], [4, 3, -1, 1, 2, 4, -1, 0]],
+  combat: [[0, 2, 4, -1, 3, 1, -1, 4], [2, -1, 3, 4, 1, -1, 4, 2], [4, 1, -1, 3, 2, 4, -1, 0]],
+  elite: [[0, 3, -1, 2, 4, 1, -1, 3], [4, -1, 1, 3, 2, -1, 4, 1], [2, 4, -1, 1, 3, 0, -1, 4]],
+  boss: [[0, 4, -1, 2, 1, 3, -1, 4], [4, -1, 2, 3, 1, -1, 0, 2], [2, 1, -1, 4, 3, 0, -1, 1]],
+  safe: [[0, -1, 2, 3, -1, 4, 2, -1], [3, 2, -1, 4, 1, -1, 2, 0], [4, -1, 1, 3, 2, -1, 0, -1]],
+  infinite: [[0, 3, -1, 4, 2, -1, 1, 3], [4, -1, 2, 1, 3, 4, -1, 2], [2, 4, -1, 1, 0, 3, -1, 4]]
 };
-var MUSIC_FALLBACK_STEPS = {
-  menu: 0.34, exploration: 0.38, danger: 0.28, combat: 0.3,
-  elite: 0.25, boss: 0.28, safe: 0.44, infinite: 0.32
+var MUSIC_FALLBACK_PROGRESSIONS = {
+  menu: [[0, 3, 4, 0], [0, 2, 3, 0]],
+  exploration: [[0, 3, 4, 0], [0, 4, 2, 0]],
+  danger: [[0, 4, 3, 0], [0, 2, 4, 0]],
+  combat: [[0, 4, 2, 0], [0, 3, 1, 0]],
+  elite: [[0, 4, 3, 0], [0, 2, 4, 0]],
+  boss: [[0, 4, 1, 0], [0, 2, 4, 0]],
+  safe: [[0, 3, 0, 0], [0, 2, 3, 0]],
+  infinite: [[0, 4, 3, 0], [0, 2, 4, 0]]
+};
+var MUSIC_FALLBACK_ARPEGGIOS = {
+  menu: [0, -1, 2, 4, -1, 2, 1, -1],
+  exploration: [0, -1, 2, 4, 2, -1, 4, -1],
+  danger: [0, 2, -1, 4, 2, 1, -1, 4],
+  combat: [0, -1, 4, 2, 0, 2, -1, 4],
+  elite: [0, 2, 4, -1, 2, 4, 1, -1],
+  boss: [0, 4, -1, 2, 1, 4, -1, 2],
+  safe: [0, -1, 2, -1, 4, 2, -1, -1],
+  infinite: [0, 2, -1, 4, 2, 0, -1, 4]
+};
+var MUSIC_FALLBACK_BASS_RHYTHMS = {
+  menu: [0, 2],
+  exploration: [0, 2.5],
+  danger: [0, 1.5, 2.5],
+  combat: [0, 1.5, 2.5, 3.5],
+  elite: [0, 2, 3],
+  boss: [0, 1.5, 2.5],
+  safe: [0],
+  infinite: [0, 2, 3]
+};
+var MUSIC_FALLBACK_DYNAMICS = {
+  menu: [0.5, 0.66, 0.8, 0.62],
+  exploration: [0.46, 0.64, 0.76, 0.56],
+  danger: [0.58, 0.78, 0.96, 0.72],
+  combat: [0.62, 0.84, 1, 0.76],
+  elite: [0.62, 0.86, 1, 0.78],
+  boss: [0.66, 0.88, 1, 0.8],
+  safe: [0.42, 0.56, 0.68, 0.5],
+  infinite: [0.58, 0.8, 0.94, 0.72]
+};
+var MUSIC_FALLBACK_BEATS = {
+  menu: 0.42, exploration: 0.46, danger: 0.34, combat: 0.36,
+  elite: 0.32, boss: 0.34, safe: 0.52, infinite: 0.38
 };
 var MUSIC_BASE_VOLUME = 0.2;
 var currentMusicTrack = "";
@@ -248,20 +288,31 @@ function ensureMusicPlayers() {
     musicPlayers.push(player);
   }
 }
-function playFallbackNote(frequency, duration, type, volume, delay) {
-    if (!audioCtx || !musicEnabled) return;
-    var oscillator = audioCtx.createOscillator();
-    var gain = audioCtx.createGain();
-    var startAt = audioCtx.currentTime + (delay || 0);
-    oscillator.type = type || "square";
-    oscillator.frequency.setValueAtTime(frequency, startAt);
-    gain.gain.setValueAtTime(0.0001, startAt);
-    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume * MUSIC_BASE_VOLUME * musicVolume * masterVolume), startAt + 0.015);
-    gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
-    oscillator.connect(gain);
-    gain.connect(ensureMusicFallbackGain());
-    oscillator.start(startAt);
-    oscillator.stop(startAt + duration + 0.02);
+function playFallbackNote(frequency, duration, type, volume, delay, pan) {
+  if (!audioCtx || !musicEnabled) return;
+  var oscillator = audioCtx.createOscillator();
+  var gain = audioCtx.createGain();
+  var startAt = audioCtx.currentTime + (delay || 0);
+  var endAt = startAt + duration;
+  var attack = Math.min(0.07, duration * 0.3);
+  var peak = Math.max(0.0001, volume * MUSIC_BASE_VOLUME * musicVolume * masterVolume);
+  oscillator.type = type || "triangle";
+  oscillator.frequency.setValueAtTime(frequency, startAt);
+  gain.gain.setValueAtTime(0.0001, startAt);
+  gain.gain.exponentialRampToValueAtTime(peak, startAt + attack);
+  gain.gain.setValueAtTime(peak, Math.max(startAt + attack, endAt - Math.min(0.1, duration * 0.25)));
+  gain.gain.exponentialRampToValueAtTime(0.0001, endAt);
+  oscillator.connect(gain);
+  var output = gain;
+  if (typeof audioCtx.createStereoPanner === "function" && pan) {
+    var stereo = audioCtx.createStereoPanner();
+    stereo.pan.setValueAtTime(pan, startAt);
+    gain.connect(stereo);
+    output = stereo;
+  }
+  output.connect(ensureMusicFallbackGain());
+  oscillator.start(startAt);
+  oscillator.stop(endAt + 0.02);
 }
 function nextFallbackPhraseIndex(sceneKey, phraseCount) {
   var bag = musicFallbackPhraseBags[sceneKey];
@@ -287,29 +338,93 @@ function nextFallbackPhraseIndex(sceneKey, phraseCount) {
   return selectedIndex;
 }
 
+function getFallbackFrequency(theme, degree, octaveOffset) {
+  var scaleIndex = ((degree % theme.scale.length) + theme.scale.length) % theme.scale.length;
+  var octave = Math.floor(degree / theme.scale.length);
+  return theme.root * Math.pow(2, (theme.scale[scaleIndex] + octave * 12 + (octaveOffset || 0)) / 12);
+}
+
 function playFallbackPhrase(sceneKey) {
   var parts = sceneKey.split(":");
   var region = parts[0];
   var mood = parts[1] || "exploration";
   var theme = MUSIC_FALLBACK_THEMES[region] || MUSIC_FALLBACK_THEMES.crystal;
-  var phrases = MUSIC_FALLBACK_MOTIFS[mood] || MUSIC_FALLBACK_MOTIFS.exploration;
-  var motif = phrases[nextFallbackPhraseIndex(sceneKey, phrases.length)];
-  var step = MUSIC_FALLBACK_STEPS[mood] || MUSIC_FALLBACK_STEPS.exploration;
-  var noteType = mood === "danger" || mood === "elite" || mood === "boss"
-    ? "sawtooth"
-    : (mood === "combat" ? "square" : theme.waveform);
-  var rootShift = mood === "danger" || mood === "boss" ? -12 :
-    (mood === "safe" ? 12 : 0);
+  var motifs = MUSIC_FALLBACK_MOTIFS[mood] || MUSIC_FALLBACK_MOTIFS.exploration;
+  var motifIndex = nextFallbackPhraseIndex(sceneKey, motifs.length);
+  var motif = motifs[motifIndex];
+  var secondaryMotif = motifs[(motifIndex + 1 + Math.floor(Math.random() * (motifs.length - 1))) % motifs.length];
+  var progressions = MUSIC_FALLBACK_PROGRESSIONS[mood] || MUSIC_FALLBACK_PROGRESSIONS.exploration;
+  var progression = progressions[Math.floor(Math.random() * progressions.length)];
+  var arpeggio = MUSIC_FALLBACK_ARPEGGIOS[mood] || MUSIC_FALLBACK_ARPEGGIOS.exploration;
+  var bassRhythm = MUSIC_FALLBACK_BASS_RHYTHMS[mood] || MUSIC_FALLBACK_BASS_RHYTHMS.exploration;
+  var dynamics = MUSIC_FALLBACK_DYNAMICS[mood] || MUSIC_FALLBACK_DYNAMICS.exploration;
+  var beat = MUSIC_FALLBACK_BEATS[mood] || MUSIC_FALLBACK_BEATS.exploration;
+  var leadWave = mood === "danger" || mood === "elite" || mood === "boss" ? "sawtooth" : theme.waveform;
+  var bassWave = mood === "combat" || mood === "infinite" ? "square" : "triangle";
 
-  for (var i = 0; i < motif.length; i++) {
-    var scaleIndex = motif[i] % theme.scale.length;
-    var octave = Math.floor(motif[i] / theme.scale.length);
-    var semitones = theme.scale[scaleIndex] + octave * 12 + rootShift;
-    var frequency = theme.root * Math.pow(2, semitones / 12);
-    playFallbackNote(frequency, step * 0.82, noteType, 0.65, i * step);
-    if (mood !== "safe") playFallbackNote(frequency / 2, step * 0.75, "triangle", 0.28, i * step);
+  for (var bar = 0; bar < 4; bar++) {
+    var barStart = bar * 4 * beat;
+    var chordRoot = progression[bar];
+    var energy = dynamics[bar];
+    var melody = bar === 2 ? secondaryMotif : motif;
+
+    [0, 2, 4].forEach(function(chordTone, index) {
+      var voicing = chordRoot + chordTone;
+      var octave = index === 0 ? 0 : (index === 1 ? 12 : 12);
+      playFallbackNote(
+        getFallbackFrequency(theme, voicing, octave),
+        beat * (bar === 3 ? 3.7 : 3.9),
+        "sine",
+        energy * (index === 0 ? 0.14 : 0.085),
+        barStart,
+        index === 0 ? -0.2 : 0.2
+      );
+    });
+
+    for (var slot = 0; slot < 8; slot++) {
+      var note = melody[slot];
+      var startBeat = slot * 0.5;
+      var delay = barStart + startBeat * beat;
+      var arpNote = arpeggio[(slot + bar) % arpeggio.length];
+      if (arpNote !== -1 && (slot % 2 === 0 || (bar + slot) % 3 === 0)) {
+        playFallbackNote(
+          getFallbackFrequency(theme, chordRoot + arpNote, 12),
+          beat * (slot % 4 === 0 ? 0.42 : 0.28),
+          "triangle",
+          energy * 0.18,
+          delay,
+          slot % 2 === 0 ? -0.55 : 0.55
+        );
+      }
+
+      if (note === -1) continue;
+      var melodicDegree = note;
+      if (bar === 1 && slot % 3 === 1) melodicDegree += 1;
+      if (bar === 3 && slot > 4) melodicDegree = Math.max(0, melodicDegree - 1);
+      if (Math.random() < 0.12) melodicDegree += Math.random() < 0.5 ? -1 : 1;
+      var noteLength = slot % 4 === 0 ? 0.78 : (slot % 3 === 0 ? 0.58 : 0.38);
+      playFallbackNote(
+        getFallbackFrequency(theme, melodicDegree, 12),
+        beat * noteLength,
+        leadWave,
+        energy * (slot === 0 || slot === 4 ? 0.44 : 0.34),
+        delay,
+        slot % 2 === 0 ? 0.18 : -0.18
+      );
+    }
+
+    bassRhythm.forEach(function(bassBeat, index) {
+      var bassDegree = chordRoot + (index % 2 === 0 ? 0 : 2);
+      playFallbackNote(
+        getFallbackFrequency(theme, bassDegree, -12),
+        beat * (index === 0 ? 0.78 : 0.48),
+        bassWave,
+        energy * (index === 0 ? 0.36 : 0.26),
+        barStart + bassBeat * beat
+      );
+    });
   }
-  return motif.length * step;
+  return beat * 16;
 }
 function ensureMusicFallbackGain() {
     if (!musicFallbackGainNode) {
