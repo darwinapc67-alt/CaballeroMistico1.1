@@ -9,6 +9,11 @@ var bestiaryInfo = {
 };
 var bestiary = { bat: { discovered: false, count: 0 }, kamikaze_bat: { discovered: false, count: 0 }, acid_slime: { discovered: false, count: 0 }, larva_mosca: { discovered: false, count: 0 }, cazador_paramo: { discovered: false, count: 0 }, dark_knight: { discovered: false, count: 0 }, blue_sentry: { discovered: false, count: 0 } };
 var ARDORIS_ELITE_HP = 750;
+var ARDORIS_ELITE_ATTACKS = [
+  { action: "elite_slash_windup", windupFrames: 48 },
+  { action: "elite_charge_windup", windupFrames: 44 },
+  { action: "elite_slam_windup", windupFrames: 50 }
+];
 
 var queenLarvaReserve = {
   x: 15540, y: 470, w: 78, h: 90, vx: 0, vy: 0, dead: false, room: 19, type: "queen_larva",

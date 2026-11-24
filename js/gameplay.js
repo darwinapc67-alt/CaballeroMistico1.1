@@ -1237,21 +1237,14 @@ function updateBoss(e, room) {
     } else if (e.attackTimer <= 0) {
       e.attackDirection = target.player.x + target.player.w / 2 < e.x + e.w / 2 ? -1 : 1;
       e.attackHit = false;
-      var eliteAttack = e.attackIndex % 3;
-      e.attackIndex = (e.attackIndex + 1) % 3;
-      if (eliteAttack === 0) {
-        e.action = "elite_slash_windup";
-        e.actionTimer = 48;
-        sfxBossVoice();
-      } else if (eliteAttack === 1) {
-        e.action = "elite_charge_windup";
-        e.actionTimer = 44;
-        sfxBossVoice();
-      } else {
-        e.action = "elite_slam_windup";
-        e.actionTimer = 50;
-        sfxBossVoice();
-      }
+      var eliteAttackIndex = Math.floor(Number(e.attackIndex) || 0);
+      if (eliteAttackIndex < 0 || eliteAttackIndex >= ARDORIS_ELITE_ATTACKS.length) eliteAttackIndex = 0;
+      var selectedEliteAttack = ARDORIS_ELITE_ATTACKS[eliteAttackIndex];
+      e.attackIndex = (eliteAttackIndex + 1) % ARDORIS_ELITE_ATTACKS.length;
+      e.action = selectedEliteAttack.action;
+      e.actionTimer = selectedEliteAttack.windupFrames;
+      if (e.action === "elite_slam_windup") e.waveSpawned = false;
+      sfxBossVoice();
     } else {
       var eliteWalkDirection = target.player.x < e.x ? -1 : 1;
       e.x += eliteWalkDirection * 0.55;
