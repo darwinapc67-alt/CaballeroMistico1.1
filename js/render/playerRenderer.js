@@ -447,17 +447,19 @@ function drawPlayerEntity(p, wakeProgress) {
 }
 function drawHpBar(p, barX, barY) {
   var heartW = 15, heartH = 14, gap = 2;
+  var heartCount = 10;
+  var hpPerHeart = p.maxHp / heartCount;
   ctx.fillStyle = "rgba(0,0,0,0.6)";
-  ctx.fillRect(barX - 6, barY - 5, (heartW + gap) * p.maxHp + 8, heartH + 10);
+  ctx.fillRect(barX - 6, barY - 5, (heartW + gap) * heartCount + 8, heartH + 10);
   ctx.strokeStyle = p.id === 2 ? "#f4f" : "#f44";
   ctx.lineWidth = 1;
-  ctx.strokeRect(barX - 6, barY - 5, (heartW + gap) * p.maxHp + 8, heartH + 10);
-  for (var i = 0; i < p.maxHp; i++) {
+  ctx.strokeRect(barX - 6, barY - 5, (heartW + gap) * heartCount + 8, heartH + 10);
+  for (var i = 0; i < heartCount; i++) {
     var x = barX + i * (heartW + gap);
     var color = p.id === 2 ? "#ff33ff" : "#ff3344";
     var emptyColor = p.id === 2 ? "#331133" : "#331111";
     var outlineColor = p.id === 2 ? "#ff99ff" : "#ff8899";
-    var heartValue = Math.max(0, Math.min(1, p.hp - i));
+    var heartValue = Math.max(0, Math.min(1, (p.hp - i * hpPerHeart) / hpPerHeart));
     ctx.save();
     ctx.translate(x, barY);
     ctx.fillStyle = emptyColor;
@@ -473,7 +475,7 @@ function drawHpBar(p, barX, barY) {
     if (heartValue > 0) {
       ctx.save();
       ctx.beginPath();
-      ctx.rect(0, 0, heartValue === 0.5 ? 8 : 16, 15);
+      ctx.rect(0, 0, 16 * heartValue, 15);
       ctx.clip();
       ctx.fillStyle = color;
       ctx.strokeStyle = outlineColor;

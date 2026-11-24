@@ -896,17 +896,25 @@ window.addEventListener("keydown", function(e) {
           arrows += 20;
           sfxBuy();
         }
-        if (menuSelection === 3 && heartFragmentsBought1 < 4 && spendAzari(25, "heart_fragment_1")) {
+        if (menuSelection === 3 && spendAzari(25, "heart_fragment_1")) {
           heartFragments1++;
           heartFragmentsBought1++;
           sfxBuy();
-          if (heartFragments1 >= 4) { heartFragments1 -= 4; player.maxHp++; player.hp = player.maxHp; }
+          if (heartFragments1 >= 4) {
+            heartFragments1 -= 4;
+            grantPermanentVitality(player);
+            spawnFloatText(player.x, player.y - 50, "¡+10 vidas máximas!", "#f44");
+          }
         }
-        if (menuSelection === 4 && heartFragmentsBought2 < 4 && spendAzari(25, "heart_fragment_2")) {
+        if (menuSelection === 4 && spendAzari(25, "heart_fragment_2")) {
           heartFragments2++;
           heartFragmentsBought2++;
           sfxBuy();
-          if (heartFragments2 >= 4) { heartFragments2 -= 4; player2.maxHp++; player2.hp = player2.maxHp; }
+          if (heartFragments2 >= 4) {
+            heartFragments2 -= 4;
+            grantPermanentVitality(player2);
+            spawnFloatText(player2.x, player2.y - 50, "¡+10 vidas máximas!", "#f4f");
+          }
         }
         if (menuSelection === 5 && !hasAzariCharm && spendAzari(45, "azari_charm")) {
           hasAzariCharm = true;
@@ -1041,11 +1049,16 @@ window.addEventListener("keydown", function(e) {
       if (e.key === "ArrowUp" || k === "w") { menuSelection = (menuSelection - 1 + 2) % 2; e.preventDefault(); return; }
       if (e.key === "ArrowDown" || k === "s") { menuSelection = (menuSelection + 1) % 2; e.preventDefault(); return; }
       if (e.key === "Enter") {
-        if (menuSelection === 0 && heartFragmentsBought2 < 4 && azari >= 25) {
+        if (menuSelection === 0 && azari >= 25) {
           spendAzari(25, "heart_fragment_2"); heartFragments2++; heartFragmentsBought2++;
           spawnFloatText(player2.x, player2.y - 30, "¡Fragmento J2!", "#f4f");
           sfxBuy();
-          if (heartFragments2 >= 4) { heartFragments2 -= 4; player2.maxHp++; player2.hp = player2.maxHp; spawnFloatText(player2.x, player2.y - 50, "¡Vida +1!", "#f4f"); spawnParticles(player2.x + player2.w/2, player2.y + player2.h/2, "#f4f", 20, 5); }
+          if (heartFragments2 >= 4) {
+            heartFragments2 -= 4;
+            grantPermanentVitality(player2);
+            spawnFloatText(player2.x, player2.y - 50, "¡+10 vidas máximas!", "#f4f");
+            spawnParticles(player2.x + player2.w/2, player2.y + player2.h/2, "#f4f", 20, 5);
+          }
         }
         if (menuSelection === 1 && !hasAzariCharm && azari >= 45) { spendAzari(45, "azari_charm"); hasAzariCharm = true; spawnFloatText(player.x, player.y - 30, "¡Amuleto!", "#0ff"); sfxBuy(); }
         e.preventDefault(); return;
@@ -1240,8 +1253,14 @@ function processGamepadInput() {
         if (menuSelection === 0 && !hasMap && azari >= 45) { spendAzari(45, "map"); hasMap = true; sfxBuy(); }
         if (menuSelection === 1 && !hasBow && azari >= 35) { spendAzari(35, "bow"); hasBow = true; arrows = Math.max(arrows, 20); if (device === "touch") setupTouchControls(); sfxBuy(); }
         if (menuSelection === 2 && azari >= 5) { spendAzari(5, "arrows"); arrows += 20; sfxBuy(); }
-        if (menuSelection === 3 && heartFragmentsBought1 < 4 && azari >= 25) { spendAzari(25, "heart_fragment_1"); heartFragments1++; heartFragmentsBought1++; sfxBuy(); if (heartFragments1 >= 4) { heartFragments1 -= 4; player.maxHp++; player.hp = player.maxHp; } }
-        if (menuSelection === 4 && heartFragmentsBought2 < 4 && azari >= 25) { spendAzari(25, "heart_fragment_2"); heartFragments2++; heartFragmentsBought2++; sfxBuy(); if (heartFragments2 >= 4) { heartFragments2 -= 4; player2.maxHp++; player2.hp = player2.maxHp; } }
+        if (menuSelection === 3 && azari >= 25) {
+          spendAzari(25, "heart_fragment_1"); heartFragments1++; heartFragmentsBought1++; sfxBuy();
+          if (heartFragments1 >= 4) { heartFragments1 -= 4; grantPermanentVitality(player); spawnFloatText(player.x, player.y - 50, "¡+10 vidas máximas!", "#f44"); }
+        }
+        if (menuSelection === 4 && azari >= 25) {
+          spendAzari(25, "heart_fragment_2"); heartFragments2++; heartFragmentsBought2++; sfxBuy();
+          if (heartFragments2 >= 4) { heartFragments2 -= 4; grantPermanentVitality(player2); spawnFloatText(player2.x, player2.y - 50, "¡+10 vidas máximas!", "#f4f"); }
+        }
         if (menuSelection === 5 && !hasAzariCharm && azari >= 45) { spendAzari(45, "azari_charm"); hasAzariCharm = true; sfxBuy(); }
         if (menuSelection === 6 && !hasAzariMagnet && azari >= 60) { spendAzari(60, "azari_magnet"); hasAzariMagnet = true; sfxBuy(); }
         if (menuSelection === 7 && azariBagLevel < 5) {

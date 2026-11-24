@@ -68,7 +68,7 @@ function resetAll() {
   bossUniqueItems = { guardian: false, queen_larva: false, abyssal_knight: false, dragon: false };
   hiddenCollectibles = { eclipse: false, root: false, crown: false, echo: false, highGallery: false, abyssRift: false, branchCache: false, fungusCache: false, galleryCache: false, cityCache: false };
   hitFlash = 0; needsRespawn = false;
-  player.hp = player.maxHp = 10 + permanentUpgrades.vitality;
+  player.hp = player.maxHp = getMaxHpForVitality(permanentUpgrades.vitality);
   if (twoPlayerMode) player2.hp = player2.maxHp = 10;
   stats = { playTime: 0, enemiesKilled: 0, roomsVisited: 1, jumps: 0, attacks: 0, deaths: 0 };
   frameCounter = 0;

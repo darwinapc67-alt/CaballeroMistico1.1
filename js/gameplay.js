@@ -27,50 +27,22 @@ function playerTakeDamage(p, dmg, isBossDamage) {
   flash = 0.4;
   sfxHit();
   if (p.hp <= 0) {
+    p.hp = 0;
     stats.deaths++;
     consecutiveDeaths++;
-    if (consecutiveDeaths >= 3) {
-      var totalDeaths = stats.deaths;
-      trackGameEvent("player_death", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
-      trackGameEvent("game_over", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
-      if (gameMode === "hardcore") {
-        trackGameEvent("hardcore_reset", { room: currentRoom, deaths: totalDeaths });
-        if (activeSlot >= 0) {
-          deleteSave(activeSlot);
-        }
-        resetAll();
-        menuSubState = "slots";
-        introTimer = 0;
-        hardcoreGameOver = true;
-        gameState = ST_DEATH;
-        return;
-      }
-      restoreCheckpoint(gameMode === "infinite");
-      stats.deaths = totalDeaths;
-      consecutiveDeaths = 0;
-      spawnFloatText(player.x, player.y - 32, "¡Tres derrotas! Último punto de guardado", "#ffd700");
-      return;
-    }
-    if (consecutiveDeaths < 3) {
-      trackGameEvent("player_death", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
-      player.x = p === player ? lastSafeX : p.x;
-      player.y = p === player ? lastSafeY : p.y;
-      player.vx = 0;
-      player.vy = 0;
-      player.hp = player.maxHp;
-      player.frozen = false;
-      playerDead = false;
-      player.inv = 90;
-      player.hasSword = hasSword;
-      player.swordEquipped = swordEquipped;
-      player.swordSheathed = !swordEquipped;
-      gameState = ST_PLAYING;
-      spawnFloatText(player.x, player.y - 32, "DERROTA " + consecutiveDeaths + " / 3", "#ff7777");
+    trackGameEvent("player_death", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
+    trackGameEvent("game_over", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
+    if (gameMode === "hardcore") {
+      if (activeSlot >= 0) deleteSave(activeSlot);
+      resetAll();
+      menuSubState = "slots";
+      introTimer = 0;
+      hardcoreGameOver = true;
+      gameState = ST_DEATH;
       return;
     }
     playerDead = true;
-    spawnFloatText(p.x, p.y - 34, "DERROTA " + consecutiveDeaths + " / 3", "#ff7777");
-    trackGameEvent("player_death", { game_mode: gameMode, room: currentRoom, deaths: stats.deaths });
+    spawnFloatText(p.x, p.y - 34, "DERROTA", "#ff7777");
     deathTimer = 0;
     deathAnimTimer = 0;
     deathChoice = 0;
@@ -91,6 +63,17 @@ function playerTakeDamage(p, dmg, isBossDamage) {
     }
     spawnParticles(p.x + p.w/2, p.y + p.h/2, "#f00", 20, 5);
   }
+}
+
+function grantPermanentVitality(targetPlayer) {
+  if (targetPlayer && targetPlayer !== player) {
+    targetPlayer.maxHp += 10;
+    targetPlayer.hp = targetPlayer.maxHp;
+    return;
+  }
+  permanentUpgrades.vitality = getVitalityUpgradeCount(permanentUpgrades) + 1;
+  player.maxHp = getMaxHpForVitality(permanentUpgrades.vitality);
+  player.hp = player.maxHp;
 }
 
 function spawnAcidPuddle(enemy) {
@@ -555,6 +538,8 @@ function saveHealingStoneCheckpoint() {
 
 function restoreCheckpoint(preserveInfiniteProgress) {
     if (preserveInfiniteProgress === undefined) preserveInfiniteProgress = true;
+    var currentVitality = getVitalityUpgradeCount(permanentUpgrades, player.maxHp);
+    var currentEclipseCollected = !!(hiddenCollectibles && hiddenCollectibles.eclipse);
     var currentSwordState = {
       hasSword: hasSword,
       swordEquipped: swordEquipped,
@@ -571,7 +556,7 @@ function restoreCheckpoint(preserveInfiniteProgress) {
     } : null;
     var cp = checkpointState || { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, hasShield: false, swordEquipped: false, weaponId: DEFAULT_WEAPON_ID, unlockedWeapons: [DEFAULT_WEAPON_ID], hasBow: false, arrows: 0, hasMap: false, hasAzariCharm: false, hasAzariMagnet: false, hasAzariBag: false, azariBagLevel: 0, hasOldKey: false, doorUnlocked: false, rewardAzariCollected: false, hasLantern: false, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, blessingSlots: 2, equippedBlessings: [], armorId: "vacío", armorLevel: 0, permanentUpgrades: { vitality: 0, strength: 0 }, bossUniqueItems: { guardian: false, queen_larva: false, abyssal_knight: false }, hiddenCollectibles: { eclipse: false, root: false, crown: false, echo: false, highGallery: false, abyssRift: false, branchCache: false, fungusCache: false, galleryCache: false, cityCache: false } };
     currentRoom = cp.room; player.x = cp.px; player.y = cp.py;
-    player.hp = cp.hp; player.maxHp = cp.maxHp;
+    player.hp = cp.hp;
     azari = gameMode === "infinite" && preserveInfiniteProgress ? azari : cp.azari;
     eterium = Math.max(eterium, Number(cp.eterium) || 0);
     hasEteriumSkill = hasEteriumSkill || !!cp.hasEteriumSkill;
@@ -593,8 +578,12 @@ function restoreCheckpoint(preserveInfiniteProgress) {
     combatSkills = cp.combatSkills || { charged: false, aerial: false, combo: false };
     blessingSlots = cp.blessingSlots || 2; equippedBlessings = cp.equippedBlessings || [];
     armorId = cp.armorId || "vacío"; armorLevel = Math.max(0, Math.min(3, Number(cp.armorLevel) || (armorId === "plate" ? 1 : 0))); permanentUpgrades = cp.permanentUpgrades || { vitality: 0, strength: 0 };
+    permanentUpgrades.vitality = Math.max(currentVitality, getVitalityUpgradeCount(permanentUpgrades, cp.maxHp));
+    player.maxHp = getMaxHpForVitality(permanentUpgrades.vitality);
+    player.hp = Math.min(typeof cp.hp === "number" ? cp.hp : player.maxHp, player.maxHp);
     bossUniqueItems = cp.bossUniqueItems || { guardian: false, queen_larva: false, abyssal_knight: false };
     hiddenCollectibles = cp.hiddenCollectibles || { eclipse: false, root: false, crown: false, echo: false, highGallery: false, abyssRift: false, branchCache: false, fungusCache: false, galleryCache: false, cityCache: false };
+    hiddenCollectibles.eclipse = hiddenCollectibles.eclipse || currentEclipseCollected;
     if (Array.isArray(cp.altars)) {
       cp.altars.forEach(function(savedAltar) {
         var altar = altars.find(function(candidate) { return candidate.id === savedAltar.id; });
@@ -751,9 +740,7 @@ function updateHiddenCollectibles() {
     if (Math.abs(player.x - item.x) < 34 && Math.abs(player.y - item.y) < 50) {
       hiddenCollectibles[item.id] = true;
       if (item.id === "eclipse") {
-        permanentUpgrades.vitality++;
-        player.maxHp++;
-        player.hp = player.maxHp;
+        grantPermanentVitality(player);
       } else if (item.id === "root") {
         permanentUpgrades.strength++;
       } else if (item.id === "crown") {
@@ -2130,9 +2117,8 @@ function defeatBoss(e) {
   speakBossDialogue("JEFE DERROTADO");
   startMusic();
   if (e.type === "guardian") {
-    player.maxHp++;
-    player.hp = player.maxHp;
-    spawnFloatText(player.x, player.y - 40, "¡Corazón +1!", "#f44");
+    grantPermanentVitality(player);
+    spawnFloatText(player.x, player.y - 40, "¡+10 vidas máximas!", "#f44");
   } else if (e.type === "queen_larva") {
     hasDoubleJump = true;
     player.maxJumps = 2; player2.maxJumps = 2;

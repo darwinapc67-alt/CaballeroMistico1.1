@@ -844,16 +844,20 @@ function drawGame() {
     ctx.fillText("ENTER / ESPACIO para omitir", 400, 560);
     ctx.textAlign = "left";
   }
-  var barX = canvas.width - 20 - (player.maxHp * 15);
-  if (barX < 200) barX = 200;
+  var barX = canvas.width - 20 - (10 * 17) - 62;
   drawHpBar(player, barX, 14);
-  if (twoPlayerMode) drawHpBar(player2, barX, 30);
+  ctx.fillStyle = "#fff"; ctx.font = "11px monospace";
+  ctx.fillText(player.hp + "/" + player.maxHp, barX + 178, 25);
+  if (twoPlayerMode) {
+    drawHpBar(player2, barX, 30);
+    ctx.fillText(player2.hp + "/" + player2.maxHp, barX + 178, 41);
+  }
 
   if (heartFragments1 > 0 || heartFragments2 > 0) {
     ctx.fillStyle = "#f44"; ctx.font = "bold 12px monospace";
     var fragText = "❤️ J1:" + heartFragments1 + "/4";
     if (twoPlayerMode) fragText += "  J2:" + heartFragments2 + "/4";
-    ctx.fillText(fragText, barX, twoPlayerMode ? 50 : 28);
+    ctx.fillText(fragText, barX, twoPlayerMode ? 58 : 44);
   }
   ctx.fillStyle = "#fff"; ctx.font = "13px monospace";
   ctx.fillText(hasSword ? "⚔️ " + getWeaponConfig(weaponId).name : "🛡️ " + translateText("Sin arma"), 12, 22);
@@ -1213,8 +1217,7 @@ function drawDeathScreen() {
   ctx.fillText("HAS MUERTO", canvas.width / 2, 170);
   ctx.fillStyle = "#ddd";
   ctx.font = "14px monospace";
-  var deathProgress = gameMode === "infinite" ? "Derrota " + consecutiveDeaths + " / 3" : "Derrota";
-  ctx.fillText(deathProgress + ": elige cómo continuar.", canvas.width / 2, 215);
+  ctx.fillText("Tus vidas llegaron a cero. Elige cómo continuar.", canvas.width / 2, 215);
   ctx.fillStyle = "#aebbd0";
   ctx.font = "11px monospace";
   ctx.fillText("Tiempo: " + formatTime(stats.playTime) + "  •  Enemigos: " + stats.enemiesKilled + "  •  Derrotas: " + stats.deaths, canvas.width / 2, 242);

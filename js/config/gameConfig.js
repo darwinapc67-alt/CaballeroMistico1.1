@@ -9,6 +9,22 @@ var VERSION = "v2.75 beta";
 
 var ST_LANGUAGE = 0, ST_DEVICE = 1, ST_MENU = 2, ST_PLAYING = 3, ST_PAUSED = 4, ST_TRANSITION = 5, ST_INVENTORY = 7, ST_DIALOGUE = 8, ST_DEATH = 9, ST_HOUSE = 10, ST_LEVEL_EDITOR = 11, ST_INTRO = 12, ST_WAKE = 13;
 
+function getVitalityUpgradeCount(upgrades, savedMaxHp) {
+  var vitality = Math.max(0, Math.floor(Number(upgrades && upgrades.vitality) || 0));
+  var previousMaxHp = Number(savedMaxHp);
+  if (isFinite(previousMaxHp) && previousMaxHp === getMaxHpForVitality(vitality)) {
+    return vitality;
+  }
+  if (isFinite(previousMaxHp) && previousMaxHp > 10) {
+    vitality = Math.max(vitality, Math.floor(previousMaxHp - 10));
+  }
+  return vitality;
+}
+
+function getMaxHpForVitality(vitality) {
+  return 10 + 10 * Math.max(0, Math.floor(Number(vitality) || 0));
+}
+
 var introTimer = 0, introAmbientCue = -1;
 var introWakeUp = false;
 var introWakeUpDone = false;
@@ -907,6 +923,9 @@ function loadGame(i) {
   ownedSkins = s.ownedSkins || {};
   equippedSkin = s.equippedSkin || "";
   permanentUpgrades = s.permanentUpgrades || { vitality: 0, strength: 0 };
+  permanentUpgrades.vitality = getVitalityUpgradeCount(permanentUpgrades, player.maxHp);
+  player.maxHp = getMaxHpForVitality(permanentUpgrades.vitality);
+  player.hp = Math.min(player.hp, player.maxHp);
   bossUniqueItems = s.bossUniqueItems || { guardian: false, queen_larva: false, abyssal_knight: false, dragon: false };
   hiddenCollectibles = s.hiddenCollectibles || { eclipse: false, root: false, crown: false, echo: false, highGallery: false, abyssRift: false, branchCache: false, fungusCache: false, galleryCache: false, cityCache: false };
   bossArenaState.guardian = !!(s.bossesDefeated && s.bossesDefeated.guardian);
