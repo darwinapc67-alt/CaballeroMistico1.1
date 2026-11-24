@@ -1023,6 +1023,26 @@ function finishArdorisEliteAttack(e) {
   e.vx = 0;
 }
 
+function spawnArdorisGroundWave(e, direction, landingWave) {
+  var waveWidth = landingWave ? 52 : 40;
+  var waveHeight = landingWave ? 16 : 12;
+  var eliteLeft = e.room * ROOM_W + 35;
+  var eliteRight = e.room * ROOM_W + ROOM_W - 35 - e.w;
+  var waveArenaRight = eliteRight + e.w;
+  var waveX = landingWave
+    ? e.x + e.w / 2 - waveWidth / 2
+    : (direction > 0 ? e.x + e.w - 6 : e.x - waveWidth + 6);
+  waveX = Math.max(eliteLeft, Math.min(waveArenaRight - waveWidth, waveX));
+  bossProjectiles.push({
+    x: waveX, y: e.y + e.h - waveHeight, w: waveWidth, h: waveHeight,
+    vx: direction * (landingWave ? 5.5 : 7), vy: 0, gravity: 0, damage: 1,
+    life: 120, room: e.room,
+    kind: landingWave ? "ardoris_landing_wave" : "ardoris_shockwave",
+    color: landingWave ? "#ffb347" : "#a6ef78", homing: false, owner: e,
+    arenaLeft: eliteLeft, arenaRight: waveArenaRight
+  });
+}
+
 function updateBoss(e, room) {
   var target = bossTarget(e);
   var arenaLeft = e.room * ROOM_W + 35, arenaRight = arenaLeft + ROOM_W - 70;
@@ -1157,24 +1177,7 @@ function updateBoss(e, room) {
     var eliteLeft = e.room * ROOM_W + 35;
     var eliteRight = e.room * ROOM_W + ROOM_W - 35 - e.w;
     if (e.actionTimer > 0) {
-      if (e.action === "elite_slash_windup") {
-        e.actionTimer--;
-        if (e.actionTimer <= 0) {
-          e.action = "elite_slash";
-          e.actionTimer = 9;
-          e.attackHit = false;
-          sfxAttack();
-        }
-      } else if (e.action === "elite_slash") {
-        if (e.actionTimer === 4) {
-          var slashBox = e.attackDirection > 0
-            ? {x: e.x + e.w - 8, y: e.y + 20, w: 105, h: e.h - 32}
-            : {x: e.x - 97, y: e.y + 20, w: 105, h: e.h - 32};
-          ardorisEliteHit(e, slashBox);
-        }
-        e.actionTimer--;
-        if (e.actionTimer <= 0) finishArdorisEliteAttack(e);
-      } else if (e.action === "elite_charge_windup") {
+      if (e.action === "elite_charge_windup") {
         e.actionTimer--;
         if (e.actionTimer <= 0) {
           e.action = "elite_charge";
@@ -1203,18 +1206,7 @@ function updateBoss(e, room) {
         }
       } else if (e.action === "elite_slam") {
         if (e.actionTimer === 5 && !e.waveSpawned) {
-          var waveWidth = 40;
-          var waveX = e.attackDirection > 0 ? e.x + e.w - 6 : e.x - waveWidth + 6;
-          var waveArenaRight = eliteRight + e.w;
-          waveX = Math.max(eliteLeft, Math.min(waveArenaRight - waveWidth, waveX));
-          var waveY = e.y + e.h - 12;
-          bossProjectiles.push({
-            x: waveX, y: waveY, w: waveWidth, h: 12,
-            vx: e.attackDirection * 7, vy: 0, gravity: 0, damage: 1,
-            life: 120, room: e.room, kind: "ardoris_shockwave",
-            color: "#a6ef78", homing: false, owner: e,
-            arenaLeft: eliteLeft, arenaRight: waveArenaRight
-          });
+          spawnArdorisGroundWave(e, e.attackDirection, false);
           var impactX = e.x + e.w / 2 + e.attackDirection * 18;
           impactBursts.push({
             x: impactX, y: e.y + e.h, life: 22, maxLife: 22,
@@ -1226,6 +1218,43 @@ function updateBoss(e, room) {
         }
         e.actionTimer--;
         if (e.actionTimer <= 0) finishArdorisEliteAttack(e);
+      } else if (e.action === "elite_jump_windup") {
+        e.actionTimer--;
+        if (e.actionTimer <= 0) {
+          e.action = "elite_jump";
+          e.jumpStartX = e.x;
+          e.jumpTargetX = Math.max(eliteLeft, Math.min(
+            eliteRight, target.player.x + target.player.w / 2 - e.w / 2
+          ));
+          e.jumpDuration = 44;
+          e.actionTimer = e.jumpDuration;
+          e.waveSpawned = false;
+          e.attackHit = false;
+          sfxBossVoice();
+        }
+      } else if (e.action === "elite_jump") {
+        var jumpDuration = Math.max(1, e.jumpDuration || 44);
+        var jumpProgress = (jumpDuration - e.actionTimer) / jumpDuration;
+        e.x = e.jumpStartX + (e.jumpTargetX - e.jumpStartX) * jumpProgress;
+        e.y = floorY - 180 * 4 * jumpProgress * (1 - jumpProgress);
+        e.actionTimer--;
+        if (e.actionTimer <= 0) {
+          e.x = e.jumpTargetX;
+          e.y = floorY;
+          if (!e.waveSpawned) {
+            var landingDirection = target.player.x + target.player.w / 2 < e.x + e.w / 2 ? -1 : 1;
+            spawnArdorisGroundWave(e, landingDirection, true);
+            var landingX = e.x + e.w / 2;
+            impactBursts.push({
+              x: landingX, y: e.y + e.h, life: 26, maxLife: 26,
+              landing: true, strength: 5, color: "#ffb347"
+            });
+            spawnParticles(landingX, e.y + e.h - 2, "#ffb347", 18, 5);
+            sfxGroundSlam();
+            e.waveSpawned = true;
+          }
+          finishArdorisEliteAttack(e);
+        }
       } else if (e.action === "elite_energy_windup") {
         e.actionTimer--;
         if (e.actionTimer <= 0) {
@@ -1330,7 +1359,8 @@ function updateBossProjectiles() {
       b.vy = targetY / targetDistance * 7;
     }
     var hit = false;
-    var outsideArena = b.kind === "ardoris_shockwave" &&
+    var isArdorisGroundWave = b.kind === "ardoris_shockwave" || b.kind === "ardoris_landing_wave";
+    var outsideArena = isArdorisGroundWave &&
       (b.x < b.arenaLeft || b.x + b.w > b.arenaRight);
     if (!outsideArena && currentRoom === b.room && !b.reflected) {
       if (rectHit(player, b)) { playerTakeDamage(player, b.damage, true); hit = true; }

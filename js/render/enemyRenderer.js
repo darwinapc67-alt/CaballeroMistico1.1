@@ -120,9 +120,9 @@ function drawEnemies() {
         ctx.moveTo(eliteCenter + eliteFacing * 57, e.y + 42);
         ctx.lineTo(eliteCenter + eliteFacing * 68, e.y + 31);
         ctx.stroke();
-        var slashWarning = e.action === "elite_slash_windup";
         var slamWindup = e.action === "elite_slam_windup";
         var slamStrike = e.action === "elite_slam";
+        var jumpWindup = e.action === "elite_jump_windup";
         var energyWindup = e.action === "elite_energy_windup";
         var slamProgress = Math.max(0, Math.min(1, (9 - e.actionTimer) / 4));
         var bladeTipY = slamWindup
@@ -131,11 +131,11 @@ function drawEnemies() {
         var bladeStartX = eliteCenter + eliteFacing * (slamStrike ? 30 : 34);
         var bladeStartY = e.y + (slamStrike ? 38 : 56);
         var bladeTipX = eliteCenter + eliteFacing * (slamStrike ? 58 : 80);
-        var bladeGlow = slashWarning || slamWindup ? 0.8 + Math.sin(Date.now() / 65) * 0.2 : 0.3;
+        var bladeGlow = slamWindup ? 0.8 + Math.sin(Date.now() / 65) * 0.2 : 0.3;
         ctx.shadowColor = "#e7ff9a";
-        ctx.shadowBlur = slashWarning || slamWindup ? 18 : 4;
+        ctx.shadowBlur = slamWindup ? 18 : 4;
         ctx.strokeStyle = "rgba(190, 245, 120, " + bladeGlow + ")";
-        ctx.lineWidth = slashWarning ? 11 : (slamWindup ? 8 : 4);
+        ctx.lineWidth = slamWindup ? 8 : 4;
         ctx.beginPath();
         ctx.moveTo(bladeStartX, bladeStartY);
         ctx.lineTo(bladeTipX, bladeTipY);
@@ -147,16 +147,7 @@ function drawEnemies() {
         ctx.moveTo(bladeStartX, bladeStartY);
         ctx.lineTo(bladeTipX, bladeTipY);
         ctx.stroke();
-        if (slashWarning) {
-          ctx.fillStyle = "#efffb2";
-          ctx.beginPath();
-          ctx.arc(eliteCenter + eliteFacing * 80, e.y + 52, 7 + Math.sin(Date.now() / 65) * 2, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.font = "bold 18px monospace";
-          ctx.textAlign = "center";
-          ctx.fillText("!", eliteCenter + eliteFacing * 72, e.y + 29);
-          ctx.textAlign = "left";
-        } else if (e.action === "elite_charge_windup") {
+        if (e.action === "elite_charge_windup") {
           ctx.strokeStyle = "#d5ef91";
           ctx.lineWidth = 4;
           ctx.beginPath();
@@ -179,6 +170,18 @@ function drawEnemies() {
           ctx.textAlign = "center";
           ctx.fillText("!", eliteCenter + eliteFacing * 64, e.y + 12);
           ctx.textAlign = "left";
+        } else if (jumpWindup) {
+          var jumpChargePulse = 0.7 + Math.sin(Date.now() / 75) * 0.3;
+          ctx.strokeStyle = "rgba(255, 179, 71, " + jumpChargePulse + ")";
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.ellipse(eliteCenter, e.y + e.h, 32 + jumpChargePulse * 8, 8, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fillStyle = "#ffe0a3";
+          ctx.font = "bold 18px monospace";
+          ctx.textAlign = "center";
+          ctx.fillText("!", eliteCenter, e.y + 12);
+          ctx.textAlign = "left";
         } else if (energyWindup) {
           var energyPulse = 10 + Math.sin(Date.now() / 55) * 3;
           ctx.save();
@@ -199,13 +202,18 @@ function drawEnemies() {
           ctx.textAlign = "center";
           ctx.fillText("!", eliteCenter + eliteFacing * 44, e.y + 20);
           ctx.textAlign = "left";
-        } else if (e.action === "elite_slash") {
-          ctx.strokeStyle = "#e3ffae";
-          ctx.lineWidth = 8;
+        } else if (e.action === "elite_jump" && typeof e.jumpTargetX === "number") {
+          var jumpFloorY = rooms[e.room].height - 40;
+          var landingPulse = 0.75 + Math.sin(Date.now() / 70) * 0.2;
+          ctx.strokeStyle = "rgba(255, 179, 71, " + landingPulse + ")";
+          ctx.lineWidth = 4;
           ctx.beginPath();
-          ctx.moveTo(eliteCenter + eliteFacing * 35, e.y + 72);
-          ctx.lineTo(eliteCenter + eliteFacing * 102, e.y + 35);
+          ctx.ellipse(e.jumpTargetX + e.w / 2, jumpFloorY, 38 + landingPulse * 8, 9, 0, 0, Math.PI * 2);
           ctx.stroke();
+          ctx.fillStyle = "#ffe0a3";
+          ctx.beginPath();
+          ctx.arc(e.jumpTargetX + e.w / 2, jumpFloorY - 5, 5, 0, Math.PI * 2);
+          ctx.fill();
         } else if (e.action === "elite_charge") {
           ctx.strokeStyle = "rgba(181, 236, 127, 0.65)";
           ctx.lineWidth = 5;

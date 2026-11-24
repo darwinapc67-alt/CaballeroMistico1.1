@@ -29,15 +29,16 @@ function drawBossProjectiles() {
       ctx.ellipse(0, 0, b.w * 0.28, b.h * 0.24, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
-    } else if (b.kind === "ardoris_shockwave") {
-      ctx.shadowColor = "#a6ef78";
+    } else if (b.kind === "ardoris_shockwave" || b.kind === "ardoris_landing_wave") {
+      var isLandingWave = b.kind === "ardoris_landing_wave";
+      ctx.shadowColor = b.color;
       ctx.shadowBlur = 10;
       ctx.beginPath();
       ctx.ellipse(b.x + b.w / 2, b.y + b.h / 2, b.w / 2, b.h / 2, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.shadowBlur = 0;
-      ctx.fillStyle = "#e5ffc1";
-      ctx.fillRect(b.x + b.w * 0.2, b.y + 3, b.w * 0.6, 3);
+      ctx.fillStyle = isLandingWave ? "#fff0cd" : "#e5ffc1";
+      ctx.fillRect(b.x + b.w * 0.2, b.y + (isLandingWave ? 5 : 3), b.w * 0.6, 3);
     } else {
       ctx.beginPath(); ctx.arc(b.x + b.w / 2, b.y + b.h / 2, Math.max(b.w, b.h) / 2, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "rgba(255,255,255,0.45)"; ctx.fillRect(b.x + 2, b.y + 2, 3, 3);
