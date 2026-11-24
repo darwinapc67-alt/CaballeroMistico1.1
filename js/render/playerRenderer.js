@@ -447,21 +447,24 @@ function drawPlayerEntity(p, wakeProgress) {
 }
 function drawHpBar(p, barX, barY) {
   var heartW = 15, heartH = 14, gap = 2;
-  var heartCount = 10;
-  var hpPerHeart = p.maxHp / heartCount;
+  var heartColumns = Math.min(20, p.maxHp);
+  var heartRows = Math.ceil(p.maxHp / heartColumns);
+  var barWidth = (heartW + gap) * heartColumns + 8;
+  var barHeight = heartRows * 16 + 10;
   ctx.fillStyle = "rgba(0,0,0,0.6)";
-  ctx.fillRect(barX - 6, barY - 5, (heartW + gap) * heartCount + 8, heartH + 10);
+  ctx.fillRect(barX - 6, barY - 5, barWidth, barHeight);
   ctx.strokeStyle = p.id === 2 ? "#f4f" : "#f44";
   ctx.lineWidth = 1;
-  ctx.strokeRect(barX - 6, barY - 5, (heartW + gap) * heartCount + 8, heartH + 10);
-  for (var i = 0; i < heartCount; i++) {
-    var x = barX + i * (heartW + gap);
+  ctx.strokeRect(barX - 6, barY - 5, barWidth, barHeight);
+  for (var i = 0; i < p.maxHp; i++) {
+    var x = barX + (i % heartColumns) * (heartW + gap);
+    var y = barY + Math.floor(i / heartColumns) * 16;
     var color = p.id === 2 ? "#ff33ff" : "#ff3344";
     var emptyColor = p.id === 2 ? "#331133" : "#331111";
     var outlineColor = p.id === 2 ? "#ff99ff" : "#ff8899";
-    var heartValue = Math.max(0, Math.min(1, (p.hp - i * hpPerHeart) / hpPerHeart));
+    var heartValue = Math.max(0, Math.min(1, p.hp - i));
     ctx.save();
-    ctx.translate(x, barY);
+    ctx.translate(x, y);
     ctx.fillStyle = emptyColor;
     ctx.strokeStyle = "#552233";
     ctx.lineWidth = 1;

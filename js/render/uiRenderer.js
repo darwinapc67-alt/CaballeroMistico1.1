@@ -844,20 +844,24 @@ function drawGame() {
     ctx.fillText("ENTER / ESPACIO para omitir", 400, 560);
     ctx.textAlign = "left";
   }
-  var barX = canvas.width - 20 - (10 * 17) - 62;
+  var heartColumns = Math.min(20, Math.max(player.maxHp, twoPlayerMode ? player2.maxHp : 0));
+  var barX = canvas.width - 20 - (heartColumns * 17) - 62;
   drawHpBar(player, barX, 14);
   ctx.fillStyle = "#fff"; ctx.font = "11px monospace";
-  ctx.fillText(player.hp + "/" + player.maxHp, barX + 178, 25);
+  ctx.fillText(player.hp + "/" + player.maxHp, barX + heartColumns * 17 + 8, 25);
+  var hpHudBottom = 14 + Math.ceil(player.maxHp / 20) * 16;
   if (twoPlayerMode) {
-    drawHpBar(player2, barX, 30);
-    ctx.fillText(player2.hp + "/" + player2.maxHp, barX + 178, 41);
+    var player2BarY = hpHudBottom + 6;
+    drawHpBar(player2, barX, player2BarY);
+    ctx.fillText(player2.hp + "/" + player2.maxHp, barX + heartColumns * 17 + 8, player2BarY + 11);
+    hpHudBottom = player2BarY + Math.ceil(player2.maxHp / 20) * 16;
   }
 
   if (heartFragments1 > 0 || heartFragments2 > 0) {
     ctx.fillStyle = "#f44"; ctx.font = "bold 12px monospace";
     var fragText = "❤️ J1:" + heartFragments1 + "/4";
     if (twoPlayerMode) fragText += "  J2:" + heartFragments2 + "/4";
-    ctx.fillText(fragText, barX, twoPlayerMode ? 58 : 44);
+    ctx.fillText(fragText, barX, hpHudBottom + 16);
   }
   ctx.fillStyle = "#fff"; ctx.font = "13px monospace";
   ctx.fillText(hasSword ? "⚔️ " + getWeaponConfig(weaponId).name : "🛡️ " + translateText("Sin arma"), 12, 22);
