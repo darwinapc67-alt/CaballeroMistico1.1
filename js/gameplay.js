@@ -2907,8 +2907,9 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     });
   }
 
-  if (jumpPressed && !p.jumpHeld && (p.jumpsLeft > 0 || p.wallContact) && !p.frozen) {
-    if (p.wallContact && !p.onGround) {
+  var wallJumpAvailable = hasWallJump && p.wallContact && !p.onGround;
+  if (jumpPressed && !p.jumpHeld && (p.jumpsLeft > 0 || wallJumpAvailable) && !p.frozen) {
+    if (wallJumpAvailable) {
       p.vy = -13.5;
       p.vx = p.wallContact > 0 ? -5 : 5;
       p.facing = p.wallContact > 0 ? -1 : 1;

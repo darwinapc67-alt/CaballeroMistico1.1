@@ -17,6 +17,7 @@ var player2 = {
 };
 
 var hasSword = false, hasShield = false, swordEquipped = false, weaponId = DEFAULT_WEAPON_ID;
+var hasWallJump = false;
 var currentRoom = 0, cameraX = 0, targetCamX = 0, cameraY = 0, targetCamY = 0;
 var particles = [], floatTexts = [], arrowsInFlight = [], bombsInFlight = [], impactBursts = [], flash = 0;
 var eteriumSkillEffect = null;

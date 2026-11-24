@@ -6,7 +6,7 @@ var GUARD_DURATION = 120, GUARD_COOLDOWN = 240, SHIELD_PARRY_WINDOW = 12, SHIELD
 var WORLD_W = 52 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
 var VERSION_STORAGE_KEY = "caballero_mistico_version";
-var GAME_VERSION = "2.83";
+var GAME_VERSION = "2.84";
 var VERSION = "v" + GAME_VERSION;
 
 function initializeGameVersion() {
@@ -930,6 +930,7 @@ function loadGame(i) {
   heartFragmentsBought2 = s.heartFragmentsBought2 || 0;
   hasAzariCharm = s.hasAzariCharm || false;
   hasDoubleJump = s.hasDoubleJump || false;
+  hasWallJump = false;
   hasAzariMagnet = s.hasAzariMagnet || false;
   azariBagLevel = Math.max(0, Math.min(5, Number(s.azariBagLevel) || (s.hasAzariBag ? 1 : 0)));
   hasAzariBag = azariBagLevel > 0;

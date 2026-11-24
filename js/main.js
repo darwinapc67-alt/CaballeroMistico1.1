@@ -56,7 +56,7 @@ function resetAll() {
   azari = 0; hasMap = false; hasBow = false; arrows = 0; bombs = 0; shopOpen = false; shopId = 0; shopGreeting = ""; shopGreetingTimer = 0;
   heartFragments1 = 0; heartFragments2 = 0;
   heartFragmentsBought1 = 0; heartFragmentsBought2 = 0;
-  hasAzariCharm = false; hasDoubleJump = false;
+  hasAzariCharm = false; hasDoubleJump = false; hasWallJump = false;
   hasAzariMagnet = false; hasAzariBag = false; azariBagLevel = 0; hasLantern = false; lanternLevel = 0;
   hasOldKey = false; keyReady = false; doorUnlocked = false; rewardAzariCollected = false;
   hasDash = false;
