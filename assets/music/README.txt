@@ -9,11 +9,17 @@ Nombres requeridos:
 - boss.mp3       Alias opcional de la música de jefes.
 - infinite.mp3   Música del modo infinito.
 
-Si todavía no se han añadido los MP3, el juego usa una melodía de respaldo
-generada con Web Audio después de la primera interacción del jugador.
+Si todavía no se han añadido los MP3, el juego usa música de respaldo
+generada con Web Audio después de la primera interacción del jugador. Esa
+alternativa varía por región y situación y cambia entre motivos sin repetir
+el anterior inmediatamente.
 Para sustituirla, copia pistas MP3 u OGG con loop limpio y licencia válida.
 
 Para añadir una pista:
 1. Copia el archivo en esta carpeta.
 2. Añade su ruta al objeto MUSIC_TRACKS en js/audio.js.
-3. Incluye la pista en getMusicTrackForState() cuando corresponda.
+3. Asígnala a la situación correspondiente en MUSIC_SCENE_TRACKS.
+4. La región y la situación actuales se determinan en getMusicSceneForState().
+
+Para tener variedad de audio real por región y situación hacen falta varias
+pistas propias; actualmente no hay archivos MP3 u OGG en esta carpeta.

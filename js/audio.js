@@ -100,39 +100,140 @@ var MUSIC_TRACKS = {
   boss: "assets/music/jefe.mp3",
   infinite: "assets/music/infinite.mp3"
 };
+var MUSIC_SCENE_TRACKS = {
+  exploration: "normal",
+  danger: "jefe",
+  combat: "jefe",
+  elite: "elite",
+  boss: "jefe",
+  safe: "tienda",
+  infinite: "infinite"
+};
+var MUSIC_FALLBACK_THEMES = {
+  menu: {root: 196, scale: [0, 2, 4, 7, 9], waveform: "triangle"},
+  crystal: {root: 220, scale: [0, 2, 4, 7, 9], waveform: "triangle"},
+  ardoris: {root: 164.81, scale: [0, 2, 4, 7, 9], waveform: "square"},
+  marsh: {root: 146.83, scale: [0, 3, 5, 7, 10], waveform: "triangle"},
+  city: {root: 196, scale: [0, 2, 3, 7, 9], waveform: "triangle"},
+  abyss: {root: 110, scale: [0, 1, 5, 7, 8], waveform: "sawtooth"},
+  brumalis: {root: 174.61, scale: [0, 2, 5, 7, 9], waveform: "triangle"},
+  infinite: {root: 130.81, scale: [0, 2, 3, 7, 8], waveform: "square"}
+};
+var MUSIC_FALLBACK_MOTIFS = {
+  menu: [[0, 2, 4, 2, 1, 3, 2, 0], [0, 3, 4, 1, 2, 4, 3, 0], [0, 1, 3, 4, 2, 3, 1, 0]],
+  exploration: [[0, 2, 4, 3, 2, 1, 3, 0], [0, 3, 4, 2, 1, 4, 2, 0], [0, 1, 3, 4, 2, 3, 1, 0]],
+  danger: [[0, 2, 1, 4, 3, 2, 1, 0], [0, 3, 2, 4, 1, 3, 2, 0], [0, 4, 2, 3, 1, 4, 2, 1]],
+  combat: [[0, 2, 4, 1, 3, 2, 4, 0], [0, 3, 1, 4, 2, 3, 4, 1], [0, 4, 2, 1, 3, 4, 2, 0]],
+  elite: [[0, 3, 2, 4, 1, 3, 0, 2], [0, 4, 1, 3, 2, 4, 1, 0], [0, 2, 4, 1, 3, 0, 4, 2]],
+  boss: [[0, 4, 2, 1, 3, 0, 4, 1], [0, 3, 1, 4, 2, 0, 3, 1], [0, 4, 1, 3, 0, 2, 4, 1]],
+  safe: [[0, 2, 3, 4, 2, 1, 3, 0], [0, 3, 1, 4, 2, 3, 1, 0], [0, 1, 4, 3, 2, 4, 1, 0]],
+  infinite: [[0, 3, 4, 2, 3, 1, 4, 0], [0, 2, 4, 1, 3, 4, 2, 1], [0, 4, 3, 1, 2, 4, 1, 0]]
+};
+var MUSIC_FALLBACK_STEPS = {
+  menu: 0.34, exploration: 0.38, danger: 0.28, combat: 0.3,
+  elite: 0.25, boss: 0.28, safe: 0.44, infinite: 0.32
+};
 var MUSIC_BASE_VOLUME = 0.2;
 var currentMusicTrack = "";
-var musicRequestedTrack = "";
+var musicSceneKey = "";
 var musicPlayers = [];
 var activeMusicPlayer = -1;
 var musicFadeTimer = null;
 var musicUserInteracted = false;
 var musicFallbackTimer = null;
 var musicFallbackTrack = "";
+var musicFallbackSceneKey = "";
+var musicFallbackPhraseBags = {};
+var musicFallbackLastPhrase = {};
+var musicCombatUntil = 0;
 var musicFallbackGainNode = null;
 var musicFallbackSwitchTimer = null;
 
-function getMusicTrackForState() {
-  if (gameState === ST_MENU || gameState === ST_LANGUAGE || gameState === ST_DEVICE) return "menu";
-  if (shopOpen) return "tienda";
+function getMusicRegionForState() {
+  if (gameMode === "infinite") return "infinite";
+  var room = rooms && rooms[currentRoom];
+  if (room && room.visualProfile === "brumalis") return "brumalis";
+  if (room && room.optional) return room.visualProfile === "abyss" ? "abyss" : "crystal";
+  if ((currentRoom >= 0 && currentRoom <= 23) || currentRoom === 50) return "ardoris";
+  if (currentRoom >= 24 && currentRoom <= 29) return "city";
+  if (currentRoom >= 30) return "abyss";
+  return "crystal";
+}
+
+function isMusicSafeZone(room) {
+  if (shopOpen || gameState === ST_HOUSE || (room && (room.safeZone || room.restArea || room.shops))) return true;
+  var healingStone = room && room.healingStone;
+  return !!(healingStone && player &&
+    Math.abs(player.x + player.w / 2 - (healingStone.x + healingStone.w / 2)) < 110);
+}
+
+function isMusicDangerSituation(room) {
+  if (floorCollapseTimer > 0) return true;
+  if (player && player.maxHp > 0 && player.hp / player.maxHp <= 0.3) return true;
+  if (!player || !room || !room.spikes) return false;
+  return room.spikes.some(function(spike) {
+    return player.x + player.w > spike.x - 70 && player.x < spike.x + spike.w + 70 &&
+      Math.abs(player.y + player.h - spike.y) < 110;
+  });
+}
+
+function isMusicCombatActive() {
+  if (!player || !enemies || !enemies.some) return false;
+  var targets = twoPlayerMode ? [player, player2] : [player];
+  var activeCombat = enemies.some(function(enemy) {
+    if (enemy.dead || enemy.disabled || enemy.boss || enemy.room !== currentRoom) return false;
+    var vision = enemy.visionRadius || (enemy.type === "dark_knight" ? 260 :
+      (enemy.type === "cazador_paramo" ? 220 : (enemy.type === "acid_slime" ? 150 : 220)));
+    return targets.some(function(target) {
+      if (!target || target.frozen) return false;
+      var dx = target.x + target.w / 2 - (enemy.x + enemy.w / 2);
+      var dy = target.y + target.h / 2 - (enemy.y + enemy.h / 2);
+      return dx * dx + dy * dy <= vision * vision;
+    });
+  });
+  if (activeCombat) musicCombatUntil = Date.now() + 2500;
+  return activeCombat || Date.now() < musicCombatUntil;
+}
+
+function getMusicSceneForState() {
+  if (gameState === ST_MENU || gameState === ST_LANGUAGE || gameState === ST_DEVICE) {
+    return {track: "menu", key: "menu:menu"};
+  }
+  var region = getMusicRegionForState();
+  var room = rooms && rooms[currentRoom];
+  var mood = "exploration";
   var activeElite = enemies && enemies.find ? enemies.find(function(enemy) {
     return enemy.type === "ardoris_elite" && enemy.room === currentRoom && !enemy.dead && !enemy.disabled;
   }) : null;
-  if (activeElite) return "elite";
   var activeBoss = enemies && enemies.find ? enemies.find(function(enemy) {
-    return enemy.boss && enemy.room === currentRoom && !enemy.dead;
+    return enemy.boss && enemy.room === currentRoom && !enemy.dead && !enemy.disabled;
   }) : null;
-  var roomIsBoss = rooms && rooms[currentRoom] && rooms[currentRoom].bossName;
-  if (activeBoss || roomIsBoss || gameState === ST_DIALOGUE) return "jefe";
-  if (gameMode === "infinite") return "infinite";
-  return "normal";
+  if (isMusicSafeZone(room)) mood = "safe";
+  else if (activeElite) mood = "elite";
+  else if (activeBoss) mood = "boss";
+  else if (gameMode === "infinite") mood = "infinite";
+  else if (isMusicDangerSituation(room)) mood = "danger";
+  else if (isMusicCombatActive()) mood = "combat";
+  return {track: MUSIC_SCENE_TRACKS[mood] || "normal", key: region + ":" + mood};
+}
+
+function getMusicSceneKeyForTrack(trackName) {
+  var scene = getMusicSceneForState();
+  if (trackName === scene.track) return scene.key;
+  var mood = trackName === "menu" ? "menu" :
+    (trackName === "tienda" ? "safe" : (trackName === "elite" ? "elite" :
+    (trackName === "jefe" || trackName === "boss" ? "boss" :
+    (trackName === "infinite" ? "infinite" : "exploration"))));
+  return getMusicRegionForState() + ":" + mood;
+}
+
+function getMusicTrackForState() {
+  return getMusicSceneForState().track;
 }
 function controlarMusica() {
-  if (!musicUserInteracted || !musicEnabled) return;
-  var desiredTrack = getMusicTrackForState();
-  if (musicPlaying && currentMusicTrack === desiredTrack && musicRequestedTrack === desiredTrack) return;
-  if (desiredTrack === "jefe" && currentMusicTrack && currentMusicTrack !== "jefe") stopMusic();
-  startMusic(desiredTrack);
+  if (!musicUserInteracted || !musicEnabled || gameState === ST_PAUSED) return;
+  var scene = getMusicSceneForState();
+  startMusic(scene.track, scene.key);
 }
 function setMusicPlayerVolume(player, volume) {
   player.volume = Math.max(0, Math.min(1, volume * MUSIC_BASE_VOLUME * musicVolume * masterVolume));
@@ -162,20 +263,53 @@ function playFallbackNote(frequency, duration, type, volume, delay) {
     oscillator.start(startAt);
     oscillator.stop(startAt + duration + 0.02);
 }
-function playFallbackPhrase(trackName) {
-    var phrases = {
-      normal: [220, 262, 330, 392, 330, 262, 196, 220],
-      tienda: [262, 330, 392, 330, 294, 349, 440, 349],
-      jefe: [110, 165, 220, 330, 220, 165, 294, 440],
-      elite: [98, 147, 196, 247, 185, 147, 110, 165]
-    };
-    var notes = phrases[trackName] || phrases.normal;
-    var step = trackName === "elite" ? 0.2 : (trackName === "jefe" ? 0.18 : (trackName === "tienda" ? 0.42 : 0.3));
-    var noteType = trackName === "tienda" ? "triangle" : (trackName === "elite" ? "sawtooth" : "square");
-    for (var i = 0; i < notes.length; i++) {
-      playFallbackNote(notes[i], step * 0.82, noteType, 0.65, i * step);
-      if (trackName !== "tienda") playFallbackNote(notes[i] / 2, step * 0.75, "triangle", 0.3, i * step);
+function nextFallbackPhraseIndex(sceneKey, phraseCount) {
+  var bag = musicFallbackPhraseBags[sceneKey];
+  if (!bag || !bag.length) {
+    bag = [];
+    for (var i = 0; i < phraseCount; i++) bag.push(i);
+    for (var shuffleIndex = bag.length - 1; shuffleIndex > 0; shuffleIndex--) {
+      var swapIndex = Math.floor(Math.random() * (shuffleIndex + 1));
+      var value = bag[shuffleIndex];
+      bag[shuffleIndex] = bag[swapIndex];
+      bag[swapIndex] = value;
     }
+    if (bag.length > 1 && bag[bag.length - 1] === musicFallbackLastPhrase[sceneKey]) {
+      var otherIndex = Math.floor(Math.random() * (bag.length - 1));
+      var previousValue = bag[bag.length - 1];
+      bag[bag.length - 1] = bag[otherIndex];
+      bag[otherIndex] = previousValue;
+    }
+    musicFallbackPhraseBags[sceneKey] = bag;
+  }
+  var selectedIndex = bag.pop();
+  musicFallbackLastPhrase[sceneKey] = selectedIndex;
+  return selectedIndex;
+}
+
+function playFallbackPhrase(sceneKey) {
+  var parts = sceneKey.split(":");
+  var region = parts[0];
+  var mood = parts[1] || "exploration";
+  var theme = MUSIC_FALLBACK_THEMES[region] || MUSIC_FALLBACK_THEMES.crystal;
+  var phrases = MUSIC_FALLBACK_MOTIFS[mood] || MUSIC_FALLBACK_MOTIFS.exploration;
+  var motif = phrases[nextFallbackPhraseIndex(sceneKey, phrases.length)];
+  var step = MUSIC_FALLBACK_STEPS[mood] || MUSIC_FALLBACK_STEPS.exploration;
+  var noteType = mood === "danger" || mood === "elite" || mood === "boss"
+    ? "sawtooth"
+    : (mood === "combat" ? "square" : theme.waveform);
+  var rootShift = mood === "danger" || mood === "boss" ? -12 :
+    (mood === "safe" ? 12 : 0);
+
+  for (var i = 0; i < motif.length; i++) {
+    var scaleIndex = motif[i] % theme.scale.length;
+    var octave = Math.floor(motif[i] / theme.scale.length);
+    var semitones = theme.scale[scaleIndex] + octave * 12 + rootShift;
+    var frequency = theme.root * Math.pow(2, semitones / 12);
+    playFallbackNote(frequency, step * 0.82, noteType, 0.65, i * step);
+    if (mood !== "safe") playFallbackNote(frequency / 2, step * 0.75, "triangle", 0.28, i * step);
+  }
+  return motif.length * step;
 }
 function ensureMusicFallbackGain() {
     if (!musicFallbackGainNode) {
@@ -189,6 +323,7 @@ function fadeOutFallbackMusic(duration) {
     if (musicFallbackTimer) { clearInterval(musicFallbackTimer); musicFallbackTimer = null; }
     if (musicFallbackSwitchTimer) { clearTimeout(musicFallbackSwitchTimer); musicFallbackSwitchTimer = null; }
     musicFallbackTrack = "";
+    musicFallbackSceneKey = "";
     if (!audioCtx || !musicFallbackGainNode) return;
     var now = audioCtx.currentTime;
     var gain = musicFallbackGainNode.gain;
@@ -196,27 +331,37 @@ function fadeOutFallbackMusic(duration) {
     gain.setValueAtTime(gain.value, now);
     gain.linearRampToValueAtTime(0, now + duration);
 }
-function startFallbackMusic(trackName) {
+function startFallbackMusic(trackName, sceneKey) {
     if (!musicEnabled) return;
+    sceneKey = sceneKey || getMusicSceneKeyForTrack(trackName);
+    if (musicFallbackTrack === trackName && musicFallbackSceneKey === sceneKey) return;
     if (musicFallbackTimer) clearInterval(musicFallbackTimer);
     if (musicFallbackSwitchTimer) clearTimeout(musicFallbackSwitchTimer);
     var previousFallbackTrack = !!musicFallbackTrack;
     var fallbackGain = ensureMusicFallbackGain();
+    if (previousFallbackTrack) {
+      var fadeStart = audioCtx.currentTime;
+      fallbackGain.gain.cancelScheduledValues(fadeStart);
+      fallbackGain.gain.setValueAtTime(fallbackGain.gain.value, fadeStart);
+      fallbackGain.gain.linearRampToValueAtTime(0, fadeStart + 0.35);
+    }
     musicFallbackTrack = trackName;
+    musicFallbackSceneKey = sceneKey;
     musicPlaying = true;
     currentMusicTrack = trackName;
-    musicRequestedTrack = trackName;
+    musicSceneKey = sceneKey;
+    fadeMusicPlayers(null, 0, 350);
     function beginFallbackPhrase() {
-      if (musicFallbackTrack !== trackName || !musicEnabled) return;
+      if (musicFallbackTrack !== trackName || musicFallbackSceneKey !== sceneKey || !musicEnabled) return;
       var now = audioCtx.currentTime;
       fallbackGain.gain.cancelScheduledValues(now);
       fallbackGain.gain.setValueAtTime(0, now);
-      playFallbackPhrase(trackName);
+      var phraseDuration = playFallbackPhrase(sceneKey);
       fallbackGain.gain.linearRampToValueAtTime(1, now + 0.35);
-      var phraseDuration = trackName === "elite" ? 1.6 :
-        (trackName === "jefe" ? 1.44 : (trackName === "tienda" ? 3.36 : 2.4));
       musicFallbackTimer = setInterval(function() {
-        if (musicFallbackTrack === trackName && musicEnabled) playFallbackPhrase(trackName);
+        if (musicFallbackTrack === trackName && musicFallbackSceneKey === sceneKey && musicEnabled) {
+          playFallbackPhrase(sceneKey);
+        }
       }, phraseDuration * 1000);
       musicFallbackSwitchTimer = null;
     }
@@ -233,53 +378,77 @@ function startFallbackMusic(trackName) {
 function fadeMusicPlayers(targetPlayer, targetVolume, duration) {
   if (musicFadeTimer) clearInterval(musicFadeTimer);
   var startedAt = Date.now();
-  var fromPlayer = activeMusicPlayer >= 0 ? musicPlayers[activeMusicPlayer] : null;
+  var outgoingPlayers = [];
+  var outgoingVolumes = [];
+  var volumeScale = MUSIC_BASE_VOLUME * musicVolume * masterVolume;
+  musicPlayers.forEach(function(player) {
+    if (player === targetPlayer || player.paused) return;
+    outgoingPlayers.push(player);
+    outgoingVolumes.push(volumeScale > 0 ? player.volume / volumeScale : 0);
+  });
   musicFadeTimer = setInterval(function() {
     var progress = Math.min(1, (Date.now() - startedAt) / duration);
-    if (fromPlayer && fromPlayer !== targetPlayer) setMusicPlayerVolume(fromPlayer, 1 - progress);
-    setMusicPlayerVolume(targetPlayer, progress * targetVolume);
+    outgoingPlayers.forEach(function(player, index) {
+      setMusicPlayerVolume(player, outgoingVolumes[index] * (1 - progress));
+    });
+    if (targetPlayer) setMusicPlayerVolume(targetPlayer, progress * targetVolume);
     if (progress >= 1) {
-      if (fromPlayer && fromPlayer !== targetPlayer) {
-        fromPlayer.pause();
-        fromPlayer.currentTime = 0;
-        setMusicPlayerVolume(fromPlayer, 0);
-      }
+      outgoingPlayers.forEach(function(player) {
+        player.pause();
+        player.currentTime = 0;
+        setMusicPlayerVolume(player, 0);
+      });
+      if (!targetPlayer) activeMusicPlayer = -1;
       clearInterval(musicFadeTimer);
       musicFadeTimer = null;
     }
   }, 40);
 }
-function startMusic(trackName) {
+function startMusic(trackName, sceneKey) {
   if (!musicEnabled) return;
   musicUserInteracted = true;
   initAudio();
   ensureMusicPlayers();
-  trackName = trackName || getMusicTrackForState();
-  if (musicPlaying && currentMusicTrack === trackName) return;
-  if (musicFallbackTrack && musicFallbackTrack !== trackName) fadeOutFallbackMusic(0.25);
+  var scene = getMusicSceneForState();
+  trackName = trackName || scene.track;
+  sceneKey = sceneKey || (trackName === scene.track ? scene.key : getMusicSceneKeyForTrack(trackName));
+  if (musicPlaying && currentMusicTrack === trackName) {
+    if (musicSceneKey === sceneKey) return;
+    musicSceneKey = sceneKey;
+    if (musicFallbackTrack) startFallbackMusic(trackName, sceneKey);
+    return;
+  }
   var source = MUSIC_TRACKS[trackName];
   if (!source) return;
   var nextIndex = activeMusicPlayer === 0 ? 1 : 0;
   var nextPlayer = musicPlayers[nextIndex];
   nextPlayer.src = source;
   nextPlayer.onerror = function() {
-    if (currentMusicTrack === trackName) startFallbackMusic(trackName);
+    if (currentMusicTrack === trackName && musicSceneKey === sceneKey) startFallbackMusic(trackName, sceneKey);
   };
   nextPlayer.loop = true;
   nextPlayer.currentTime = 0;
   setMusicPlayerVolume(nextPlayer, 0);
   var playResult = nextPlayer.play();
-  if (playResult && playResult.catch) playResult.catch(function() {});
   currentMusicTrack = trackName;
-  musicRequestedTrack = trackName;
+  musicSceneKey = sceneKey;
   musicPlaying = true;
   activeMusicPlayer = nextIndex;
   fadeMusicPlayers(nextPlayer, 1, 700);
+  if (playResult && playResult.then) {
+    playResult.then(function() {
+      if (currentMusicTrack === trackName && musicSceneKey === sceneKey && musicFallbackTrack) {
+        fadeOutFallbackMusic(0.7);
+      }
+    }).catch(function() {
+      if (currentMusicTrack === trackName && musicSceneKey === sceneKey) startFallbackMusic(trackName, sceneKey);
+    });
+  }
 }
 function stopMusic() {
   musicPlaying = false;
   currentMusicTrack = "";
-  musicRequestedTrack = "";
+  musicSceneKey = "";
   if (musicFadeTimer) { clearInterval(musicFadeTimer); musicFadeTimer = null; }
   musicPlayers.forEach(function(player) {
     player.pause();
@@ -290,6 +459,7 @@ function stopMusic() {
   if (musicFallbackTimer) { clearInterval(musicFallbackTimer); musicFallbackTimer = null; }
   if (musicFallbackSwitchTimer) { clearTimeout(musicFallbackSwitchTimer); musicFallbackSwitchTimer = null; }
   musicFallbackTrack = "";
+  musicFallbackSceneKey = "";
   if (musicFallbackGainNode && audioCtx) {
     var now = audioCtx.currentTime;
     musicFallbackGainNode.gain.cancelScheduledValues(now);
@@ -312,12 +482,18 @@ function updateAudioEnvironment() {
     else if (currentRoom !== 1) sfxWind();
   }
 }
-function startBossMusic() { startMusic("boss"); }
+function startBossMusic(bossType) {
+  var mood = bossType === "ardoris_elite" ? "elite" : "boss";
+  startMusic(MUSIC_SCENE_TRACKS[mood], getMusicRegionForState() + ":" + mood);
+}
 function toggleMusic() {
   musicUserInteracted = true;
   musicEnabled = !musicEnabled;
   if (!musicEnabled) stopMusic();
-  else startMusic(getMusicTrackForState());
+  else {
+    var scene = getMusicSceneForState();
+    startMusic(scene.track, scene.key);
+  }
 }
 function toggleSfx() { sfxEnabled = !sfxEnabled; }
 function adjustMusicVolume(delta) {
