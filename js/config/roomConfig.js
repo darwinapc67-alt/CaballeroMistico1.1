@@ -224,12 +224,6 @@ interludeRooms[1].pedestal = {
   glow: 0,
   taken: false
 };
-interludeRooms[6].shieldPickup = {
-  stone: {x: 14670, y: 545, w: 80, h: 40},
-  shield: {x: 14695, y: 492, w: 30, h: 45},
-  taken: false
-};
-
 function createCityRoom(index, district, features) {
   var off = index * ROOM_W;
   var platforms = [{x: off, y: 560, w: ROOM_W, h: 40}];

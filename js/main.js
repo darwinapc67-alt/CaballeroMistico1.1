@@ -45,7 +45,6 @@ function resetAll() {
   resetPlayer();
   currentRoom = 0; cameraX = 0; targetCamX = 0; cameraY = 0; targetCamY = 0;
   hasSword = false; hasShield = false; swordEquipped = false;
-  if (rooms[18].shieldPickup) rooms[18].shieldPickup.taken = false;
   weaponId = DEFAULT_WEAPON_ID;
   unlockedWeapons = [DEFAULT_WEAPON_ID];
   weaponLevels = {};

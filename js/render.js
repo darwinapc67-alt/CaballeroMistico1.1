@@ -182,7 +182,6 @@ function drawGameWorld(skipPlayers) {
     if (room.city) drawCityHouses(room, r);
     if (r === 1 && currentRoom === 1 && gameMode === "normal") drawJumpTutorialHint();
     if (r === 13 && room.pedestal) drawPedestal(room.pedestal, hasSword);
-    if (r === 18 && room.shieldPickup) drawShieldPedestal(room.shieldPickup);
     var roomTransitionZones = Array.isArray(room.transitionZones) ? room.transitionZones.slice() : [];
     if (room.transitionZone) roomTransitionZones.unshift(room.transitionZone);
     roomTransitionZones.forEach(function(transitionZone) {

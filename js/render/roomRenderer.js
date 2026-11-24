@@ -375,45 +375,6 @@ function drawPedestal(ped, alreadyHasSword) {
   }
 
 }
-function drawShieldPedestal(pickup) {
-  if (!pickup) return;
-  var stone = pickup.stone;
-  ctx.fillStyle = "#4a4b3d";
-  ctx.fillRect(stone.x, stone.y, stone.w, stone.h);
-  ctx.fillStyle = "#8b8061";
-  ctx.fillRect(stone.x, stone.y, stone.w, 4);
-  ctx.strokeStyle = "rgba(25, 27, 21, 0.8)";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(stone.x + 12, stone.y + 12);
-  ctx.lineTo(stone.x + 28, stone.y + 24);
-  ctx.lineTo(stone.x + 19, stone.y + 34);
-  ctx.moveTo(stone.x + 64, stone.y + 9);
-  ctx.lineTo(stone.x + 51, stone.y + 22);
-  ctx.lineTo(stone.x + 61, stone.y + 35);
-  ctx.stroke();
-  if (!pickup.taken && !hasShield) {
-    var shield = pickup.shield;
-    var centerX = shield.x + shield.w / 2;
-    var centerY = shield.y + shield.h / 2;
-    ctx.fillStyle = "rgba(186, 128, 69, " + (0.12 + Math.sin(Date.now() / 190) * 0.04) + ")";
-    ctx.beginPath();
-    ctx.ellipse(centerX, centerY, 29, 34, 0, 0, Math.PI * 2);
-    ctx.fill();
-    drawWoodenShield(centerX, centerY, shield.w, shield.h, 1);
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#e0ba82";
-    ctx.font = "bold 11px monospace";
-    ctx.fillText("ESCUDO DE MADERA", centerX, shield.y - 12);
-    var pickupRange = {x: shield.x - 42, y: shield.y - 42, w: shield.w + 84, h: shield.h + 84};
-    if (currentRoom === 18 && rectHit(player, pickupRange)) {
-      ctx.fillStyle = "#f3d9ac";
-      ctx.font = "bold 11px monospace";
-      ctx.fillText("[" + getControlKeyLabel("interact") + "] TOMAR", centerX, shield.y - 26);
-    }
-    ctx.textAlign = "left";
-  }
-}
 function drawShopNPC(room, roomIndex) {
   if (!room.shops || !room.shops.length) return;
   var roomOrigin = room.worldX !== undefined ? room.worldX : roomIndex * ROOM_W;

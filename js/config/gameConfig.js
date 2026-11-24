@@ -6,7 +6,7 @@ var GUARD_DURATION = 120, GUARD_COOLDOWN = 240, SHIELD_PARRY_WINDOW = 12, SHIELD
 var WORLD_W = 52 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
 var VERSION_STORAGE_KEY = "caballero_mistico_version";
-var GAME_VERSION = "2.81";
+var GAME_VERSION = "2.82";
 var VERSION = "v" + GAME_VERSION;
 
 function initializeGameVersion() {
@@ -878,6 +878,7 @@ function saveGame(i) {
 function loadGame(i) {
   var s = getSaves().slots[i];
   if (!s) return false;
+  var combinedRewardMigration = false;
   enemies = enemies.filter(function(enemy) {
     return !enemy.infiniteEnemy && !enemy.customEnemy;
   });
@@ -895,6 +896,9 @@ function loadGame(i) {
   migrateRemovedEclipseVitality(s);
   migrateRemovedEclipseVitality(s.checkpointState);
   checkpointState = s.checkpointState || checkpointState;
+  var savedShield = !!s.hasShield || !!(checkpointState && checkpointState.hasShield);
+  combinedRewardMigration = gameMode === "normal" && !!s.hasSword && !savedShield;
+  if (gameMode === "normal" && s.hasSword && checkpointState) checkpointState.hasShield = true;
   if (Array.isArray(s.altars)) {
     s.altars.forEach(function(savedAltar) {
       var altar = altars.find(function(candidate) { return candidate.id === savedAltar.id; });
@@ -905,8 +909,7 @@ function loadGame(i) {
   targetCamX = currentRoom * ROOM_W; cameraX = targetCamX;
   player.x = s.px; player.y = s.py; player.vx = 0; player.vy = 0;
   hasSword = s.hasSword || false; swordEquipped = s.swordEquipped || false;
-  hasShield = s.hasShield || false;
-  if (rooms[18].shieldPickup) rooms[18].shieldPickup.taken = hasShield;
+  hasShield = savedShield || (gameMode === "normal" && !!s.hasSword);
   weaponId = normalizeWeaponId(s.weaponId || DEFAULT_WEAPON_ID);
   unlockedWeapons = Array.isArray(s.unlockedWeapons) ? s.unlockedWeapons.filter(function(id) { return WEAPON_CONFIG[id]; }) : [DEFAULT_WEAPON_ID];
   weaponLevels = s.weaponLevels || weaponLevels;
@@ -993,6 +996,7 @@ function loadGame(i) {
     if (e.disabled) e.dead = true;
     if (e.boss && bossArenaState[e.type]) { e.dead = true; e.hp = 0; }
   });
+  if (combinedRewardMigration) saveGame(i);
   return true;
 }
 

@@ -215,11 +215,22 @@ function updateSwordPickupCinematic() {
     if (particle.life <= 0) particles.splice(i, 1);
   }
   if (swordPickupCinematicTimer >= 220) {
-    hasSword = true; swordEquipped = true;
+    hasSword = true; hasShield = true; swordEquipped = true;
     player.hasSword = true; player.swordEquipped = true; player.frozen = false;
-    if (twoPlayerMode) { player2.hasSword = true; player2.swordEquipped = true; }
-    spawnFloatText(rooms[13].pedestal.stone.x, rooms[13].pedestal.stone.y - 90, "Has recuperado tu poder", "#ffd700");
-    spawnFloatText(rooms[13].pedestal.stone.x, rooms[13].pedestal.stone.y - 70, "Presiona X/J o CTRL para atacar", "#aaa");
+    player.blocking = false; player.parryTimer = 0; player.parryCooldown = 0; player.shieldButtonHeld = false;
+    if (twoPlayerMode) {
+      player2.hasSword = true; player2.swordEquipped = true;
+      player2.blocking = false; player2.parryTimer = 0; player2.parryCooldown = 0; player2.shieldButtonHeld = false;
+    }
+    if (checkpointState) {
+      checkpointState.hasSword = true;
+      checkpointState.hasShield = true;
+      checkpointState.swordEquipped = true;
+      checkpointState.weaponId = weaponId;
+    }
+    spawnFloatText(rooms[13].pedestal.stone.x, rooms[13].pedestal.stone.y - 90, "Has obtenido la espada y el escudo", "#ffd700");
+    spawnFloatText(rooms[13].pedestal.stone.x, rooms[13].pedestal.stone.y - 70, "Parry [" + getControlKeyLabel("block") + "]", "#aaa");
+    if (activeSlot >= 0) saveGame(activeSlot);
     dialogueMode = ""; swordPickupCinematicTimer = 0; gameState = ST_PLAYING; updateUI();
   }
 }
@@ -563,7 +574,6 @@ function restoreCheckpoint(preserveInfiniteProgress) {
     eteriumSkillLevel = Math.max(eteriumSkillLevel, Math.min(3, Number(cp.eteriumSkillLevel) || (hasEteriumSkill ? 1 : 0)));
     hasSword = !!cp.hasSword || currentSwordState.hasSword;
     hasShield = !!cp.hasShield || currentShieldState;
-    if (rooms[18].shieldPickup) rooms[18].shieldPickup.taken = hasShield;
     swordEquipped = hasSword && (!!cp.swordEquipped || currentSwordState.swordEquipped);
     weaponId = normalizeWeaponId(cp.weaponId || currentSwordState.weaponId);
     unlockedWeapons = Array.isArray(cp.unlockedWeapons) ? cp.unlockedWeapons.filter(function(id) { return WEAPON_CONFIG[id]; }) : [DEFAULT_WEAPON_ID];
@@ -3169,22 +3179,6 @@ function checkSwordHitEnemiesFor(p) {
 
 function tryInteractFor(p) {
   var room = rooms[currentRoom];
-  if (p === player && currentRoom === 18 && room.shieldPickup && !room.shieldPickup.taken && !hasShield) {
-    var shieldPickup = room.shieldPickup.shield;
-    if (rectHit(p, {x: shieldPickup.x - 42, y: shieldPickup.y - 42, w: shieldPickup.w + 84, h: shieldPickup.h + 84})) {
-      hasShield = true;
-      room.shieldPickup.taken = true;
-      player.shieldButtonHeld = isControlPressed("block");
-      player.parryTimer = 0;
-      player.parryCooldown = 0;
-      if (checkpointState) checkpointState.hasShield = true;
-      if (activeSlot >= 0) saveGame(activeSlot);
-      spawnParticles(shieldPickup.x + shieldPickup.w / 2, shieldPickup.y + shieldPickup.h / 2, "#a86a36", 18, 3);
-      spawnFloatText(p.x, p.y - 28, "ESCUDO DE MADERA • PARRY [" + getControlKeyLabel("block") + "]", "#d9a36b");
-      sfxDiscovery();
-      return;
-    }
-  }
   for (var altarIndex = 0; altarIndex < altars.length; altarIndex++) {
     var altar = altars[altarIndex];
     if (altar.room !== currentRoom || !rectHit(p, altar)) continue;
