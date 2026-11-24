@@ -5,7 +5,28 @@ var GUARD_DURATION = 120, GUARD_COOLDOWN = 240, SHIELD_PARRY_WINDOW = 12, SHIELD
 /* Rooms 0-10 cover the original route; later regions and arenas are composed below. */
 var WORLD_W = 52 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
-var VERSION = "v2.75 beta";
+var VERSION_STORAGE_KEY = "caballero_mistico_version";
+var GAME_VERSION = "2.78";
+var VERSION = "v" + GAME_VERSION;
+
+function initializeGameVersion() {
+  var storedVersion = localStorage.getItem(VERSION_STORAGE_KEY);
+  var storedMatch = /^(\d+)\.(\d{2})$/.exec(storedVersion || "");
+  var currentMatch = /^(\d+)\.(\d{2})$/.exec(GAME_VERSION);
+  if (storedMatch && currentMatch) {
+    var storedMajor = Number(storedMatch[1]);
+    var currentMajor = Number(currentMatch[1]);
+    var isStoredVersionNewer = storedMajor > currentMajor ||
+      (storedMajor === currentMajor && Number(storedMatch[2]) > Number(currentMatch[2]));
+    if (isStoredVersionNewer) GAME_VERSION = storedMatch[0];
+  }
+  if (storedVersion !== GAME_VERSION) {
+    localStorage.setItem(VERSION_STORAGE_KEY, GAME_VERSION);
+  }
+  VERSION = "v" + GAME_VERSION;
+}
+
+initializeGameVersion();
 
 var ST_LANGUAGE = 0, ST_DEVICE = 1, ST_MENU = 2, ST_PLAYING = 3, ST_PAUSED = 4, ST_TRANSITION = 5, ST_INVENTORY = 7, ST_DIALOGUE = 8, ST_DEATH = 9, ST_HOUSE = 10, ST_LEVEL_EDITOR = 11, ST_INTRO = 12, ST_WAKE = 13;
 
@@ -871,6 +892,8 @@ function loadGame(i) {
   difficulty = s.difficulty || "normal"; gameMode = s.gameMode || "normal";
   currentRoom = Math.max(0, Math.min(rooms.length - 1, s.room || 0));
   highestRoomReached = Math.max(currentRoom, s.highestRoomReached || 0);
+  migrateRemovedEclipseVitality(s);
+  migrateRemovedEclipseVitality(s.checkpointState);
   checkpointState = s.checkpointState || checkpointState;
   if (Array.isArray(s.altars)) {
     s.altars.forEach(function(savedAltar) {
@@ -927,7 +950,7 @@ function loadGame(i) {
   player.maxHp = getMaxHpForVitality(permanentUpgrades.vitality);
   player.hp = Math.min(player.hp, player.maxHp);
   bossUniqueItems = s.bossUniqueItems || { guardian: false, queen_larva: false, abyssal_knight: false, dragon: false };
-  hiddenCollectibles = s.hiddenCollectibles || { eclipse: false, root: false, crown: false, echo: false, highGallery: false, abyssRift: false, branchCache: false, fungusCache: false, galleryCache: false, cityCache: false };
+  hiddenCollectibles = normalizeHiddenCollectibles(s.hiddenCollectibles);
   bossArenaState.guardian = !!(s.bossesDefeated && s.bossesDefeated.guardian);
   bossArenaState.queen_larva = !!(s.bossesDefeated && s.bossesDefeated.queen_larva);
   bossArenaState.abyssal_knight = !!(s.bossesDefeated && s.bossesDefeated.abyssal_knight);

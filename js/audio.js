@@ -119,25 +119,87 @@ var MUSIC_FALLBACK_THEMES = {
   brumalis: {root: 174.61, scale: [0, 2, 5, 7, 9], waveform: "triangle"},
   infinite: {root: 130.81, scale: [0, 2, 3, 7, 8], waveform: "square"}
 };
-var MUSIC_FALLBACK_MOTIFS = {
-  menu: [[0, -1, 2, 4, -1, 3, 2, -1], [2, 3, -1, 4, 3, -1, 1, 0], [4, -1, 3, 2, 1, -1, 2, 0]],
-  exploration: [[0, -1, 2, 4, 2, -1, 3, 1], [2, 3, -1, 4, 3, -1, 1, 0], [4, -1, 3, 2, -1, 1, 2, -1]],
-  danger: [[0, 4, -1, 2, 3, -1, 1, 4], [2, -1, 3, 4, -1, 1, 4, 2], [4, 3, -1, 1, 2, 4, -1, 0]],
-  combat: [[0, 2, 4, -1, 3, 1, -1, 4], [2, -1, 3, 4, 1, -1, 4, 2], [4, 1, -1, 3, 2, 4, -1, 0]],
-  elite: [[0, 3, -1, 2, 4, 1, -1, 3], [4, -1, 1, 3, 2, -1, 4, 1], [2, 4, -1, 1, 3, 0, -1, 4]],
-  boss: [[0, 4, -1, 2, 1, 3, -1, 4], [4, -1, 2, 3, 1, -1, 0, 2], [2, 1, -1, 4, 3, 0, -1, 1]],
-  safe: [[0, -1, 2, 3, -1, 4, 2, -1], [3, 2, -1, 4, 1, -1, 2, 0], [4, -1, 1, 3, 2, -1, 0, -1]],
-  infinite: [[0, 3, -1, 4, 2, -1, 1, 3], [4, -1, 2, 1, 3, 4, -1, 2], [2, 4, -1, 1, 0, 3, -1, 4]]
-};
-var MUSIC_FALLBACK_PROGRESSIONS = {
-  menu: [[0, 3, 4, 0], [0, 2, 3, 0]],
-  exploration: [[0, 3, 4, 0], [0, 4, 2, 0]],
-  danger: [[0, 4, 3, 0], [0, 2, 4, 0]],
-  combat: [[0, 4, 2, 0], [0, 3, 1, 0]],
-  elite: [[0, 4, 3, 0], [0, 2, 4, 0]],
-  boss: [[0, 4, 1, 0], [0, 2, 4, 0]],
-  safe: [[0, 3, 0, 0], [0, 2, 3, 0]],
-  infinite: [[0, 4, 3, 0], [0, 2, 4, 0]]
+var MUSIC_FALLBACK_ARRANGEMENTS = {
+  menu: {
+    form: [0, 1, 0, 2, 3, 2, 1, 3],
+    phrases: [
+      [0, -1, 2, -1, 4, 2, 3, -1, 2, -1, 4, 3, -1, 2, 1, -1],
+      [2, 3, -1, 4, 3, -1, 1, 0, 1, -1, 3, 2, -1, 4, 2, -1],
+      [4, -1, 3, 2, 1, -1, 2, 0, 3, -1, 2, 4, 3, -1, 1, 0],
+      [0, 2, -1, 3, 1, -1, 2, 4, 3, -1, 1, 2, -1, 3, 0, -1]
+    ],
+    chords: [0, 3, 4, 2, 0, 4, 2, 3, 0, 3, 1, 4, 2, 3, 4, 0]
+  },
+  exploration: {
+    form: [0, 1, 0, 2, 3, 2, 1, 3],
+    phrases: [
+      [0, -1, 2, 4, 2, -1, 3, 1, 0, -1, 2, 3, 4, -1, 3, -1],
+      [2, 3, -1, 4, 3, -1, 1, 0, 1, -1, 3, 2, -1, 4, 2, -1],
+      [4, -1, 3, 2, -1, 1, 2, -1, 3, -1, 2, 4, 3, -1, 1, 0],
+      [0, 2, -1, 3, 1, -1, 2, 4, 3, -1, 1, 2, -1, 3, 0, -1]
+    ],
+    chords: [0, 3, 4, 2, 0, 4, 2, 3, 0, 3, 1, 4, 2, 3, 4, 0]
+  },
+  danger: {
+    form: [0, 1, 2, 0, 3, 2, 1, 3],
+    phrases: [
+      [0, 4, -1, 2, 3, -1, 1, 4, 2, -1, 3, 4, -1, 2, 1, -1],
+      [2, -1, 3, 4, -1, 1, 4, 2, 3, 4, -1, 2, 1, -1, 3, 0],
+      [4, 3, -1, 1, 2, 4, -1, 0, 4, -1, 2, 3, -1, 1, 2, -1],
+      [1, -1, 4, 3, 2, -1, 4, 1, 0, 2, -1, 3, 4, -1, 2, 0]
+    ],
+    chords: [0, 4, 3, 4, 0, 2, 4, 3, 0, 4, 2, 3, 1, 4, 3, 0]
+  },
+  combat: {
+    form: [0, 1, 2, 1, 3, 2, 3, 3],
+    phrases: [
+      [0, 2, 4, -1, 3, 1, -1, 4, 2, -1, 1, 3, 4, -1, 2, -1],
+      [2, -1, 3, 4, 1, -1, 4, 2, 0, 3, -1, 2, 4, 1, -1, 0],
+      [4, 1, -1, 3, 2, 4, -1, 0, 3, -1, 4, 2, 1, -1, 3, -1],
+      [1, 3, -1, 4, 2, -1, 0, 3, 4, -1, 2, 1, 3, -1, 4, 0]
+    ],
+    chords: [0, 4, 2, 3, 0, 3, 1, 4, 0, 4, 2, 1, 3, 4, 2, 0]
+  },
+  elite: {
+    form: [0, 1, 2, 0, 3, 2, 1, 3],
+    phrases: [
+      [0, 3, -1, 2, 4, 1, -1, 3, 2, -1, 4, 3, 1, -1, 2, -1],
+      [4, -1, 1, 3, 2, -1, 4, 1, 0, 3, -1, 4, 2, -1, 1, 0],
+      [2, 4, -1, 1, 3, 0, -1, 4, 3, -1, 2, 4, 1, -1, 3, -1],
+      [1, -1, 3, 4, 2, -1, 0, 3, 4, 2, -1, 1, 3, -1, 4, 0]
+    ],
+    chords: [0, 4, 3, 2, 0, 2, 4, 3, 0, 4, 1, 3, 2, 4, 3, 0]
+  },
+  boss: {
+    form: [0, 1, 2, 1, 3, 2, 3, 3],
+    phrases: [
+      [0, 4, -1, 2, 1, 3, -1, 4, 2, -1, 0, 3, 4, -1, 2, -1],
+      [4, -1, 2, 3, 1, -1, 0, 2, 4, 3, -1, 1, 2, -1, 4, 0],
+      [2, 1, -1, 4, 3, 0, -1, 1, 4, -1, 2, 3, 1, -1, 0, -1],
+      [3, -1, 1, 4, 2, -1, 3, 0, 4, 1, -1, 2, 3, -1, 4, 0]
+    ],
+    chords: [0, 4, 1, 3, 0, 2, 4, 1, 0, 3, 2, 4, 1, 3, 4, 0]
+  },
+  safe: {
+    form: [0, 1, 0, 2, 3, 2, 1, 3],
+    phrases: [
+      [0, -1, 2, 3, -1, 4, 2, -1, 1, -1, 3, 2, -1, 4, 3, -1],
+      [3, 2, -1, 4, 1, -1, 2, 0, 2, -1, 4, 3, -1, 1, 0, -1],
+      [4, -1, 1, 3, 2, -1, 0, -1, 3, 1, -1, 4, 2, -1, 1, 0],
+      [0, 2, -1, 4, 3, -1, 1, 2, 4, -1, 2, 1, -1, 3, 0, -1]
+    ],
+    chords: [0, 3, 0, 4, 0, 2, 3, 0, 0, 3, 4, 2, 3, 4, 2, 0]
+  },
+  infinite: {
+    form: [0, 1, 2, 0, 3, 2, 1, 3],
+    phrases: [
+      [0, 3, -1, 4, 2, -1, 1, 3, 4, -1, 2, 0, 3, -1, 4, -1],
+      [4, -1, 2, 1, 3, 4, -1, 2, 0, 3, -1, 4, 2, -1, 1, 0],
+      [2, 4, -1, 1, 0, 3, -1, 4, 3, -1, 1, 2, 4, -1, 0, -1],
+      [1, -1, 4, 2, 3, -1, 0, 4, 2, 3, -1, 1, 4, -1, 2, 0]
+    ],
+    chords: [0, 4, 3, 1, 0, 2, 4, 3, 0, 3, 1, 4, 2, 4, 3, 0]
+  }
 };
 var MUSIC_FALLBACK_ARPEGGIOS = {
   menu: [0, -1, 2, 4, -1, 2, 1, -1],
@@ -183,8 +245,6 @@ var musicUserInteracted = false;
 var musicFallbackTimer = null;
 var musicFallbackTrack = "";
 var musicFallbackSceneKey = "";
-var musicFallbackPhraseBags = {};
-var musicFallbackLastPhrase = {};
 var musicCombatUntil = 0;
 var musicFallbackGainNode = null;
 var musicFallbackSwitchTimer = null;
@@ -314,30 +374,6 @@ function playFallbackNote(frequency, duration, type, volume, delay, pan) {
   oscillator.start(startAt);
   oscillator.stop(endAt + 0.02);
 }
-function nextFallbackPhraseIndex(sceneKey, phraseCount) {
-  var bag = musicFallbackPhraseBags[sceneKey];
-  if (!bag || !bag.length) {
-    bag = [];
-    for (var i = 0; i < phraseCount; i++) bag.push(i);
-    for (var shuffleIndex = bag.length - 1; shuffleIndex > 0; shuffleIndex--) {
-      var swapIndex = Math.floor(Math.random() * (shuffleIndex + 1));
-      var value = bag[shuffleIndex];
-      bag[shuffleIndex] = bag[swapIndex];
-      bag[swapIndex] = value;
-    }
-    if (bag.length > 1 && bag[bag.length - 1] === musicFallbackLastPhrase[sceneKey]) {
-      var otherIndex = Math.floor(Math.random() * (bag.length - 1));
-      var previousValue = bag[bag.length - 1];
-      bag[bag.length - 1] = bag[otherIndex];
-      bag[otherIndex] = previousValue;
-    }
-    musicFallbackPhraseBags[sceneKey] = bag;
-  }
-  var selectedIndex = bag.pop();
-  musicFallbackLastPhrase[sceneKey] = selectedIndex;
-  return selectedIndex;
-}
-
 function getFallbackFrequency(theme, degree, octaveOffset) {
   var scaleIndex = ((degree % theme.scale.length) + theme.scale.length) % theme.scale.length;
   var octave = Math.floor(degree / theme.scale.length);
@@ -349,12 +385,7 @@ function playFallbackPhrase(sceneKey) {
   var region = parts[0];
   var mood = parts[1] || "exploration";
   var theme = MUSIC_FALLBACK_THEMES[region] || MUSIC_FALLBACK_THEMES.crystal;
-  var motifs = MUSIC_FALLBACK_MOTIFS[mood] || MUSIC_FALLBACK_MOTIFS.exploration;
-  var motifIndex = nextFallbackPhraseIndex(sceneKey, motifs.length);
-  var motif = motifs[motifIndex];
-  var secondaryMotif = motifs[(motifIndex + 1 + Math.floor(Math.random() * (motifs.length - 1))) % motifs.length];
-  var progressions = MUSIC_FALLBACK_PROGRESSIONS[mood] || MUSIC_FALLBACK_PROGRESSIONS.exploration;
-  var progression = progressions[Math.floor(Math.random() * progressions.length)];
+  var arrangement = MUSIC_FALLBACK_ARRANGEMENTS[mood] || MUSIC_FALLBACK_ARRANGEMENTS.exploration;
   var arpeggio = MUSIC_FALLBACK_ARPEGGIOS[mood] || MUSIC_FALLBACK_ARPEGGIOS.exploration;
   var bassRhythm = MUSIC_FALLBACK_BASS_RHYTHMS[mood] || MUSIC_FALLBACK_BASS_RHYTHMS.exploration;
   var dynamics = MUSIC_FALLBACK_DYNAMICS[mood] || MUSIC_FALLBACK_DYNAMICS.exploration;
@@ -362,18 +393,21 @@ function playFallbackPhrase(sceneKey) {
   var leadWave = mood === "danger" || mood === "elite" || mood === "boss" ? "sawtooth" : theme.waveform;
   var bassWave = mood === "combat" || mood === "infinite" ? "square" : "triangle";
 
-  for (var bar = 0; bar < 4; bar++) {
+  for (var bar = 0; bar < 16; bar++) {
+    var section = Math.floor(bar / 2);
     var barStart = bar * 4 * beat;
-    var chordRoot = progression[bar];
-    var energy = dynamics[bar];
-    var melody = bar === 2 ? secondaryMotif : motif;
+    var chordRoot = arrangement.chords[bar];
+    var energy = dynamics[Math.floor(bar / 4)] * (bar % 2 === 0 ? 1 : 0.9);
+    var melody = arrangement.phrases[arrangement.form[section]];
+    var melodyStart = (bar % 2) * 8;
+    var leadOctave = section === 2 || section === 3 ? 19 : (section === 6 ? 7 : 12);
 
     [0, 2, 4].forEach(function(chordTone, index) {
       var voicing = chordRoot + chordTone;
       var octave = index === 0 ? 0 : (index === 1 ? 12 : 12);
       playFallbackNote(
         getFallbackFrequency(theme, voicing, octave),
-        beat * (bar === 3 ? 3.7 : 3.9),
+        beat * (bar === 15 ? 3.7 : 3.9),
         "sine",
         energy * (index === 0 ? 0.14 : 0.085),
         barStart,
@@ -382,7 +416,7 @@ function playFallbackPhrase(sceneKey) {
     });
 
     for (var slot = 0; slot < 8; slot++) {
-      var note = melody[slot];
+      var note = melody[melodyStart + slot];
       var startBeat = slot * 0.5;
       var delay = barStart + startBeat * beat;
       var arpNote = arpeggio[(slot + bar) % arpeggio.length];
@@ -399,12 +433,13 @@ function playFallbackPhrase(sceneKey) {
 
       if (note === -1) continue;
       var melodicDegree = note;
-      if (bar === 1 && slot % 3 === 1) melodicDegree += 1;
-      if (bar === 3 && slot > 4) melodicDegree = Math.max(0, melodicDegree - 1);
-      if (Math.random() < 0.12) melodicDegree += Math.random() < 0.5 ? -1 : 1;
+      if (section % 4 === 1 && (slot === 2 || slot === 6)) melodicDegree += 1;
+      if (section % 4 === 2 && (slot === 0 || slot === 4)) melodicDegree += 2;
+      if (section % 4 === 3 && slot > 4) melodicDegree = Math.max(0, melodicDegree - 1);
+      if (section === 7 && bar === 15 && slot === 7) melodicDegree = 0;
       var noteLength = slot % 4 === 0 ? 0.78 : (slot % 3 === 0 ? 0.58 : 0.38);
       playFallbackNote(
-        getFallbackFrequency(theme, melodicDegree, 12),
+        getFallbackFrequency(theme, melodicDegree, leadOctave),
         beat * noteLength,
         leadWave,
         energy * (slot === 0 || slot === 4 ? 0.44 : 0.34),
@@ -424,7 +459,7 @@ function playFallbackPhrase(sceneKey) {
       );
     });
   }
-  return beat * 16;
+  return beat * 64;
 }
 function ensureMusicFallbackGain() {
     if (!musicFallbackGainNode) {

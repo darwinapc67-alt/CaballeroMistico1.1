@@ -66,7 +66,7 @@ function resetAll() {
   blessingSlots = 2; equippedBlessings = []; armorId = "vacío"; armorLevel = 0;
   permanentUpgrades = { vitality: 0, strength: 0 };
   bossUniqueItems = { guardian: false, queen_larva: false, abyssal_knight: false, dragon: false };
-  hiddenCollectibles = { eclipse: false, root: false, crown: false, echo: false, highGallery: false, abyssRift: false, branchCache: false, fungusCache: false, galleryCache: false, cityCache: false };
+  hiddenCollectibles = { root: false, crown: false, echo: false, highGallery: false, abyssRift: false, branchCache: false, fungusCache: false, galleryCache: false, cityCache: false };
   hitFlash = 0; needsRespawn = false;
   player.hp = player.maxHp = 10;
   if (twoPlayerMode) player2.hp = player2.maxHp = 10;
@@ -86,7 +86,7 @@ function resetAll() {
   infiniteWave = 0; infiniteSpawnTimer = 60;
   highestRoomReached = 0;
   tutorialStep = 0; tutorialTimer = 240;
-  checkpointState = { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, hasShield: false, swordEquipped: false, weaponId: DEFAULT_WEAPON_ID, unlockedWeapons: [DEFAULT_WEAPON_ID], hasBow: false, arrows: 0, bombs: 0, hasMap: false, hasAzariCharm: false, hasLantern: false, lanternLevel: 0, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, hiddenCollectibles: { eclipse: false, root: false, crown: false, echo: false, highGallery: false, abyssRift: false, branchCache: false, fungusCache: false, galleryCache: false, cityCache: false } };
+  checkpointState = { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, hasShield: false, swordEquipped: false, weaponId: DEFAULT_WEAPON_ID, unlockedWeapons: [DEFAULT_WEAPON_ID], hasBow: false, arrows: 0, bombs: 0, hasMap: false, hasAzariCharm: false, hasLantern: false, lanternLevel: 0, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, hiddenCollectibles: { root: false, crown: false, echo: false, highGallery: false, abyssRift: false, branchCache: false, fungusCache: false, galleryCache: false, cityCache: false } };
   room0.transitionZone = null; room1.transitionZone = null; room2.transitionZone = null;
   room3.transitionZone = null; room4.transitionZone = null;
   room5.transitionZone = {x:4750, y:460, w:50, h:100, to:6};

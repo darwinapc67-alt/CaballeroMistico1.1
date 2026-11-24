@@ -10,10 +10,11 @@ Nombres requeridos:
 - infinite.mp3   Música del modo infinito.
 
 Si todavía no se han añadido los MP3, el juego usa música de respaldo
-generada con Web Audio después de la primera interacción del jugador. Esa
-alternativa compone frases de cuatro compases con melodía, acordes, arpegios y
-bajo independientes, silencios, variaciones rítmicas y cambios de intensidad.
-La armonía y el carácter también varían según la región y la situación.
+generada con Web Audio después de la primera interacción del jugador. Cada
+arreglo tiene 16 compases con secciones de apertura, desarrollo, contraste y
+cierre, además de melodías, acordes, arpegios y bajo independientes, silencios,
+variaciones rítmicas y cambios de intensidad. La armonía y el carácter varían
+según la región y la situación.
 Para sustituirla, copia pistas MP3 u OGG con loop limpio y licencia válida.
 
 Para añadir una pista:

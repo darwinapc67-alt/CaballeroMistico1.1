@@ -24,10 +24,9 @@ var skinCatalog = [
 var ownedSkins = {}, equippedSkin = "";
 var permanentUpgrades = { vitality: 0, strength: 0 };
 
-var hiddenCollectibles = { eclipse: false, root: false, crown: false, echo: false, highGallery: false, abyssRift: false, branchCache: false, fungusCache: false, galleryCache: false, cityCache: false };
+var hiddenCollectibles = { root: false, crown: false, echo: false, highGallery: false, abyssRift: false, branchCache: false, fungusCache: false, galleryCache: false, cityCache: false };
 var hasBrokenLarvaSword = false;
 var hiddenCollectibleData = [
-  { id: "eclipse", room: 2, x: 2360, y: 420 },
   { id: "root", room: 6, x: 5480, y: 620 },
   { id: "crown", room: 10, x: 8580, y: 620 },
   { id: "echo", room: 43, x: 43 * ROOM_W + 660, y: 520, rewardAzari: 100 },
@@ -38,6 +37,31 @@ var hiddenCollectibleData = [
   { id: "galleryCache", room: 48, x: 48 * ROOM_W + 660, y: 520, rewardAzari: 180 },
   { id: "cityCache", room: 49, x: 49 * ROOM_W + 660, y: 520, rewardAzari: 240 }
 ];
+function normalizeHiddenCollectibles(savedState) {
+  var normalized = {};
+  hiddenCollectibleData.forEach(function(item) {
+    normalized[item.id] = !!(savedState && savedState[item.id]);
+  });
+  return normalized;
+}
+
+function migrateRemovedEclipseVitality(savedState) {
+  if (!savedState) return;
+  if (savedState.hiddenCollectibles && savedState.hiddenCollectibles.eclipse) {
+    savedState.permanentUpgrades = savedState.permanentUpgrades || {vitality: 0, strength: 0};
+    savedState.permanentUpgrades.vitality = Math.max(
+      0,
+      Math.floor(Number(savedState.permanentUpgrades.vitality) || 0) - 1
+    );
+    if (typeof savedState.maxHp === "number") {
+      savedState.maxHp = Math.max(10, savedState.maxHp - 10);
+    }
+    if (typeof savedState.hp === "number" && typeof savedState.maxHp === "number") {
+      savedState.hp = Math.min(savedState.hp, savedState.maxHp);
+    }
+  }
+  savedState.hiddenCollectibles = normalizeHiddenCollectibles(savedState.hiddenCollectibles);
+}
 
 var twoPlayerMode = false;
 var inventoryOpen = false, mapOpen = false, mapFade = 0, mapClosing = false, inventoryPage = 0, inventorySelection = 0, inventoryHover = -1;
