@@ -194,8 +194,10 @@ function update() {
   if (combatShake < 0.1) combatShake = 0;
   updateRoomAtmosphere();
   for (var impactIndex = impactBursts.length - 1; impactIndex >= 0; impactIndex--) {
-    impactBursts[impactIndex].life--;
-    if (impactBursts[impactIndex].life <= 0) impactBursts.splice(impactIndex, 1);
+    var impactBurst = impactBursts[impactIndex];
+    if (impactBurst.groundWave) updateArdorisLandingShockwave(impactBurst);
+    impactBurst.life--;
+    if (impactBurst.life <= 0) impactBursts.splice(impactIndex, 1);
   }
   if (eteriumSkillEffect) {
     eteriumSkillEffect.life--;

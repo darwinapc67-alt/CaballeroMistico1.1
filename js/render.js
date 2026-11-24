@@ -304,6 +304,21 @@ function drawGameWorld(skipPlayers) {
   particles.forEach(function(p) { ctx.globalAlpha = Math.max(0, p.life/p.maxLife); ctx.fillStyle = p.color; ctx.fillRect(p.x-p.size/2, p.y-p.size/2, p.size, p.size); });
   impactBursts.forEach(function(b) {
     var progress = 1 - b.life / b.maxLife;
+    if (b.groundWave) {
+      ctx.globalAlpha = Math.max(0, b.life / b.maxLife) * 0.9;
+      ctx.strokeStyle = b.color;
+      ctx.lineWidth = 2 + b.strength * (1 - progress * 0.45);
+      ctx.beginPath();
+      ctx.ellipse(b.x, b.y - 3, Math.max(1, b.radius), 3 + progress * 5, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha *= 0.75;
+      ctx.strokeStyle = "#fff0cd";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(b.x, b.y - 2, Math.max(1, b.radius * 0.72), 1.5 + progress * 2, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      return;
+    }
     if (b.landing) {
       ctx.globalAlpha = Math.max(0, b.life / b.maxLife) * 0.7;
       ctx.strokeStyle = "rgba(210, 195, 175, 0.8)";

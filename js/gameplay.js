@@ -1023,23 +1023,36 @@ function finishArdorisEliteAttack(e) {
   e.vx = 0;
 }
 
-function spawnArdorisGroundWave(e, direction, landingWave) {
-  var waveWidth = landingWave ? 52 : 40;
-  var waveHeight = landingWave ? 16 : 12;
+function spawnArdorisGroundWave(e, direction) {
+  var waveWidth = 40;
+  var waveHeight = 12;
   var eliteLeft = e.room * ROOM_W + 35;
   var eliteRight = e.room * ROOM_W + ROOM_W - 35 - e.w;
   var waveArenaRight = eliteRight + e.w;
-  var waveX = landingWave
-    ? e.x + e.w / 2 - waveWidth / 2
-    : (direction > 0 ? e.x + e.w - 6 : e.x - waveWidth + 6);
+  var waveX = direction > 0 ? e.x + e.w - 6 : e.x - waveWidth + 6;
   waveX = Math.max(eliteLeft, Math.min(waveArenaRight - waveWidth, waveX));
   bossProjectiles.push({
     x: waveX, y: e.y + e.h - waveHeight, w: waveWidth, h: waveHeight,
-    vx: direction * (landingWave ? 5.5 : 7), vy: 0, gravity: 0, damage: 1,
+    vx: direction * 7, vy: 0, gravity: 0, damage: 1,
     life: 120, room: e.room,
-    kind: landingWave ? "ardoris_landing_wave" : "ardoris_shockwave",
-    color: landingWave ? "#ffb347" : "#a6ef78", homing: false, owner: e,
+    kind: "ardoris_shockwave", color: "#a6ef78", homing: false, owner: e,
     arenaLeft: eliteLeft, arenaRight: waveArenaRight
+  });
+}
+
+function updateArdorisLandingShockwave(wave) {
+  wave.previousRadius = wave.radius;
+  wave.radius = Math.min(wave.maxRadius, wave.radius + wave.waveSpeed);
+  if (gameState !== ST_PLAYING || wave.room !== currentRoom) return;
+
+  [player, twoPlayerMode ? player2 : null].forEach(function(target, index) {
+    var hitKey = index === 0 ? "hitPlayer" : "hitPlayer2";
+    if (!target || wave[hitKey] || target.y + target.h < wave.y - 14 ||
+        target.y + target.h > wave.y + 14) return;
+    var nearestDistance = Math.max(0, Math.abs(target.x + target.w / 2 - wave.x) - target.w / 2);
+    if (nearestDistance < wave.previousRadius || nearestDistance > wave.radius) return;
+    wave[hitKey] = true;
+    playerTakeDamage(target, wave.damage, true);
   });
 }
 
@@ -1206,7 +1219,7 @@ function updateBoss(e, room) {
         }
       } else if (e.action === "elite_slam") {
         if (e.actionTimer === 5 && !e.waveSpawned) {
-          spawnArdorisGroundWave(e, e.attackDirection, false);
+          spawnArdorisGroundWave(e, e.attackDirection);
           var impactX = e.x + e.w / 2 + e.attackDirection * 18;
           impactBursts.push({
             x: impactX, y: e.y + e.h, life: 22, maxLife: 22,
@@ -1242,14 +1255,19 @@ function updateBoss(e, room) {
           e.x = e.jumpTargetX;
           e.y = floorY;
           if (!e.waveSpawned) {
-            var landingDirection = target.player.x + target.player.w / 2 < e.x + e.w / 2 ? -1 : 1;
-            spawnArdorisGroundWave(e, landingDirection, true);
             var landingX = e.x + e.w / 2;
+            var landingLeft = e.room * ROOM_W + 35;
+            var landingRight = e.room * ROOM_W + ROOM_W - 35;
+            var landingRadius = Math.max(landingX - landingLeft, landingRight - landingX);
+            var landingWaveSpeed = 12;
+            var landingWaveFrames = Math.ceil(landingRadius / landingWaveSpeed);
             impactBursts.push({
-              x: landingX, y: e.y + e.h, life: 26, maxLife: 26,
-              landing: true, strength: 5, color: "#ffb347"
+              x: landingX, y: e.y + e.h, life: landingWaveFrames + 1,
+              maxLife: landingWaveFrames + 1, groundWave: true, room: e.room,
+              radius: 0, previousRadius: 0, maxRadius: landingRadius,
+              waveSpeed: landingWaveSpeed, damage: 1,
+              hitPlayer: false, hitPlayer2: false, strength: 5, color: "#ffb347"
             });
-            spawnParticles(landingX, e.y + e.h - 2, "#ffb347", 18, 5);
             sfxGroundSlam();
             e.waveSpawned = true;
           }
@@ -1359,8 +1377,7 @@ function updateBossProjectiles() {
       b.vy = targetY / targetDistance * 7;
     }
     var hit = false;
-    var isArdorisGroundWave = b.kind === "ardoris_shockwave" || b.kind === "ardoris_landing_wave";
-    var outsideArena = isArdorisGroundWave &&
+    var outsideArena = b.kind === "ardoris_shockwave" &&
       (b.x < b.arenaLeft || b.x + b.w > b.arenaRight);
     if (!outsideArena && currentRoom === b.room && !b.reflected) {
       if (rectHit(player, b)) { playerTakeDamage(player, b.damage, true); hit = true; }
