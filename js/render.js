@@ -1,3 +1,58 @@
+function getCaveVisualContinuity(roomIndex) {
+  var room = rooms[roomIndex];
+  if (!room || room.city) return {backgroundHeight: room ? room.height : 600, left: false, right: false};
+
+  var roomX = room.worldX !== undefined ? room.worldX : roomIndex * ROOM_W;
+  var roomWidth = room.roomWidth || ROOM_W;
+  var roomRight = roomX + roomWidth;
+  var profileId = getZoneVisualProfile(roomIndex).id;
+  var connectedEdges = {left: false, right: false};
+  var connectedIndices = [roomIndex];
+  var visited = {};
+  visited[roomIndex] = true;
+  var backgroundHeight = room.height;
+
+  for (var i = 0; i < connectedIndices.length; i++) {
+    var connectedIndex = connectedIndices[i];
+    var connectedRoom = rooms[connectedIndex];
+    var connectedX = connectedRoom.worldX !== undefined
+      ? connectedRoom.worldX
+      : connectedIndex * ROOM_W;
+    var connectedRight = connectedX + (connectedRoom.roomWidth || ROOM_W);
+
+    for (var candidateIndex = 0; candidateIndex < rooms.length; candidateIndex++) {
+      if (visited[candidateIndex]) continue;
+      var candidate = rooms[candidateIndex];
+      if (!candidate || candidate.city || candidate.height <= 0 ||
+          getZoneVisualProfile(candidateIndex).id !== profileId) continue;
+
+      var candidateX = candidate.worldX !== undefined ? candidate.worldX : candidateIndex * ROOM_W;
+      var candidateRight = candidateX + (candidate.roomWidth || ROOM_W);
+      var isConnectedLeft = Math.abs(connectedX - candidateRight) < 1;
+      var isConnectedRight = Math.abs(connectedRight - candidateX) < 1;
+      if (!isConnectedLeft && !isConnectedRight) continue;
+
+      var leftRoom = isConnectedLeft ? candidate : connectedRoom;
+      if (leftRoom.suppressNextRoomConnection) continue;
+
+      visited[candidateIndex] = true;
+      connectedIndices.push(candidateIndex);
+      backgroundHeight = Math.max(backgroundHeight, candidate.height);
+
+      if (connectedIndex === roomIndex) {
+        if (isConnectedLeft) connectedEdges.left = true;
+        if (isConnectedRight) connectedEdges.right = true;
+      }
+    }
+  }
+
+  return {
+    backgroundHeight: backgroundHeight,
+    left: connectedEdges.left,
+    right: connectedEdges.right
+  };
+}
+
 function drawGameWorld(skipPlayers) {
   ctx.fillStyle = "#050510"; ctx.fillRect(0, 0, canvas.width, canvas.height);
   if (flash > 0) { ctx.fillStyle = "rgba(255,255,255," + (flash*0.3) + ")"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
@@ -58,15 +113,23 @@ function drawGameWorld(skipPlayers) {
     if (rx + roomWidth < camLeft - 100 || rx > camRight + 100) continue;
     var room = rooms[r];
     if (room.height < camTop - 100 || 0 > camBottom + 100) continue;
+    var continuity = room.city ? null : getCaveVisualContinuity(r);
     if (room.city) drawCityBg(rx, room, roomWidth);
-    else drawCaveBg(rx, room.height, roomWidth, r);
-    visibleRooms.push({index: r, room: room, x: rx, width: roomWidth});
+    else drawCaveBg(rx, room.height, roomWidth, r, continuity.backgroundHeight);
+    visibleRooms.push({index: r, room: room, x: rx, width: roomWidth, continuity: continuity});
   }
   visibleRooms.forEach(function(visibleRoom) {
     var r = visibleRoom.index;
     var room = visibleRoom.room;
     if (room.city) drawCityBackgroundDetails(visibleRoom.x, room, visibleRoom.width);
-    else drawCaveBgDetails(visibleRoom.x, room.decor, room.height, visibleRoom.width, r);
+    else drawCaveBgDetails(
+      visibleRoom.x,
+      room.decor,
+      room.height,
+      visibleRoom.width,
+      r,
+      visibleRoom.continuity
+    );
   });
   visibleRooms.forEach(function(visibleRoom) {
     var r = visibleRoom.index;

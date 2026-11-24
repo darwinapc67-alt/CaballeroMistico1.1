@@ -26,17 +26,18 @@ function getZoneVisualProfile(roomIndex) {
   return { id: "crystal", top: "#11152d", middle: "#202b50", bottom: "#070a18", light: "#69dfff", accent: "#536cb4", platform: "#303b5a", edge: "#79b8d6", particle: "#b9f3ff" };
 }
 
-function drawCaveBg(rx, roomH, roomWidth, roomIndex) {
+function drawCaveBg(rx, roomH, roomWidth, roomIndex, backgroundHeight) {
   roomWidth = roomWidth || ROOM_W;
+  backgroundHeight = Math.max(roomH, backgroundHeight || roomH);
   var roomSeed = Math.floor(rx / ROOM_W);
   var profile = getZoneVisualProfile(roomIndex);
-  var bgGradient = ctx.createLinearGradient(rx, 0, rx, roomH);
+  var bgGradient = ctx.createLinearGradient(rx, 0, rx, backgroundHeight);
   bgGradient.addColorStop(0, profile.top);
   bgGradient.addColorStop(0.52, profile.middle);
   bgGradient.addColorStop(1, profile.bottom);
   ctx.fillStyle = bgGradient;
   ctx.fillRect(rx, 0, roomWidth, roomH);
-  var backGradient = ctx.createLinearGradient(rx, 0, rx, roomH);
+  var backGradient = ctx.createLinearGradient(rx, 0, rx, backgroundHeight);
   backGradient.addColorStop(0, "rgba(255, 255, 255, 0.04)");
   backGradient.addColorStop(0.5, "rgba(0, 0, 0, 0.05)");
   backGradient.addColorStop(1, "rgba(0, 0, 0, 0.3)");
@@ -44,8 +45,9 @@ function drawCaveBg(rx, roomH, roomWidth, roomIndex) {
   ctx.fillRect(rx, 0, roomWidth, roomH);
 }
 
-function drawCaveBgDetails(rx, decor, roomH, roomWidth, roomIndex) {
+function drawCaveBgDetails(rx, decor, roomH, roomWidth, roomIndex, continuity) {
   roomWidth = roomWidth || ROOM_W;
+  continuity = continuity || {backgroundHeight: roomH, left: false, right: false};
   var roomSeed = Math.floor(rx / ROOM_W);
   var profile = getZoneVisualProfile(roomIndex);
   if (roomIndex === 0) {
@@ -85,7 +87,7 @@ function drawCaveBgDetails(rx, decor, roomH, roomWidth, roomIndex) {
     ctx.closePath();
     ctx.fill();
   }
-  drawCaveBackRelief(rx, roomH, roomWidth, roomSeed);
+  drawCaveBackRelief(rx, roomH, roomWidth, roomSeed, continuity);
   drawZoneBackdropDetails(rx, roomH, roomWidth, roomIndex, roomSeed, profile);
   if (gameMode === "normal") drawNormalCaveAtmosphere(rx, roomH, roomWidth, roomSeed, profile);
   for (var i = 0; i < 20; i++) {
@@ -100,12 +102,12 @@ function drawCaveBgDetails(rx, decor, roomH, roomWidth, roomIndex) {
     ctx.fillRect(drop.x, drop.y, 2, 8);
   });
   ctx.globalAlpha = 1;
-  drawCaveEdgeDetails(rx, roomH, roomWidth, roomSeed, roomIndex);
-  drawCaveDecor(decor);
-  drawZoneLighting(rx, roomH, roomWidth, profile);
+  drawCaveEdgeDetails(rx, roomH, roomWidth, roomSeed, roomIndex, continuity);
+  drawCaveDecor(decor, continuity);
+  drawZoneLighting(rx, roomH, roomWidth, profile, continuity.backgroundHeight);
 }
 
-function drawCaveDecor(decor) {
+function drawCaveDecor(decor, continuity) {
   (decor || []).forEach(function(d) {
     if (d.type === 'stalactite') {
       var stalactiteGradient = ctx.createLinearGradient(d.x, d.y, d.x + d.w, d.y + d.h);
@@ -140,6 +142,7 @@ function drawCaveDecor(decor) {
       ctx.closePath();
       ctx.fill();
     } else if (d.type === 'wall') {
+      if (continuity && (d.side ? continuity.right : continuity.left)) return;
       var wallGradient = ctx.createLinearGradient(d.x, d.y, d.x + d.w, d.y + d.h);
       wallGradient.addColorStop(0, "#101221");
       wallGradient.addColorStop(1, "#27293d");
@@ -236,9 +239,10 @@ function drawZoneBackdropDetails(rx, roomH, roomWidth, roomIndex, seed, profile)
   ctx.restore();
 }
 
-function drawZoneLighting(rx, roomH, roomWidth, profile) {
+function drawZoneLighting(rx, roomH, roomWidth, profile, backgroundHeight) {
+  backgroundHeight = Math.max(roomH, backgroundHeight || roomH);
   var lightX = rx + roomWidth * 0.5;
-  var lightY = profile.id === "abyss" ? roomH * 0.35 : roomH * 0.58;
+  var lightY = profile.id === "abyss" ? backgroundHeight * 0.35 : backgroundHeight * 0.58;
   var radius = profile.id === "boss" ? 290 : 220;
   var glow = ctx.createRadialGradient(lightX, lightY, 12, lightX, lightY, radius);
   glow.addColorStop(0, profile.light + "22");
@@ -416,11 +420,12 @@ function drawNormalCaveAtmosphere(rx, roomH, roomWidth, seed, profile) {
   }
   ctx.restore();
 }
-function drawCaveBackRelief(rx, roomH, roomWidth, seed) {
+function drawCaveBackRelief(rx, roomH, roomWidth, seed, continuity) {
   ctx.save();
   ctx.globalAlpha = 0.28;
   for (var i = 0; i < 7; i++) {
     var side = i % 2 ? 1 : -1;
+    if (continuity && (side < 0 ? continuity.left : continuity.right)) continue;
     var w = 45 + ((seed * 17 + i * 31) % 65);
     var x = side < 0 ? rx : rx + roomWidth - w;
     var y = 70 + ((seed * 41 + i * 73) % Math.max(80, roomH - 150));
@@ -454,10 +459,11 @@ function drawCaveBackRelief(rx, roomH, roomWidth, seed) {
   }
   ctx.restore();
 }
-function drawCaveEdgeDetails(rx, roomH, roomWidth, seed, roomIndex) {
+function drawCaveEdgeDetails(rx, roomH, roomWidth, seed, roomIndex, continuity) {
   ctx.save();
   for (var i = 0; i < 5; i++) {
     var side = i % 2 ? 1 : -1;
+    if (continuity && (side < 0 ? continuity.left : continuity.right)) continue;
     var x = rx + (side < 0 ? 18 + i * 9 : roomWidth - 34 - i * 8);
     var y = 80 + ((seed * 67 + i * 103) % Math.max(100, roomH - 180));
     ctx.strokeStyle = "rgba(76, 79, 105, 0.42)";
@@ -470,6 +476,8 @@ function drawCaveEdgeDetails(rx, roomH, roomWidth, seed, roomIndex) {
     ctx.stroke();
   }
   for (var j = 0; j < 3; j++) {
+    var crystalOnRight = j % 2 === 1;
+    if (continuity && (crystalOnRight ? continuity.right : continuity.left)) continue;
     var crystalX = rx + (j % 2 ? roomWidth - 72 : 54 + j * 18);
     var crystalY = roomH - 62 - ((seed * 23 + j * 47) % 90);
     ctx.fillStyle = "rgba(53, 173, 202, 0.14)";
@@ -487,7 +495,8 @@ function drawCaveEdgeDetails(rx, roomH, roomWidth, seed, roomIndex) {
     ctx.fillStyle = "rgba(180, 244, 255, 0.7)";
     ctx.fillRect(crystalX - 2, crystalY - 10, 3, 8);
   }
-  if (roomH >= 560) {
+  var torchOnRight = seed % 2 === 1;
+  if (roomH >= 560 && !(continuity && (torchOnRight ? continuity.right : continuity.left))) {
     var torchX = rx + (seed % 2 ? roomWidth - 105 : 105);
     var torchY = roomH - 125;
     var torchState = roomIndex === currentRoom && roomIndex === roomAtmosphereRoom ? atmosphereTorches[0] : null;
