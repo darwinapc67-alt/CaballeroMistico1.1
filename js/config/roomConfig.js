@@ -201,9 +201,9 @@ function createInterludeRoom(index, name, variant) {
   platforms.push({x: off + 80, y: 420 + (variant % 2) * 40, w: 150, h: 16});
   platforms.push({x: off + 330, y: 320 + (variant % 3) * 40, w: 180, h: 16});
   platforms.push({x: off + 610, y: 400 - (variant % 2) * 80, w: 120, h: 16});
-  return {height: 600, platforms: platforms, spikes: variant === 3 ? [{x: off + 300, y: 540, w: 180, h: 20}] : [],
+  return {height: 600, platforms: platforms, spikes: [],
     walls: [], transitionZone: {x: off + 750, y: 460, w: 40, h: 100, to: index + 1},
-    decor: genDecor(off, 7, 5, 600), zoneTitle: name || "PASO DE LAS PROFUNDIDADES"};
+    decor: genDecor(off, 7, 5, 600), zoneTitle: name || "H" + (index + 1)};
 }
 
 var interludeRooms = [
