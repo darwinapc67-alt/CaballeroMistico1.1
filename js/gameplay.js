@@ -1200,18 +1200,28 @@ function updateBoss(e, room) {
           e.action = "elite_slam";
           e.actionTimer = 9;
           e.waveSpawned = false;
-          sfxStalactiteFall();
         }
       } else if (e.action === "elite_slam") {
         if (e.actionTimer === 5 && !e.waveSpawned) {
           var waveWidth = 40;
+          var waveX = e.attackDirection > 0 ? e.x + e.w - 6 : e.x - waveWidth + 6;
+          var waveArenaRight = eliteRight + e.w;
+          waveX = Math.max(eliteLeft, Math.min(waveArenaRight - waveWidth, waveX));
+          var waveY = e.y + e.h - 12;
           bossProjectiles.push({
-            x: e.attackDirection > 0 ? e.x + e.w - 6 : e.x - waveWidth + 6,
-            y: e.y + e.h - 13, w: waveWidth, h: 12,
+            x: waveX, y: waveY, w: waveWidth, h: 12,
             vx: e.attackDirection * 7, vy: 0, gravity: 0, damage: 1,
             life: 120, room: e.room, kind: "ardoris_shockwave",
-            color: "#a6ef78", homing: false, owner: e
+            color: "#a6ef78", homing: false, owner: e,
+            arenaLeft: eliteLeft, arenaRight: waveArenaRight
           });
+          var impactX = e.x + e.w / 2 + e.attackDirection * 18;
+          impactBursts.push({
+            x: impactX, y: e.y + e.h, life: 22, maxLife: 22,
+            landing: true, strength: 4
+          });
+          spawnParticles(impactX, e.y + e.h - 2, "#a6ef78", 14, 4);
+          sfxGroundSlam();
           e.waveSpawned = true;
         }
         e.actionTimer--;
@@ -1240,7 +1250,7 @@ function updateBoss(e, room) {
       } else {
         e.action = "elite_slam_windup";
         e.actionTimer = 50;
-        sfxStalactiteFall();
+        sfxBossVoice();
       }
     } else {
       var eliteWalkDirection = target.player.x < e.x ? -1 : 1;
@@ -1301,7 +1311,9 @@ function updateBossProjectiles() {
       b.vy = targetY / targetDistance * 7;
     }
     var hit = false;
-    if (currentRoom === b.room && !b.reflected) {
+    var outsideArena = b.kind === "ardoris_shockwave" &&
+      (b.x < b.arenaLeft || b.x + b.w > b.arenaRight);
+    if (!outsideArena && currentRoom === b.room && !b.reflected) {
       if (rectHit(player, b)) { playerTakeDamage(player, b.damage, true); hit = true; }
       if (twoPlayerMode && rectHit(player2, b)) { playerTakeDamage(player2, b.damage, true); hit = true; }
     }
@@ -1326,7 +1338,7 @@ function updateBossProjectiles() {
     var projectileRoom = rooms[b.room];
     var projectileOrigin = projectileRoom.worldX !== undefined ? projectileRoom.worldX : b.room * ROOM_W;
     var projectileWidth = projectileRoom.roomWidth || ROOM_W;
-    if (hit || b.life <= 0 || b.x < projectileOrigin - 40 || b.x > projectileOrigin + projectileWidth + 40 || b.y > projectileRoom.height + 30 || b.y < -40) {
+    if (hit || outsideArena || b.life <= 0 || b.x < projectileOrigin - 40 || b.x > projectileOrigin + projectileWidth + 40 || b.y > projectileRoom.height + 30 || b.y < -40) {
       bossProjectiles.splice(i, 1);
     }
   }

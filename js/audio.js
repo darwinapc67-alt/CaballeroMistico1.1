@@ -52,6 +52,7 @@ function sfxDiscovery() { playTone(523, 0.10, "sine", 0.08, 0); playTone(659, 0.
 function sfxBuy() { playTone(880, 0.08, "sine", 0.10, 0); playTone(1100, 0.10, "sine", 0.10, 0.06); playTone(1320, 0.15, "sine", 0.08, 0.12); }
 function sfxFall() { playTone(200, 0.4, "sine", 0.06, 0); playTone(150, 0.5, "sine", 0.05, 0.15); playTone(100, 0.6, "sine", 0.04, 0.30); }
 function sfxStalactiteFall() { playTone(80, 0.3, "sawtooth", 0.06, 0); playNoise(0.2, 0.08, 0.05); }
+function sfxGroundSlam() { playNoise(0.28, 0.16, 0); playTone(72, 0.24, "sawtooth", 0.1, 0); playTone(48, 0.3, "triangle", 0.08, 0.04); }
 function sfxEterium() { playTone(660, 0.12, "sine", 0.1, 0); playTone(990, 0.16, "triangle", 0.08, 0.08); playTone(1320, 0.24, "sine", 0.07, 0.16); }
 function sfxEteriumSkill() { playNoise(0.12, 0.14, 0); playTone(180, 0.18, "sawtooth", 0.1, 0); playTone(520, 0.22, "triangle", 0.1, 0.04); playTone(1040, 0.28, "sine", 0.09, 0.1); }
 function sfxDeath() { playTone(800, 0.1, "square", 0.10, 0); playTone(600, 0.1, "square", 0.08, 0.08); playTone(400, 0.2, "sawtooth", 0.06, 0.16); playTone(200, 0.3, "sawtooth", 0.04, 0.28); playNoise(0.3, 0.15, 0); }

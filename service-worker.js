@@ -1,7 +1,7 @@
 "use strict";
 
 // Bump this value when publishing a new app-shell version.
-const CACHE_NAME = "caballero-mistico-shell-v17";
+const CACHE_NAME = "caballero-mistico-shell-v18";
 const SHELL_FILES = [
   "index.html",
   "jugar/index.html",
@@ -29,12 +29,12 @@ const SHELL_FILES = [
   "js/config/bossConfig.js?v=226",
   "js/config/roomConfig.js?v=257",
   "js/config/enemyConfig.js?v=241",
-  "js/audio.js?v=12",
-  "js/gameplay.js?v=284",
+  "js/audio.js?v=13",
+  "js/gameplay.js?v=285",
   "js/render/backgroundRenderer.js?v=222",
   "js/render/roomRenderer.js?v=215",
   "js/render/effectsRenderer.js?v=204",
-  "js/render/enemyRenderer.js?v=210",
+  "js/render/enemyRenderer.js?v=211",
   "js/render/playerRenderer.js?v=224",
   "js/render.js?v=222",
   "js/render/uiRenderer.js?v=289",

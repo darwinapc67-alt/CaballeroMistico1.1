@@ -120,21 +120,23 @@ function drawEnemies() {
         ctx.lineTo(eliteCenter + eliteFacing * 68, e.y + 31);
         ctx.stroke();
         var slashWarning = e.action === "elite_slash_windup";
-        var bladeGlow = slashWarning ? 0.8 + Math.sin(Date.now() / 65) * 0.2 : 0.3;
+        var slamWindup = e.action === "elite_slam_windup";
+        var bladeTipY = slamWindup ? e.y + 8 + Math.sin(Date.now() / 70) * 3 : e.y + 52;
+        var bladeGlow = slashWarning || slamWindup ? 0.8 + Math.sin(Date.now() / 65) * 0.2 : 0.3;
         ctx.shadowColor = "#e7ff9a";
-        ctx.shadowBlur = slashWarning ? 18 : 4;
+        ctx.shadowBlur = slashWarning || slamWindup ? 18 : 4;
         ctx.strokeStyle = "rgba(190, 245, 120, " + bladeGlow + ")";
-        ctx.lineWidth = slashWarning ? 11 : 4;
+        ctx.lineWidth = slashWarning ? 11 : (slamWindup ? 8 : 4);
         ctx.beginPath();
         ctx.moveTo(eliteCenter + eliteFacing * 34, e.y + 56);
-        ctx.lineTo(eliteCenter + eliteFacing * 80, e.y + 52);
+        ctx.lineTo(eliteCenter + eliteFacing * 80, bladeTipY);
         ctx.stroke();
         ctx.shadowBlur = 0;
         ctx.strokeStyle = "#d7e9ae";
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(eliteCenter + eliteFacing * 34, e.y + 56);
-        ctx.lineTo(eliteCenter + eliteFacing * 80, e.y + 52);
+        ctx.lineTo(eliteCenter + eliteFacing * 80, bladeTipY);
         ctx.stroke();
         if (slashWarning) {
           ctx.fillStyle = "#efffb2";
@@ -160,7 +162,14 @@ function drawEnemies() {
           ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.ellipse(eliteCenter, e.y + e.h, 36 + Math.sin(Date.now() / 80) * 6, 8, 0, 0, Math.PI * 2);
+          ctx.moveTo(eliteCenter + eliteFacing * 20, e.y + e.h);
+          ctx.lineTo(eliteCenter + eliteFacing * 130, e.y + e.h);
           ctx.stroke();
+          ctx.fillStyle = "#efffb2";
+          ctx.font = "bold 18px monospace";
+          ctx.textAlign = "center";
+          ctx.fillText("!", eliteCenter + eliteFacing * 64, e.y + 12);
+          ctx.textAlign = "left";
         } else if (e.action === "elite_slash") {
           ctx.strokeStyle = "#e3ffae";
           ctx.lineWidth = 8;
