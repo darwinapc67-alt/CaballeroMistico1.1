@@ -283,7 +283,7 @@ function drawPedestal(ped, alreadyHasSword) {
   ctx.lineTo(ped.stone.x + 61, ped.stone.y + 17);
   ctx.lineTo(ped.stone.x + 67, ped.stone.y + 34);
   ctx.stroke();
-  if (!ped.taken && !alreadyHasSword) {
+  if (!alreadyHasSword) {
     ped.glow += 0.05;
     var glowAlpha = 0.15 + Math.sin(ped.glow) * 0.1;
     ctx.fillStyle = "rgba(255, 215, 0, " + glowAlpha + ")";
@@ -293,6 +293,13 @@ function drawPedestal(ped, alreadyHasSword) {
     ctx.strokeStyle = "rgba(255, 215, 0, 0.4)";
     ctx.lineWidth = 1;
     ctx.strokeRect(ped.glass.x, ped.glass.y, ped.glass.w, ped.glass.h);
+    var shieldX = ped.stone.x + 28;
+    var shieldY = ped.stone.y - 24;
+    ctx.fillStyle = "rgba(186, 128, 69, " + (0.12 + Math.sin(Date.now() / 190) * 0.04) + ")";
+    ctx.beginPath();
+    ctx.ellipse(shieldX, shieldY, 20, 25, 0, 0, Math.PI * 2);
+    ctx.fill();
+    drawWoodenShield(shieldX, shieldY, 26, 36, 1);
     var swordX = ped.sword.x + ped.sword.w / 2;
     var swordTop = ped.sword.y;
     var guardY = swordTop + 25;
