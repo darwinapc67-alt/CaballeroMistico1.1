@@ -88,6 +88,7 @@ function drawCaveBgDetails(rx, decor, roomH, roomWidth, roomIndex, continuity) {
     ctx.fill();
   }
   drawCaveBackRelief(rx, roomH, roomWidth, roomSeed, continuity);
+  drawNaturalRockLayers(rx, roomH, roomWidth, profile);
   drawZoneBackdropDetails(rx, roomH, roomWidth, roomIndex, roomSeed, profile);
   if (gameMode === "normal") drawNormalCaveAtmosphere(rx, roomH, roomWidth, roomSeed, profile);
   for (var i = 0; i < 20; i++) {
@@ -459,6 +460,142 @@ function drawCaveBackRelief(rx, roomH, roomWidth, seed, continuity) {
   }
   ctx.restore();
 }
+
+function getBackgroundVariation(cell, layer) {
+  var value = Math.sin(cell * 127.1 + layer * 311.7) * 43758.5453;
+  return value - Math.floor(value);
+}
+
+function drawNaturalRockLayers(rx, roomH, roomWidth, profile) {
+  var spacing = 305;
+  var visibleLeft = Math.max(rx, cameraX - 100);
+  var visibleRight = Math.min(rx + roomWidth, cameraX + canvas.width + 100);
+  if (visibleRight <= visibleLeft) return;
+
+  var firstCell = Math.floor(visibleLeft / spacing) - 1;
+  var lastCell = Math.ceil(visibleRight / spacing) + 1;
+  var bands = [
+    {top: 68, range: 250, height: 70, opacity: 0.18, scale: 0.76},
+    {top: 180, range: 250, height: 90, opacity: 0.22, scale: 1},
+    {top: 325, range: 150, height: 70, opacity: 0.15, scale: 0.82}
+  ];
+  if (roomH > 650) {
+    bands.push({top: 610, range: Math.min(150, roomH - 650), height: 86, opacity: 0.17, scale: 0.86});
+  }
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(rx, 0, roomWidth, roomH);
+  ctx.clip();
+  for (var cell = firstCell; cell <= lastCell; cell++) {
+    for (var bandIndex = 0; bandIndex < bands.length; bandIndex++) {
+      var band = bands[bandIndex];
+      var presence = getBackgroundVariation(cell, bandIndex + 3);
+      if (presence < 0.38) continue;
+
+      var x = cell * spacing + 8 + getBackgroundVariation(cell, bandIndex + 11) * 190;
+      var y = band.top + getBackgroundVariation(cell, bandIndex + 19) * band.range;
+      var width = (78 + getBackgroundVariation(cell, bandIndex + 29) * 140) * band.scale;
+      var height = (30 + getBackgroundVariation(cell, bandIndex + 37) * band.height) * band.scale;
+      var peakOffset = 0.14 + getBackgroundVariation(cell, bandIndex + 43) * 0.36;
+      var secondPeak = 0.48 + getBackgroundVariation(cell, bandIndex + 47) * 0.36;
+      var shapeVariant = Math.floor(getBackgroundVariation(cell, bandIndex + 67) * 3);
+
+      ctx.globalAlpha = band.opacity;
+      ctx.fillStyle = bandIndex === 0 ? profile.middle : profile.bottom;
+      ctx.beginPath();
+      ctx.moveTo(x, y + height * 0.72);
+      if (shapeVariant === 1) {
+        ctx.quadraticCurveTo(x + width * 0.14, y + height * 0.55, x + width * 0.27, y + height * 0.32);
+        ctx.quadraticCurveTo(x + width * 0.42, y + height * 0.12, x + width * 0.55, y + height * 0.43);
+        ctx.quadraticCurveTo(x + width * 0.73, y + height * 0.62, x + width * 0.84, y + height * 0.26);
+      } else if (shapeVariant === 2) {
+        ctx.lineTo(x + width * 0.11, y + height * 0.59);
+        ctx.lineTo(x + width * 0.24, y + height * 0.28);
+        ctx.lineTo(x + width * 0.39, y + height * 0.48);
+        ctx.lineTo(x + width * 0.51, y + height * 0.08);
+        ctx.lineTo(x + width * 0.68, y + height * 0.42);
+        ctx.lineTo(x + width * 0.79, y + height * 0.24);
+      } else {
+        ctx.lineTo(x + width * 0.12, y + height * 0.48);
+        ctx.lineTo(x + width * peakOffset, y + height * 0.24);
+        ctx.lineTo(x + width * 0.43, y + height * 0.52);
+        ctx.lineTo(x + width * secondPeak, y);
+        ctx.lineTo(x + width * 0.76, y + height * 0.42);
+      }
+      ctx.lineTo(x + width, y + height * 0.7);
+      ctx.lineTo(x + width, y + height);
+      ctx.lineTo(x, y + height);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.globalAlpha = band.opacity * 1.5;
+      ctx.strokeStyle = profile.edge;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      if (shapeVariant === 1) {
+        ctx.moveTo(x + width * 0.14, y + height * 0.55);
+        ctx.quadraticCurveTo(x + width * 0.27, y + height * 0.32, x + width * 0.42, y + height * 0.25);
+        ctx.quadraticCurveTo(x + width * 0.66, y + height * 0.57, x + width * 0.84, y + height * 0.26);
+      } else if (shapeVariant === 2) {
+        ctx.moveTo(x + width * 0.11, y + height * 0.59);
+        ctx.lineTo(x + width * 0.24, y + height * 0.28);
+        ctx.lineTo(x + width * 0.39, y + height * 0.48);
+        ctx.lineTo(x + width * 0.51, y + height * 0.08);
+        ctx.lineTo(x + width * 0.68, y + height * 0.42);
+        ctx.lineTo(x + width * 0.79, y + height * 0.24);
+      } else {
+        ctx.moveTo(x + width * 0.12, y + height * 0.48);
+        ctx.lineTo(x + width * peakOffset, y + height * 0.24);
+        ctx.lineTo(x + width * 0.43, y + height * 0.52);
+        ctx.lineTo(x + width * secondPeak, y);
+        ctx.lineTo(x + width * 0.76, y + height * 0.42);
+      }
+      ctx.stroke();
+
+      ctx.globalAlpha = band.opacity * 0.8;
+      ctx.strokeStyle = profile.bottom;
+      ctx.beginPath();
+      ctx.moveTo(x + width * 0.35, y + height * 0.53);
+      ctx.lineTo(x + width * 0.41, y + height * 0.68);
+      ctx.lineTo(x + width * 0.38, y + height * 0.82);
+      ctx.moveTo(x + width * 0.76, y + height * 0.47);
+      ctx.lineTo(x + width * 0.71, y + height * 0.64);
+      ctx.stroke();
+
+      if (profile.id === "ardoris" || profile.id === "marsh") {
+        ctx.globalAlpha = band.opacity * 1.8;
+        ctx.strokeStyle = profile.accent;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x + width * 0.18, y + height * 0.5);
+        ctx.quadraticCurveTo(x + width * 0.28, y + height * 0.37, x + width * 0.37, y + height * 0.47);
+        ctx.moveTo(x + width * 0.72, y + height * 0.49);
+        ctx.quadraticCurveTo(x + width * 0.82, y + height * 0.38, x + width * 0.89, y + height * 0.56);
+        ctx.stroke();
+        ctx.globalAlpha = band.opacity * 1.5;
+        ctx.fillStyle = profile.accent;
+        ctx.beginPath();
+        ctx.ellipse(x + width * 0.32, y + height * 0.47, 7, 2, -0.2, 0, Math.PI * 2);
+        ctx.ellipse(x + width * 0.82, y + height * 0.48, 9, 2, 0.15, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (profile.id === "crystal" || profile.id === "abyss" || profile.id === "brumalis") {
+        var crystalX = x + width * (0.24 + getBackgroundVariation(cell, bandIndex + 53) * 0.5);
+        var crystalHeight = 12 + getBackgroundVariation(cell, bandIndex + 59) * 19;
+        ctx.globalAlpha = band.opacity * 1.5;
+        ctx.fillStyle = profile.light + "55";
+        ctx.beginPath();
+        ctx.moveTo(crystalX, y + height * 0.38);
+        ctx.lineTo(crystalX + 4, y + height * 0.38 - crystalHeight);
+        ctx.lineTo(crystalX + 9, y + height * 0.38);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+  }
+  ctx.restore();
+}
+
 function drawCaveEdgeDetails(rx, roomH, roomWidth, seed, roomIndex, continuity) {
   ctx.save();
   for (var i = 0; i < 5; i++) {
