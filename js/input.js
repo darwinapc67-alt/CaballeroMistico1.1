@@ -1229,6 +1229,8 @@ function processGamepadInput() {
   var btn15 = (gpButtons[15] && !prevGPButtons[15]) || (gp2Buttons[15] && !prevGP2Buttons[15]);
   var btn16 = (gpButtons[16] && !prevGPButtons[16]) || (gp2Buttons[16] && !prevGP2Buttons[16]);
   var controlsCancel = btn9 || btn16;
+  if (gameState === ST_MENU && menuSubState === "slots" && musicEnabled && !musicUserInteracted &&
+      (btn0 || btn9 || btn12 || btn13 || Math.abs(gpAxes.y) >= 0.5)) startMusic();
   if (shopOpen && shopId === 0) {
     if (btn9) {
       shopOpen = false; shopMenuOpen = false; shopConfirm = -1; shopExitCooldown = 30;
@@ -1355,6 +1357,7 @@ function processGamepadInput() {
         setupTouchControls();
         gameState = ST_MENU;
         menuSubState = "slots";
+        startMusic();
       }
     }
     return;

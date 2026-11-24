@@ -6,7 +6,7 @@ var GUARD_DURATION = 120, GUARD_COOLDOWN = 240, SHIELD_PARRY_WINDOW = 12, SHIELD
 var WORLD_W = 52 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
 var VERSION_STORAGE_KEY = "caballero_mistico_version";
-var GAME_VERSION = "2.85";
+var GAME_VERSION = "2.86";
 var VERSION = "v" + GAME_VERSION;
 
 function initializeGameVersion() {

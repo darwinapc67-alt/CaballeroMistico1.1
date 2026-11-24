@@ -2,6 +2,7 @@ Coloca aquí las pistas de música del juego.
 
 Nombres requeridos:
 - menu.mp3       Música del menú principal.
+- save-menu.mp3  Música ambiental serena para elegir una ranura.
 - normal.mp3     Música de aventura y exploración normal.
 - tienda.mp3     Música tranquila de la tienda y el armario.
 - jefe.mp3       Música de tensión para las salas de jefe.

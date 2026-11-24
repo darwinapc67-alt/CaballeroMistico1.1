@@ -92,6 +92,7 @@ function sfxBossPhase() { playTone(70, 0.25, "sawtooth", 0.12, 0); playTone(140,
 
 var MUSIC_TRACKS = {
   menu: "assets/music/menu.mp3",
+  saveMenu: "assets/music/save-menu.mp3",
   normal: "assets/music/normal.mp3",
   tienda: "assets/music/tienda.mp3",
   jefe: "assets/music/jefe.mp3",
@@ -101,6 +102,7 @@ var MUSIC_TRACKS = {
   infinite: "assets/music/infinite.mp3"
 };
 var MUSIC_SCENE_TRACKS = {
+  saveMenu: "saveMenu",
   exploration: "normal",
   danger: "jefe",
   combat: "jefe",
@@ -111,6 +113,7 @@ var MUSIC_SCENE_TRACKS = {
 };
 var MUSIC_FALLBACK_THEMES = {
   menu: {root: 196, scale: [0, 2, 4, 7, 9], waveform: "triangle"},
+  saveMenu: {root: 146.83, scale: [0, 3, 5, 7, 10], waveform: "triangle"},
   crystal: {root: 220, scale: [0, 2, 4, 7, 9], waveform: "triangle"},
   ardoris: {root: 164.81, scale: [0, 2, 4, 7, 9], waveform: "square"},
   marsh: {root: 146.83, scale: [0, 3, 5, 7, 10], waveform: "triangle"},
@@ -129,6 +132,17 @@ var MUSIC_FALLBACK_ARRANGEMENTS = {
       [0, 2, -1, 3, 1, -1, 2, 4, 3, -1, 1, 2, -1, 3, 0, -1]
     ],
     chords: [0, 3, 4, 2, 0, 4, 2, 3, 0, 3, 1, 4, 2, 3, 4, 0]
+  },
+  saveMenu: {
+    form: [0, 1, 0, 2, 3, 2, 1, 3],
+    phrases: [
+      [0, -1, -1, 2, -1, 1, -1, -1, 0, -1, 2, -1, 4, -1, -1, 2],
+      [2, -1, 3, -1, -1, 4, 2, -1, 1, -1, -1, 3, -1, 2, -1, -1],
+      [4, -1, -1, 3, 2, -1, 1, -1, -1, 0, 2, -1, -1, 3, -1, 1],
+      [1, -1, 2, -1, 4, -1, -1, 3, 2, -1, 0, -1, -1, 1, -1, 0]
+    ],
+    chords: [0, 3, 4, 2, 0, 2, 3, 4, 1, 3, 0, 2, 4, 1, 3, 0],
+    chordTones: [0, 1, 3]
   },
   exploration: {
     form: [0, 1, 0, 2, 3, 2, 1, 3],
@@ -203,6 +217,7 @@ var MUSIC_FALLBACK_ARRANGEMENTS = {
 };
 var MUSIC_FALLBACK_ARPEGGIOS = {
   menu: [0, -1, 2, 4, -1, 2, 1, -1],
+  saveMenu: [0, -1, -1, 2, -1, -1, 4, -1],
   exploration: [0, -1, 2, 4, 2, -1, 4, -1],
   danger: [0, 2, -1, 4, 2, 1, -1, 4],
   combat: [0, -1, 4, 2, 0, 2, -1, 4],
@@ -213,6 +228,7 @@ var MUSIC_FALLBACK_ARPEGGIOS = {
 };
 var MUSIC_FALLBACK_BASS_RHYTHMS = {
   menu: [0, 2],
+  saveMenu: [0],
   exploration: [0, 2.5],
   danger: [0, 1.5, 2.5],
   combat: [0, 1.5, 2.5, 3.5],
@@ -223,6 +239,7 @@ var MUSIC_FALLBACK_BASS_RHYTHMS = {
 };
 var MUSIC_FALLBACK_DYNAMICS = {
   menu: [0.5, 0.66, 0.8, 0.62],
+  saveMenu: [0.24, 0.3, 0.27, 0.22],
   exploration: [0.46, 0.64, 0.76, 0.56],
   danger: [0.58, 0.78, 0.96, 0.72],
   combat: [0.62, 0.84, 1, 0.76],
@@ -232,7 +249,7 @@ var MUSIC_FALLBACK_DYNAMICS = {
   infinite: [0.58, 0.8, 0.94, 0.72]
 };
 var MUSIC_FALLBACK_BEATS = {
-  menu: 0.42, exploration: 0.46, danger: 0.34, combat: 0.36,
+  menu: 0.42, saveMenu: 0.62, exploration: 0.46, danger: 0.34, combat: 0.36,
   elite: 0.32, boss: 0.34, safe: 0.52, infinite: 0.38
 };
 var MUSIC_BASE_VOLUME = 0.2;
@@ -250,6 +267,7 @@ var musicFallbackSceneKey = "";
 var musicCombatUntil = 0;
 var musicFallbackGainNode = null;
 var musicFallbackSwitchTimer = null;
+var musicFallbackOscillators = [];
 
 function getMusicRegionForState() {
   if (gameMode === "infinite") return "infinite";
@@ -297,7 +315,18 @@ function isMusicCombatActive() {
   return activeCombat || Date.now() < musicCombatUntil;
 }
 
+function stopFallbackNotesAt(stopAt) {
+  musicFallbackOscillators.forEach(function(entry) {
+    if (entry.endAt <= stopAt) return;
+    entry.endAt = stopAt;
+    entry.oscillator.stop(stopAt);
+  });
+}
+
 function getMusicSceneForState() {
+  if (gameState === ST_MENU && (menuSubState === "slots" || menuSubState === "confirm_delete")) {
+    return {track: MUSIC_SCENE_TRACKS.saveMenu, key: "saveMenu:saveMenu"};
+  }
   if (gameState === ST_MENU || gameState === ST_LANGUAGE || gameState === ST_DEVICE) {
     return {track: "menu", key: "menu:menu"};
   }
@@ -322,6 +351,7 @@ function getMusicSceneForState() {
 function getMusicSceneKeyForTrack(trackName) {
   var scene = getMusicSceneForState();
   if (trackName === scene.track) return scene.key;
+  if (trackName === "saveMenu") return "saveMenu:saveMenu";
   var mood = trackName === "menu" ? "menu" :
     (trackName === "tienda" ? "safe" : (trackName === "elite" ? "elite" :
     (trackName === "jefe" || trackName === "boss" ? "boss" :
@@ -410,6 +440,12 @@ function playFallbackNote(frequency, duration, type, volume, delay, pan) {
     output = stereo;
   }
   output.connect(ensureMusicFallbackGain());
+  var oscillatorEntry = {oscillator: oscillator, endAt: endAt + 0.02};
+  musicFallbackOscillators.push(oscillatorEntry);
+  oscillator.onended = function() {
+    var oscillatorIndex = musicFallbackOscillators.indexOf(oscillatorEntry);
+    if (oscillatorIndex >= 0) musicFallbackOscillators.splice(oscillatorIndex, 1);
+  };
   oscillator.start(startAt);
   oscillator.stop(endAt + 0.02);
 }
@@ -429,6 +465,7 @@ function playFallbackPhrase(sceneKey) {
   var bassRhythm = MUSIC_FALLBACK_BASS_RHYTHMS[mood] || MUSIC_FALLBACK_BASS_RHYTHMS.exploration;
   var dynamics = MUSIC_FALLBACK_DYNAMICS[mood] || MUSIC_FALLBACK_DYNAMICS.exploration;
   var beat = MUSIC_FALLBACK_BEATS[mood] || MUSIC_FALLBACK_BEATS.exploration;
+  var chordVoicing = arrangement.chordTones || [0, 2, 4];
   var leadWave = mood === "danger" || mood === "elite" || mood === "boss" ? "sawtooth" : theme.waveform;
   var bassWave = mood === "combat" || mood === "infinite" ? "square" : "triangle";
 
@@ -439,9 +476,9 @@ function playFallbackPhrase(sceneKey) {
     var energy = dynamics[Math.floor(bar / 4)] * (bar % 2 === 0 ? 1 : 0.9);
     var melody = arrangement.phrases[arrangement.form[section]];
     var melodyStart = (bar % 2) * 8;
-    var leadOctave = section === 2 || section === 3 ? 19 : (section === 6 ? 7 : 12);
+    var leadOctave = mood === "saveMenu" ? 12 : (section === 2 || section === 3 ? 19 : (section === 6 ? 7 : 12));
 
-    [0, 2, 4].forEach(function(chordTone, index) {
+    chordVoicing.forEach(function(chordTone, index) {
       var voicing = chordRoot + chordTone;
       var octave = index === 0 ? 0 : (index === 1 ? 12 : 12);
       playFallbackNote(
@@ -519,6 +556,7 @@ function fadeOutFallbackMusic(duration) {
     gain.cancelScheduledValues(now);
     gain.setValueAtTime(gain.value, now);
     gain.linearRampToValueAtTime(0, now + duration);
+    stopFallbackNotesAt(now + duration);
 }
 function startFallbackMusic(trackName, sceneKey, requestId) {
     if (!musicEnabled || (requestId !== undefined && requestId !== musicRequestId)) return;
@@ -569,6 +607,7 @@ function startFallbackMusic(trackName, sceneKey, requestId) {
       fallbackGain.gain.cancelScheduledValues(switchAt);
       fallbackGain.gain.setValueAtTime(fallbackGain.gain.value, switchAt);
       fallbackGain.gain.linearRampToValueAtTime(0, switchAt + 0.25);
+      stopFallbackNotesAt(switchAt + 0.25);
       musicFallbackSwitchTimer = setTimeout(beginFallbackPhrase, 250);
     } else {
       beginFallbackPhrase();
@@ -688,6 +727,7 @@ function stopMusic() {
     var now = audioCtx.currentTime;
     musicFallbackGainNode.gain.cancelScheduledValues(now);
     musicFallbackGainNode.gain.setValueAtTime(0, now);
+    stopFallbackNotesAt(now);
   }
 }
 function updateAudioEnvironment() {
