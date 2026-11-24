@@ -16,10 +16,11 @@ function playerTakeDamage(p, dmg, isBossDamage) {
 
   var difficultyData = difficultyOptions.find(function(option) { return option.id === difficulty; }) || difficultyOptions[1];
   var guardianGuard = bossAbilities.guardian ? 0.8 : 1;
-  var armorGuard = armorId === "cave" ? 0.85 : 1;
+  var armorEquipped = armorId === "plate" || armorId === "cave";
+  var armorGuard = armorEquipped && armorId === "cave" ? 0.85 : 1;
   var blessingGuard = equippedBlessings.indexOf("stone") >= 0 ? 0.85 : 1;
   var incomingDamage = isBossDamage ? 1 : Math.max(1, Math.ceil(dmg * difficultyData.damage * guardianGuard * armorGuard * blessingGuard));
-  var armorHalfDamageChance = [0, 0.25, 0.4, 0.55][armorLevel] || 0;
+  var armorHalfDamageChance = armorEquipped ? ([0, 0.25, 0.4, 0.55][armorLevel] || 0) : 0;
   if (armorHalfDamageChance > 0 && Math.random() < armorHalfDamageChance) incomingDamage *= 0.5;
   p.hp -= incomingDamage;
   p.inv = 40;
