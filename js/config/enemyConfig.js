@@ -12,6 +12,7 @@ var ARDORIS_ELITE_HP = 750;
 var ARDORIS_ELITE_ATTACKS = [
   { action: "elite_slash_windup", windupFrames: 48 },
   { action: "elite_charge_windup", windupFrames: 44 },
+  { action: "elite_energy_windup", windupFrames: 48 },
   { action: "elite_slam_windup", windupFrames: 50 }
 ];
 
@@ -140,7 +141,7 @@ enemies.push({
   dead: false, room: 23, type: "ardoris_elite", boss: true,
   bossName: "VESPEX",
   hp: ARDORIS_ELITE_HP, maxHp: ARDORIS_ELITE_HP,
-  action: "", actionTimer: 0, attackTimer: 90, attackIndex: 0,
+  action: "", actionTimer: 0, attackTimer: 90, lastAttackIndex: -1,
   attackDirection: 1, attackHit: false, waveSpawned: false, phase: 1, staysRoom: true
 });
 enemies.forEach(function(e) {

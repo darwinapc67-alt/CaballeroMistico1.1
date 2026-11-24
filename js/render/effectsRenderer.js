@@ -13,6 +13,22 @@ function drawBossProjectiles() {
       ctx.shadowBlur = 0;
       ctx.fillStyle = "#d9fbff";
       ctx.fillRect(b.x + 4, b.y + 4, b.w - 8, b.h - 8);
+    } else if (b.kind === "ardoris_energy_bolt") {
+      ctx.save();
+      ctx.translate(b.x + b.w / 2, b.y + b.h / 2);
+      ctx.rotate(Math.atan2(b.vy, b.vx));
+      ctx.shadowColor = "#59e79b";
+      ctx.shadowBlur = 14;
+      ctx.fillStyle = "#59e79b";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, b.w / 2, b.h / 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#e3ffe9";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, b.w * 0.28, b.h * 0.24, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     } else if (b.kind === "ardoris_shockwave") {
       ctx.shadowColor = "#a6ef78";
       ctx.shadowBlur = 10;

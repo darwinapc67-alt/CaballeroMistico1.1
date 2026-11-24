@@ -121,6 +121,7 @@ function drawEnemies() {
         ctx.stroke();
         var slashWarning = e.action === "elite_slash_windup";
         var slamWindup = e.action === "elite_slam_windup";
+        var energyWindup = e.action === "elite_energy_windup";
         var bladeTipY = slamWindup ? e.y + 8 + Math.sin(Date.now() / 70) * 3 : e.y + 52;
         var bladeGlow = slashWarning || slamWindup ? 0.8 + Math.sin(Date.now() / 65) * 0.2 : 0.3;
         ctx.shadowColor = "#e7ff9a";
@@ -169,6 +170,26 @@ function drawEnemies() {
           ctx.font = "bold 18px monospace";
           ctx.textAlign = "center";
           ctx.fillText("!", eliteCenter + eliteFacing * 64, e.y + 12);
+          ctx.textAlign = "left";
+        } else if (energyWindup) {
+          var energyPulse = 10 + Math.sin(Date.now() / 55) * 3;
+          ctx.save();
+          ctx.shadowColor = "#8fffc1";
+          ctx.shadowBlur = 18;
+          ctx.fillStyle = "#59e79b";
+          ctx.beginPath();
+          ctx.arc(eliteCenter + eliteFacing * 44, e.y + 47, energyPulse, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = "#e3ffe9";
+          ctx.beginPath();
+          ctx.arc(eliteCenter + eliteFacing * 44, e.y + 47, energyPulse * 0.42, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+          ctx.fillStyle = "#efffb2";
+          ctx.font = "bold 18px monospace";
+          ctx.textAlign = "center";
+          ctx.fillText("!", eliteCenter + eliteFacing * 44, e.y + 20);
           ctx.textAlign = "left";
         } else if (e.action === "elite_slash") {
           ctx.strokeStyle = "#e3ffae";

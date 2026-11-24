@@ -1226,25 +1226,51 @@ function updateBoss(e, room) {
         }
         e.actionTimer--;
         if (e.actionTimer <= 0) finishArdorisEliteAttack(e);
+      } else if (e.action === "elite_energy_windup") {
+        e.actionTimer--;
+        if (e.actionTimer <= 0) {
+          var energyDx = e.energyTargetX - (e.x + e.w / 2);
+          var energyDy = e.energyTargetY - (e.y + e.h / 2);
+          var energyDistance = Math.max(1, Math.sqrt(energyDx * energyDx + energyDy * energyDy));
+          spawnBossProjectile(e, energyDx / energyDistance * 6, energyDy / energyDistance * 6,
+            1, "ardoris_energy_bolt", {w: 18, h: 12, color: "#a6ef78", life: 150});
+          e.action = "elite_energy";
+          e.actionTimer = 8;
+          sfxEteriumSkill();
+        }
+      } else if (e.action === "elite_energy") {
+        e.actionTimer--;
+        if (e.actionTimer <= 0) finishArdorisEliteAttack(e);
       } else if (e.action === "elite_recovery") {
         e.actionTimer--;
         if (e.actionTimer <= 0) {
           e.action = "";
-          e.attackTimer = 42;
+          e.attackTimer = e.phase === 3 ? 34 : (e.phase === 2 ? 38 : 42);
           e.attackHit = false;
         }
       }
     } else if (e.attackTimer <= 0) {
       e.attackDirection = target.player.x + target.player.w / 2 < e.x + e.w / 2 ? -1 : 1;
       e.attackHit = false;
-      var eliteAttackIndex = Math.floor(Number(e.attackIndex) || 0);
-      if (eliteAttackIndex < 0 || eliteAttackIndex >= ARDORIS_ELITE_ATTACKS.length) eliteAttackIndex = 0;
-      var selectedEliteAttack = ARDORIS_ELITE_ATTACKS[eliteAttackIndex];
-      e.attackIndex = (eliteAttackIndex + 1) % ARDORIS_ELITE_ATTACKS.length;
+      var previousAttackIndex = Math.floor(Number(e.lastAttackIndex));
+      var availableEliteAttacks = [];
+      for (var eliteAttackIndex = 0; eliteAttackIndex < ARDORIS_ELITE_ATTACKS.length; eliteAttackIndex++) {
+        if (eliteAttackIndex !== previousAttackIndex) availableEliteAttacks.push(eliteAttackIndex);
+      }
+      var nextAttackPosition = Math.floor(Math.random() * availableEliteAttacks.length);
+      var selectedAttackIndex = availableEliteAttacks[nextAttackPosition];
+      var selectedEliteAttack = ARDORIS_ELITE_ATTACKS[selectedAttackIndex];
+      e.lastAttackIndex = selectedAttackIndex;
       e.action = selectedEliteAttack.action;
       e.actionTimer = selectedEliteAttack.windupFrames;
+      if (e.action === "elite_energy_windup") {
+        e.energyTargetX = target.player.x + target.player.w / 2;
+        e.energyTargetY = target.player.y + target.player.h / 2;
+        sfxEterium();
+      } else {
+        sfxBossVoice();
+      }
       if (e.action === "elite_slam_windup") e.waveSpawned = false;
-      sfxBossVoice();
     } else {
       var eliteWalkDirection = target.player.x < e.x ? -1 : 1;
       e.x += eliteWalkDirection * 0.55;

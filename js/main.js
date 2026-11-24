@@ -157,7 +157,7 @@ function resetAll() {
       e.deathTimer = 0; e.attackHit = false; e.phaseNotice = 0;
       if (e.type === "ardoris_elite") {
         e.x = e.homeX; e.y = e.homeY;
-        e.attackTimer = 90; e.attackIndex = 0; e.attackDirection = 1; e.waveSpawned = false;
+        e.attackTimer = 90; e.lastAttackIndex = -1; e.attackDirection = 1; e.waveSpawned = false;
       }
     }
     e.vy = 0;
