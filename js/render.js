@@ -48,6 +48,7 @@ function drawGameWorld(skipPlayers) {
   });
 
   var camLeft = cameraX, camRight = cameraX + 800, camTop = cameraY, camBottom = cameraY + 600;
+  var visibleRooms = [];
   for (var r = 0; r < rooms.length; r++) {
     if (currentRoom === 37 && r !== 37) continue;
     if (r === 37 && currentRoom !== 37) continue;
@@ -57,8 +58,19 @@ function drawGameWorld(skipPlayers) {
     if (rx + roomWidth < camLeft - 100 || rx > camRight + 100) continue;
     var room = rooms[r];
     if (room.height < camTop - 100 || 0 > camBottom + 100) continue;
-    if (room.city) drawCityBg(rx, room);
-    else drawCaveBg(rx, room.decor, room.height, roomWidth, r);
+    if (room.city) drawCityBg(rx, room, roomWidth);
+    else drawCaveBg(rx, room.height, roomWidth, r);
+    visibleRooms.push({index: r, room: room, x: rx, width: roomWidth});
+  }
+  visibleRooms.forEach(function(visibleRoom) {
+    var r = visibleRoom.index;
+    var room = visibleRoom.room;
+    if (room.city) drawCityBackgroundDetails(visibleRoom.x, room, visibleRoom.width);
+    else drawCaveBgDetails(visibleRoom.x, room.decor, room.height, visibleRoom.width, r);
+  });
+  visibleRooms.forEach(function(visibleRoom) {
+    var r = visibleRoom.index;
+    var room = visibleRoom.room;
     if (r === 0 && room.secretPassage && room.walls[1] && room.walls[1].broken) {
       ctx.fillStyle = "#0a1018";
       ctx.fillRect(room.secretPassage.x, room.secretPassage.y, room.secretPassage.w, room.secretPassage.h);
@@ -185,7 +197,7 @@ function drawGameWorld(skipPlayers) {
     if (room.bossName || r === 23) drawBossDoor(r);
     if (r === 9) drawHealingStone();
     if (r === 50) drawShopNPC(room, r);
-  }
+  });
   drawAltars();
   atmosphereRocks.forEach(function(rock) {
     ctx.fillStyle = "#766d68";

@@ -26,7 +26,7 @@ function getZoneVisualProfile(roomIndex) {
   return { id: "crystal", top: "#11152d", middle: "#202b50", bottom: "#070a18", light: "#69dfff", accent: "#536cb4", platform: "#303b5a", edge: "#79b8d6", particle: "#b9f3ff" };
 }
 
-function drawCaveBg(rx, decor, roomH, roomWidth, roomIndex) {
+function drawCaveBg(rx, roomH, roomWidth, roomIndex) {
   roomWidth = roomWidth || ROOM_W;
   var roomSeed = Math.floor(rx / ROOM_W);
   var profile = getZoneVisualProfile(roomIndex);
@@ -42,6 +42,12 @@ function drawCaveBg(rx, decor, roomH, roomWidth, roomIndex) {
   backGradient.addColorStop(1, "rgba(0, 0, 0, 0.3)");
   ctx.fillStyle = backGradient;
   ctx.fillRect(rx, 0, roomWidth, roomH);
+}
+
+function drawCaveBgDetails(rx, decor, roomH, roomWidth, roomIndex) {
+  roomWidth = roomWidth || ROOM_W;
+  var roomSeed = Math.floor(rx / ROOM_W);
+  var profile = getZoneVisualProfile(roomIndex);
   if (roomIndex === 0) {
     var entranceCenter = rx + 320;
     ctx.fillStyle = "#668a73";
@@ -95,7 +101,12 @@ function drawCaveBg(rx, decor, roomH, roomWidth, roomIndex) {
   });
   ctx.globalAlpha = 1;
   drawCaveEdgeDetails(rx, roomH, roomWidth, roomSeed, roomIndex);
-  decor.forEach(function(d) {
+  drawCaveDecor(decor);
+  drawZoneLighting(rx, roomH, roomWidth, profile);
+}
+
+function drawCaveDecor(decor) {
+  (decor || []).forEach(function(d) {
     if (d.type === 'stalactite') {
       var stalactiteGradient = ctx.createLinearGradient(d.x, d.y, d.x + d.w, d.y + d.h);
       stalactiteGradient.addColorStop(0, "#111426");
@@ -156,7 +167,6 @@ function drawCaveBg(rx, decor, roomH, roomWidth, roomIndex) {
       ctx.stroke();
     }
   });
-  drawZoneLighting(rx, roomH, roomWidth, profile);
 }
 
 function drawZoneBackdropDetails(rx, roomH, roomWidth, roomIndex, seed, profile) {
@@ -511,14 +521,19 @@ function drawCaveEdgeDetails(rx, roomH, roomWidth, seed, roomIndex) {
   }
   ctx.restore();
 }
-function drawCityBg(rx, room) {
+function drawCityBg(rx, room, roomWidth) {
+  roomWidth = roomWidth || room.roomWidth || ROOM_W;
   var palette = ["#182848", "#213b59", "#294a62", "#31586a"];
   ctx.fillStyle = palette[room.district.length % palette.length];
-  ctx.fillRect(rx, 0, ROOM_W, room.height);
+  ctx.fillRect(rx, 0, roomWidth, room.height);
   ctx.fillStyle = "rgba(255, 210, 120, 0.08)";
-  ctx.fillRect(rx, 80, ROOM_W, 210);
+  ctx.fillRect(rx, 80, roomWidth, 210);
   ctx.fillStyle = "#10182c";
-  ctx.fillRect(rx, 470, ROOM_W, 90);
+  ctx.fillRect(rx, 470, roomWidth, 90);
+}
+
+function drawCityBackgroundDetails(rx, room, roomWidth) {
+  roomWidth = roomWidth || room.roomWidth || ROOM_W;
   for (var i = 0; i < 6; i++) {
     var bx = rx + i * 145 - 20;
     var bh = 85 + (i % 3) * 28;
@@ -543,7 +558,8 @@ function drawCityBg(rx, room) {
 }
 function drawCityHouses(room, roomIndex) {
   (room.houses || []).forEach(function(house) {
-    var x = roomIndex * ROOM_W + house.x;
+    var roomOrigin = room.worldX !== undefined ? room.worldX : roomIndex * ROOM_W;
+    var x = roomOrigin + house.x;
     var width = 170;
     var top = 390;
     ctx.fillStyle = "#29243b";
