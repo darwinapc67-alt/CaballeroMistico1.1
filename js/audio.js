@@ -237,9 +237,11 @@ var MUSIC_FALLBACK_BEATS = {
 };
 var MUSIC_BASE_VOLUME = 0.2;
 var currentMusicTrack = "";
+var currentMusicSource = "";
 var musicSceneKey = "";
 var musicPlayers = [];
 var activeMusicPlayer = -1;
+var musicRequestId = 0;
 var musicFadeTimer = null;
 var musicUserInteracted = false;
 var musicFallbackTimer = null;
@@ -347,6 +349,43 @@ function ensureMusicPlayers() {
     player.setAttribute("aria-hidden", "true");
     musicPlayers.push(player);
   }
+}
+function findPlayingMusicPlayer(source) {
+  if (activeMusicPlayer >= 0 && musicPlayers[activeMusicPlayer] &&
+      musicPlayers[activeMusicPlayer]._musicSource === source &&
+      !musicPlayers[activeMusicPlayer].paused) return activeMusicPlayer;
+  for (var i = 0; i < musicPlayers.length; i++) {
+    if (musicPlayers[i]._musicSource === source && !musicPlayers[i].paused) return i;
+  }
+  return -1;
+}
+function silenceDuplicateMusicPlayers(source, keepIndex) {
+  musicPlayers.forEach(function(player, index) {
+    if (index === keepIndex || player._musicSource !== source) return;
+    player.pause();
+    player.currentTime = 0;
+    setMusicPlayerVolume(player, 0);
+  });
+}
+function watchMusicPlayback(player, playResult, requestId, source) {
+  if (!playResult || !playResult.then) return;
+  player._musicPlayPromise = playResult;
+  playResult.then(function() {
+    if (player._musicRequestId !== requestId) return;
+    if (requestId !== musicRequestId || currentMusicSource !== source ||
+        musicPlayers[activeMusicPlayer] !== player) {
+      player.pause();
+      player.currentTime = 0;
+      setMusicPlayerVolume(player, 0);
+      return;
+    }
+    if (musicFallbackTrack) fadeOutFallbackMusic(0.7);
+  }).catch(function() {
+    if (player._musicRequestId === requestId && requestId === musicRequestId &&
+        currentMusicSource === source && musicPlayers[activeMusicPlayer] === player) {
+      startFallbackMusic(currentMusicTrack, musicSceneKey, requestId);
+    }
+  });
 }
 function playFallbackNote(frequency, duration, type, volume, delay, pan) {
   if (!audioCtx || !musicEnabled) return;
@@ -481,10 +520,16 @@ function fadeOutFallbackMusic(duration) {
     gain.setValueAtTime(gain.value, now);
     gain.linearRampToValueAtTime(0, now + duration);
 }
-function startFallbackMusic(trackName, sceneKey) {
-    if (!musicEnabled) return;
+function startFallbackMusic(trackName, sceneKey, requestId) {
+    if (!musicEnabled || (requestId !== undefined && requestId !== musicRequestId)) return;
     sceneKey = sceneKey || getMusicSceneKeyForTrack(trackName);
-    if (musicFallbackTrack === trackName && musicFallbackSceneKey === sceneKey) return;
+    if (musicFallbackTrack && musicFallbackSceneKey === sceneKey) {
+      currentMusicTrack = trackName;
+      currentMusicSource = MUSIC_TRACKS[trackName] || currentMusicSource;
+      musicSceneKey = sceneKey;
+      musicPlaying = true;
+      return;
+    }
     if (musicFallbackTimer) clearInterval(musicFallbackTimer);
     if (musicFallbackSwitchTimer) clearTimeout(musicFallbackSwitchTimer);
     var previousFallbackTrack = !!musicFallbackTrack;
@@ -499,17 +544,21 @@ function startFallbackMusic(trackName, sceneKey) {
     musicFallbackSceneKey = sceneKey;
     musicPlaying = true;
     currentMusicTrack = trackName;
+    currentMusicSource = MUSIC_TRACKS[trackName] || "";
     musicSceneKey = sceneKey;
+    var fallbackRequestId = musicRequestId;
     fadeMusicPlayers(null, 0, 350);
     function beginFallbackPhrase() {
-      if (musicFallbackTrack !== trackName || musicFallbackSceneKey !== sceneKey || !musicEnabled) return;
+      if (fallbackRequestId !== musicRequestId || musicFallbackTrack !== trackName ||
+          musicFallbackSceneKey !== sceneKey || !musicEnabled) return;
       var now = audioCtx.currentTime;
       fallbackGain.gain.cancelScheduledValues(now);
       fallbackGain.gain.setValueAtTime(0, now);
       var phraseDuration = playFallbackPhrase(sceneKey);
       fallbackGain.gain.linearRampToValueAtTime(1, now + 0.35);
       musicFallbackTimer = setInterval(function() {
-        if (musicFallbackTrack === trackName && musicFallbackSceneKey === sceneKey && musicEnabled) {
+        if (fallbackRequestId === musicRequestId && musicFallbackTrack === trackName &&
+            musicFallbackSceneKey === sceneKey && musicEnabled) {
           playFallbackPhrase(sceneKey);
         }
       }, phraseDuration * 1000);
@@ -561,43 +610,68 @@ function startMusic(trackName, sceneKey) {
   ensureMusicPlayers();
   var scene = getMusicSceneForState();
   trackName = trackName || scene.track;
-  sceneKey = sceneKey || (trackName === scene.track ? scene.key : getMusicSceneKeyForTrack(trackName));
-  if (musicPlaying && currentMusicTrack === trackName) {
-    if (musicSceneKey === sceneKey) return;
-    musicSceneKey = sceneKey;
-    if (musicFallbackTrack) startFallbackMusic(trackName, sceneKey);
-    return;
-  }
   var source = MUSIC_TRACKS[trackName];
   if (!source) return;
+  sceneKey = sceneKey || (trackName === scene.track ? scene.key : getMusicSceneKeyForTrack(trackName));
+  var existingIndex = findPlayingMusicPlayer(source);
+  if (musicPlaying && currentMusicSource === source) {
+    currentMusicTrack = trackName;
+    musicSceneKey = sceneKey;
+    if (existingIndex >= 0) {
+      activeMusicPlayer = existingIndex;
+      silenceDuplicateMusicPlayers(source, existingIndex);
+    }
+    if (musicFallbackTrack) startFallbackMusic(trackName, sceneKey, musicRequestId);
+    return;
+  }
+  if (existingIndex >= 0) {
+    var existingRequestId = ++musicRequestId;
+    var existingPlayer = musicPlayers[existingIndex];
+    currentMusicTrack = trackName;
+    currentMusicSource = source;
+    musicSceneKey = sceneKey;
+    musicPlaying = true;
+    activeMusicPlayer = existingIndex;
+    existingPlayer._musicRequestId = existingRequestId;
+    existingPlayer.onerror = function() {
+      if (existingRequestId === musicRequestId && currentMusicSource === source) {
+        startFallbackMusic(currentMusicTrack, musicSceneKey, existingRequestId);
+      }
+    };
+    silenceDuplicateMusicPlayers(source, existingIndex);
+    fadeMusicPlayers(existingPlayer, 1, 700);
+    watchMusicPlayback(existingPlayer, existingPlayer._musicPlayPromise, existingRequestId, source);
+    if (musicFallbackTrack) fadeOutFallbackMusic(0.7);
+    return;
+  }
+  var requestId = ++musicRequestId;
   var nextIndex = activeMusicPlayer === 0 ? 1 : 0;
   var nextPlayer = musicPlayers[nextIndex];
+  nextPlayer._musicSource = source;
+  nextPlayer._musicRequestId = requestId;
   nextPlayer.src = source;
   nextPlayer.onerror = function() {
-    if (currentMusicTrack === trackName && musicSceneKey === sceneKey) startFallbackMusic(trackName, sceneKey);
+    if (requestId === musicRequestId && currentMusicSource === source) {
+      startFallbackMusic(currentMusicTrack, musicSceneKey, requestId);
+    }
   };
   nextPlayer.loop = true;
   nextPlayer.currentTime = 0;
   setMusicPlayerVolume(nextPlayer, 0);
   var playResult = nextPlayer.play();
   currentMusicTrack = trackName;
+  currentMusicSource = source;
   musicSceneKey = sceneKey;
   musicPlaying = true;
   activeMusicPlayer = nextIndex;
   fadeMusicPlayers(nextPlayer, 1, 700);
-  if (playResult && playResult.then) {
-    playResult.then(function() {
-      if (currentMusicTrack === trackName && musicSceneKey === sceneKey && musicFallbackTrack) {
-        fadeOutFallbackMusic(0.7);
-      }
-    }).catch(function() {
-      if (currentMusicTrack === trackName && musicSceneKey === sceneKey) startFallbackMusic(trackName, sceneKey);
-    });
-  }
+  watchMusicPlayback(nextPlayer, playResult, requestId, source);
 }
 function stopMusic() {
+  musicRequestId++;
   musicPlaying = false;
   currentMusicTrack = "";
+  currentMusicSource = "";
   musicSceneKey = "";
   if (musicFadeTimer) { clearInterval(musicFadeTimer); musicFadeTimer = null; }
   musicPlayers.forEach(function(player) {
