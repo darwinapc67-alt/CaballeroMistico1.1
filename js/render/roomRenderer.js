@@ -283,7 +283,7 @@ function drawPedestal(ped, alreadyHasSword) {
   ctx.lineTo(ped.stone.x + 61, ped.stone.y + 17);
   ctx.lineTo(ped.stone.x + 67, ped.stone.y + 34);
   ctx.stroke();
-  if (!alreadyHasSword) {
+  if (!alreadyHasSword && !ped.taken) {
     ped.glow += 0.05;
     var glowAlpha = 0.15 + Math.sin(ped.glow) * 0.1;
     ctx.fillStyle = "rgba(255, 215, 0, " + glowAlpha + ")";
