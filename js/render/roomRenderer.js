@@ -61,6 +61,9 @@ function drawSwordPickupCinematic() {
       color: player.color, headColor: player.headColor, inv: 0, dashing: false,
       blocking: false, hasSword: false, swordEquipped: false, swordSheathed: true, swordSwing: 0
     });
+    var shieldX = ped.stone.x + 28 - cameraX - reveal * 10;
+    var shieldY = ped.stone.y - 24 - cameraY - reveal * 100;
+    drawWoodenShield(shieldX, shieldY, 26, 36, 1);
     var swordY = pedestalY - 78 - reveal * 100;
     var swordX = knightX + 28;
     ctx.save(); ctx.translate(swordX, swordY); ctx.rotate(-0.08);
