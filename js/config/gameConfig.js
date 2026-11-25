@@ -6,7 +6,7 @@ var GUARD_DURATION = 120, GUARD_COOLDOWN = 240, SHIELD_PARRY_WINDOW = 12, SHIELD
 var WORLD_W = 52 * ROOM_W;
 var SAVE_KEY = "caballero_mistico_v080";
 var VERSION_STORAGE_KEY = "caballero_mistico_version";
-var GAME_VERSION = "2.87";
+var GAME_VERSION = "2.88";
 var VERSION = "v" + GAME_VERSION;
 
 function initializeGameVersion() {
@@ -968,8 +968,8 @@ function loadGame(i) {
   bossZonesUnlocked.queen_larva = bossArenaState.queen_larva;
   bossZonesUnlocked.abyssal_knight = bossArenaState.abyssal_knight;
   bossZonesUnlocked.dragon = bossArenaState.dragon;
-  rooms[11].transitionZone = bossArenaState.guardian ? {x: 9540, y: 460, w: 40, h: 100, to: 12, requiresBoss: true} : null;
-  rooms[19].transitionZone = {x: 15940, y: 460, w: 40, h: 100, to: 20};
+  rooms[11].transitionZone = null;
+  rooms[19].transitionZone = null;
   room36.transitionZone = {x: 39 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 37};
   room37.transitionZone = {x: 40 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 38};
   room38.transitionZone = {x: 41 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 39};

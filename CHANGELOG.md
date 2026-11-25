@@ -18,6 +18,7 @@ archivo.
 | v2.84 | v2.85 | Evitadas reproducciones musicales duplicadas al cambiar de pista y al resolver callbacks de reproducción obsoletos. | Garantiza una única reproducción por fuente y descarta errores asíncronos de solicitudes anteriores. |
 | v2.85 | v2.86 | Añadida música ambiental instrumental propia para el selector de partidas. | Acompaña la selección de ranuras con un arreglo sereno y diferenciado, respetando los fundidos y la opción de música. |
 | v2.86 | v2.87 | Añadidos identificadores temporales H1–H25 a las habitaciones de Ardoris. | Facilita la identificación visual de las salas para organizar el diseño del mapa sin modificar sus IDs ni conexiones. |
+| v2.87 | v2.88 | Reorganizadas las conexiones y la distribución del mapa de Ardoris. | Adapta las rutas a la distribución H1–H25, conservando los IDs, las barreras de progresión y el acceso a la tienda y Brumalis. |
 
 La versión activa se define en `js/config/gameConfig.js` y se guarda con la
 clave independiente `caballero_mistico_version` de `localStorage`. Crear una

@@ -178,18 +178,34 @@ function drawEteriumSkillHud() {
 }
 
 function drawExplorationMapGraph(x, y, width, height) {
-  var columns = 8;
-  var rows = Math.ceil(rooms.length / columns);
-  var gapX = 8, gapY = 8;
+  var columns = 13;
+  var otherRegionColumns = 8;
+  var customRows = 6;
+  var gapX = 4, gapY = 5;
+  var unpositionedRooms = [];
+  rooms.forEach(function(room, roomIndex) {
+    if (!room.mapPosition) unpositionedRooms.push(roomIndex);
+  });
+  var rows = customRows + Math.ceil(unpositionedRooms.length / otherRegionColumns);
   var chamberW = Math.min(94, (width - gapX * (columns - 1)) / columns);
   var chamberH = Math.min(38, (height - gapY * (rows - 1)) / rows);
   var positions = [];
+  var unpositionedIndex = 0;
   rooms.forEach(function(room, roomIndex) {
-    var row = Math.floor(roomIndex / columns);
-    var column = roomIndex % columns;
-    var direction = row % 2 === 0 ? column : columns - 1 - column;
+    var row;
+    var column;
+    if (room.mapPosition) {
+      row = room.mapPosition.row;
+      column = room.mapPosition.column;
+    } else {
+      var otherRegionRow = Math.floor(unpositionedIndex / otherRegionColumns);
+      column = unpositionedIndex % otherRegionColumns;
+      if (otherRegionRow % 2 === 1) column = otherRegionColumns - 1 - column;
+      row = customRows + otherRegionRow;
+      unpositionedIndex++;
+    }
     positions[roomIndex] = {
-      x: x + direction * (chamberW + gapX),
+      x: x + column * (chamberW + gapX),
       y: y + row * (chamberH + gapY)
     };
   });
@@ -206,6 +222,7 @@ function drawExplorationMapGraph(x, y, width, height) {
   for (var connectionIndex = 0; connectionIndex < rooms.length - 1; connectionIndex++) {
     if (rooms[connectionIndex].optional || rooms[connectionIndex + 1].optional) continue;
     if (rooms[connectionIndex].suppressNextRoomConnection) continue;
+    if (rooms[connectionIndex].mapPosition || rooms[connectionIndex + 1].mapPosition) continue;
     var from = positions[connectionIndex];
     var to = positions[connectionIndex + 1];
     ctx.strokeStyle = connectionIndex < highestRoomReached ? "#3d7180" : "#1a2938";
@@ -221,7 +238,9 @@ function drawExplorationMapGraph(x, y, width, height) {
     var transitionZones = Array.isArray(room.transitionZones) ? room.transitionZones.slice() : [];
     if (room.transitionZone) transitionZones.unshift(room.transitionZone);
     transitionZones.forEach(function(exit) {
-      if (exit.to === roomIndex + 1 || !positions[roomIndex] || !positions[exit.to] ||
+      var isMappedRoute = room.mapPosition && rooms[exit.to] && rooms[exit.to].mapPosition;
+      if ((exit.to === roomIndex + 1 && !isMappedRoute) ||
+          !positions[roomIndex] || !positions[exit.to] ||
           !nodeIsRevealed(roomIndex) || !nodeIsRevealed(exit.to)) return;
       var first = Math.min(roomIndex, exit.to);
       var second = Math.max(roomIndex, exit.to);
@@ -247,15 +266,26 @@ function drawExplorationMapGraph(x, y, width, height) {
       var source = positions[roomIndex];
       var destination = positions[exit.to];
       if (!source || !destination || !nodeIsRevealed(roomIndex)) return;
+      var first = Math.min(roomIndex, exit.to);
+      var second = Math.max(roomIndex, exit.to);
+      var connectionKey = first + ":" + second;
+      if (drawnConnections[connectionKey]) return;
       ctx.save();
-      ctx.setLineDash(exit.requires && !isSideExitAvailable(exit) ? [3, 4] : [7, 3]);
-      ctx.strokeStyle = exit.requires && !isSideExitAvailable(exit) ? "#9a7842" : "#55d6a5";
+      var isLocked = (exit.requires || exit.requiresBoss || exit.requiresWall) &&
+        !isSideExitAvailable(exit);
+      var isBranch = exit.mapBranch || !room.mapPosition || !destination.mapPosition;
+      ctx.setLineDash(isLocked ? [3, 4] : (isBranch ? [7, 3] : []));
+      ctx.strokeStyle = isLocked ? "#9a7842" : (isBranch ? "#55d6a5" : "#3d7180");
       ctx.lineWidth = 2.5;
       ctx.beginPath();
       ctx.moveTo(source.x + chamberW / 2, source.y + chamberH / 2);
+      if (exit.mapBend) {
+        ctx.lineTo(destination.x + chamberW / 2, source.y + chamberH / 2);
+      }
       ctx.lineTo(destination.x + chamberW / 2, destination.y + chamberH / 2);
       ctx.stroke();
       ctx.restore();
+      drawnConnections[connectionKey] = true;
     });
   });
 
@@ -329,7 +359,8 @@ function drawExplorationMapGraph(x, y, width, height) {
     ctx.fillStyle = current ? "#ffd700" : (room.optional ? "#7fe0c2" : "#8fa7c7");
     ctx.font = "8px monospace";
     ctx.textAlign = "left";
-    ctx.fillText(room.optional ? (room.zoneTitle || "RAMAL").slice(0, 12) : "H" + (roomIndex + 1),
+    ctx.fillText(room.optional ? (room.zoneTitle || "RAMAL").slice(0, 12) :
+      (room.mapLabel || "H" + (roomIndex + 1)),
       nodeX + 4, nodeY + 10);
   });
   ctx.setLineDash([]);

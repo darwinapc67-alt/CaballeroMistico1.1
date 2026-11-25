@@ -88,12 +88,10 @@ function resetAll() {
   checkpointState = { room: 0, px: 100, py: 400, hp: 10, maxHp: 10, azari: 0, hasSword: false, hasShield: false, swordEquipped: false, weaponId: DEFAULT_WEAPON_ID, unlockedWeapons: [DEFAULT_WEAPON_ID], hasBow: false, arrows: 0, bombs: 0, hasMap: false, hasAzariCharm: false, hasLantern: false, lanternLevel: 0, hasDash: false, hasDoubleJump: false, swordLevel: 0, bowLevel: 0, arrowType: "normal", combatSkills: { charged: false, aerial: false, combo: false }, hiddenCollectibles: { crown: false, echo: false, highGallery: false, abyssRift: false, branchCache: false, fungusCache: false, galleryCache: false, cityCache: false } };
   room0.transitionZone = null; room1.transitionZone = null; room2.transitionZone = null;
   room3.transitionZone = null; room4.transitionZone = null;
-  room5.transitionZone = {x:4750, y:460, w:50, h:100, to:6};
+  room5.transitionZone = null;
   room6.transitionZone = null; room7.transitionZone = null; room8.transitionZone = null;
-  room9.transitionZone = {x:7960, y:460, w:40, h:100, to:10};
-  room10.transitionZone = {x:8000, y:500, w:40, h:100, to:9, sharedBoundary: true};
-  room11.transitionZone = {x:9540, y:460, w:40, h:100, to:12, requiresBoss: true};
-  rooms[19].transitionZone = {x:15940, y:460, w:40, h:100, to:20};
+  room9.transitionZone = null; room10.transitionZone = null;
+  room11.transitionZone = null; rooms[19].transitionZone = null;
   room36.transitionZone = {x: 39 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 37};
   room37.transitionZone = {x: 40 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 38};
   room38.transitionZone = {x: 41 * ROOM_W + 750, y: 450, w: 40, h: 110, to: 39};

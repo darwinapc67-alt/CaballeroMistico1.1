@@ -2210,7 +2210,7 @@ function defeatBoss(e) {
     spawnFloatText(player.x, player.y - 40, "¡Dash desbloqueado!", "#79c");
   }
   if (e.type === "guardian" && e.room === 39) startFloorCollapse();
-  if (e.room < rooms.length - 1) {
+  if (e.room < rooms.length - 1 && !rooms[e.room].directionalMap) {
     if (e.type !== "dragon" && !(e.type === "guardian" && e.room === 39)) {
       rooms[e.room].transitionZone = {x: e.room * ROOM_W + ROOM_W - 70, y: 450, w: 60, h: 110, to: e.room + 1};
     }
@@ -2464,6 +2464,16 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   if (gameMode === "custom") { left = 16; right = 576; }
   if (p.x < left + 5) { p.x = left + 5; p.vx = 0; }
   if (p.x + p.w > right - 5) { p.x = right - 5 - p.w; p.vx = 0; }
+  if (gameMode === "normal" && rooms[currentRoom].directionalMap) {
+    var directionalRoom = rooms[currentRoom];
+    var directionalOrigin = directionalRoom.worldX !== undefined
+      ? directionalRoom.worldX : currentRoom * ROOM_W;
+    var directionalWidth = directionalRoom.roomWidth || ROOM_W;
+    var directionalLeft = currentRoom === 0 ? left + 5 : directionalOrigin + 5;
+    var directionalRight = Math.min(right - 5, directionalOrigin + directionalWidth - 5) - p.w;
+    if (p.x < directionalLeft) { p.x = directionalLeft; p.vx = 0; }
+    if (p.x > directionalRight) { p.x = directionalRight; p.vx = 0; }
+  }
 
   var activeArenaBoss = getActiveBoss(currentRoom);
   if (activeArenaBoss && (rooms[currentRoom].bossName ||
@@ -2604,7 +2614,20 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       p.jumpsLeft = p.maxJumps;
       return;
     }
-    if (!room.optional && currentRoom < 42) { sfxFall(); startFallThroughTransition(currentRoom + 1); return; }
+    if (!room.optional && currentRoom < 42 && !room.directionalMap) {
+      sfxFall(); startFallThroughTransition(currentRoom + 1); return;
+    }
+    if (room.directionalMap) {
+      var recovery = getDirectionalRoomRecovery(currentRoom, p);
+      p.x = recovery.x;
+      p.y = recovery.y;
+      p.vx = 0;
+      p.vy = 0;
+      p.onGround = true;
+      p.jumpsLeft = p.maxJumps;
+      p.inv = Math.max(p.inv, 30);
+      return;
+    }
     p.x = currentRoom * ROOM_W + ROOM_W / 2 - p.w / 2 + (p.id === 2 ? 30 : -30);
     p.y = 100; p.vx = 0; p.vy = 0;
     spawnFloatText(p.x, p.y - 20, "¡No hay más abajo!", "#f44");
@@ -2872,10 +2895,9 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
         }
         continue;
       }
-      startTransition(sideExit.to, sideExit.to < currentRoom ? "back" : "forward", {
-        x: sideExit.spawnX,
-        y: sideExit.spawnY
-      });
+      startTransition(sideExit.to, sideExit.direction ||
+        (sideExit.to < currentRoom ? "back" : "forward"),
+      getSideExitTransitionSpawn(sideExit));
       return;
     }
   }
@@ -3328,10 +3350,115 @@ function updateHouseInterior() {
 }
 
 function isSideExitAvailable(exit) {
-  if (exit.requires === "doubleJump") return hasDoubleJump;
-  if (exit.requires === "dash") return hasDash;
-  if (exit.requires === "sword") return hasSword;
+  if (exit.requires === "doubleJump" && !hasDoubleJump) return false;
+  if (exit.requires === "dash" && !hasDash) return false;
+  if (exit.requires === "sword" && !hasSword) return false;
+  if (exit.requiresBoss && !bossArenaState[exit.requiresBoss]) return false;
+  if (exit.requiresWall) {
+    var requiredRoom = rooms[exit.requiresWall.roomIndex];
+    var requiredWall = requiredRoom && requiredRoom.walls[exit.requiresWall.wallIndex];
+    if (!requiredWall || !requiredWall.broken) return false;
+  }
   return true;
+}
+
+function getSideExitTransitionSpawn(exit) {
+  var destination = rooms[exit.to];
+  var origin = destination.worldX !== undefined ? destination.worldX : exit.to * ROOM_W;
+  var width = destination.roomWidth || ROOM_W;
+  var entrySide = exit.entrySide;
+  var spawnX = origin + width / 2 - player.w / 2;
+  var landingPlatform = null;
+
+  if (entrySide === "left") {
+    spawnX = origin + 64;
+  } else if (entrySide === "right") {
+    spawnX = origin + width - player.w - 64;
+  } else if (entrySide === "up") {
+    destination.platforms.forEach(function(platform) {
+      var platformSurfaceY = getPlatformSurfaceY(platform, platform.x + platform.w / 2);
+      var platformTop = platformSurfaceY === null ? platform.y : platformSurfaceY;
+      var landingSurfaceY = landingPlatform &&
+        getPlatformSurfaceY(landingPlatform, landingPlatform.x + landingPlatform.w / 2);
+      var landingTop = landingSurfaceY === null && landingPlatform
+        ? landingPlatform.y : landingSurfaceY;
+      if (!landingPlatform || platformTop < landingTop) landingPlatform = platform;
+    });
+    if (landingPlatform) {
+      spawnX = landingPlatform.x + landingPlatform.w - player.w - 2;
+    }
+  } else if (entrySide === "down") {
+    spawnX += 100;
+  }
+
+  function getLandingSurface(x) {
+    if (landingPlatform) {
+      var platformSurface = getPlatformSurfaceY(landingPlatform, x + player.w / 2);
+      if (platformSurface !== null) return platformSurface;
+      if (x + player.w / 2 >= landingPlatform.x &&
+          x + player.w / 2 <= landingPlatform.x + landingPlatform.w) return landingPlatform.y;
+      return null;
+    }
+
+    var surfaceY = null;
+    destination.platforms.forEach(function(platform) {
+      var candidateSurface = getPlatformSurfaceY(platform, x + player.w / 2);
+      if (candidateSurface === null && x + player.w / 2 >= platform.x &&
+          x + player.w / 2 <= platform.x + platform.w) candidateSurface = platform.y;
+      if (candidateSurface !== null && (surfaceY === null || candidateSurface > surfaceY)) {
+        surfaceY = candidateSurface;
+      }
+    });
+    return surfaceY;
+  }
+
+  function isSafeLanding(x, y) {
+    return !(destination.sideExits || []).some(function(sideExit) {
+      return x < sideExit.x + sideExit.w && x + player.w > sideExit.x &&
+        y < sideExit.y + sideExit.h && y + player.h > sideExit.y;
+    });
+  }
+
+  var landingSurfaceY = getLandingSurface(spawnX);
+  var spawnY = landingSurfaceY === null
+    ? destination.height - player.h - 40 : landingSurfaceY - player.h - 2;
+  if (isSafeLanding(spawnX, spawnY)) return {x: spawnX, y: spawnY};
+
+  for (var offset = 16; offset < width; offset += 16) {
+    var candidates = [spawnX + offset, spawnX - offset];
+    for (var candidateIndex = 0; candidateIndex < candidates.length; candidateIndex++) {
+      var candidateX = candidates[candidateIndex];
+      if (candidateX < origin + 5 || candidateX + player.w > origin + width - 5) continue;
+      var candidateSurfaceY = getLandingSurface(candidateX);
+      if (candidateSurfaceY === null) continue;
+      var candidateY = candidateSurfaceY - player.h - 2;
+      if (isSafeLanding(candidateX, candidateY)) return {x: candidateX, y: candidateY};
+    }
+  }
+
+  return {x: spawnX, y: spawnY};
+}
+
+function getDirectionalRoomRecovery(roomIndex, p) {
+  var room = rooms[roomIndex];
+  var origin = room.worldX !== undefined ? room.worldX : roomIndex * ROOM_W;
+  var width = room.roomWidth || ROOM_W;
+  if (lastSafeX >= origin && lastSafeX + p.w <= origin + width) {
+    return {x: lastSafeX, y: lastSafeY};
+  }
+
+  var chosenPlatform = null;
+  room.platforms.forEach(function(platform) {
+    if (!chosenPlatform || platform.y > chosenPlatform.y) chosenPlatform = platform;
+  });
+  if (chosenPlatform) {
+    var platformX = Math.max(origin + 5,
+      Math.min(origin + width - p.w - 5, chosenPlatform.x + chosenPlatform.w / 2 - p.w / 2));
+    var surfaceY = getPlatformSurfaceY(chosenPlatform, platformX + p.w / 2);
+    if (surfaceY === null) surfaceY = chosenPlatform.y;
+    return {x: platformX, y: surfaceY - p.h - 2};
+  }
+  return {x: origin + width / 2 - p.w / 2, y: room.height - p.h - 40};
 }
 
 function startTransition(toRoom, direction, destinationSpawn) {
@@ -3348,8 +3475,13 @@ function startTransition(toRoom, direction, destinationSpawn) {
   transIsFall = false;
   player.autoWalk = 50;
   if (twoPlayerMode) player2.autoWalk = 50;
-  if (direction === "back") { player.vx = -2; if (twoPlayerMode) player2.vx = -2; }
-  else { player.vx = 2; if (twoPlayerMode) player2.vx = 2; }
+  player.vx = direction === "back" || direction === "left" ? -2 :
+    (direction === "up" || direction === "down" ? 0 : 2);
+  player.vy = direction === "up" ? -2 : (direction === "down" ? 2 : 0);
+  if (twoPlayerMode) {
+    player2.vx = player.vx;
+    player2.vy = player.vy;
+  }
 }
 
 function startBossDialogue(roomIndex) {
@@ -3439,7 +3571,9 @@ function updateTransition() {
   if (transPhase === "out") {
     transFade = 1 - (transTimer / 50);
     player.x += player.vx;
+    player.y += player.vy;
     if (twoPlayerMode) player2.x += player2.vx;
+    if (twoPlayerMode) player2.y += player2.vy;
     if (transTimer <= 0) { transPhase = "load"; transTimer = 40; }
   } else if (transPhase === "load") {
     transFade = 1;

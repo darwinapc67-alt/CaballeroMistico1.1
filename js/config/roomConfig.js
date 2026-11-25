@@ -554,6 +554,172 @@ rooms.push({
   decor: genDecor(brumalisOrigin, 10, 5, 600)
 });
 
+var ardorisMapPositions = {
+  0: {column: 0, row: 4}, 1: {column: 1, row: 4},
+  2: {column: 1, row: 3}, 3: {column: 2, row: 3},
+  4: {column: 3, row: 3}, 5: {column: 4, row: 3},
+  6: {column: 4, row: 4}, 7: {column: 3, row: 4},
+  8: {column: 3, row: 5}, 9: {column: 4, row: 5},
+  10: {column: 5, row: 5}, 11: {column: 6, row: 5},
+  12: {column: 6, row: 4}, 13: {column: 7, row: 4},
+  14: {column: 8, row: 4}, 15: {column: 8, row: 3},
+  16: {column: 7, row: 3}, 17: {column: 6, row: 3},
+  18: {column: 6, row: 2}, 19: {column: 7, row: 2},
+  20: {column: 7, row: 1}, 21: {column: 8, row: 1},
+  22: {column: 9, row: 1}, 23: {column: 10, row: 1},
+  50: {column: 11, row: 1}, 51: {column: 12, row: 1}
+};
+
+Object.keys(ardorisMapPositions).forEach(function(roomIndexText) {
+  var roomIndex = Number(roomIndexText);
+  rooms[roomIndex].mapPosition = ardorisMapPositions[roomIndex];
+  if (roomIndex <= 23) {
+    rooms[roomIndex].directionalMap = true;
+    rooms[roomIndex].mapLabel = "H" + (roomIndex + 1);
+  } else if (roomIndex === 50) {
+    rooms[roomIndex].mapLabel = "H25";
+  } else if (roomIndex === 51) {
+    rooms[roomIndex].mapLabel = "BRUMALIS";
+  }
+});
+rooms[24].mapLabel = "CIUDAD";
+
+for (var ardorisRoomIndex = 0; ardorisRoomIndex < 23; ardorisRoomIndex++) {
+  rooms[ardorisRoomIndex].transitionZone = null;
+}
+
+function getArdorisExitAnchor(room, direction) {
+  var platforms = room.platforms || [];
+  if (!platforms.length) return {x: 0, y: room.height - 40, w: ROOM_W, h: 40};
+
+  if (direction === "up") {
+    return platforms.reduce(function(highest, platform) {
+      return !highest || platform.y < highest.y ? platform : highest;
+    }, null);
+  }
+
+  var fullWidthPlatforms = platforms.filter(function(platform) {
+    return platform.w >= ROOM_W * 0.75;
+  });
+  if (fullWidthPlatforms.length) {
+    return fullWidthPlatforms.reduce(function(lowest, platform) {
+      return !lowest || platform.y > lowest.y ? platform : lowest;
+    }, null);
+  }
+
+  return platforms.reduce(function(nearest, platform) {
+    if (!nearest) return platform;
+    var platformEdge = direction === "left" ? platform.x : platform.x + platform.w;
+    var nearestEdge = direction === "left" ? nearest.x : nearest.x + nearest.w;
+    return direction === "left"
+      ? (platformEdge < nearestEdge ? platform : nearest)
+      : (platformEdge > nearestEdge ? platform : nearest);
+  }, null);
+}
+
+function getArdorisExitZone(roomIndex, direction) {
+  var room = rooms[roomIndex];
+  var origin = room.worldX !== undefined ? room.worldX : roomIndex * ROOM_W;
+  var anchor = getArdorisExitAnchor(room, direction);
+  var zone = {x: origin + ROOM_W / 2 - 24, y: anchor.y - 80, w: 48, h: 90};
+
+  if (direction === "left") {
+    zone.x = origin + 12;
+    zone.y = anchor.y - 80;
+  } else if (direction === "right") {
+    zone.x = origin + ROOM_W - 60;
+    zone.y = anchor.y - 80;
+  } else if (direction === "up") {
+    zone.x = anchor.x;
+    zone.y = Math.max(0, anchor.y - 110);
+    zone.h = 90;
+  } else if (direction === "down") {
+    zone.y = anchor.y - 48;
+    zone.h = 72;
+  }
+
+  return zone;
+}
+
+function addArdorisSideExit(roomIndex, toRoom, direction, entrySide, options) {
+  var room = rooms[roomIndex];
+  var exit = getArdorisExitZone(roomIndex, direction);
+  var origin = room.worldX !== undefined ? room.worldX : roomIndex * ROOM_W;
+  exit.to = toRoom;
+  exit.direction = direction;
+  exit.entrySide = entrySide;
+  exit.mapBranch = !!options.mapBranch;
+  exit.mapBend = !!options.mapBend;
+  if (typeof options.zoneXOffset === "number") exit.x = origin + options.zoneXOffset;
+  if (typeof options.zoneY === "number") exit.y = options.zoneY;
+  if (options.requires) exit.requires = options.requires;
+  if (options.requiresBoss) exit.requiresBoss = options.requiresBoss;
+  if (options.requiresWall) exit.requiresWall = options.requiresWall;
+  if (!room.sideExits) room.sideExits = [];
+  room.sideExits.push(exit);
+}
+
+function oppositeArdorisDirection(direction) {
+  return {left: "right", right: "left", up: "down", down: "up"}[direction];
+}
+
+function addArdorisConnection(connection) {
+  var reverseDirection = connection.reverseDirection ||
+    oppositeArdorisDirection(connection.direction);
+  var reverseEntrySide = connection.reverseEntrySide ||
+    oppositeArdorisDirection(reverseDirection);
+  var forwardOptions = {
+    mapBranch: connection.mapBranch,
+    mapBend: connection.mapBend,
+    requires: connection.requires,
+    requiresBoss: connection.requiresBoss,
+    requiresWall: connection.requiresWall
+  };
+  var reverseOptions = {
+    mapBranch: connection.mapBranch,
+    mapBend: connection.mapBend,
+    requires: connection.reverseRequires,
+    requiresBoss: connection.reverseRequiresBoss,
+    requiresWall: connection.reverseRequiresWall || connection.requiresWall,
+    zoneXOffset: connection.reverseZoneXOffset,
+    zoneY: connection.reverseZoneY
+  };
+
+  addArdorisSideExit(connection.from, connection.to, connection.direction,
+    connection.entrySide || oppositeArdorisDirection(connection.direction), forwardOptions);
+  addArdorisSideExit(connection.to, connection.from, reverseDirection,
+    reverseEntrySide, reverseOptions);
+}
+
+[
+  {from: 0, to: 1, direction: "right"},
+  {from: 1, to: 2, direction: "up"},
+  {from: 2, to: 3, direction: "right"},
+  {from: 3, to: 4, direction: "right"},
+  {from: 4, to: 5, direction: "right"},
+  {from: 5, to: 6, direction: "down", reverseZoneXOffset: 450, reverseZoneY: 530},
+  {from: 6, to: 7, direction: "left"},
+  {from: 6, to: 10, direction: "right", entrySide: "up",
+    reverseDirection: "up", reverseEntrySide: "right", mapBranch: true, mapBend: true},
+  {from: 7, to: 8, direction: "down"},
+  {from: 8, to: 9, direction: "right"},
+  {from: 9, to: 10, direction: "right"},
+  {from: 10, to: 11, direction: "right"},
+  {from: 11, to: 12, direction: "up", requiresBoss: "guardian"},
+  {from: 12, to: 13, direction: "right"},
+  {from: 13, to: 14, direction: "right"},
+  {from: 14, to: 15, direction: "up"},
+  {from: 15, to: 16, direction: "left"},
+  {from: 16, to: 17, direction: "left"},
+  {from: 17, to: 18, direction: "up"},
+  {from: 18, to: 19, direction: "right"},
+  {from: 19, to: 20, direction: "up", requires: "sword",
+    requiresWall: {roomIndex: 19, wallIndex: 0}, reverseRequiresWall: {roomIndex: 19, wallIndex: 0}},
+  {from: 20, to: 21, direction: "right"},
+  {from: 21, to: 22, direction: "right"},
+  {from: 22, to: 23, direction: "right"}
+].forEach(addArdorisConnection);
+
 var caveFloorProfiles = {
   0: [[-240, 560], [0, 560], [160, 550], [330, 575], [470, 588], [630, 558], [800, 560]],
   1: [[0, 560], [160, 552], [330, 540], [490, 560], [650, 580], [800, 560]],
