@@ -910,6 +910,7 @@ function loadGame(i) {
   player.x = s.px; player.y = s.py; player.vx = 0; player.vy = 0;
   hasSword = s.hasSword || false; swordEquipped = s.swordEquipped || false;
   hasShield = savedShield || (gameMode === "normal" && !!s.hasSword);
+  if (rooms[13].pedestal) rooms[13].pedestal.taken = hasSword;
   weaponId = normalizeWeaponId(s.weaponId || DEFAULT_WEAPON_ID);
   unlockedWeapons = Array.isArray(s.unlockedWeapons) ? s.unlockedWeapons.filter(function(id) { return WEAPON_CONFIG[id]; }) : [DEFAULT_WEAPON_ID];
   weaponLevels = s.weaponLevels || weaponLevels;
