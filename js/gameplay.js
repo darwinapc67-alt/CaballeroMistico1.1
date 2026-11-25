@@ -2379,6 +2379,8 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     p.vx *= 0.9;
     p.vy += GRAVITY;
     if (p.vy > 12) p.vy = 12;
+    var recoilPreviousX = p.x;
+    var recoilPreviousY = p.y;
     p.x += p.vx;
     p.y += p.vy;
     var recoilRoom = rooms[currentRoom];
@@ -2400,8 +2402,15 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     recoilRoom.walls.forEach(function(wall) {
       if (wall.broken) return;
       if (!rectHit(p, wall)) return;
-      if (p.vx > 0) { p.x = wall.x - p.w; p.vx = 0; }
-      else if (p.vx < 0) { p.x = wall.x + wall.w; p.vx = 0; }
+      if (p.vy > 0 && recoilPreviousY + p.h <= wall.y + 8) {
+        p.y = wall.y - p.h; p.vy = 0; p.onGround = true;
+      } else if (p.vy < 0 && recoilPreviousY >= wall.y + wall.h - 8) {
+        p.y = wall.y + wall.h; p.vy = 0;
+      } else if (p.vx > 0 && recoilPreviousX + p.w <= wall.x + 8) {
+        p.x = wall.x - p.w; p.vx = 0;
+      } else if (p.vx < 0 && recoilPreviousX >= wall.x + wall.w - 8) {
+        p.x = wall.x + wall.w; p.vx = 0;
+      }
     });
     return;
   }
@@ -2446,8 +2455,13 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     p.vy += GRAVITY; if (p.vy > 12) p.vy = 12;
   }
   var previousPlayerX = p.x;
+  var previousPlayerY = p.y;
   p.x += p.vx; p.y += p.vy;
   if (p.attackLungeTimer > 0) checkSwordHitEnemiesFor(p);
+  if (p === player && gameMode === "normal" && transitionCooldown <= 0 &&
+      tryStartArdorisPassageTransition(p, rooms[currentRoom], previousPlayerX, previousPlayerY)) {
+    return;
+  }
   p.wallContact = 0;
   if (gameMode === "infinite" && currentRoom === 0) {
     if (p.y < 20) { p.y = 20; p.vy = 0; }
@@ -2473,6 +2487,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     var directionalRight = Math.min(right - 5, directionalOrigin + directionalWidth - 5) - p.w;
     if (p.x < directionalLeft) { p.x = directionalLeft; p.vx = 0; }
     if (p.x > directionalRight) { p.x = directionalRight; p.vx = 0; }
+    if (p.y < 0) { p.y = 0; p.vy = 0; }
   }
 
   var activeArenaBoss = getActiveBoss(currentRoom);
@@ -2487,18 +2502,6 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
     if (p.x > arenaRight) { p.x = arenaRight; p.vx = 0; }
   }
 
-  if (currentRoom === 23) {
-    var ardorisRoom = rooms[23];
-    var ardorisOrigin = ardorisRoom.worldX !== undefined ? ardorisRoom.worldX : 23 * ROOM_W;
-    var ardorisWidth = ardorisRoom.roomWidth || ROOM_W;
-    var cityBoundaryWall = ardorisRoom.walls.find(function(wall) {
-      return wall.x + wall.w === ardorisOrigin + ardorisWidth;
-    });
-    if (cityBoundaryWall && p.x + p.w > cityBoundaryWall.x) {
-      p.x = cityBoundaryWall.x - p.w;
-      p.vx = 0;
-    }
-  }
   if (currentRoom === 50 || currentRoom === 51) {
     var linkedRoom = rooms[currentRoom];
     var linkedOrigin = linkedRoom.worldX !== undefined ? linkedRoom.worldX : currentRoom * ROOM_W;
@@ -2681,12 +2684,24 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
       else if (p.vx < 0) { p.x = pl.x + pl.w; p.vx = 0; }
     }
   });
+  if (p._ardorisPassageFloorBlocked) {
+    p.onGround = true;
+    p.jumpsLeft = p.maxJumps;
+    p._ardorisPassageFloorBlocked = false;
+  }
 
   room.walls.forEach(function(w) {
     if (w.broken) return;
     if (rectHit(p, w)) {
-      if (p.vx > 0) { p.x = w.x - p.w; p.vx = 0; p.wallContact = 1; }
-      else if (p.vx < 0) { p.x = w.x + w.w; p.vx = 0; p.wallContact = -1; }
+      if (p.vy > 0 && previousPlayerY + p.h <= w.y + 8) {
+        p.y = w.y - p.h; p.vy = 0; p.onGround = true; p.jumpsLeft = p.maxJumps;
+      } else if (p.vy < 0 && previousPlayerY >= w.y + w.h - 8) {
+        p.y = w.y + w.h; p.vy = 0;
+      } else if (p.vx > 0 && previousPlayerX + p.w <= w.x + 8) {
+        p.x = w.x - p.w; p.vx = 0; p.wallContact = 1;
+      } else if (p.vx < 0 && previousPlayerX >= w.x + w.w - 8) {
+        p.x = w.x + w.w; p.vx = 0; p.wallContact = -1;
+      }
     }
   });
   if (gameMode === "normal" && room.jumpCourse) {
@@ -2885,6 +2900,7 @@ function updateGenericPlayer(p, moveLeft, moveRight, jumpPressed, attackPressed,
   if (gameMode === "normal" && p === player && transitionCooldown <= 0 && room.sideExits) {
     for (var sideExitIndex = 0; sideExitIndex < room.sideExits.length; sideExitIndex++) {
       var sideExit = room.sideExits[sideExitIndex];
+      if (sideExit.passage) continue;
       if (sideExit.activation === "drop") continue;
       if (!rectHit(p, sideExit)) continue;
       if (!isSideExitAvailable(sideExit)) {
@@ -3354,6 +3370,12 @@ function isSideExitAvailable(exit) {
   if (exit.requires === "dash" && !hasDash) return false;
   if (exit.requires === "sword" && !hasSword) return false;
   if (exit.requiresBoss && !bossArenaState[exit.requiresBoss]) return false;
+  if (typeof exit.requiresRoomBossDefeated === "number") {
+    var requiredBoss = enemies.find(function(enemy) {
+      return enemy.boss && enemy.room === exit.requiresRoomBossDefeated;
+    });
+    if (!requiredBoss || !requiredBoss.dead) return false;
+  }
   if (exit.requiresWall) {
     var requiredRoom = rooms[exit.requiresWall.roomIndex];
     var requiredWall = requiredRoom && requiredRoom.walls[exit.requiresWall.wallIndex];
@@ -3362,78 +3384,113 @@ function isSideExitAvailable(exit) {
   return true;
 }
 
+function tryStartArdorisPassageTransition(p, room, previousX, previousY) {
+  if (!room || !room.directionalMap && currentRoom < 50) return false;
+  var exits = room.sideExits || [];
+  for (var i = 0; i < exits.length; i++) {
+    var exit = exits[i];
+    var passage = exit.passage;
+    if (!passage) continue;
+    var crossed = false;
+    var fits = true;
+
+    if (exit.direction === "right") {
+      crossed = p.vx > 0 && previousX + p.w <= passage.thresholdX &&
+        p.x + p.w > passage.thresholdX;
+      fits = p.y >= passage.y && p.y + p.h <= passage.y + passage.h;
+    } else if (exit.direction === "left") {
+      crossed = p.vx < 0 && previousX >= passage.thresholdX &&
+        p.x < passage.thresholdX;
+      fits = p.y >= passage.y && p.y + p.h <= passage.y + passage.h;
+    } else if (exit.direction === "up") {
+      crossed = p.vy < 0 && previousY >= passage.thresholdY && p.y < passage.thresholdY;
+      fits = p.x >= passage.x && p.x + p.w <= passage.x + passage.w;
+    } else if (exit.direction === "down") {
+      crossed = p.vy > 0 && previousY + p.h <= passage.thresholdY + 1 &&
+        p.y + p.h > passage.thresholdY;
+      fits = p.x + p.w / 2 >= passage.x &&
+        p.x + p.w / 2 <= passage.x + passage.w;
+    }
+
+    if (!crossed) continue;
+    if (!fits) {
+      if (exit.direction === "up") { p.y = passage.thresholdY; p.vy = 0; }
+      continue;
+    }
+    if (isSideExitAvailable(exit)) {
+      startTransition(exit.to, exit.direction, getSideExitTransitionSpawn(exit));
+      return true;
+    }
+
+    if (exit.direction === "right") { p.x = passage.thresholdX - p.w; p.vx = 0; }
+    else if (exit.direction === "left") { p.x = passage.thresholdX; p.vx = 0; }
+    else if (exit.direction === "up") { p.y = passage.thresholdY + 18; p.vy = 0; }
+    else {
+      p.y = passage.thresholdY - p.h;
+      p.vy = 0;
+      p._ardorisPassageFloorBlocked = true;
+    }
+    if (interactPressed) {
+      spawnFloatText(p.x, p.y - 28, exit.lockedMessage || "El pasaje está bloqueado.", "#ffb347");
+    }
+  }
+  return false;
+}
+
 function getSideExitTransitionSpawn(exit) {
   var destination = rooms[exit.to];
   var origin = destination.worldX !== undefined ? destination.worldX : exit.to * ROOM_W;
   var width = destination.roomWidth || ROOM_W;
-  var entrySide = exit.entrySide;
-  var spawnX = origin + width / 2 - player.w / 2;
-  var landingPlatform = null;
+  var entry = (destination.sideExits || []).find(function(sideExit) {
+    return sideExit.to === currentRoom && sideExit.passage;
+  });
+  if (!entry) {
+    return {x: origin + width / 2 - player.w / 2, y: destination.height - player.h - 40};
+  }
 
-  if (entrySide === "left") {
-    spawnX = origin + 64;
-  } else if (entrySide === "right") {
-    spawnX = origin + width - player.w - 64;
-  } else if (entrySide === "up") {
-    destination.platforms.forEach(function(platform) {
-      var platformSurfaceY = getPlatformSurfaceY(platform, platform.x + platform.w / 2);
-      var platformTop = platformSurfaceY === null ? platform.y : platformSurfaceY;
-      var landingSurfaceY = landingPlatform &&
-        getPlatformSurfaceY(landingPlatform, landingPlatform.x + landingPlatform.w / 2);
-      var landingTop = landingSurfaceY === null && landingPlatform
-        ? landingPlatform.y : landingSurfaceY;
-      if (!landingPlatform || platformTop < landingTop) landingPlatform = platform;
-    });
-    if (landingPlatform) {
-      spawnX = landingPlatform.x + landingPlatform.w - player.w - 2;
-    }
-  } else if (entrySide === "down") {
-    spawnX += 100;
+  var passage = entry.passage;
+  var spawnX = passage.centerX - player.w / 2;
+  var spawnY = 28;
+  if (entry.direction === "left") spawnX = passage.thresholdX + 42;
+  else if (entry.direction === "right") spawnX = passage.thresholdX - player.w - 42;
+  else if (entry.direction === "down") {
+    var sideOffset = passage.w / 2 + player.w / 2 + 18;
+    spawnX = passage.centerX + sideOffset;
+    if (spawnX + player.w > origin + width - 24) spawnX = passage.centerX - sideOffset - player.w;
   }
 
   function getLandingSurface(x) {
-    if (landingPlatform) {
-      var platformSurface = getPlatformSurfaceY(landingPlatform, x + player.w / 2);
-      if (platformSurface !== null) return platformSurface;
-      if (x + player.w / 2 >= landingPlatform.x &&
-          x + player.w / 2 <= landingPlatform.x + landingPlatform.w) return landingPlatform.y;
-      return null;
-    }
-
-    var surfaceY = null;
+    var landingY = null;
     destination.platforms.forEach(function(platform) {
-      var candidateSurface = getPlatformSurfaceY(platform, x + player.w / 2);
-      if (candidateSurface === null && x + player.w / 2 >= platform.x &&
-          x + player.w / 2 <= platform.x + platform.w) candidateSurface = platform.y;
-      if (candidateSurface !== null && (surfaceY === null || candidateSurface > surfaceY)) {
-        surfaceY = candidateSurface;
+      var surfaceY = getPlatformSurfaceY(platform, x + player.w / 2);
+      if (surfaceY === null && !platform.surface &&
+          x + player.w / 2 >= platform.x && x + player.w / 2 <= platform.x + platform.w) {
+        surfaceY = platform.y;
       }
+      if (surfaceY !== null && (landingY === null || surfaceY > landingY)) landingY = surfaceY;
     });
-    return surfaceY;
+    return landingY;
   }
 
-  function isSafeLanding(x, y) {
-    return !(destination.sideExits || []).some(function(sideExit) {
-      return x < sideExit.x + sideExit.w && x + player.w > sideExit.x &&
-        y < sideExit.y + sideExit.h && y + player.h > sideExit.y;
-    });
-  }
-
-  var landingSurfaceY = getLandingSurface(spawnX);
-  var spawnY = landingSurfaceY === null
-    ? destination.height - player.h - 40 : landingSurfaceY - player.h - 2;
-  if (isSafeLanding(spawnX, spawnY)) return {x: spawnX, y: spawnY};
-
-  for (var offset = 16; offset < width; offset += 16) {
-    var candidates = [spawnX + offset, spawnX - offset];
-    for (var candidateIndex = 0; candidateIndex < candidates.length; candidateIndex++) {
-      var candidateX = candidates[candidateIndex];
-      if (candidateX < origin + 5 || candidateX + player.w > origin + width - 5) continue;
-      var candidateSurfaceY = getLandingSurface(candidateX);
-      if (candidateSurfaceY === null) continue;
-      var candidateY = candidateSurfaceY - player.h - 2;
-      if (isSafeLanding(candidateX, candidateY)) return {x: candidateX, y: candidateY};
+  if (entry.direction !== "up") {
+    var landingSurfaceY = getLandingSurface(spawnX);
+    if (landingSurfaceY === null) {
+      for (var offset = 16; offset < width; offset += 16) {
+        var candidates = [spawnX + offset, spawnX - offset];
+        var found = false;
+        for (var candidateIndex = 0; candidateIndex < candidates.length; candidateIndex++) {
+          var candidateX = candidates[candidateIndex];
+          if (candidateX < origin + 20 || candidateX + player.w > origin + width - 20) continue;
+          landingSurfaceY = getLandingSurface(candidateX);
+          if (landingSurfaceY === null) continue;
+          spawnX = candidateX;
+          found = true;
+          break;
+        }
+        if (found) break;
+      }
     }
+    if (landingSurfaceY !== null) spawnY = landingSurfaceY - player.h - 4;
   }
 
   return {x: spawnX, y: spawnY};

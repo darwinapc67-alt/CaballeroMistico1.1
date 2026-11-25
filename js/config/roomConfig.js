@@ -630,7 +630,7 @@ function getArdorisExitZone(roomIndex, direction) {
     zone.x = origin + ROOM_W - 60;
     zone.y = anchor.y - 80;
   } else if (direction === "up") {
-    zone.x = anchor.x;
+    zone.x = anchor.x + anchor.w / 2 - zone.w / 2;
     zone.y = Math.max(0, anchor.y - 110);
     zone.h = 90;
   } else if (direction === "down") {
@@ -654,7 +654,60 @@ function addArdorisSideExit(roomIndex, toRoom, direction, entrySide, options) {
   if (typeof options.zoneY === "number") exit.y = options.zoneY;
   if (options.requires) exit.requires = options.requires;
   if (options.requiresBoss) exit.requiresBoss = options.requiresBoss;
+  if (options.requiresRoomBossDefeated !== undefined) {
+    exit.requiresRoomBossDefeated = options.requiresRoomBossDefeated;
+  }
   if (options.requiresWall) exit.requiresWall = options.requiresWall;
+  var roomWidth = room.roomWidth || ROOM_W;
+  if (direction === "left" || direction === "right") {
+    var sideWall = room.walls.find(function(wall) {
+      return direction === "left"
+        ? wall.x <= origin + 2 && wall.x + wall.w > origin
+        : wall.x < origin + roomWidth && wall.x + wall.w >= origin + roomWidth - 2;
+    });
+    var thresholdX = sideWall
+      ? (direction === "left" ? sideWall.x + sideWall.w : sideWall.x)
+      : (direction === "left" ? origin : origin + roomWidth);
+    var passageHeight = 150;
+    var passageY = Math.max(24, Math.min(room.height - passageHeight - 8, exit.y - 42));
+    exit.passage = {
+      axis: "x",
+      direction: direction,
+      thresholdX: thresholdX,
+      x: direction === "left" ? thresholdX - 18 : thresholdX - 30,
+      y: passageY,
+      w: 48,
+      h: passageHeight,
+      centerX: thresholdX,
+      centerY: passageY + passageHeight / 2
+    };
+  } else if (direction === "up") {
+    var upperCenterX = exit.x + exit.w / 2;
+    exit.passage = {
+      axis: "y",
+      direction: direction,
+      thresholdY: 0,
+      x: upperCenterX - 54,
+      y: 0,
+      w: 108,
+      h: 76,
+      centerX: upperCenterX,
+      centerY: 0
+    };
+  } else {
+    var lowerCenterX = exit.x + exit.w / 2;
+    exit.passage = {
+      axis: "y",
+      direction: direction,
+      thresholdY: exit.y + 48,
+      x: lowerCenterX - 54,
+      y: exit.y + 48,
+      w: 108,
+      h: Math.max(0, room.height - (exit.y + 48)),
+      centerX: lowerCenterX,
+      centerY: exit.y + 48
+    };
+  }
   if (!room.sideExits) room.sideExits = [];
   room.sideExits.push(exit);
 }
@@ -673,6 +726,7 @@ function addArdorisConnection(connection) {
     mapBend: connection.mapBend,
     requires: connection.requires,
     requiresBoss: connection.requiresBoss,
+    requiresRoomBossDefeated: connection.requiresRoomBossDefeated,
     requiresWall: connection.requiresWall
   };
   var reverseOptions = {
@@ -680,6 +734,8 @@ function addArdorisConnection(connection) {
     mapBend: connection.mapBend,
     requires: connection.reverseRequires,
     requiresBoss: connection.reverseRequiresBoss,
+    requiresRoomBossDefeated: connection.reverseRequiresRoomBossDefeated !== undefined
+      ? connection.reverseRequiresRoomBossDefeated : connection.requiresRoomBossDefeated,
     requiresWall: connection.reverseRequiresWall || connection.requiresWall,
     zoneXOffset: connection.reverseZoneXOffset,
     zoneY: connection.reverseZoneY
@@ -719,6 +775,62 @@ function addArdorisConnection(connection) {
   {from: 21, to: 22, direction: "right"},
   {from: 22, to: 23, direction: "right"}
 ].forEach(addArdorisConnection);
+
+addArdorisConnection({
+  from: 23, to: 50, direction: "right", requiresRoomBossDefeated: 23
+});
+addArdorisConnection({
+  from: 50, to: 51, direction: "right", requiresRoomBossDefeated: 23
+});
+
+function splitArdorisSideWall(room, exit) {
+  if (exit.direction !== "left" && exit.direction !== "right") return;
+  var passage = exit.passage;
+  var wallIndex = room.walls.findIndex(function(wall) {
+    return exit.direction === "left"
+      ? wall.x <= passage.thresholdX && wall.x + wall.w >= passage.thresholdX
+      : wall.x <= passage.thresholdX && wall.x + wall.w >= passage.thresholdX;
+  });
+  if (wallIndex < 0) return;
+  var wall = room.walls[wallIndex];
+  if (wall.h < room.height * 0.75) return;
+  room.walls.splice(wallIndex, 1);
+  if (passage.y > wall.y) {
+    room.walls.push({
+      x: wall.x, y: wall.y, w: wall.w, h: passage.y - wall.y,
+      passageFrame: true
+    });
+  }
+  var lowerStart = passage.y + passage.h;
+  if (lowerStart < wall.y + wall.h) {
+    room.walls.push({
+      x: wall.x, y: lowerStart, w: wall.w, h: wall.y + wall.h - lowerStart,
+      passageFrame: true
+    });
+  }
+}
+
+rooms.forEach(function(room) {
+  (room.sideExits || []).forEach(function(exit) {
+    splitArdorisSideWall(room, exit);
+  });
+});
+
+var h20ToH21Exit = rooms[19].sideExits.find(function(exit) {
+  return exit.to === 20 && exit.direction === "up";
+});
+if (h20ToH21Exit && rooms[19].walls[0]) {
+  var h20PassageWall = rooms[19].walls[0];
+  h20PassageWall.x = h20ToH21Exit.passage.x;
+  h20PassageWall.y = 0;
+  h20PassageWall.w = h20ToH21Exit.passage.w;
+  h20PassageWall.h = 18;
+}
+
+rooms[23].transitionZone = null;
+rooms[50].transitionZone = null;
+rooms[50].transitionZones = [];
+rooms[51].transitionZone = null;
 
 var caveFloorProfiles = {
   0: [[-240, 560], [0, 560], [160, 550], [330, 575], [470, 588], [630, 558], [800, 560]],
@@ -803,7 +915,22 @@ Object.keys(caveFloorProfiles).forEach(function(indexKey) {
     : [];
   var floor = createCaveFloorPlatform(roomIndex);
   var floorPlatforms = [floor];
-  if (room.jumpCourse && room.jumpCourse.gaps) {
+  var floorGaps = room.jumpCourse && room.jumpCourse.gaps
+    ? room.jumpCourse.gaps.slice() : [];
+  (room.sideExits || []).forEach(function(exit) {
+    if (exit.direction !== "down") return;
+    var thresholdY = getPlatformSurfaceY(floor, exit.passage.centerX);
+    if (thresholdY !== null) {
+      exit.passage.thresholdY = thresholdY;
+      exit.passage.y = thresholdY;
+      exit.passage.h = Math.max(0, room.height - thresholdY);
+    }
+    floorGaps.push({
+      x: exit.passage.x - floor.x,
+      w: exit.passage.w
+    });
+  });
+  if (floorGaps.length) {
     function floorHeightAt(localX) {
       var points = floor.surface;
       for (var pointIndex = 0; pointIndex < points.length - 1; pointIndex++) {
@@ -833,7 +960,7 @@ Object.keys(caveFloorProfiles).forEach(function(indexKey) {
     }
     var gapCursor = 0;
     floorPlatforms = [];
-    room.jumpCourse.gaps.slice().sort(function(a, b) { return a.x - b.x; }).forEach(function(gap) {
+    floorGaps.sort(function(a, b) { return a.x - b.x; }).forEach(function(gap) {
       var gapStart = Math.max(0, Math.min(floor.w, gap.x));
       var gapEnd = Math.max(gapStart, Math.min(floor.w, gap.x + gap.w));
       if (gapStart > gapCursor) floorPlatforms.push(makeFloorSegment(gapCursor, gapStart));

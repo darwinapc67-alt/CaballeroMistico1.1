@@ -969,6 +969,87 @@ function drawWalls(room) {
     }
   });
 }
+function drawArdorisPassages(room, roomIndex) {
+  if (!room || !room.sideExits || (!room.directionalMap && roomIndex < 50)) return;
+  room.sideExits.forEach(function(exit) {
+    var passage = exit.passage;
+    if (!passage) return;
+    var open = typeof isSideExitAvailable === "function" && isSideExitAvailable(exit);
+    ctx.save();
+    ctx.fillStyle = "#080b13";
+    ctx.strokeStyle = "#69727e";
+    ctx.lineWidth = 3;
+
+    if (passage.axis === "x") {
+      var portalX = passage.direction === "right"
+        ? passage.thresholdX - 18 : passage.thresholdX - 30;
+      ctx.fillRect(portalX, passage.y, 48, passage.h);
+      ctx.fillStyle = "#393f4b";
+      ctx.fillRect(portalX, passage.y, 10, passage.h);
+      ctx.fillRect(portalX + 38, passage.y, 10, passage.h);
+      ctx.fillRect(portalX, passage.y, 48, 12);
+      ctx.fillStyle = "#7e8995";
+      ctx.fillRect(portalX + 8, passage.y + 12, 32, 4);
+      ctx.strokeRect(portalX + 5, passage.y + 5, 38, passage.h - 10);
+      ctx.fillStyle = "#a9c5d8";
+      ctx.font = "bold 15px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(passage.direction === "right" ? "›" : "‹",
+        portalX + 24, passage.y + passage.h / 2 + 5);
+      if (!open) {
+        ctx.fillStyle = "rgba(95, 31, 44, 0.94)";
+        ctx.fillRect(portalX + 12, passage.y + 22, 24, passage.h - 44);
+        ctx.strokeStyle = "#ff8b79";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(portalX + 12, passage.y + 22, 24, passage.h - 44);
+        for (var bar = passage.y + 31; bar < passage.y + passage.h - 25; bar += 18) {
+          ctx.beginPath();
+          ctx.moveTo(portalX + 14, bar);
+          ctx.lineTo(portalX + 34, bar + 8);
+          ctx.stroke();
+        }
+      }
+    } else if (passage.direction === "up") {
+      ctx.fillRect(passage.x, 0, passage.w, passage.h);
+      ctx.fillStyle = "#454c58";
+      ctx.fillRect(passage.x - 8, 0, 10, passage.h);
+      ctx.fillRect(passage.x + passage.w - 2, 0, 10, passage.h);
+      ctx.fillRect(passage.x - 8, passage.h - 8, passage.w + 16, 8);
+      ctx.strokeRect(passage.x, 0, passage.w, passage.h - 2);
+      ctx.fillStyle = "#b9d1df";
+      ctx.font = "bold 15px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("↑", passage.centerX, passage.h - 22);
+      if (!open) {
+        ctx.fillStyle = "rgba(95, 31, 44, 0.94)";
+        ctx.fillRect(passage.x + 12, 14, passage.w - 24, 18);
+        ctx.strokeStyle = "#ff8b79";
+        ctx.strokeRect(passage.x + 12, 14, passage.w - 24, 18);
+      }
+    } else {
+      var openingBottom = room.height;
+      ctx.fillRect(passage.x, passage.thresholdY, passage.w, openingBottom - passage.thresholdY);
+      ctx.fillStyle = "#454c58";
+      ctx.fillRect(passage.x - 8, passage.thresholdY - 8, 10, 20);
+      ctx.fillRect(passage.x + passage.w - 2, passage.thresholdY - 8, 10, 20);
+      ctx.fillStyle = "#8b96a2";
+      ctx.fillRect(passage.x - 8, passage.thresholdY - 8, passage.w + 16, 8);
+      ctx.strokeRect(passage.x, passage.thresholdY, passage.w, Math.max(0, openingBottom - passage.thresholdY));
+      ctx.fillStyle = "#b9d1df";
+      ctx.font = "bold 15px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("↓", passage.centerX, passage.thresholdY + 28);
+      if (!open) {
+        ctx.fillStyle = "rgba(95, 31, 44, 0.94)";
+        ctx.fillRect(passage.x + 8, passage.thresholdY - 12, passage.w - 16, 10);
+        ctx.strokeStyle = "#ff8b79";
+        ctx.strokeRect(passage.x + 8, passage.thresholdY - 12, passage.w - 16, 10);
+      }
+    }
+    ctx.textAlign = "left";
+    ctx.restore();
+  });
+}
 function drawSpikes(room) {
   room.spikes.forEach(function(s) {
     ctx.fillStyle = "#441111";

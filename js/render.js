@@ -146,6 +146,7 @@ function drawGameWorld(skipPlayers) {
     }
     drawPlatforms(room, r);
     drawWalls(room);
+    drawArdorisPassages(room, r);
     if (!room.city) drawCaveLocalLighting(r, room);
     if (room.chests && Array.isArray(room.chests)) {
       room.chests.forEach(function(chest) {
