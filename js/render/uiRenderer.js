@@ -865,21 +865,6 @@ function drawGame() {
   }
   ctx.fillStyle = "#fff"; ctx.font = "13px monospace";
   ctx.fillText(hasSword ? "⚔️ " + getWeaponConfig(weaponId).name : "🛡️ " + translateText("Sin arma"), 12, 22);
-  var ardorisRoomLabel = currentRoom >= 0 && currentRoom <= 23
-    ? "H" + (currentRoom + 1)
-    : (currentRoom === 50 ? "H25" : "");
-  if (ardorisRoomLabel) {
-    ctx.fillStyle = "rgba(8, 12, 16, 0.76)";
-    ctx.fillRect(12, 31, 46, 22);
-    ctx.strokeStyle = "rgba(199, 230, 193, 0.58)";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(12, 31, 46, 22);
-    ctx.fillStyle = "#c7e6c1";
-    ctx.font = "bold 12px monospace";
-    ctx.textAlign = "center";
-    ctx.fillText(ardorisRoomLabel, 35, 46);
-    ctx.textAlign = "left";
-  }
   if (gameMode === "infinite") {
     ctx.fillStyle = "#ff9b3d"; ctx.font = "bold 13px monospace";
     ctx.fillText("COLISEO INFINITO  •  RONDA " + infiniteWave + "  •  ARMAS " + unlockedWeapons.length + "/" + WEAPON_PROGRESSION.length + "  •  PODER " + (swordLevel + (hasDash ? 1 : 0) + (hasDoubleJump ? 1 : 0) + (hasBow ? 1 : 0)), 12, canvas.height - 18);
@@ -1014,6 +999,21 @@ function drawGame() {
   }
   if (adminConsoleOpen) drawAdminConsole();
   drawTutorial();
+  var ardorisRoomLabel = currentRoom >= 0 && currentRoom <= 23
+    ? "H" + (currentRoom + 1)
+    : (currentRoom === 50 ? "H25" : "");
+  if (ardorisRoomLabel) {
+    ctx.fillStyle = "rgba(8, 12, 16, 0.76)";
+    ctx.fillRect(12, 126, 46, 22);
+    ctx.strokeStyle = "rgba(199, 230, 193, 0.58)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(12, 126, 46, 22);
+    ctx.fillStyle = "#c7e6c1";
+    ctx.font = "bold 12px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText(ardorisRoomLabel, 35, 141);
+    ctx.textAlign = "left";
+  }
 }
 function drawIntro() {
  var fade = Math.min(1, introTimer / 28, Math.max(0, (300 - introTimer) / 35));
